@@ -25,6 +25,19 @@ const LENGTH_DESCRIPTION: Record<AdventureLength, string> = {
     "**Campaign** — a **multi-session framework**: factions, 3-act arc, **at least five session-scale adventures** (plus Session 1 fully detailed), leveling roadmap, and hooks you can run at the table.",
 };
 
+/**
+ * Plain-text descriptions for UI hover tooltips (`title`).
+ * Kept in sync with generator scope; no Markdown (browser tooltips are plain text).
+ */
+export const ADVENTURE_LENGTH_HOVER_HELP: Record<AdventureLength, string> = {
+  short:
+    "Short adventure — built for about one session at the table (roughly 3–5 playable scenes). Expect a clear arc, scene-by-scene DM notes (NPCs, encounters, skill checks, treasure embedded where they show up), plus locale and battle map briefs suitable for image generation. Best when you want something runnable this week without committing to a long arc.",
+  one_night:
+    "One-nighter — a single tight evening (about 2–4 hours). Fewer locations, brisk pacing, and a strong start-to-finish in one sitting. Scene beats read like compact chapters; map briefs stay focused on tonight’s fights and set-pieces. Ideal for a pickup game or a con slot.",
+  campaign:
+    "Campaign framework — multi-session scaffolding: factions, tensions, arcs, a leveling roadmap, and at least five numbered session adventures after Session 1 (Session 1 is the most detailed, chapter-style run). Later sessions are structured outlines you can expand. Includes regional overview plus Session 1 battle map briefs for images. Best when you want a table-ready start plus a roadmap for what comes next.",
+};
+
 function lengthSpecificRules(length: AdventureLength): string {
   switch (length) {
     case "short":

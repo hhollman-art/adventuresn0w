@@ -1,7 +1,11 @@
 "use client";
 
 import { use, useState } from "react";
-import type { AdventureLength, CombatIntensity } from "@/lib/adventurePrompt";
+import {
+  ADVENTURE_LENGTH_HOVER_HELP,
+  type AdventureLength,
+  type CombatIntensity,
+} from "@/lib/adventurePrompt";
 import type { MapPackKind } from "@/lib/mapImagePrompt";
 import type { PropType } from "@/lib/propImagePrompt";
 import {
@@ -191,6 +195,108 @@ async function fetchPropImageResult(payload: PropFormState): Promise<{
   }
 }
 
+const AUTO_IMAGE_CONCURRENCY = 2;
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  worker: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) return [];
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  const runWorker = async () => {
+    while (true) {
+      const current = nextIndex++;
+      if (current >= items.length) return;
+      results[current] = await worker(items[current]!, current);
+    }
+  };
+
+  const workerCount = Math.max(1, Math.min(limit, items.length));
+  await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+  return results;
+}
+
+async function fetchAdventureResultStream(
+  payload: FormState,
+  callbacks: { onChunk: (chunk: string) => void; onModel: (model: string) => void },
+): Promise<{ markdown: string; model: string | null; error: string | null }> {
+  try {
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+      body: JSON.stringify({ ...payload, stream: true }),
+    });
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      return {
+        markdown: "",
+        model: null,
+        error: data.error ?? `Request failed (${res.status})`,
+      };
+    }
+    if (!res.body) {
+      return { markdown: "", model: null, error: "No response stream received." };
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let markdown = "";
+    let model: string | null = null;
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split("\n\n");
+      buffer = events.pop() ?? "";
+
+      for (const rawEvent of events) {
+        const lines = rawEvent
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line.startsWith("data: "));
+        if (lines.length === 0) continue;
+        const dataText = lines.map((line) => line.slice(6)).join("\n");
+        const evt = JSON.parse(dataText) as
+          | { type: "meta"; model?: string }
+          | { type: "chunk"; text?: string }
+          | { type: "done"; markdown?: string; model?: string }
+          | { type: "error"; error?: string };
+        if (evt.type === "meta" && evt.model) {
+          model = evt.model;
+          callbacks.onModel(evt.model);
+        } else if (evt.type === "chunk" && evt.text) {
+          markdown += evt.text;
+          callbacks.onChunk(evt.text);
+        } else if (evt.type === "done") {
+          markdown = evt.markdown ?? markdown;
+          if (evt.model) {
+            model = evt.model;
+            callbacks.onModel(evt.model);
+          }
+        } else if (evt.type === "error") {
+          return {
+            markdown: "",
+            model: null,
+            error: evt.error ?? "Streamed request failed.",
+          };
+        }
+      }
+    }
+    return { markdown: markdown.trim(), model, error: null };
+  } catch (err) {
+    return {
+      markdown: "",
+      model: null,
+      error: err instanceof Error ? err.message : "Network error",
+    };
+  }
+}
+
 export default function Home(props: PageProps<"/">) {
   use(props.params);
   use(props.searchParams);
@@ -242,26 +348,42 @@ export default function Home(props: PageProps<"/">) {
               characterCount: form.partySize,
               extraNotes: form.extraNotes,
             };
+      let generatedMarkdown = "";
+      let generatedModel: string | null = null;
+      if (mode === "adventure") {
+        const streamed = await fetchAdventureResultStream(form, {
+          onChunk: (chunk) => setMarkdown((prev) => prev + chunk),
+          onModel: (m) => setModel(m),
+        });
+        if (streamed.error) {
+          setError(streamed.error);
+          return;
+        }
+        generatedMarkdown = streamed.markdown;
+        generatedModel = streamed.model;
+      } else {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = (await res.json()) as {
+          markdown?: string;
+          model?: string;
+          error?: string;
+        };
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = (await res.json()) as {
-        markdown?: string;
-        model?: string;
-        error?: string;
-      };
-
-      if (!res.ok) {
-        setError(data.error ?? `Request failed (${res.status})`);
-        return;
+        if (!res.ok) {
+          setError(data.error ?? `Request failed (${res.status})`);
+          return;
+        }
+        generatedMarkdown = data.markdown ?? "";
+        generatedModel = data.model ?? null;
       }
 
-      if (data.markdown) {
-        setMarkdown(data.markdown);
-        setModel(data.model ?? null);
+      if (generatedMarkdown) {
+        setMarkdown(generatedMarkdown);
+        setModel(generatedModel ?? null);
         setProgressStage("adventure_done");
         if (
           mode === "adventure" &&
@@ -272,7 +394,7 @@ export default function Home(props: PageProps<"/">) {
           setMapImages([]);
           setImageModel(null);
 
-          const mapContext = buildAutoMapContextFromAdventure(data.markdown, form);
+          const mapContext = buildAutoMapContextFromAdventure(generatedMarkdown, form);
           const mapExtraNotes = [
             form.adventureLength === "campaign"
               ? "Focus on Session 1 playable map details."
@@ -302,7 +424,7 @@ export default function Home(props: PageProps<"/">) {
             imageQuality: "high",
           };
 
-          const scenes = extractAdventureScenes(data.markdown, MAX_AUTO_SCENE_IMAGES);
+          const scenes = extractAdventureScenes(generatedMarkdown, MAX_AUTO_SCENE_IMAGES);
           const collected: GeneratedImage[] = [];
           let workflowModel: string | null = null;
           let workflowError: string | null = null;
@@ -334,30 +456,38 @@ export default function Home(props: PageProps<"/">) {
                   );
                   workflowModel = rLocale.model;
                   setProgressStage("map_battle_generating");
-                  for (const scene of scenes) {
-                    if (workflowError) break;
-                    const r = await fetchMapImageResult({
-                      ...mapBase,
-                      mapKind: "battle",
-                      locationName: `${mapBase.locationName} — ${scene.title}`.slice(0, 200),
-                      context: buildSceneBattleMapPrompt(
-                        scene,
-                        mapBase,
-                        data.markdown,
-                        form,
-                      ),
-                    });
-                    if (r.error) {
-                      workflowError = r.error;
-                      break;
-                    }
-                    collected.push(
-                      ...r.images.map((img) => ({
-                        ...img,
-                        label: `Battle — ${scene.title}`,
-                      })),
+                  try {
+                    const battleGroups = await mapWithConcurrency(
+                      scenes,
+                      AUTO_IMAGE_CONCURRENCY,
+                      async (scene) => {
+                        const r = await fetchMapImageResult({
+                          ...mapBase,
+                          mapKind: "battle",
+                          locationName: `${mapBase.locationName} — ${scene.title}`.slice(
+                            0,
+                            200,
+                          ),
+                          context: buildSceneBattleMapPrompt(
+                            scene,
+                            mapBase,
+                            generatedMarkdown,
+                            form,
+                          ),
+                        });
+                        if (r.error) {
+                          throw new Error(r.error);
+                        }
+                        workflowModel = r.model ?? workflowModel;
+                        return r.images.map((img) => ({
+                          ...img,
+                          label: `Battle — ${scene.title}`,
+                        }));
+                      },
                     );
-                    workflowModel = r.model ?? workflowModel;
+                    collected.push(...battleGroups.flat());
+                  } catch (err) {
+                    workflowError = err instanceof Error ? err.message : "Map generation failed.";
                   }
                 }
               }
@@ -368,26 +498,28 @@ export default function Home(props: PageProps<"/">) {
               const propPayloads =
                 scenes.length > 0
                   ? scenes.map((s, i) => buildAutoPropPayloadFromScene(s, form, i))
-                  : [buildAutoPropPayloadFromAdventure(data.markdown, form)];
-              for (let i = 0; i < propPayloads.length; i++) {
-                if (workflowError) break;
-                const payload = propPayloads[i]!;
-                const r = await fetchPropImageResult(payload);
-                if (r.error) {
-                  workflowError = r.error;
-                  break;
-                }
-                const propLabel =
-                  scenes.length > 0 && scenes[i]
-                    ? `Handout — ${scenes[i]!.title}`
-                    : "Handout";
-                collected.push(
-                  ...r.images.map((img) => ({
-                    ...img,
-                    label: propLabel,
-                  })),
+                  : [buildAutoPropPayloadFromAdventure(generatedMarkdown, form)];
+              try {
+                const propGroups = await mapWithConcurrency(
+                  propPayloads,
+                  AUTO_IMAGE_CONCURRENCY,
+                  async (payload, i) => {
+                    const r = await fetchPropImageResult(payload);
+                    if (r.error) throw new Error(r.error);
+                    const propLabel =
+                      scenes.length > 0 && scenes[i]
+                        ? `Handout — ${scenes[i]!.title}`
+                        : "Handout";
+                    workflowModel = r.model ?? workflowModel;
+                    return r.images.map((img) => ({
+                      ...img,
+                      label: propLabel,
+                    }));
+                  },
                 );
-                workflowModel = r.model ?? workflowModel;
+                collected.push(...propGroups.flat());
+              } catch (err) {
+                workflowError = err instanceof Error ? err.message : "Prop generation failed.";
               }
             }
 
@@ -454,30 +586,6 @@ export default function Home(props: PageProps<"/">) {
       setImageError(err instanceof Error ? err.message : "Network error");
       setProgressStage("error");
       return false;
-    } finally {
-      setImageLoading(false);
-    }
-  }
-
-  async function generatePropImage(payload: PropFormState) {
-    setImageLoading(true);
-    setImageError(null);
-    setImageModel(null);
-    setProgressStage("prop_generating");
-
-    try {
-      const result = await fetchPropImageResult(payload);
-      if (result.error) {
-        setImageError(result.error);
-        setProgressStage("error");
-        return;
-      }
-      setMapImages((prev) => [...prev, ...result.images.map((img) => ({ ...img }))]);
-      setImageModel(result.model);
-      setProgressStage("map_done");
-    } catch (err) {
-      setImageError(err instanceof Error ? err.message : "Network error");
-      setProgressStage("error");
     } finally {
       setImageLoading(false);
     }
@@ -792,7 +900,8 @@ export default function Home(props: PageProps<"/">) {
                 ).map((opt) => (
                   <label
                     key={opt.id}
-                    className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-2 sm:flex-1 sm:flex-col sm:px-3"
+                    title={ADVENTURE_LENGTH_HOVER_HELP[opt.id]}
+                    className="flex cursor-help items-start gap-2 rounded-md px-2 py-2 sm:flex-1 sm:flex-col sm:px-3"
                     style={{
                       background:
                         form.adventureLength === opt.id
@@ -1141,9 +1250,7 @@ export default function Home(props: PageProps<"/">) {
               ? "Submit to generate a 5.2-style adventure in Markdown (length matches your selection)."
               : mode === "characters"
                 ? "Submit the form to generate pre-made PCs (Markdown). Copy to your notes or VTT."
-                : mode === "maps"
-                  ? "Submit to generate locale and battle image maps using OpenAI."
-                  : "Submit to generate written prop images (letters, scrolls, notes, map handouts)."}
+                : "Submit to generate locale and battle image maps using OpenAI."}
           </p>
         ) : null}
 
@@ -1154,7 +1261,7 @@ export default function Home(props: PageProps<"/">) {
         ) : null}
         {imageLoading ? (
           <p className="mt-2 animate-pulse text-sm text-[var(--muted)]">
-            Rendering image maps and handouts (sequential API calls)…
+            Rendering image maps and handouts (batched API calls)…
           </p>
         ) : null}
       </section>
@@ -1638,24 +1745,24 @@ const PREFERRED_PROP_TYPES_FOR_SCENES: PropType[] = [
 
 function inferSceneSubject(scene: AdventureSceneSnippet): string {
   const source = `${scene.title}\n${scene.context}`.replace(/\s+/g, " ").trim();
-  if (!source) return "key scene element";
+  if (!source) return "this place";
 
   const lowered = source.toLowerCase();
-  const patterns: Array<{ test: RegExp; subject: string }> = [
-    { test: /\b(altar|shrine|idol|statue)\b/, subject: "defaced shrine relic" },
-    { test: /\b(gate|door|lock|seal)\b/, subject: "sealed gate sigil" },
-    { test: /\b(map|route|path|trail|passage)\b/, subject: "annotated route fragment" },
-    { test: /\b(rune|glyph|ward|sigil)\b/, subject: "arcane rune inscription" },
-    { test: /\b(monster|beast|aberration|undead|dragon|fiend)\b/, subject: "monster warning marker" },
-    { test: /\b(cult|ritual|circle|summon)\b/, subject: "ritual circle notes" },
-    { test: /\b(water|flood|river|canal|drowned|tide)\b/, subject: "flood hazard notice" },
-    { test: /\b(fire|forge|embers|lava|ash)\b/, subject: "burn-scarred warning plaque" },
-    { test: /\b(trap|snare|ambush|hazard)\b/, subject: "hazard marker" },
-    { test: /\b(vault|crypt|tomb|catacomb)\b/, subject: "burial vault inscription" },
+  const patterns: Array<{ re: RegExp; subject: string }> = [
+    { re: /\b(altar|shrine|idol|statue)\b/, subject: "the offering niche" },
+    { re: /\b(gate|door|lock|seal)\b/, subject: "the sealed threshold" },
+    { re: /\b(map|route|path|trail|passage)\b/, subject: "the pilgrim road north" },
+    { re: /\b(rune|glyph|ward|sigil)\b/, subject: "the broken ward" },
+    { re: /\b(monster|beast|aberration|undead|dragon|fiend)\b/, subject: "what hunts past curfew" },
+    { re: /\b(cult|ritual|circle|summon)\b/, subject: "the circle drawn wrong" },
+    { re: /\b(water|flood|river|canal|drowned|tide)\b/, subject: "the drowned threshold" },
+    { re: /\b(fire|forge|embers|lava|ash)\b/, subject: "the scorched lintel" },
+    { re: /\b(trap|snare|ambush|hazard)\b/, subject: "the treacherous step" },
+    { re: /\b(vault|crypt|tomb|catacomb)\b/, subject: "the barred crypt" },
   ];
 
   for (const pattern of patterns) {
-    if (pattern.test.test(lowered)) return pattern.subject;
+    if (pattern.re.test(lowered)) return pattern.subject;
   }
 
   const nounPhrase = source
@@ -1663,7 +1770,7 @@ function inferSceneSubject(scene: AdventureSceneSnippet): string {
     ?.replace(/^[^a-zA-Z0-9]+/, "")
     .trim()
     .slice(0, 56);
-  return nounPhrase || "key scene element";
+  return nounPhrase || "this accursed business";
 }
 
 function chooseScenePropType(scene: AdventureSceneSnippet, index: number): PropType {
@@ -1689,17 +1796,42 @@ function chooseScenePropType(scene: AdventureSceneSnippet, index: number): PropT
 function buildSceneArtifactText(subject: string, propType: PropType): string {
   switch (propType) {
     case "map_handout":
-      return `Field sketch: ${subject}. Marked route, hazard symbols, and one circled objective.`;
+      return [
+        "The parchment remembers rain—ink feathers along a ridgeline traced three times, as if someone feared their own hand.",
+        `${subject.charAt(0).toUpperCase() + subject.slice(1)}: a thin line wanders east through blotched pines; two careful X marks past the second fork, a tight circle around a watchtower scratched out and redrawn.`,
+        'A cramped margin, almost swallowed: "Not after the third bell."',
+      ].join("\n");
     case "rune_tablet":
-      return `Inscribed tablet fragment naming ${subject}; cracked edges and two emphasized warning runes.`;
+      return [
+        "Stone remembers heat. Glyphs march in a broken ring—two lines warn travelers away; one praises the keeper who failed.",
+        `At the heart, worn smooth: ${subject}.`,
+        "Below, a hairline crack where the ward opened once—and should not again.",
+      ].join("\n");
     case "notice":
-      return `Posted notice regarding ${subject}: concise warning, location marker, and reward/severity line.`;
+      return [
+        "PUBLIC WARNING",
+        `Let every honest house take heed—${subject} is not to be mocked as rumor.`,
+        "Witnesses may speak plainly at the wardhouse before the next full moon; none after dark without a lantern and a friend.",
+        "Signed in haste—wax still weeps at the edge.",
+      ].join("\n");
     case "journal":
-      return `Journal excerpt on ${subject}: one concrete observation, one risk, one immediate next step.`;
+      return [
+        "Day I dare not name—the fog is wrong.",
+        `${subject.charAt(0).toUpperCase() + subject.slice(1)}—if you read this, do not trust the bells that ring early.`,
+        "I left what I could wrapped in oiled cloth beneath the third stair. May the road remember me kindly.",
+      ].join("\n");
     case "scroll":
-      return `Short scroll text tied to ${subject}: directive sentence plus a single cautionary clause.`;
+      return [
+        "By seal and smoke, let it be known—",
+        `${subject.charAt(0).toUpperCase() + subject.slice(1)}.`,
+        "Let no hand open what the river locked. Should the circle be broken, sound the iron horn once only.",
+        "Thus bound under wax where the flame tastes honest.",
+      ].join("\n");
     default:
-      return `Artifact caption highlighting ${subject}.`;
+      return [
+        "A scrap too stubborn to burn.",
+        `${subject.charAt(0).toUpperCase() + subject.slice(1)}—whoever carries this, let it find a braver pocket than mine.`,
+      ].join("\n");
   }
 }
 
@@ -1720,8 +1852,7 @@ function buildAutoPropPayloadFromScene(
     ageWear: initialPropForm.ageWear,
     extraNotes: [
       form.extraNotes,
-      "This handout must match this single scene only; no spoilers for other beats.",
-      "This prop illustrates one impactful scene element (item, sign, or monster clue), not a scene-introduction narrative.",
+      "Any visible writing must be entirely in-world (letters, decrees, marginalia). Do not print meta or production phrases (no words like sketch, fragment, handout, annotation, caption, DM, prop, or similar).",
     ]
       .filter(Boolean)
       .join(" "),

@@ -6,7 +6,11 @@ import {
   type AdventureLength,
   type CombatIntensity,
 } from "@/lib/adventurePrompt";
-import { formatAnthropicError, generateMarkdown } from "@/lib/anthropicGenerate";
+import {
+  formatAnthropicError,
+  generateMarkdown,
+  generateMarkdownStream,
+} from "@/lib/anthropicGenerate";
 
 function parseAdventureLength(value: unknown): AdventureLength {
   const raw = String(value ?? "").trim();
@@ -37,7 +41,7 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: Partial<AdventureInput>;
+  let body: Partial<AdventureInput> & { stream?: boolean };
   try {
     body = await request.json();
   } catch {
@@ -58,12 +62,47 @@ export async function POST(request: Request) {
   };
 
   try {
-    const { markdown, model } = await generateMarkdown({
-      apiKey,
-      system: SYSTEM_PROMPT,
-      user: buildUserMessage(input),
+    const userMessage = buildUserMessage(input);
+    if (!body.stream) {
+      const { markdown, model } = await generateMarkdown({
+        apiKey,
+        system: SYSTEM_PROMPT,
+        user: userMessage,
+      });
+      return NextResponse.json({ markdown, model });
+    }
+
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const write = (payload: unknown) => {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
+        };
+        try {
+          const result = await generateMarkdownStream({
+            apiKey,
+            system: SYSTEM_PROMPT,
+            user: userMessage,
+            onModel: (model) => write({ type: "meta", model }),
+            onText: (chunk) => write({ type: "chunk", text: chunk }),
+          });
+          write({ type: "done", markdown: result.markdown, model: result.model });
+          controller.close();
+        } catch (err) {
+          const { message, status } = formatAnthropicError(err);
+          write({ type: "error", error: message, status });
+          controller.close();
+        }
+      },
     });
-    return NextResponse.json({ markdown, model });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      },
+    });
   } catch (err) {
     const { message, status } = formatAnthropicError(err);
     return NextResponse.json({ error: message }, { status });

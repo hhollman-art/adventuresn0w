@@ -5,7 +5,7 @@ export type AdventureSceneSnippet = {
 };
 
 /** Cap per adventure to limit OpenAI image API cost and time. */
-export const MAX_AUTO_SCENE_IMAGES = 8;
+export const MAX_AUTO_SCENE_IMAGES = 5;
 
 function normalizeH2(line: string): string | null {
   const t = line.trim();
