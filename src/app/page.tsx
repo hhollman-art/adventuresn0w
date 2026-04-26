@@ -1,0 +1,1819 @@
+"use client";
+
+import { use, useState } from "react";
+import type { AdventureLength, CombatIntensity } from "@/lib/adventurePrompt";
+import type { MapPackKind } from "@/lib/mapImagePrompt";
+import type { PropType } from "@/lib/propImagePrompt";
+import {
+  extractAdventureScenes,
+  MAX_AUTO_SCENE_IMAGES,
+  type AdventureSceneSnippet,
+} from "@/lib/extractAdventureScenes";
+
+type GenerateMode = "adventure" | "characters" | "maps";
+
+type GeneratedImage = {
+  kind: string;
+  label?: string;
+  imageDataUrl: string;
+};
+type ProgressStage =
+  | "idle"
+  | "adventure_generating"
+  | "adventure_done"
+  | "map_locale_generating"
+  | "map_battle_generating"
+  | "prop_generating"
+  | "map_done"
+  | "complete"
+  | "error";
+
+type MapFormState = {
+  mapKind: MapPackKind;
+  locationName: string;
+  levelRange: string;
+  partySize: string;
+  tone: string;
+  context: string;
+  gridNotes: string;
+  extraNotes: string;
+  imageSize: "1024x1024" | "1536x1024" | "1024x1536";
+  imageQuality: "medium" | "high";
+};
+
+type PropFormState = {
+  propType: PropType;
+  title: string;
+  bodyText: string;
+  style: string;
+  ageWear: string;
+  settingHint: string;
+  extraNotes: string;
+  imageSize: "1024x1024" | "1536x1024" | "1024x1536";
+  imageQuality: "medium" | "high";
+};
+
+const initialMapForm: MapFormState = {
+  mapKind: "both",
+  locationName: "Sunken ring-fort at Blacktarn",
+  levelRange: "3–4",
+  partySize: "4",
+  tone: "rain-slick stone, broken walkways, cold bioluminescence",
+  context:
+    "Party corners a beast in the flooded lower ring: a chokepoint skirmish in a gatehouse, then a balcony finale over black water.",
+  gridNotes: "5 ft. squares; keep interior rooms ~25–40 ft across",
+  extraNotes: "",
+  imageSize: "1536x1024",
+  imageQuality: "high",
+};
+
+const initialPropForm: PropFormState = {
+  propType: "letter",
+  title: "Letter to Captain Varn",
+  bodyText:
+    "Captain, the third bell shipment never arrived. Meet me by the east quay before dawn. Burn this.",
+  style: "ink on parchment, medieval calligraphy",
+  ageWear: "creased corners, faint water stains, wax seal remnants",
+  settingHint: "rainy port city in a grim fantasy kingdom",
+  extraNotes: "",
+  imageSize: "1024x1536",
+  imageQuality: "high",
+};
+
+type FormState = {
+  adventureLength: AdventureLength;
+  combatIntensity: CombatIntensity;
+  titleHint: string;
+  levelRange: string;
+  tone: string;
+  setting: string;
+  villainOrThreat: string;
+  partySize: string;
+  sessionLength: string;
+  extraNotes: string;
+};
+
+const initialForm: FormState = {
+  adventureLength: "short",
+  combatIntensity: 3,
+  titleHint: "",
+  levelRange: "3–4",
+  tone: "heroic, slightly spooky",
+  setting: "misty river valley with ruined shrines",
+  villainOrThreat: "a pact-bound beast and its charmed villagers",
+  partySize: "4",
+  sessionLength: "3–4 hours",
+  extraNotes: "",
+};
+
+const initialFormCharacters: FormState = {
+  adventureLength: "short",
+  combatIntensity: 3,
+  titleHint: "wandering relic-hunters bound by a shared oath",
+  levelRange: "3",
+  tone: "hopeful, witty banter",
+  setting: "trade-road kingdoms and old battlefields",
+  villainOrThreat: "",
+  partySize: "4",
+  sessionLength: "",
+  extraNotes: "",
+};
+
+async function fetchMapImageResult(payload: MapFormState): Promise<{
+  images: Array<{ kind: string; imageDataUrl: string }>;
+  model: string | null;
+  error: string | null;
+}> {
+  try {
+    const res = await fetch("/api/generate-map-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = (await res.json()) as {
+      images?: Array<{ kind: string; imageDataUrl: string }>;
+      model?: string;
+      error?: string;
+    };
+    if (!res.ok) {
+      return {
+        images: [],
+        model: null,
+        error: data.error ?? `Image request failed (${res.status})`,
+      };
+    }
+    if (!data.images?.length) {
+      return { images: [], model: null, error: "No image returned." };
+    }
+    return { images: data.images, model: data.model ?? null, error: null };
+  } catch (err) {
+    return {
+      images: [],
+      model: null,
+      error: err instanceof Error ? err.message : "Network error",
+    };
+  }
+}
+
+async function fetchPropImageResult(payload: PropFormState): Promise<{
+  images: Array<{ kind: string; imageDataUrl: string }>;
+  model: string | null;
+  error: string | null;
+}> {
+  try {
+    const res = await fetch("/api/generate-prop-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = (await res.json()) as {
+      images?: Array<{ kind: string; imageDataUrl: string }>;
+      model?: string;
+      error?: string;
+    };
+    if (!res.ok) {
+      return {
+        images: [],
+        model: null,
+        error: data.error ?? `Image request failed (${res.status})`,
+      };
+    }
+    if (!data.images?.length) {
+      return { images: [], model: null, error: "No image returned." };
+    }
+    return { images: data.images, model: data.model ?? null, error: null };
+  } catch (err) {
+    return {
+      images: [],
+      model: null,
+      error: err instanceof Error ? err.message : "Network error",
+    };
+  }
+}
+
+export default function Home(props: PageProps<"/">) {
+  use(props.params);
+  use(props.searchParams);
+
+  const [mode, setMode] = useState<GenerateMode>("adventure");
+  const [form, setForm] = useState<FormState>(initialForm);
+  const [mapForm, setMapForm] = useState<MapFormState>(initialMapForm);
+  const [markdown, setMarkdown] = useState("");
+  const [model, setModel] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [mapImages, setMapImages] = useState<GeneratedImage[]>([]);
+  const [imageModel, setImageModel] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [autoGenerateAdventureMap, setAutoGenerateAdventureMap] = useState(true);
+  const [autoGenerateAdventureProps, setAutoGenerateAdventureProps] = useState(true);
+  const [progressStage, setProgressStage] = useState<ProgressStage>("idle");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setMarkdown("");
+    setModel(null);
+    setImageError(null);
+    setMapImages([]);
+    setImageModel(null);
+    setProgressStage(mode === "maps" ? "map_locale_generating" : "adventure_generating");
+
+    try {
+      if (mode === "maps") {
+        const ok = await generateMapImage(mapForm);
+        if (ok) {
+          setProgressStage("complete");
+        }
+        return;
+      }
+      const url =
+        mode === "adventure" ? "/api/generate" : "/api/generate-characters";
+      const payload =
+        mode === "adventure"
+          ? form
+          : {
+              partyConcept: form.titleHint,
+              levelRange: form.levelRange,
+              tone: form.tone,
+              setting: form.setting,
+              characterCount: form.partySize,
+              extraNotes: form.extraNotes,
+            };
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json()) as {
+        markdown?: string;
+        model?: string;
+        error?: string;
+      };
+
+      if (!res.ok) {
+        setError(data.error ?? `Request failed (${res.status})`);
+        return;
+      }
+
+      if (data.markdown) {
+        setMarkdown(data.markdown);
+        setModel(data.model ?? null);
+        setProgressStage("adventure_done");
+        if (
+          mode === "adventure" &&
+          (autoGenerateAdventureMap || autoGenerateAdventureProps)
+        ) {
+          setImageLoading(true);
+          setImageError(null);
+          setMapImages([]);
+          setImageModel(null);
+
+          const mapContext = buildAutoMapContextFromAdventure(data.markdown, form);
+          const mapExtraNotes = [
+            form.adventureLength === "campaign"
+              ? "Focus on Session 1 playable map details."
+              : "",
+            `Adventure combat focus ${form.combatIntensity}/5 (${
+              form.combatIntensity <= 2
+                ? "fewer fights—favor exploration layouts"
+                : form.combatIntensity >= 4
+                  ? "combat-heavy—favor tactical arenas, cover, chokepoints"
+                  : "balanced—mix open and tactical spaces"
+            }).`,
+          ]
+            .filter(Boolean)
+            .join(" ");
+
+          const mapBase: MapFormState = {
+            mapKind: "both",
+            locationName: form.setting || form.titleHint || "Adventure locale",
+            levelRange: form.levelRange,
+            partySize: form.partySize,
+            tone: form.tone,
+            context: mapContext,
+            gridNotes:
+              "5 ft. squares for tactical spaces; keep rooms and pathways readable for tabletop movement.",
+            extraNotes: mapExtraNotes,
+            imageSize: "1536x1024",
+            imageQuality: "high",
+          };
+
+          const scenes = extractAdventureScenes(data.markdown, MAX_AUTO_SCENE_IMAGES);
+          const collected: GeneratedImage[] = [];
+          let workflowModel: string | null = null;
+          let workflowError: string | null = null;
+
+          try {
+            if (autoGenerateAdventureMap) {
+              setProgressStage("map_locale_generating");
+              if (scenes.length === 0) {
+                const r = await fetchMapImageResult(mapBase);
+                if (r.error) workflowError = r.error;
+                else {
+                  collected.push(...r.images.map((img) => ({ ...img })));
+                  workflowModel = r.model;
+                }
+              } else {
+                const rLocale = await fetchMapImageResult({
+                  ...mapBase,
+                  mapKind: "overland",
+                  context: mapContext,
+                });
+                if (rLocale.error) {
+                  workflowError = rLocale.error;
+                } else {
+                  collected.push(
+                    ...rLocale.images.map((img) => ({
+                      ...img,
+                      label: "Locale / overview",
+                    })),
+                  );
+                  workflowModel = rLocale.model;
+                  setProgressStage("map_battle_generating");
+                  for (const scene of scenes) {
+                    if (workflowError) break;
+                    const r = await fetchMapImageResult({
+                      ...mapBase,
+                      mapKind: "battle",
+                      locationName: `${mapBase.locationName} — ${scene.title}`.slice(0, 200),
+                      context: buildSceneBattleMapPrompt(
+                        scene,
+                        mapBase,
+                        data.markdown,
+                        form,
+                      ),
+                    });
+                    if (r.error) {
+                      workflowError = r.error;
+                      break;
+                    }
+                    collected.push(
+                      ...r.images.map((img) => ({
+                        ...img,
+                        label: `Battle — ${scene.title}`,
+                      })),
+                    );
+                    workflowModel = r.model ?? workflowModel;
+                  }
+                }
+              }
+            }
+
+            if (autoGenerateAdventureProps && !workflowError) {
+              setProgressStage("prop_generating");
+              const propPayloads =
+                scenes.length > 0
+                  ? scenes.map((s, i) => buildAutoPropPayloadFromScene(s, form, i))
+                  : [buildAutoPropPayloadFromAdventure(data.markdown, form)];
+              for (let i = 0; i < propPayloads.length; i++) {
+                if (workflowError) break;
+                const payload = propPayloads[i]!;
+                const r = await fetchPropImageResult(payload);
+                if (r.error) {
+                  workflowError = r.error;
+                  break;
+                }
+                const propLabel =
+                  scenes.length > 0 && scenes[i]
+                    ? `Handout — ${scenes[i]!.title}`
+                    : "Handout";
+                collected.push(
+                  ...r.images.map((img) => ({
+                    ...img,
+                    label: propLabel,
+                  })),
+                );
+                workflowModel = r.model ?? workflowModel;
+              }
+            }
+
+            setMapImages(collected);
+            setImageModel(workflowModel);
+            if (workflowError) {
+              setImageError(workflowError);
+              setProgressStage("error");
+            } else {
+              setProgressStage("complete");
+            }
+          } finally {
+            setImageLoading(false);
+          }
+        } else {
+          setProgressStage("complete");
+        }
+      } else {
+        setError("No generated text returned.");
+        setProgressStage("error");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error");
+      setProgressStage("error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGenerateMapImage() {
+    await generateMapImage(mapForm);
+  }
+
+  function downloadMapImage(imageDataUrl: string, labelOrKind: string) {
+    const base = fileBaseName(markdown || mapForm.locationName, "maps");
+    const part = slugFilePart(labelOrKind);
+    const filename = `${base}-${part}.png`;
+    triggerDownloadFromDataUrl(imageDataUrl, filename);
+  }
+
+  async function generateMapImage(payload: MapFormState) {
+    setImageLoading(true);
+    setImageError(null);
+    setMapImages([]);
+    setImageModel(null);
+
+    try {
+      const result = await fetchMapImageResult(payload);
+      if (result.error) {
+        setImageError(result.error);
+        setProgressStage("error");
+        return false;
+      }
+      const hasLocale = result.images.some((img) => img.kind === "locale");
+      const hasBattle = result.images.some((img) => img.kind === "battle");
+      if (hasLocale) {
+        setProgressStage(hasBattle ? "map_battle_generating" : "map_locale_generating");
+      }
+      setMapImages(result.images.map((img) => ({ ...img })));
+      setImageModel(result.model);
+      setProgressStage("map_done");
+      return true;
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : "Network error");
+      setProgressStage("error");
+      return false;
+    } finally {
+      setImageLoading(false);
+    }
+  }
+
+  async function generatePropImage(payload: PropFormState) {
+    setImageLoading(true);
+    setImageError(null);
+    setImageModel(null);
+    setProgressStage("prop_generating");
+
+    try {
+      const result = await fetchPropImageResult(payload);
+      if (result.error) {
+        setImageError(result.error);
+        setProgressStage("error");
+        return;
+      }
+      setMapImages((prev) => [...prev, ...result.images.map((img) => ({ ...img }))]);
+      setImageModel(result.model);
+      setProgressStage("map_done");
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : "Network error");
+      setProgressStage("error");
+    } finally {
+      setImageLoading(false);
+    }
+  }
+
+  function copyMarkdown() {
+    if (!markdown) return;
+    void navigator.clipboard.writeText(markdown);
+  }
+
+  function downloadMarkdown() {
+    if (!markdown) return;
+    const name = `${fileBaseName(markdown, mode)}.md`;
+    triggerDownload(
+      new Blob([markdown], { type: "text/markdown;charset=utf-8" }),
+      name,
+    );
+  }
+
+  function downloadHtml() {
+    if (!markdown) return;
+    const title =
+      firstHeading(markdown) ??
+      (mode === "adventure"
+        ? "Adventure"
+        : mode === "characters"
+          ? "Characters"
+          : "Maps");
+    const doc = buildStandaloneHtmlDocument(title, markdownToBasicHtml(markdown));
+    const name = `${fileBaseName(markdown, mode)}.html`;
+    triggerDownload(
+      new Blob([doc], { type: "text/html;charset=utf-8" }),
+      name,
+    );
+  }
+
+  return (
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:gap-10">
+      <section
+        className="w-full shrink-0 rounded-xl border p-6 lg:max-w-md"
+        style={{
+          background: "var(--surface)",
+          borderColor: "var(--border)",
+        }}
+      >
+        <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">
+          {mode === "adventure"
+            ? "Adventure (5.2)"
+            : mode === "characters"
+              ? "Pre-made characters (5.2)"
+              : "Maps (5.2)"}
+        </h1>
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          {mode === "adventure"
+            ? "Pick a length: short session, one-nighter, or campaign framework. Original and SRD-aware—not official WotC content."
+            : mode === "characters"
+              ? "Claude builds a ready-to-play party: stats, gear, and hooks. SRD-open options only."
+              : "Generate detailed locale and battle map images with OpenAI (no ASCII maps)."}
+        </p>
+
+        <div
+          className="mt-4 grid grid-cols-3 gap-1 rounded-lg border p-1 text-xs font-medium sm:text-sm"
+          style={{ borderColor: "var(--border)" }}
+          role="tablist"
+          aria-label="Generation mode"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "adventure"}
+            onClick={() => {
+              setMode("adventure");
+              setForm(initialForm);
+            }}
+            className="rounded-md px-2 py-2 transition sm:px-3"
+            style={{
+              background: mode === "adventure" ? "var(--accent)" : "transparent",
+              color: mode === "adventure" ? "#000" : "var(--muted)",
+            }}
+          >
+            Adventure
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "characters"}
+            onClick={() => {
+              setMode("characters");
+              setForm(initialFormCharacters);
+            }}
+            className="rounded-md px-2 py-2 transition sm:px-3"
+            style={{
+              background:
+                mode === "characters" ? "var(--accent)" : "transparent",
+              color: mode === "characters" ? "#000" : "var(--muted)",
+            }}
+          >
+            Characters
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "maps"}
+            onClick={() => {
+              setMode("maps");
+              setMapForm(initialMapForm);
+            }}
+            className="rounded-md px-2 py-2 transition sm:px-3"
+            style={{
+              background: mode === "maps" ? "var(--accent)" : "transparent",
+              color: mode === "maps" ? "#000" : "var(--muted)",
+            }}
+          >
+            Maps
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+          {mode === "maps" ? (
+            <>
+              <fieldset className="flex flex-col gap-2">
+                <legend className="text-sm font-medium text-[var(--muted)]">
+                  Map pack type
+                </legend>
+                <div
+                  className="flex flex-col gap-2 rounded-lg border p-2 text-xs"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  {(
+                    [
+                      {
+                        id: "overland" as const,
+                        label: "Locale / overland",
+                        hint: "Travel, regions, sites",
+                      },
+                      {
+                        id: "battle" as const,
+                        label: "Battle maps",
+                        hint: "Tactical image arenas",
+                      },
+                      {
+                        id: "both" as const,
+                        label: "Both",
+                        hint: "Overview + fights",
+                      },
+                    ] as const
+                  ).map((opt) => (
+                    <label
+                      key={opt.id}
+                      className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-2"
+                      style={{
+                        background:
+                          mapForm.mapKind === opt.id
+                            ? "rgba(201, 162, 39, 0.15)"
+                            : "transparent",
+                        outline:
+                          mapForm.mapKind === opt.id
+                            ? "1px solid var(--accent)"
+                            : "none",
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="mapKind"
+                        value={opt.id}
+                        checked={mapForm.mapKind === opt.id}
+                        onChange={() =>
+                          setMapForm((f) => ({ ...f, mapKind: opt.id }))
+                        }
+                        className="mt-0.5 accent-[var(--accent)]"
+                      />
+                      <span>
+                        <span className="font-semibold text-[var(--text)]">
+                          {opt.label}
+                        </span>
+                        <span className="block text-[var(--muted)]">
+                          {opt.hint}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <Field
+                label="Location or region name"
+                value={mapForm.locationName}
+                onChange={(v) => setMapForm((f) => ({ ...f, locationName: v }))}
+                placeholder="e.g. The Saltfen Catacombs"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Field
+                  label="Level range"
+                  value={mapForm.levelRange}
+                  onChange={(v) => setMapForm((f) => ({ ...f, levelRange: v }))}
+                />
+                <Field
+                  label="Party size"
+                  value={mapForm.partySize}
+                  onChange={(v) => setMapForm((f) => ({ ...f, partySize: v }))}
+                />
+              </div>
+              <Field
+                label="Tone / biome"
+                value={mapForm.tone}
+                onChange={(v) => setMapForm((f) => ({ ...f, tone: v }))}
+              />
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-[var(--muted)]">
+                  Scene or adventure context
+                </span>
+                <textarea
+                  value={mapForm.context}
+                  onChange={(e) =>
+                    setMapForm((f) => ({ ...f, context: e.target.value }))
+                  }
+                  rows={5}
+                  className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                  style={{ borderColor: "var(--border)" }}
+                  placeholder="Paste a summary, bullet beats, or describe what happens here so the image maps match your table."
+                />
+              </label>
+              <Field
+                label="Grid / scale preferences (optional)"
+                value={mapForm.gridNotes}
+                onChange={(v) => setMapForm((f) => ({ ...f, gridNotes: v }))}
+                placeholder="e.g. 5 ft squares, 40 ft wide temple interior"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <SelectField
+                  label="Image size"
+                  value={mapForm.imageSize}
+                  onChange={(v) =>
+                    setMapForm((f) => ({
+                      ...f,
+                      imageSize: v as MapFormState["imageSize"],
+                    }))
+                  }
+                  options={[
+                    { value: "1536x1024", label: "Landscape (1536x1024)" },
+                    { value: "1024x1024", label: "Square (1024x1024)" },
+                    { value: "1024x1536", label: "Portrait (1024x1536)" },
+                  ]}
+                />
+                <SelectField
+                  label="Image quality"
+                  value={mapForm.imageQuality}
+                  onChange={(v) =>
+                    setMapForm((f) => ({
+                      ...f,
+                      imageQuality: v as MapFormState["imageQuality"],
+                    }))
+                  }
+                  options={[
+                    { value: "high", label: "High detail" },
+                    { value: "medium", label: "Medium detail" },
+                  ]}
+                />
+              </div>
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-[var(--muted)]">
+                  Extra notes (optional)
+                </span>
+                <textarea
+                  value={mapForm.extraNotes}
+                  onChange={(e) =>
+                    setMapForm((f) => ({ ...f, extraNotes: e.target.value }))
+                  }
+                  rows={2}
+                  className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                  style={{ borderColor: "var(--border)" }}
+                  placeholder="Verticality, hazards to emphasize, no water levels, etc."
+                />
+              </label>
+              <button
+                type="button"
+                onClick={handleGenerateMapImage}
+                disabled={imageLoading}
+                className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-[var(--text)] transition enabled:hover:bg-[var(--bg)] disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ borderColor: "var(--border)" }}
+              >
+                {imageLoading ? "Rendering map image…" : "Generate map image"}
+              </button>
+            </>
+          ) : null}
+          {mode === "adventure" ? (
+            <fieldset className="flex flex-col gap-2">
+              <legend className="text-sm font-medium text-[var(--muted)]">
+                Adventure length
+              </legend>
+              <div
+                className="flex flex-col gap-2 rounded-lg border p-2 text-xs sm:flex-row sm:flex-wrap sm:gap-1"
+                style={{ borderColor: "var(--border)" }}
+              >
+                {(
+                  [
+                    {
+                      id: "short" as const,
+                      label: "Short",
+                      hint: "~1 session, 3–5 scenes",
+                    },
+                    {
+                      id: "one_night" as const,
+                      label: "One-nighter",
+                      hint: "Single evening, tight",
+                    },
+                    {
+                      id: "campaign" as const,
+                      label: "Campaign",
+                      hint: "Multi-session + Session 1",
+                    },
+                  ] as const
+                ).map((opt) => (
+                  <label
+                    key={opt.id}
+                    className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-2 sm:flex-1 sm:flex-col sm:px-3"
+                    style={{
+                      background:
+                        form.adventureLength === opt.id
+                          ? "rgba(201, 162, 39, 0.15)"
+                          : "transparent",
+                      outline:
+                        form.adventureLength === opt.id
+                          ? "1px solid var(--accent)"
+                          : "none",
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="adventureLength"
+                      value={opt.id}
+                      checked={form.adventureLength === opt.id}
+                      onChange={() =>
+                        setForm((f) => ({ ...f, adventureLength: opt.id }))
+                      }
+                      className="mt-0.5 accent-[var(--accent)]"
+                    />
+                    <span>
+                      <span className="font-semibold text-[var(--text)]">
+                        {opt.label}
+                      </span>
+                      <span className="block text-[var(--muted)]">{opt.hint}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
+          {mode === "adventure" ? (
+            <div
+              className="flex flex-col gap-2 rounded-lg border p-3 text-sm"
+              style={{ borderColor: "var(--border)" }}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-medium text-[var(--muted)]">
+                  Combat focus (1–5)
+                </span>
+                <span className="tabular-nums text-[var(--text)]">
+                  <span className="font-semibold">{form.combatIntensity}</span>
+                  <span className="text-[var(--muted)]"> / 5 — </span>
+                  <span className="text-[var(--muted)]">
+                    {form.combatIntensity <= 2
+                      ? "lighter on fights"
+                      : form.combatIntensity >= 4
+                        ? "more fights"
+                        : "balanced"}
+                  </span>
+                </span>
+              </div>
+              <div className="flex items-center gap-3 px-0.5">
+                <span className="w-11 shrink-0 text-xs text-[var(--muted)]">
+                  Light
+                </span>
+                <input
+                  type="range"
+                  min={1}
+                  max={5}
+                  step={1}
+                  value={form.combatIntensity}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      combatIntensity: Number(
+                        e.target.value,
+                      ) as CombatIntensity,
+                    }))
+                  }
+                  className="h-2 flex-1 cursor-pointer accent-[var(--accent)]"
+                  aria-label="Combat focus from 1 light to 5 heavy"
+                />
+                <span className="w-11 shrink-0 text-right text-xs text-[var(--muted)]">
+                  Heavy
+                </span>
+              </div>
+            </div>
+          ) : null}
+          {mode === "adventure" ? (
+            <label
+              className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
+              style={{ borderColor: "var(--border)" }}
+            >
+              <input
+                type="checkbox"
+                checked={autoGenerateAdventureMap}
+                onChange={(e) => setAutoGenerateAdventureMap(e.target.checked)}
+                className="accent-[var(--accent)]"
+              />
+              <span className="text-[var(--muted)]">
+                Auto-generate maps with adventure (overview + one battle map per scene, up to{" "}
+                {MAX_AUTO_SCENE_IMAGES})
+              </span>
+            </label>
+          ) : null}
+          {mode === "adventure" ? (
+            <label
+              className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
+              style={{ borderColor: "var(--border)" }}
+            >
+              <input
+                type="checkbox"
+                checked={autoGenerateAdventureProps}
+                onChange={(e) => setAutoGenerateAdventureProps(e.target.checked)}
+                className="accent-[var(--accent)]"
+              />
+              <span className="text-[var(--muted)]">
+                Auto-generate prop handouts with adventure (one per scene when scenes are found, up to{" "}
+                {MAX_AUTO_SCENE_IMAGES}; otherwise one handout)
+              </span>
+            </label>
+          ) : null}
+
+          {mode === "adventure" || mode === "characters" ? (
+            <>
+              <Field
+                label={
+                  mode === "adventure"
+                    ? "Title or theme hint"
+                    : "Party concept or theme"
+                }
+                value={form.titleHint}
+                onChange={(v) => setForm((f) => ({ ...f, titleHint: v }))}
+                placeholder={
+                  mode === "adventure"
+                    ? "e.g. The Drowned Choir"
+                    : "e.g. Disgraced city watch turned monster slayers"
+                }
+              />
+              <Field
+                label="Level range"
+                value={form.levelRange}
+                onChange={(v) => setForm((f) => ({ ...f, levelRange: v }))}
+              />
+              <Field
+                label="Tone"
+                value={form.tone}
+                onChange={(v) => setForm((f) => ({ ...f, tone: v }))}
+              />
+              <Field
+                label={
+                  mode === "adventure" ? "Setting" : "World flavor (optional)"
+                }
+                value={form.setting}
+                onChange={(v) => setForm((f) => ({ ...f, setting: v }))}
+              />
+              {mode === "adventure" ? (
+                <Field
+                  label="Villain / threat"
+                  value={form.villainOrThreat}
+                  onChange={(v) =>
+                    setForm((f) => ({ ...f, villainOrThreat: v }))
+                  }
+                />
+              ) : null}
+              {mode === "adventure" ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    label="Party size"
+                    value={form.partySize}
+                    onChange={(v) => setForm((f) => ({ ...f, partySize: v }))}
+                  />
+                  <Field
+                    label="Session length"
+                    value={form.sessionLength}
+                    onChange={(v) =>
+                      setForm((f) => ({ ...f, sessionLength: v }))
+                    }
+                  />
+                </div>
+              ) : (
+                <Field
+                  label="How many PCs"
+                  value={form.partySize}
+                  onChange={(v) => setForm((f) => ({ ...f, partySize: v }))}
+                />
+              )}
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-[var(--muted)]">
+                  Extra notes
+                </span>
+                <textarea
+                  value={form.extraNotes}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, extraNotes: e.target.value }))
+                  }
+                  rows={3}
+                  className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                  style={{ borderColor: "var(--border)" }}
+                  placeholder="Puzzles to avoid, safety tools, recurring PC hooks…"
+                />
+              </label>
+            </>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-black transition enabled:hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ background: "var(--accent)" }}
+          >
+            {loading
+              ? "Generating…"
+              : mode === "adventure"
+                ? "Generate adventure"
+                : mode === "characters"
+                  ? "Generate characters"
+                  : "Generate maps"}
+          </button>
+        </form>
+      </section>
+
+      <section
+        className="min-h-[50vh] flex-1 rounded-xl border p-6"
+        style={{
+          background: "var(--surface)",
+          borderColor: "var(--border)",
+        }}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-medium">Output</h2>
+          {markdown || mapImages.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {markdown ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={copyMarkdown}
+                    className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    Copy Markdown
+                  </button>
+                  <button
+                    type="button"
+                    onClick={downloadMarkdown}
+                    className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    Download .md
+                  </button>
+                  <button
+                    type="button"
+                    onClick={downloadHtml}
+                    className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    Download .html
+                  </button>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+        {model || imageModel ? (
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            {model ? `Text model: ${model}` : null}
+            {model && imageModel ? " · " : null}
+            {imageModel ? `Image model: ${imageModel}` : null}
+          </p>
+        ) : null}
+        <ProgressPanel
+          mode={mode}
+          stage={progressStage}
+          loading={loading}
+          imageLoading={imageLoading}
+          autoMapEnabled={autoGenerateAdventureMap}
+          autoPropsEnabled={autoGenerateAdventureProps}
+        />
+        {markdown ? (
+          <p className="mt-2 max-w-xl text-xs leading-relaxed text-[var(--muted)]">
+            Tip: open the <strong className="text-[var(--text)]/80">.md</strong> file in
+            Obsidian or VS Code; open the <strong className="text-[var(--text)]/80">.html</strong>{" "}
+            in your browser and use <strong className="text-[var(--text)]/80">Print → Save as PDF</strong>{" "}
+            for a PDF.{" "}
+            {mode === "maps"
+              ? "You can download locale and battle images as PNG for VTTs or handouts."
+                : "You can also paste Markdown into Google Docs / Word."}
+          </p>
+        ) : null}
+
+        {error ? (
+          <p
+            className="mt-4 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-sm text-red-200"
+            role="alert"
+          >
+            {error}
+          </p>
+        ) : null}
+        {imageError ? (
+          <p
+            className="mt-3 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-sm text-red-200"
+            role="alert"
+          >
+            {imageError}
+          </p>
+        ) : null}
+
+        {mapImages.length > 0 ? (
+          <div className="mt-6 grid gap-4">
+            {mapImages.map((img, idx) => {
+              const heading =
+                img.label ??
+                (img.kind === "locale" || img.kind === "battle"
+                  ? `${img.kind} map`
+                  : `${img.kind} image`);
+              const downloadSlug = img.label ?? img.kind;
+              return (
+                <div
+                  key={`${idx}-${img.kind}-${downloadSlug}`}
+                  className="rounded-lg border p-2"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-[var(--text)]">{heading}</p>
+                    <button
+                      type="button"
+                      onClick={() => downloadMapImage(img.imageDataUrl, downloadSlug)}
+                      className="shrink-0 rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                      style={{ borderColor: "var(--border)" }}
+                    >
+                      Download PNG
+                    </button>
+                  </div>
+                  <img
+                    src={img.imageDataUrl}
+                    alt={heading}
+                    className="h-auto w-full rounded-md"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {markdown && mode !== "maps" ? (
+          <article
+            className="adventure-md mt-6 max-w-none text-[var(--text)]"
+            dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(markdown) }}
+          />
+        ) : !loading && !error && mapImages.length === 0 ? (
+          <p className="mt-8 text-sm text-[var(--muted)]">
+            {mode === "adventure"
+              ? "Submit to generate a 5.2-style adventure in Markdown (length matches your selection)."
+              : mode === "characters"
+                ? "Submit the form to generate pre-made PCs (Markdown). Copy to your notes or VTT."
+                : mode === "maps"
+                  ? "Submit to generate locale and battle image maps using OpenAI."
+                  : "Submit to generate written prop images (letters, scrolls, notes, map handouts)."}
+          </p>
+        ) : null}
+
+        {loading ? (
+          <p className="mt-8 animate-pulse text-sm text-[var(--muted)]">
+            Calling Claude…
+          </p>
+        ) : null}
+        {imageLoading ? (
+          <p className="mt-2 animate-pulse text-sm text-[var(--muted)]">
+            Rendering image maps and handouts (sequential API calls)…
+          </p>
+        ) : null}
+      </section>
+    </main>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5 text-sm">
+      <span className="font-medium text-[var(--muted)]">{label}</span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+        style={{ borderColor: "var(--border)" }}
+      />
+    </label>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5 text-sm">
+      <span className="font-medium text-[var(--muted)]">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+        style={{ borderColor: "var(--border)" }}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ProgressPanel({
+  mode,
+  stage,
+  loading,
+  imageLoading,
+  autoMapEnabled,
+  autoPropsEnabled,
+}: {
+  mode: GenerateMode;
+  stage: ProgressStage;
+  loading: boolean;
+  imageLoading: boolean;
+  autoMapEnabled: boolean;
+  autoPropsEnabled: boolean;
+}) {
+  const items = getProgressItems(mode, stage, autoMapEnabled, autoPropsEnabled);
+  if (items.length === 0) return null;
+
+  return (
+    <div
+      className="mt-3 rounded-lg border px-3 py-2"
+      style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+      aria-live="polite"
+    >
+      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
+        Progress
+      </p>
+      <div className="mt-2 grid gap-1">
+        {items.map((item) => (
+          <p
+            key={item.label}
+            className={
+              item.state === "done"
+                ? "text-xs font-medium text-emerald-400"
+                : item.state === "active"
+                  ? "text-xs text-[var(--text)]"
+                  : "text-xs text-[var(--muted)]"
+            }
+          >
+            {item.state === "done"
+              ? "✓ Complete"
+              : item.state === "active"
+                ? "… In progress"
+                : "○ Pending"}{" "}
+            — {item.label}
+          </p>
+        ))}
+      </div>
+      {(loading || imageLoading) && stage !== "error" ? (
+        <p className="mt-2 text-xs text-[var(--muted)]">Working… this can take a minute.</p>
+      ) : null}
+    </div>
+  );
+}
+
+function getProgressItems(
+  mode: GenerateMode,
+  stage: ProgressStage,
+  autoMapEnabled: boolean,
+  autoPropsEnabled: boolean,
+): Array<{ label: string; state: "pending" | "active" | "done" }> {
+  if (mode === "characters") {
+    return [
+      { label: "Generate characters", state: stateFor(stage, "adventure_generating", "complete") },
+    ];
+  }
+
+  if (mode === "maps") {
+    return [
+      { label: "Generate locale map image", state: stateFor(stage, "map_locale_generating", "map_done") },
+      { label: "Generate battle map image", state: stateFor(stage, "map_battle_generating", "map_done") },
+    ];
+  }
+
+  const items: Array<{ label: string; state: "pending" | "active" | "done" }> = [
+    { label: "Generate adventure text", state: stateFor(stage, "adventure_generating", "adventure_done") },
+  ];
+
+  if (autoMapEnabled) {
+    items.push(
+      { label: "Generate locale map image", state: stateFor(stage, "map_locale_generating", "map_done") },
+      { label: "Generate battle map image", state: stateFor(stage, "map_battle_generating", "map_done") },
+    );
+  }
+  if (autoPropsEnabled) {
+    items.push({
+      label: "Generate written prop image",
+      state: stateFor(stage, "prop_generating", "complete"),
+    });
+  }
+
+  return items;
+}
+
+function stateFor(
+  stage: ProgressStage,
+  activeStage: ProgressStage,
+  doneStage: ProgressStage | "complete",
+): "pending" | "active" | "done" {
+  if (stage === activeStage) return "active";
+  if (stage === doneStage || stage === "complete" || stage === "map_done") return "done";
+  if (stage === "adventure_done" && activeStage === "adventure_generating") return "done";
+  return "pending";
+}
+
+/** Minimal Markdown → HTML for headings, lists, bold, fenced code, paragraphs. */
+function simpleMarkdownToHtml(md: string): string {
+  const lines = md.replace(/\r\n/g, "\n").split("\n");
+  const out: string[] = [];
+  let inUl = false;
+  let inFence = false;
+  const codeBuf: string[] = [];
+
+  const flushUl = () => {
+    if (inUl) {
+      out.push("</ul>");
+      inUl = false;
+    }
+  };
+
+  const flushCode = () => {
+    if (codeBuf.length === 0) return;
+    const raw = codeBuf.join("\n");
+    codeBuf.length = 0;
+    const escaped = raw
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;");
+    out.push(
+      `<pre class="my-3 overflow-x-auto rounded-lg border border-[var(--border)] bg-black/50 p-3 text-left font-mono text-xs leading-tight text-[var(--text)]"><code>${escaped}</code></pre>`,
+    );
+  };
+
+  const inline = (s: string) =>
+    s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("```")) {
+      flushUl();
+      if (inFence) {
+        flushCode();
+        inFence = false;
+      } else {
+        inFence = true;
+      }
+      continue;
+    }
+    if (inFence) {
+      codeBuf.push(line);
+      continue;
+    }
+
+    const t = line.trim();
+    if (t.startsWith("# ")) {
+      flushUl();
+      out.push(`<h1 class="text-2xl font-bold mt-6 mb-3">${inline(t.slice(2))}</h1>`);
+      continue;
+    }
+    if (t.startsWith("## ")) {
+      flushUl();
+      out.push(
+        `<h2 class="text-lg font-semibold mt-6 mb-2 text-[var(--accent)]">${inline(t.slice(3))}</h2>`,
+      );
+      continue;
+    }
+    if (t.startsWith("### ")) {
+      flushUl();
+      out.push(`<h3 class="text-base font-semibold mt-4 mb-2">${inline(t.slice(4))}</h3>`);
+      continue;
+    }
+    if (t.startsWith("- ") || t.startsWith("* ")) {
+      if (!inUl) {
+        out.push('<ul class="list-disc pl-5 space-y-1 my-2">');
+        inUl = true;
+      }
+      out.push(`<li>${inline(t.slice(2))}</li>`);
+      continue;
+    }
+    flushUl();
+    if (t === "") {
+      out.push("<br/>");
+    } else {
+      out.push(`<p class="my-2 leading-relaxed text-[var(--text)]/95">${inline(t)}</p>`);
+    }
+  }
+  flushUl();
+  if (inFence) flushCode();
+  return out.join("\n");
+}
+
+function triggerDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function triggerDownloadFromDataUrl(dataUrl: string, filename: string) {
+  const a = document.createElement("a");
+  a.href = dataUrl;
+  a.download = filename;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function firstHeading(md: string): string | null {
+  const line = md
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l.startsWith("# "));
+  if (!line) return null;
+  return line.replace(/^#\s+/, "").trim() || null;
+}
+
+function fileBaseName(md: string, mode: GenerateMode): string {
+  const fromTitle = firstHeading(md);
+  const slug = slugify(fromTitle ?? "");
+  if (slug) return slug;
+  const prefix =
+    mode === "adventure"
+      ? "ddeasy-adventure"
+      : mode === "characters"
+        ? "ddeasy-characters"
+        : "ddeasy-maps";
+  return `${prefix}-${new Date().toISOString().slice(0, 10)}`;
+}
+
+function slugify(s: string): string {
+  const t = s
+    .toLowerCase()
+    .replace(/['"]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 72);
+  return t;
+}
+
+function markdownToBasicHtml(md: string): string {
+  const lines = md.replace(/\r\n/g, "\n").split("\n");
+  const out: string[] = [];
+  let inUl = false;
+  let inFence = false;
+  const codeBuf: string[] = [];
+
+  const flushUl = () => {
+    if (inUl) {
+      out.push("</ul>");
+      inUl = false;
+    }
+  };
+
+  const flushCode = () => {
+    if (codeBuf.length === 0) return;
+    const raw = codeBuf.join("\n");
+    codeBuf.length = 0;
+    const escaped = raw
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;");
+    out.push(
+      `<pre class="map-pre"><code>${escaped}</code></pre>`,
+    );
+  };
+
+  const inline = (s: string) =>
+    s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("```")) {
+      flushUl();
+      if (inFence) {
+        flushCode();
+        inFence = false;
+      } else {
+        inFence = true;
+      }
+      continue;
+    }
+    if (inFence) {
+      codeBuf.push(line);
+      continue;
+    }
+
+    const t = line.trim();
+    if (t.startsWith("# ")) {
+      flushUl();
+      out.push(`<h1>${inline(t.slice(2))}</h1>`);
+      continue;
+    }
+    if (t.startsWith("## ")) {
+      flushUl();
+      out.push(`<h2>${inline(t.slice(3))}</h2>`);
+      continue;
+    }
+    if (t.startsWith("### ")) {
+      flushUl();
+      out.push(`<h3>${inline(t.slice(4))}</h3>`);
+      continue;
+    }
+    if (t.startsWith("- ") || t.startsWith("* ")) {
+      if (!inUl) {
+        out.push("<ul>");
+        inUl = true;
+      }
+      out.push(`<li>${inline(t.slice(2))}</li>`);
+      continue;
+    }
+    flushUl();
+    if (t === "") {
+      out.push("<p><br /></p>");
+    } else {
+      out.push(`<p>${inline(t)}</p>`);
+    }
+  }
+  flushUl();
+  if (inFence) flushCode();
+  return out.join("\n");
+}
+
+function buildStandaloneHtmlDocument(title: string, bodyHtml: string): string {
+  const safeTitle = title
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/"/g, "&quot;");
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${safeTitle}</title>
+  <style>
+    body { font-family: system-ui, Segoe UI, Roboto, sans-serif; margin: 0; color: #111; background: #fff; }
+    main { max-width: 44rem; margin: 0 auto; padding: 2rem 1.25rem 3rem; line-height: 1.55; }
+    h1 { font-size: 1.75rem; margin: 0 0 1rem; }
+    h2 { font-size: 1.2rem; margin: 2rem 0 0.75rem; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+    h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+    p { margin: 0.5rem 0; }
+    ul { margin: 0.5rem 0 0.75rem 1.25rem; }
+    li { margin: 0.25rem 0; }
+    .map-pre {
+      overflow-x: auto;
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      margin: 0.75rem 0;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 0.72rem;
+      line-height: 1.25;
+    }
+    .map-pre code { white-space: pre; }
+    @media print {
+      body { background: #fff; }
+      main { max-width: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+${bodyHtml}
+  </main>
+</body>
+</html>`;
+}
+
+function slugFilePart(raw: string): string {
+  const s = raw.replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/-+/g, "-");
+  const trimmed = s.replace(/^-|-$/g, "").slice(0, 80);
+  return trimmed || "image";
+}
+
+function buildSceneBattleMapPrompt(
+  scene: AdventureSceneSnippet,
+  mapBase: MapFormState,
+  fullMarkdown: string,
+  form: FormState,
+): string {
+  const toneBlock = buildAutoMapContextFromAdventure(fullMarkdown, form);
+  return [
+    "Generate ONE top-down tactical battle map for THIS scene only (VTT-ready, implied 5 ft. grid, no printed labels or room names on the image).",
+    "",
+    scene.context.slice(0, 4000),
+    "",
+    "Adventure tone / setting:",
+    mapBase.tone,
+    "",
+    "Grid / layout notes:",
+    mapBase.gridNotes,
+    "",
+    "Reference — map briefs from the adventure (tone only):",
+    toneBlock.slice(0, 2000),
+    "",
+    mapBase.extraNotes,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+const PREFERRED_PROP_TYPES_FOR_SCENES: PropType[] = [
+  "notice",
+  "map_handout",
+  "rune_tablet",
+  "scroll",
+  "journal",
+];
+
+function inferSceneSubject(scene: AdventureSceneSnippet): string {
+  const source = `${scene.title}\n${scene.context}`.replace(/\s+/g, " ").trim();
+  if (!source) return "key scene element";
+
+  const lowered = source.toLowerCase();
+  const patterns: Array<{ test: RegExp; subject: string }> = [
+    { test: /\b(altar|shrine|idol|statue)\b/, subject: "defaced shrine relic" },
+    { test: /\b(gate|door|lock|seal)\b/, subject: "sealed gate sigil" },
+    { test: /\b(map|route|path|trail|passage)\b/, subject: "annotated route fragment" },
+    { test: /\b(rune|glyph|ward|sigil)\b/, subject: "arcane rune inscription" },
+    { test: /\b(monster|beast|aberration|undead|dragon|fiend)\b/, subject: "monster warning marker" },
+    { test: /\b(cult|ritual|circle|summon)\b/, subject: "ritual circle notes" },
+    { test: /\b(water|flood|river|canal|drowned|tide)\b/, subject: "flood hazard notice" },
+    { test: /\b(fire|forge|embers|lava|ash)\b/, subject: "burn-scarred warning plaque" },
+    { test: /\b(trap|snare|ambush|hazard)\b/, subject: "hazard marker" },
+    { test: /\b(vault|crypt|tomb|catacomb)\b/, subject: "burial vault inscription" },
+  ];
+
+  for (const pattern of patterns) {
+    if (pattern.test.test(lowered)) return pattern.subject;
+  }
+
+  const nounPhrase = source
+    .split(/[.?!]/)[0]
+    ?.replace(/^[^a-zA-Z0-9]+/, "")
+    .trim()
+    .slice(0, 56);
+  return nounPhrase || "key scene element";
+}
+
+function chooseScenePropType(scene: AdventureSceneSnippet, index: number): PropType {
+  const lowered = `${scene.title}\n${scene.context}`.toLowerCase();
+  if (/\b(map|route|path|trail|passage|layout|region)\b/.test(lowered)) {
+    return "map_handout";
+  }
+  if (/\b(rune|glyph|ward|sigil|inscription)\b/.test(lowered)) {
+    return "rune_tablet";
+  }
+  if (/\b(notice|warning|proclamation|wanted|bounty|sign|poster)\b/.test(lowered)) {
+    return "notice";
+  }
+  if (/\b(log|record|diary|journal|ledger|entry)\b/.test(lowered)) {
+    return "journal";
+  }
+  if (/\b(scroll|decree|edict|ritual|prayer)\b/.test(lowered)) {
+    return "scroll";
+  }
+  return PREFERRED_PROP_TYPES_FOR_SCENES[index % PREFERRED_PROP_TYPES_FOR_SCENES.length]!;
+}
+
+function buildSceneArtifactText(subject: string, propType: PropType): string {
+  switch (propType) {
+    case "map_handout":
+      return `Field sketch: ${subject}. Marked route, hazard symbols, and one circled objective.`;
+    case "rune_tablet":
+      return `Inscribed tablet fragment naming ${subject}; cracked edges and two emphasized warning runes.`;
+    case "notice":
+      return `Posted notice regarding ${subject}: concise warning, location marker, and reward/severity line.`;
+    case "journal":
+      return `Journal excerpt on ${subject}: one concrete observation, one risk, one immediate next step.`;
+    case "scroll":
+      return `Short scroll text tied to ${subject}: directive sentence plus a single cautionary clause.`;
+    default:
+      return `Artifact caption highlighting ${subject}.`;
+  }
+}
+
+function buildAutoPropPayloadFromScene(
+  scene: AdventureSceneSnippet,
+  form: FormState,
+  index: number,
+): PropFormState {
+  const propType = chooseScenePropType(scene, index);
+  const sceneSubject = inferSceneSubject(scene);
+  return {
+    ...initialPropForm,
+    propType,
+    title: `Handout — ${scene.title}`.slice(0, 120),
+    bodyText: buildSceneArtifactText(sceneSubject, propType).slice(0, 950),
+    settingHint: form.setting || initialPropForm.settingHint,
+    style: initialPropForm.style,
+    ageWear: initialPropForm.ageWear,
+    extraNotes: [
+      form.extraNotes,
+      "This handout must match this single scene only; no spoilers for other beats.",
+      "This prop illustrates one impactful scene element (item, sign, or monster clue), not a scene-introduction narrative.",
+    ]
+      .filter(Boolean)
+      .join(" "),
+    imageSize: "1024x1536",
+    imageQuality: "high",
+  };
+}
+
+function buildAutoMapContextFromAdventure(markdown: string, form: FormState): string {
+  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+  const captureStart = [
+    "## Locale / area map concept (for image generation)",
+    "## Battle map concepts (for image generation)",
+    "## Regional map concept (for image generation)",
+    "## Battle map concepts (Session 1)",
+  ];
+  const conceptLines: string[] = [];
+  let capturing = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("## ")) {
+      if (captureStart.includes(trimmed)) {
+        capturing = true;
+        conceptLines.push(trimmed);
+        continue;
+      }
+      if (capturing) {
+        capturing = false;
+      }
+    }
+    if (capturing) {
+      conceptLines.push(line);
+    }
+  }
+
+  const conceptText = conceptLines.join("\n").trim();
+  if (conceptText) {
+    return conceptText;
+  }
+
+  return [
+    form.titleHint ? `Theme: ${form.titleHint}` : "",
+    form.villainOrThreat ? `Threat: ${form.villainOrThreat}` : "",
+    form.extraNotes ? `Notes: ${form.extraNotes}` : "",
+    "Generate a combat-usable map for the main conflict and a readable locale overview.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function buildAutoPropPayloadFromAdventure(
+  markdown: string,
+  form: FormState,
+): PropFormState {
+  const title = (firstHeading(markdown) ?? form.titleHint) || "Adventure note";
+  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+  const hooks: string[] = [];
+  const secrets: string[] = [];
+  let section: "hooks" | "secrets" | null = null;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (line.startsWith("## ")) {
+      if (line.toLowerCase().includes("hooks")) {
+        section = "hooks";
+      } else if (line.toLowerCase().includes("secrets")) {
+        section = "secrets";
+      } else {
+        section = null;
+      }
+      continue;
+    }
+    if (!line) continue;
+    if (section === "hooks" && hooks.length < 2) hooks.push(line.replace(/^[-*]\s*/, ""));
+    if (section === "secrets" && secrets.length < 2) secrets.push(line.replace(/^[-*]\s*/, ""));
+  }
+
+  const bodyText = [
+    `To whoever finds this,`,
+    hooks[0] || "The town is not safe after dusk.",
+    hooks[1] || "Trust no one wearing the old crest.",
+    secrets[0] || "The key is hidden where the river meets the stone.",
+    secrets[1] || "Burn this letter after reading.",
+  ].join("\n");
+
+  return {
+    ...initialPropForm,
+    propType: "letter",
+    title: `Handout: ${title}`,
+    bodyText,
+    settingHint: form.setting || initialPropForm.settingHint,
+    extraNotes: form.extraNotes,
+  };
+}
