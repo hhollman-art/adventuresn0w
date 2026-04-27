@@ -1,6 +1,7 @@
 import {
   clampImagePromptText,
   IMAGE_PROMPT_SAFETY_PREAMBLE,
+  MAP_CARTOGRAPHER_HAND_LOOK,
 } from "@/lib/openaiImagePrompt";
 
 export type MapPackKind = "overland" | "battle" | "both";
@@ -52,6 +53,8 @@ export function buildMapImagePrompt(
 
 Create ONE fantasy map graphic for tabletop play. Prioritize cartography (clear symbols, line weights, and regions players can use) over illustration (no fine-art painting, dramatic lighting, or “concept art” scene).
 
+${MAP_CARTOGRAPHER_HAND_LOOK}
+
 ${mapTypeLine}
 
 Context:
@@ -65,11 +68,13 @@ Context:
 
 Rendering requirements:
 - Top-down 2D orthographic map only (not isometric, not side view, not perspective illustration).
-- Cartographic style: legible linework, simple fills or light hatching for terrain, conventional symbols for woods/rock/water/built work; avoid oil-paint texture, heavy atmosphere, or storybook art direction.
+- Hand-made map appearance: as if from a surveyor or ship’s cartographer (quill, brush for flat tone)—not a digital matte painting, not an illustrated “scene.”
+- Cartographic style: legible linework, simple fills or light hatching for terrain, conventional symbols for woods/rock/water/built work; avoid oil-paint texture, heavy atmosphere, storybook art direction, or illustrative rendering that hides the grid.
 - Readability for play: distinct paths, rooms, and terrain categories; avoid “busy” painterly detail that obscures the grid and edges.
 - Clear walkable vs blocked areas; cover and obstacles as simple shapes, not highly rendered set dressing.
 - Square grid: clearly visible and regular for VTT (helper lines, not a decorative afterthought).
-- No readable text, no watermark, no logos, no UI. Do not add room names, labels, or paragraphs on the image.
+- **Labels:** Add **short, legible cartographic text** (as if hand-lettered or small print on a real map) naming **key and iconic** areas—regions, major rooms, important doors, chokes, or landmarks that appear in the context above. **Each** room, path, or landmark **at most once**—no duplicate callouts, no name repeated with leader lines from two places, and no second label that duplicates the **title** (if a title line is used). Use only a **modest** number of labels so the map stays clear; do not cover the image in paragraphs or a legend block.
+- No watermarks, no modern UI, no out-of-world meta text (no “FIGURE 1”, URLs, or app chrome). A small optional **title** line echoing the location name is fine.
 - PG-13; no graphic harm.
 - Output only the image.`;
 }

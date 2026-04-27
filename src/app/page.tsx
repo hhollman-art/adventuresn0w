@@ -1,11 +1,12 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import {
   ADVENTURE_LENGTH_HOVER_HELP,
   type AdventureLength,
   type CombatIntensity,
 } from "@/lib/adventurePrompt";
+import { REALM_SIZE_LABEL, type RealmSize } from "@/lib/realmPrompt";
 import type { MapPackKind } from "@/lib/mapImagePrompt";
 import type { PropItemCategory } from "@/lib/propImagePrompt";
 import {
@@ -14,7 +15,7 @@ import {
   type AdventureSceneSnippet,
 } from "@/lib/extractAdventureScenes";
 
-type GenerateMode = "adventure" | "characters" | "maps" | "props";
+type GenerateMode = "realm" | "adventure" | "characters" | "maps" | "props";
 
 type GeneratedImage = {
   kind: string;
@@ -23,6 +24,8 @@ type GeneratedImage = {
 };
 type ProgressStage =
   | "idle"
+  | "realm_generating"
+  | "realm_image_generating"
   | "adventure_generating"
   | "adventure_done"
   | "map_locale_generating"
@@ -66,7 +69,7 @@ const initialMapForm: MapFormState = {
   context:
     "Party corners a beast in the flooded lower ring: a chokepoint skirmish in a gatehouse, then a balcony finale over black water.",
   gridNotes:
-    "5 ft. squares; rooms ~25–40 ft. Clear lines and open shapes for movement—less painterly detail, more plan readability.",
+    "5 ft. squares; rooms ~25–40 ft. Clear lines and open shapes for movement—less painterly detail, more plan readability. Label key rooms or chokes if you name them in context.",
   extraNotes: "",
   imageSize: "1536x1024",
   imageQuality: "high",
@@ -138,6 +141,34 @@ const initialFormCharacters: FormState = {
   extraNotes: "",
 };
 
+type RealmFormState = {
+  realmSize: RealmSize;
+  titleHint: string;
+  description: string;
+  extraNotes: string;
+};
+
+/** Grey placeholder in “Describe what you want” (clears on focus via globals.css). */
+const REALM_SAMPLE_DESCRIPTION = [
+  "A trade kingdom wedged between old forest and a fault-line sea, where guild charters matter as much as crowns.",
+  "I want port politics, a haunted interior road, and one religion split between reformers and inquisitors.",
+].join(" ");
+
+const initialRealmForm: RealmFormState = {
+  realmSize: "country",
+  titleHint: "",
+  description: "",
+  extraNotes: "",
+};
+
+/** After a successful realm run: same blank form; sample lives in the textarea placeholder. */
+const emptyRealmForm: RealmFormState = {
+  realmSize: "country",
+  titleHint: "",
+  description: "",
+  extraNotes: "",
+};
+
 /**
  * Many error paths return plain text or HTML (e.g. "Internal Server Error"), which breaks `res.json()`.
  */
@@ -176,6 +207,57 @@ async function fetchMapImageResult(payload: MapFormState): Promise<{
 }> {
   try {
     const res = await fetch("/api/generate-map-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const raw = await res.text();
+    const parsed = parseResponseBodyJson(res, raw);
+    if (!parsed.ok) {
+      return { images: [], model: null, error: parsed.userMessage };
+    }
+    const data = parsed.data as {
+      images?: Array<{ kind: string; imageDataUrl: string }>;
+      model?: string;
+      error?: string;
+    };
+    if (!res.ok) {
+      return {
+        images: [],
+        model: null,
+        error: data.error ?? `Image request failed (${res.status})`,
+      };
+    }
+    if (!data.images?.length) {
+      return { images: [], model: null, error: "No image returned." };
+    }
+    return { images: data.images, model: data.model ?? null, error: null };
+  } catch (err) {
+    return {
+      images: [],
+      model: null,
+      error: err instanceof Error ? err.message : "Network error",
+    };
+  }
+}
+
+type RealmImagePayload = {
+  realmSize: RealmSize;
+  titleHint: string;
+  realmMarkdown: string;
+  imageSize: "1024x1024" | "1536x1024" | "1024x1536";
+  imageQuality: "medium" | "high";
+};
+
+async function fetchRealmImageResult(
+  payload: RealmImagePayload,
+): Promise<{
+  images: Array<{ kind: string; imageDataUrl: string }>;
+  model: string | null;
+  error: string | null;
+}> {
+  try {
+    const res = await fetch("/api/generate-realm-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -356,12 +438,107 @@ async function fetchAdventureResultStream(
   }
 }
 
+const REALM_SIZES: RealmSize[] = [
+  "world",
+  "continent",
+  "country",
+  "region",
+  "local",
+];
+
+async function fetchRealmResultStream(
+  payload: RealmFormState,
+  callbacks: { onChunk: (chunk: string) => void; onModel: (model: string) => void },
+): Promise<{ markdown: string; model: string | null; error: string | null }> {
+  try {
+    const res = await fetch("/api/generate-realm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+      body: JSON.stringify({
+        realmSize: payload.realmSize,
+        titleHint: payload.titleHint,
+        description: payload.description,
+        extraNotes: payload.extraNotes,
+        stream: true,
+      }),
+    });
+    if (!res.ok) {
+      const errBody = await res.text();
+      const p = parseResponseBodyJson(res, errBody);
+      const data = (p.ok ? p.data : {}) as { error?: string };
+      return {
+        markdown: "",
+        model: null,
+        error:
+          (p.ok ? data.error : p.userMessage) ?? `Request failed (${res.status})`,
+      };
+    }
+    if (!res.body) {
+      return { markdown: "", model: null, error: "No response stream received." };
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let markdown = "";
+    let model: string | null = null;
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split("\n\n");
+      buffer = events.pop() ?? "";
+
+      for (const rawEvent of events) {
+        const lines = rawEvent
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line.startsWith("data: "));
+        if (lines.length === 0) continue;
+        const dataText = lines.map((line) => line.slice(6)).join("\n");
+        const evt = JSON.parse(dataText) as
+          | { type: "meta"; model?: string }
+          | { type: "chunk"; text?: string }
+          | { type: "done"; markdown?: string; model?: string }
+          | { type: "error"; error?: string };
+        if (evt.type === "meta" && evt.model) {
+          model = evt.model;
+          callbacks.onModel(evt.model);
+        } else if (evt.type === "chunk" && evt.text) {
+          markdown += evt.text;
+          callbacks.onChunk(evt.text);
+        } else if (evt.type === "done") {
+          markdown = evt.markdown ?? markdown;
+          if (evt.model) {
+            model = evt.model;
+            callbacks.onModel(evt.model);
+          }
+        } else if (evt.type === "error") {
+          return {
+            markdown: "",
+            model: null,
+            error: evt.error ?? "Streamed request failed.",
+          };
+        }
+      }
+    }
+    return { markdown: markdown.trim(), model, error: null };
+  } catch (err) {
+    return {
+      markdown: "",
+      model: null,
+      error: err instanceof Error ? err.message : "Network error",
+    };
+  }
+}
+
 export default function Home(props: PageProps<"/">) {
-  use(props.params);
-  use(props.searchParams);
+  void props;
 
   const [mode, setMode] = useState<GenerateMode>("adventure");
   const [form, setForm] = useState<FormState>(initialForm);
+  const [realmForm, setRealmForm] = useState<RealmFormState>(initialRealmForm);
   const [mapForm, setMapForm] = useState<MapFormState>(initialMapForm);
   const [propForm, setPropForm] = useState<PropFormState>(initialPropFormStandalone);
   const [markdown, setMarkdown] = useState("");
@@ -374,6 +551,7 @@ export default function Home(props: PageProps<"/">) {
   const [imageError, setImageError] = useState<string | null>(null);
   const [autoGenerateAdventureMap, setAutoGenerateAdventureMap] = useState(true);
   const [autoGenerateAdventureProps, setAutoGenerateAdventureProps] = useState(true);
+  const [autoGenerateRealmMapImage, setAutoGenerateRealmMapImage] = useState(true);
   const [progressStage, setProgressStage] = useState<ProgressStage>("idle");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -390,7 +568,9 @@ export default function Home(props: PageProps<"/">) {
         ? "map_locale_generating"
         : mode === "props"
           ? "prop_generating"
-          : "adventure_generating",
+          : mode === "realm"
+            ? "realm_generating"
+            : "adventure_generating",
     );
 
     try {
@@ -410,6 +590,63 @@ export default function Home(props: PageProps<"/">) {
         const ok = await generateStandalonePropImage(propForm);
         if (ok) {
           setProgressStage("complete");
+        }
+        return;
+      }
+      if (mode === "realm") {
+        if (!realmForm.description.trim()) {
+          setError("Describe the realm: tone, key factions, terrain, and what you need at the table.");
+          setProgressStage("idle");
+          return;
+        }
+        const streamed = await fetchRealmResultStream(realmForm, {
+          onChunk: (chunk) => setMarkdown((prev) => prev + chunk),
+          onModel: (m) => setModel(m),
+        });
+        if (streamed.error) {
+          setError(streamed.error);
+          setProgressStage("error");
+          return;
+        }
+        if (streamed.markdown) {
+          setMarkdown(streamed.markdown);
+          setModel(streamed.model ?? null);
+          if (autoGenerateRealmMapImage) {
+            setImageLoading(true);
+            setImageError(null);
+            setMapImages([]);
+            setImageModel(null);
+            setProgressStage("realm_image_generating");
+            try {
+              const r = await fetchRealmImageResult({
+                realmSize: realmForm.realmSize,
+                titleHint: realmForm.titleHint,
+                realmMarkdown: streamed.markdown,
+                imageSize: "1536x1024",
+                imageQuality: "medium",
+              });
+              if (r.error) {
+                setImageError(r.error);
+              } else {
+                setMapImages(
+                  r.images.map((img) => ({
+                    ...img,
+                    label: "Realm map",
+                  })),
+                );
+                setImageModel(r.model);
+              }
+            } finally {
+              setImageLoading(false);
+            }
+            setProgressStage("complete");
+          } else {
+            setProgressStage("complete");
+          }
+          setRealmForm(emptyRealmForm);
+        } else {
+          setError("No generated text returned.");
+          setProgressStage("error");
         }
         return;
       }
@@ -480,9 +717,6 @@ export default function Home(props: PageProps<"/">) {
 
           const mapContext = buildAutoMapContextFromAdventure(generatedMarkdown, form);
             const mapExtraNotes = [
-            form.adventureLength === "campaign"
-              ? "Focus on Session 1 playable map details."
-              : "",
             `Adventure combat focus ${form.combatIntensity}/5 (${
               form.combatIntensity <= 2
                 ? "fewer fights—favor exploration layouts"
@@ -490,7 +724,7 @@ export default function Home(props: PageProps<"/">) {
                   ? "combat-heavy—favor tactical arenas, cover, chokepoints"
                   : "balanced—mix open and tactical spaces"
             }).`,
-            "Visual style: cartography first (line, symbol, flat tone)—minimize painterly or illustrative rendering.",
+            "Hand-drawn look: quill or pen on parchment or scroll. Include short text labels for key and iconic areas from the context (rooms, regions, doors, landmarks) where they matter for play—legible, not dense.",
           ]
             .filter(Boolean)
             .join(" ");
@@ -503,7 +737,7 @@ export default function Home(props: PageProps<"/">) {
             tone: form.tone,
             context: mapContext,
             gridNotes:
-              "5 ft. squares; keep rooms, corridors, and blocked edges obvious. Prefer clear line weights and flat terrain fills over artistic shading.",
+              "5 ft. squares; keep rooms, corridors, and blocked edges obvious. Prefer clear line weights and flat terrain fills over artistic shading. Add short hand-lettered labels for key and iconic areas (major rooms, chokes, hazards) from the scene.",
             extraNotes: mapExtraNotes,
             imageSize: "1536x1024",
             imageQuality: "high",
@@ -735,13 +969,15 @@ export default function Home(props: PageProps<"/">) {
     if (!markdown) return;
     const title =
       firstHeading(markdown) ??
-      (mode === "adventure"
-        ? "Adventure"
-        : mode === "characters"
-          ? "Characters"
-          : mode === "props"
-            ? "Props"
-            : "Maps");
+      (mode === "realm"
+        ? "Realm"
+        : mode === "adventure"
+          ? "Adventure"
+          : mode === "characters"
+            ? "Characters"
+            : mode === "props"
+              ? "Props"
+              : "Maps");
     const doc = buildStandaloneHtmlDocument(title, markdownToBasicHtml(markdown));
     const name = `${fileBaseName(markdown, mode)}.html`;
     triggerDownload(
@@ -760,30 +996,50 @@ export default function Home(props: PageProps<"/">) {
         }}
       >
         <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">
-          {mode === "adventure"
-            ? "Adventure (5.2)"
-            : mode === "characters"
-              ? "Pre-made characters (5.2)"
-              : mode === "props"
-                ? "Props (handouts)"
-                : "Maps (5.2)"}
+          {mode === "realm"
+            ? "Realm (5.2)"
+            : mode === "adventure"
+              ? "Adventure (5.2)"
+              : mode === "characters"
+                ? "Pre-made characters (5.2)"
+                : mode === "props"
+                  ? "Props (handouts)"
+                  : "Maps (5.2)"}
         </h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
-          {mode === "adventure"
-            ? "Pick a length: short session, one-nighter, or campaign framework. Original and SRD-aware—not official WotC content."
-            : mode === "characters"
-              ? "Claude builds a ready-to-play party: stats, gear, and hooks. SRD-open options only."
-              : mode === "props"
-                ? "Build handout images: paper props, potions, arms and armor, tools, and more. Pick an item type, describe it, generate—no adventure required."
-                : "Generate cartographic-style locale and battle maps with OpenAI (top-down, grid-friendly, not fine-art illustrations)."}
+          {mode === "realm"
+            ? "Choose the scale of the place (from a whole world down to a local cluster), then describe what you want. Claude returns table-ready setting Markdown—original, not WotC copy."
+            : mode === "adventure"
+              ? "Pick a length: short session or one-nighter. Original and SRD-aware—not official WotC content."
+              : mode === "characters"
+                ? "Claude builds a ready-to-play party: stats, gear, and hooks. SRD-open options only."
+                : mode === "props"
+                  ? "Build handout images: paper props, potions, arms and armor, tools, and more. Pick an item type, describe it, generate—no adventure required."
+                  : "Generate cartographic-style locale and battle maps with OpenAI (top-down, grid-friendly, not fine-art illustrations)."}
         </p>
 
         <div
-          className="mt-4 grid grid-cols-2 gap-1 rounded-lg border p-1 text-xs font-medium sm:grid-cols-4"
+          className="mt-4 grid grid-cols-2 gap-1 rounded-lg border p-1 text-xs font-medium sm:grid-cols-3 lg:grid-cols-5"
           style={{ borderColor: "var(--border)" }}
           role="tablist"
           aria-label="Generation mode"
         >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "realm"}
+            onClick={() => {
+              setMode("realm");
+              setRealmForm(initialRealmForm);
+            }}
+            className="rounded-md px-2 py-2 transition sm:px-3"
+            style={{
+              background: mode === "realm" ? "var(--accent)" : "transparent",
+              color: mode === "realm" ? "#000" : "var(--muted)",
+            }}
+          >
+            Realm
+          </button>
           <button
             type="button"
             role="tab"
@@ -952,7 +1208,7 @@ export default function Home(props: PageProps<"/">) {
                   rows={5}
                   className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
                   style={{ borderColor: "var(--border)" }}
-                  placeholder="Describe locations, travel routes, and encounter spaces so the map reads like a plan your table can use."
+                  placeholder="Describe locations, travel routes, and encounter spaces. Name key or iconic areas you want labeled on the map (regions, rooms, landmarks)."
                 />
               </label>
               <Field
@@ -1128,6 +1384,104 @@ export default function Home(props: PageProps<"/">) {
               </div>
             </>
           ) : null}
+          {mode === "realm" ? (
+            <>
+              <fieldset className="flex flex-col gap-2">
+                <legend className="text-sm font-medium text-[var(--muted)]">
+                  Size of realm
+                </legend>
+                <div
+                  className="flex flex-col gap-2 rounded-lg border p-2 text-xs"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  {REALM_SIZES.map((id) => {
+                    const { label, detail } = REALM_SIZE_LABEL[id];
+                    return (
+                      <label
+                        key={id}
+                        title={detail}
+                        className="flex cursor-help items-start gap-2 rounded-md px-2 py-2"
+                        style={{
+                          background:
+                            realmForm.realmSize === id
+                              ? "rgba(201, 162, 39, 0.15)"
+                              : "transparent",
+                          outline:
+                            realmForm.realmSize === id
+                              ? "1px solid var(--accent)"
+                              : "none",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="realmSize"
+                          value={id}
+                          checked={realmForm.realmSize === id}
+                          onChange={() =>
+                            setRealmForm((f) => ({ ...f, realmSize: id }))
+                          }
+                          className="mt-0.5 accent-[var(--accent)]"
+                        />
+                        <span>
+                          <span className="font-semibold text-[var(--text)]">{label}</span>
+                          <span className="block text-[var(--muted)]">{detail}</span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+              <Field
+                label="Working name or theme (optional)"
+                value={realmForm.titleHint}
+                onChange={(v) => setRealmForm((f) => ({ ...f, titleHint: v }))}
+                placeholder="e.g. The Ash Covenant coast"
+              />
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-[var(--text)]">Describe what you want</span>
+                <span className="text-xs text-[var(--muted)]">
+                  Tone, geography, who holds power, conflicts, and what you need to run at the table. Required.
+                </span>
+                <textarea
+                  value={realmForm.description}
+                  onChange={(e) =>
+                    setRealmForm((f) => ({ ...f, description: e.target.value }))
+                  }
+                  rows={8}
+                  className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                  style={{ borderColor: "var(--border)" }}
+                  placeholder={REALM_SAMPLE_DESCRIPTION}
+                />
+              </label>
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-[var(--muted)]">Extra notes (optional)</span>
+                <textarea
+                  value={realmForm.extraNotes}
+                  onChange={(e) =>
+                    setRealmForm((f) => ({ ...f, extraNotes: e.target.value }))
+                  }
+                  rows={3}
+                  className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                  style={{ borderColor: "var(--border)" }}
+                  placeholder="Constraints, inspirations to avoid, safety tools, level band…"
+                />
+              </label>
+              <label
+                className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <input
+                  type="checkbox"
+                  checked={autoGenerateRealmMapImage}
+                  onChange={(e) => setAutoGenerateRealmMapImage(e.target.checked)}
+                  className="accent-[var(--accent)]"
+                />
+                <span className="text-[var(--muted)]">
+                  Auto-generate a realm map image after the text
+                </span>
+              </label>
+            </>
+          ) : null}
           {mode === "adventure" ? (
             <fieldset className="flex flex-col gap-2">
               <legend className="text-sm font-medium text-[var(--muted)]">
@@ -1148,11 +1502,6 @@ export default function Home(props: PageProps<"/">) {
                       id: "one_night" as const,
                       label: "One-nighter",
                       hint: "Single evening, tight",
-                    },
-                    {
-                      id: "campaign" as const,
-                      label: "Campaign",
-                      hint: "Multi-session + Session 1",
                     },
                   ] as const
                 ).map((opt) => (
@@ -1365,13 +1714,15 @@ export default function Home(props: PageProps<"/">) {
           >
             {loading
               ? "Generating…"
-              : mode === "adventure"
-                ? "Generate adventure"
-                : mode === "characters"
-                  ? "Generate characters"
-                  : mode === "props"
-                    ? "Generate prop image"
-                    : "Generate maps"}
+              : mode === "realm"
+                ? "Generate realm"
+                : mode === "adventure"
+                  ? "Generate adventure"
+                  : mode === "characters"
+                    ? "Generate characters"
+                    : mode === "props"
+                      ? "Generate prop image"
+                      : "Generate maps"}
           </button>
         </form>
       </section>
@@ -1432,6 +1783,7 @@ export default function Home(props: PageProps<"/">) {
           imageLoading={imageLoading}
           autoMapEnabled={autoGenerateAdventureMap}
           autoPropsEnabled={autoGenerateAdventureProps}
+          autoRealmMapEnabled={autoGenerateRealmMapImage}
         />
         {markdown ? (
           <p className="mt-2 max-w-xl text-xs leading-relaxed text-[var(--muted)]">
@@ -1462,63 +1814,45 @@ export default function Home(props: PageProps<"/">) {
           </p>
         ) : null}
 
-        {mapImages.length > 0 ? (
-          <div className="mt-6 grid gap-4">
-            {mapImages.map((img, idx) => {
-              const heading =
-                img.label ??
-                (img.kind === "locale" || img.kind === "battle"
-                  ? `${img.kind} map`
-                  : `${img.kind} image`);
-              const downloadSlug = img.label ?? img.kind;
-              return (
-                <div
-                  key={`${idx}-${img.kind}-${downloadSlug}`}
-                  className="rounded-lg border p-2"
-                  style={{ borderColor: "var(--border)" }}
-                >
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-[var(--text)]">{heading}</p>
-                    <button
-                      type="button"
-                      onClick={() => downloadMapImage(img.imageDataUrl, downloadSlug)}
-                      className="shrink-0 rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                      style={{ borderColor: "var(--border)" }}
-                    >
-                      Download PNG
-                    </button>
-                  </div>
-                  <img
-                    src={img.imageDataUrl}
-                    alt={heading}
-                    className="h-auto w-full rounded-md"
-                  />
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
+        {mode === "realm" ? (
+          <>
+            {markdown ? (
+              <article
+                className="adventure-md mt-6 max-w-none text-[var(--text)]"
+                dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(markdown) }}
+              />
+            ) : null}
+            <MapImageOutputBlock mapImages={mapImages} onDownloadMap={downloadMapImage} />
+          </>
+        ) : (
+          <>
+            <MapImageOutputBlock mapImages={mapImages} onDownloadMap={downloadMapImage} />
+            {markdown && mode !== "maps" && mode !== "props" ? (
+              <article
+                className="adventure-md mt-6 max-w-none text-[var(--text)]"
+                dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(markdown) }}
+              />
+            ) : null}
+          </>
+        )}
 
-        {markdown && mode !== "maps" && mode !== "props" ? (
-          <article
-            className="adventure-md mt-6 max-w-none text-[var(--text)]"
-            dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(markdown) }}
-          />
-        ) : !loading && !error && mapImages.length === 0 ? (
+        {!loading && !error && !markdown && mapImages.length === 0 ? (
           <p className="mt-8 text-sm text-[var(--muted)]">
-            {mode === "adventure"
-              ? "Submit to generate a 5.2-style adventure in Markdown (length matches your selection)."
-              : mode === "characters"
-                ? "Submit the form to generate pre-made PCs (Markdown). Copy to your notes or VTT."
-                : mode === "props"
-                  ? "Choose an item type, write a description, and generate a handout image."
-                  : "Submit to generate top-down, cartography-style locale and battle maps (grid-friendly, not scene illustrations)."}
+            {mode === "realm"
+              ? "Pick a realm size, describe what you want, and generate table-ready setting Markdown."
+              : mode === "adventure"
+                ? "Submit to generate a 5.2-style adventure in Markdown (length matches your selection)."
+                : mode === "characters"
+                  ? "Submit the form to generate pre-made PCs (Markdown). Copy to your notes or VTT."
+                  : mode === "props"
+                    ? "Choose an item type, write a description, and generate a handout image."
+                    : "Submit to generate top-down, cartography-style locale and battle maps (grid-friendly, not scene illustrations)."}
           </p>
         ) : null}
 
         {loading ? (
           <p className="mt-8 animate-pulse text-sm text-[var(--muted)]">
-            {mode === "adventure" || mode === "characters"
+            {mode === "adventure" || mode === "characters" || mode === "realm"
               ? "Calling Claude…"
               : "Working on images… this can take a minute."}
           </p>
@@ -1527,11 +1861,61 @@ export default function Home(props: PageProps<"/">) {
           <p className="mt-2 animate-pulse text-sm text-[var(--muted)]">
             {mode === "props"
               ? "Rendering prop image…"
-              : "Rendering maps and handouts (batched API calls)…"}
+              : mode === "realm"
+                ? "Draw Realm…"
+                : "Rendering maps and handouts (batched API calls)…"}
           </p>
         ) : null}
       </section>
     </main>
+  );
+}
+
+function MapImageOutputBlock({
+  mapImages,
+  onDownloadMap,
+}: {
+  mapImages: GeneratedImage[];
+  onDownloadMap: (imageDataUrl: string, labelOrKind: string) => void;
+}) {
+  if (mapImages.length === 0) return null;
+  return (
+    <div className="mt-6 grid gap-4">
+      {mapImages.map((img, idx) => {
+        const heading =
+          img.label ??
+          (img.kind === "locale" || img.kind === "battle"
+            ? `${img.kind} map`
+            : img.kind === "realm"
+              ? "Realm map"
+              : `${img.kind} image`);
+        const downloadSlug = img.label ?? img.kind;
+        return (
+          <div
+            key={`${idx}-${img.kind}-${downloadSlug}`}
+            className="rounded-lg border p-2"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-[var(--text)]">{heading}</p>
+              <button
+                type="button"
+                onClick={() => onDownloadMap(img.imageDataUrl, downloadSlug)}
+                className="shrink-0 rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                style={{ borderColor: "var(--border)" }}
+              >
+                Download PNG
+              </button>
+            </div>
+            <img
+              src={img.imageDataUrl}
+              alt={heading}
+              className="h-auto w-full rounded-md"
+            />
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -1597,6 +1981,7 @@ function ProgressPanel({
   imageLoading,
   autoMapEnabled,
   autoPropsEnabled,
+  autoRealmMapEnabled,
 }: {
   mode: GenerateMode;
   stage: ProgressStage;
@@ -1604,8 +1989,15 @@ function ProgressPanel({
   imageLoading: boolean;
   autoMapEnabled: boolean;
   autoPropsEnabled: boolean;
+  autoRealmMapEnabled: boolean;
 }) {
-  const items = getProgressItems(mode, stage, autoMapEnabled, autoPropsEnabled);
+  const items = getProgressItems(
+    mode,
+    stage,
+    autoMapEnabled,
+    autoPropsEnabled,
+    autoRealmMapEnabled,
+  );
   if (items.length === 0) return null;
 
   return (
@@ -1650,6 +2042,7 @@ function getProgressItems(
   stage: ProgressStage,
   autoMapEnabled: boolean,
   autoPropsEnabled: boolean,
+  autoRealmMapEnabled: boolean,
 ): Array<{ label: string; state: "pending" | "active" | "done" }> {
   if (mode === "characters") {
     return [
@@ -1669,6 +2062,40 @@ function getProgressItems(
       {
         label: "Generate prop handout image",
         state: stateFor(stage, "prop_generating", "complete"),
+      },
+    ];
+  }
+
+  if (mode === "realm" && !autoRealmMapEnabled) {
+    return [
+      {
+        label: "Generate realm",
+        state: stateFor(stage, "realm_generating", "complete"),
+      },
+    ];
+  }
+
+  if (mode === "realm" && autoRealmMapEnabled) {
+    return [
+      {
+        label: "Generate realm",
+        state:
+          stage === "realm_generating"
+            ? "active"
+            : stage === "idle"
+              ? "pending"
+              : "done",
+      },
+      {
+        label: "Draw Realm",
+        state:
+          stage === "realm_generating"
+            ? "pending"
+            : stage === "realm_image_generating"
+              ? "active"
+              : stage === "complete" || stage === "error"
+                ? "done"
+                : "pending",
       },
     ];
   }
@@ -1828,13 +2255,15 @@ function fileBaseName(md: string, mode: GenerateMode): string {
   const slug = slugify(fromTitle ?? "");
   if (slug) return slug;
   const prefix =
-    mode === "adventure"
-      ? "ddeasy-adventure"
-      : mode === "characters"
-        ? "ddeasy-characters"
-        : mode === "props"
-          ? "ddeasy-props"
-          : "ddeasy-maps";
+    mode === "realm"
+      ? "ddeasy-realm"
+      : mode === "adventure"
+        ? "ddeasy-adventure"
+        : mode === "characters"
+          ? "ddeasy-characters"
+          : mode === "props"
+            ? "ddeasy-props"
+            : "ddeasy-maps";
   return `${prefix}-${new Date().toISOString().slice(0, 10)}`;
 }
 
@@ -1993,7 +2422,7 @@ function buildSceneBattleMapPrompt(
 ): string {
   const toneBlock = buildAutoMapContextFromAdventure(fullMarkdown, form);
   return [
-    "Generate ONE top-down tactical battle map for this scene only. Cartographic / floor-plan clarity: walls, doorways, cover, and walkable space must read like a survey map, not a painted set or cinematic key art. VTT-ready, implied 5 ft. grid, no labels or room names on the image.",
+    "Generate ONE top-down tactical battle map for this scene only. Cartographic / floor-plan clarity: walls, doorways, cover, and walkable space must read like a survey map, not a painted set or cinematic key art. VTT-ready, implied 5 ft. grid. Add **short, legible labels** (inked or small type) for **key and iconic** areas—major rooms, chokes, doors, and landmarks named in the scene; keep label count reasonable so the map stays readable.",
     "",
     scene.context.slice(0, 4000),
     "",
@@ -2217,7 +2646,7 @@ function buildAutoMapContextFromAdventure(markdown: string, form: FormState): st
     form.titleHint ? `Theme: ${form.titleHint}` : "",
     form.villainOrThreat ? `Threat: ${form.villainOrThreat}` : "",
     form.extraNotes ? `Notes: ${form.extraNotes}` : "",
-    "Generate a combat-usable, cartography-style map for the main conflict and a clear locale overview (paths and regions, not a scenic painting).",
+    "Generate a combat-usable, hand-inked cartography-style map (quill/pen on parchment, not illustrative art) for the main conflict and a clear locale overview (paths and regions, not a scenic painting).",
   ]
     .filter(Boolean)
     .join("\n");

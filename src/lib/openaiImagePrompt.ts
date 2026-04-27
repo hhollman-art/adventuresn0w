@@ -11,6 +11,16 @@ export const IMAGE_PROMPT_SAFETY_PREAMBLE =
   "Do not depict graphic violence, gore, wounded or suffering people or animals, cruelty, " +
   "sexual content, hate symbols, or real-world identifiable people. ";
 
+/**
+ * For map image prompts: favor hand-inked cartography on parchment/scroll, not illustrative or painterly art.
+ */
+export const MAP_CARTOGRAPHER_HAND_LOOK =
+  "Look and media: the image must read as a cartographer’s hand-drawn map—quill or pen line on parchment, laid paper, or an unrolled scroll—not a poster, landscape painting, concept-art scene, or glossy illustration. " +
+  "Favor iron-gall/ink line, controlled cross-hatch, stipple, and flat or nearly flat tone; avoid airbrush, cinematic lighting, 3D-render gloss, or thick painterly impasto. " +
+  "It should feel as if the map were inked for use at a table: clear cartographic marks, not a picture you hang for mood. " +
+  "Short inked or printed-style **labels** for important places belong on a working map—keep them few and legible, not a wall of text. " +
+  "**Avoid redundant labeling:** name each place or feature **at most once** on the map; do not repeat the same name in multiple callouts, do not place the map title and an identical near-title label, and do not use two labels for the same landmark (e.g. full name + nickname pointing to the same spot).";
+
 export function clampImagePromptText(text: string, maxLen: number): string {
   const t = text.replace(/\s+/g, " ").trim();
   if (t.length <= maxLen) return t;

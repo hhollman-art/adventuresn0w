@@ -1,36 +1,28 @@
 import { NextResponse } from "next/server";
 import {
-  SYSTEM_PROMPT,
-  buildUserMessage,
-  type AdventureInput,
-  type AdventureLength,
-  type CombatIntensity,
-} from "@/lib/adventurePrompt";
+  buildRealmUserMessage,
+  REALM_SYSTEM_PROMPT,
+  type RealmInput,
+  type RealmSize,
+} from "@/lib/realmPrompt";
 import {
   formatAnthropicError,
   generateMarkdown,
   generateMarkdownStream,
 } from "@/lib/anthropicGenerate";
 
-function parseAdventureLength(value: unknown): AdventureLength {
+function parseRealmSize(value: unknown): RealmSize {
   const raw = String(value ?? "").trim();
-  if (raw === "one_night" || raw === "one-night" || raw === "onenight") {
-    return "one_night";
+  if (
+    raw === "world" ||
+    raw === "continent" ||
+    raw === "country" ||
+    raw === "region" ||
+    raw === "local"
+  ) {
+    return raw;
   }
-  /** Legacy UI value; treat as one-nighter scope. */
-  if (raw === "campaign") {
-    return "one_night";
-  }
-  return "short";
-}
-
-function parseCombatIntensity(value: unknown): CombatIntensity {
-  const n = Number(value);
-  if (!Number.isFinite(n)) {
-    return 3;
-  }
-  const clamped = Math.min(5, Math.max(1, Math.round(n)));
-  return clamped as CombatIntensity;
+  return "country";
 }
 
 export async function POST(request: Request) {
@@ -42,33 +34,34 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: Partial<AdventureInput> & { stream?: boolean };
+  let body: Partial<RealmInput> & { stream?: boolean };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const input: AdventureInput = {
-    adventureLength: parseAdventureLength(body.adventureLength),
-    combatIntensity: parseCombatIntensity(body.combatIntensity),
+  const input: RealmInput = {
+    realmSize: parseRealmSize(body.realmSize),
     titleHint: String(body.titleHint ?? "").trim(),
-    levelRange: String(body.levelRange ?? "3–4").trim(),
-    tone: String(body.tone ?? "heroic fantasy").trim(),
-    setting: String(body.setting ?? "").trim() || "wilderness borderland",
-    villainOrThreat: String(body.villainOrThreat ?? "").trim() || "a rising local threat",
-    partySize: String(body.partySize ?? "4").trim(),
-    sessionLength: String(body.sessionLength ?? "3–4 hours").trim(),
+    description: String(body.description ?? "").trim(),
     extraNotes: String(body.extraNotes ?? "").trim(),
   };
 
+  if (!input.description) {
+    return NextResponse.json(
+      { error: "Describe what you want in the realm (description is required)." },
+      { status: 400 },
+    );
+  }
+
   try {
-    const userMessage = buildUserMessage(input);
+    const user = buildRealmUserMessage(input);
     if (!body.stream) {
       const { markdown, model } = await generateMarkdown({
         apiKey,
-        system: SYSTEM_PROMPT,
-        user: userMessage,
+        system: REALM_SYSTEM_PROMPT,
+        user,
       });
       return NextResponse.json({ markdown, model });
     }
@@ -82,8 +75,8 @@ export async function POST(request: Request) {
         try {
           const result = await generateMarkdownStream({
             apiKey,
-            system: SYSTEM_PROMPT,
-            user: userMessage,
+            system: REALM_SYSTEM_PROMPT,
+            user,
             onModel: (model) => write({ type: "meta", model }),
             onText: (chunk) => write({ type: "chunk", text: chunk }),
           });

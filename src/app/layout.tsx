@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import pkg from "../../package.json";
@@ -5,7 +6,7 @@ import pkg from "../../package.json";
 export const metadata: Metadata = {
   title: "D&D Easy — Adventures & characters (5.2)",
   description:
-    "Generate D&D 5.2-style adventures (short, one-nighter, or campaign), pre-made characters, and text/ASCII maps with Claude.",
+    "Generate D&D 5.2-style adventures (short or one-nighter), pre-made characters, and map images with Claude.",
 };
 
 export const viewport: Viewport = {
@@ -14,12 +15,7 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default async function RootLayout({
-  children,
-  params,
-}: Readonly<LayoutProps<"/">>) {
-  await params;
-
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="min-h-screen antialiased">
