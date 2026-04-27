@@ -7,13 +7,12 @@ import {
   type CombatIntensity,
 } from "@/lib/adventurePrompt";
 import type { MapPackKind } from "@/lib/mapImagePrompt";
-import type { PropType } from "@/lib/propImagePrompt";
+import type { PropItemCategory } from "@/lib/propImagePrompt";
 import {
   extractAdventureScenes,
   MAX_AUTO_SCENE_IMAGES,
   type AdventureSceneSnippet,
 } from "@/lib/extractAdventureScenes";
-import { PROP_IDEA_CATEGORIES, type PropIdea } from "@/lib/propIdeaCatalog";
 
 type GenerateMode = "adventure" | "characters" | "maps" | "props";
 
@@ -47,9 +46,9 @@ type MapFormState = {
 };
 
 type PropFormState = {
-  propType: PropType;
+  itemCategory: PropItemCategory;
   title: string;
-  bodyText: string;
+  description: string;
   style: string;
   ageWear: string;
   settingHint: string;
@@ -74,10 +73,12 @@ const initialMapForm: MapFormState = {
 };
 
 const initialPropForm: PropFormState = {
-  propType: "letter",
+  itemCategory: "paper",
   title: "Letter to Captain Varn",
-  bodyText:
-    "Captain, the third bell shipment never arrived. Meet me by the east quay before dawn. Burn this.",
+  description: [
+    "A folded letter: Captain, the third bell shipment never arrived. Meet me by the east quay before dawn. Burn this.",
+    "Ink on parchment, wax seal, creased from travel.",
+  ].join(" "),
   style: "ink on parchment, medieval calligraphy",
   ageWear: "creased corners, faint water stains, wax seal remnants",
   settingHint: "rainy port city in a grim fantasy kingdom",
@@ -87,9 +88,9 @@ const initialPropForm: PropFormState = {
 };
 
 const initialPropFormStandalone: PropFormState = {
-  propType: "letter",
+  itemCategory: "paper",
   title: "",
-  bodyText: "",
+  description: "",
   style: "ink on cream paper, legible for a table handout",
   ageWear: "light edge wear, believable for adventuring use",
   settingHint: "generic fantasy, any tone you set below",
@@ -137,6 +138,37 @@ const initialFormCharacters: FormState = {
   extraNotes: "",
 };
 
+/**
+ * Many error paths return plain text or HTML (e.g. "Internal Server Error"), which breaks `res.json()`.
+ */
+function parseResponseBodyJson(
+  res: Response,
+  bodyText: string,
+): { ok: true; data: unknown } | { ok: false; userMessage: string } {
+  const t = bodyText.trim();
+  if (!t) {
+    if (!res.ok) {
+      return { ok: false, userMessage: `Request failed (${res.status})` };
+    }
+    return { ok: true, data: {} };
+  }
+  try {
+    return { ok: true, data: JSON.parse(t) as unknown };
+  } catch {
+    const snippet = t.length > 280 ? `${t.slice(0, 280)}…` : t;
+    if (!res.ok) {
+      return {
+        ok: false,
+        userMessage: snippet || `Request failed (${res.status})`,
+      };
+    }
+    return {
+      ok: false,
+      userMessage: `Invalid response (not JSON, status ${res.status}): ${snippet}`,
+    };
+  }
+}
+
 async function fetchMapImageResult(payload: MapFormState): Promise<{
   images: Array<{ kind: string; imageDataUrl: string }>;
   model: string | null;
@@ -148,7 +180,12 @@ async function fetchMapImageResult(payload: MapFormState): Promise<{
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const data = (await res.json()) as {
+    const raw = await res.text();
+    const parsed = parseResponseBodyJson(res, raw);
+    if (!parsed.ok) {
+      return { images: [], model: null, error: parsed.userMessage };
+    }
+    const data = parsed.data as {
       images?: Array<{ kind: string; imageDataUrl: string }>;
       model?: string;
       error?: string;
@@ -184,7 +221,12 @@ async function fetchPropImageResult(payload: PropFormState): Promise<{
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const data = (await res.json()) as {
+    const raw = await res.text();
+    const parsed = parseResponseBodyJson(res, raw);
+    if (!parsed.ok) {
+      return { images: [], model: null, error: parsed.userMessage };
+    }
+    const data = parsed.data as {
       images?: Array<{ kind: string; imageDataUrl: string }>;
       model?: string;
       error?: string;
@@ -244,11 +286,14 @@ async function fetchAdventureResultStream(
       body: JSON.stringify({ ...payload, stream: true }),
     });
     if (!res.ok) {
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      const errBody = await res.text();
+      const p = parseResponseBodyJson(res, errBody);
+      const data = (p.ok ? p.data : {}) as { error?: string };
       return {
         markdown: "",
         model: null,
-        error: data.error ?? `Request failed (${res.status})`,
+        error:
+          (p.ok ? data.error : p.userMessage) ?? `Request failed (${res.status})`,
       };
     }
     if (!res.body) {
@@ -357,8 +402,8 @@ export default function Home(props: PageProps<"/">) {
         return;
       }
       if (mode === "props") {
-        if (!propForm.title.trim() && !propForm.bodyText.trim()) {
-          setError("Add a short title and/or the text to show on the handout (or pick an idea).");
+        if (!propForm.description.trim()) {
+          setError("Describe the item in the description box (look, material, and any text on it).");
           setProgressStage("idle");
           return;
         }
@@ -400,7 +445,13 @@ export default function Home(props: PageProps<"/">) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const data = (await res.json()) as {
+        const raw = await res.text();
+        const parsed = parseResponseBodyJson(res, raw);
+        if (!parsed.ok) {
+          setError(parsed.userMessage);
+          return;
+        }
+        const data = parsed.data as {
           markdown?: string;
           model?: string;
           error?: string;
@@ -635,19 +686,6 @@ export default function Home(props: PageProps<"/">) {
     }
   }
 
-  function applyPropIdea(idea: PropIdea) {
-    setPropForm((f) => ({
-      ...f,
-      title: idea.title,
-      bodyText: idea.bodyText,
-      propType: idea.propType,
-      style: idea.style,
-      ageWear: idea.ageWear,
-      settingHint: idea.settingHint,
-      extraNotes: idea.extraNotes ?? "",
-    }));
-  }
-
   async function generateStandalonePropImage(payload: PropFormState) {
     setImageLoading(true);
     setImageError(null);
@@ -736,7 +774,7 @@ export default function Home(props: PageProps<"/">) {
             : mode === "characters"
               ? "Claude builds a ready-to-play party: stats, gear, and hooks. SRD-open options only."
               : mode === "props"
-                ? "Build written handouts (letters, notices, map scraps, inscriptions) with OpenAI. Browse idea lists by theme, then edit and generate—no adventure required."
+                ? "Build handout images: paper props, potions, arms and armor, tools, and more. Pick an item type, describe it, generate—no adventure required."
                 : "Generate cartographic-style locale and battle maps with OpenAI (top-down, grid-friendly, not fine-art illustrations)."}
         </p>
 
@@ -983,77 +1021,51 @@ export default function Home(props: PageProps<"/">) {
           {mode === "props" ? (
             <>
               <SelectField
-                label="Handout format"
-                value={propForm.propType}
+                label="Item type"
+                value={propForm.itemCategory}
                 onChange={(v) =>
                   setPropForm((f) => ({
                     ...f,
-                    propType: v as PropType,
+                    itemCategory: v as PropItemCategory,
                   }))
                 }
                 options={[
-                  { value: "letter", label: "Letter" },
-                  { value: "scroll", label: "Scroll / decree" },
-                  { value: "journal", label: "Journal / ledger page" },
-                  { value: "notice", label: "Posted notice" },
-                  { value: "map_handout", label: "Small map / diagram" },
-                  { value: "rune_tablet", label: "Rune tablet / inscription" },
+                  { value: "paper", label: "Paper & documents (letters, scrolls, maps, ledgers)" },
+                  { value: "potion", label: "Potion, phial, or bottle" },
+                  { value: "weapon", label: "Weapon" },
+                  { value: "armor", label: "Armor or shield" },
+                  { value: "tool", label: "Tool, key, or instrument" },
+                  { value: "container", label: "Chest, box, bag, or cask" },
+                  { value: "wearable", label: "Clothing, jewelry, or accessory" },
+                  { value: "food_drink", label: "Food or drink (still life)" },
+                  { value: "relic", label: "Relic, symbol, or small carved idol" },
+                  { value: "other", label: "Other object" },
                 ]}
               />
               <p className="text-xs text-[var(--muted)]">
-                Idea lists (weapons, kitchen, warehouse, and more) fill the fields below. Edit any text, then use{" "}
+                Pick what kind of object to draw, describe it below, then use{" "}
                 <span className="text-[var(--text)]/90">Generate prop image</span> at the bottom.
               </p>
-              <div className="flex flex-col gap-2">
-                {PROP_IDEA_CATEGORIES.map((cat) => (
-                  <details
-                    key={cat.id}
-                    className="group rounded-lg border text-xs"
-                    style={{ borderColor: "var(--border)" }}
-                  >
-                    <summary className="cursor-pointer list-none px-3 py-2 font-medium text-[var(--text)] marker:content-none">
-                      <span className="text-[var(--muted)] group-open:opacity-80">{cat.label}</span>
-                      <span className="ml-1 block text-[0.7rem] font-normal text-[var(--muted)] sm:inline sm:pl-1">
-                        — {cat.description}
-                      </span>
-                    </summary>
-                    <div className="flex flex-col gap-1 border-t p-2" style={{ borderColor: "var(--border)" }}>
-                      {cat.ideas.map((idea) => (
-                        <button
-                          key={idea.title}
-                          type="button"
-                          onClick={() => applyPropIdea(idea)}
-                          className="rounded-md border px-2 py-1.5 text-left text-xs leading-snug text-[var(--text)] transition hover:bg-[var(--bg)]"
-                          style={{ borderColor: "var(--border)" }}
-                        >
-                          <span className="font-medium">{idea.title}</span>
-                          <span className="mt-0.5 block line-clamp-2 text-[var(--muted)]">
-                            {idea.bodyText.replace(/\n/g, " · ").slice(0, 120)}
-                            {idea.bodyText.length > 120 ? "…" : ""}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </details>
-                ))}
-              </div>
-              <Field
-                label="Prop title"
-                value={propForm.title}
-                onChange={(v) => setPropForm((f) => ({ ...f, title: v }))}
-                placeholder="e.g. Warehouse tally — barge 7"
-              />
               <label className="flex flex-col gap-1.5 text-sm">
-                <span className="font-medium text-[var(--muted)]">Text to show (in-world writing)</span>
+                <span className="font-medium text-[var(--text)]">Description</span>
+                <span className="text-xs text-[var(--muted)]">
+                  What it looks like, materials, color, and any in-world text or marks. Be specific—the image model follows this.
+                </span>
                 <textarea
-                  value={propForm.bodyText}
-                  onChange={(e) => setPropForm((f) => ({ ...f, bodyText: e.target.value }))}
-                  rows={6}
-                  className="rounded-lg border bg-[var(--bg)] px-3 py-2 font-mono text-xs text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                  value={propForm.description}
+                  onChange={(e) => setPropForm((f) => ({ ...f, description: e.target.value }))}
+                  rows={7}
+                  className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
                   style={{ borderColor: "var(--border)" }}
-                  placeholder="What should appear on the object—decrees, tallies, warnings, runes, etc."
+                  placeholder="Example (potion): dark green glass, wax seal, paper label with three words in block letters, sediment at the bottom…"
                 />
               </label>
+              <Field
+                label="Short label (optional)"
+                value={propForm.title}
+                onChange={(v) => setPropForm((f) => ({ ...f, title: v }))}
+                placeholder="e.g. Captain’s letter — for your files / download name"
+              />
               <Field
                 label="Look / materials"
                 value={propForm.style}
@@ -1499,7 +1511,7 @@ export default function Home(props: PageProps<"/">) {
               : mode === "characters"
                 ? "Submit the form to generate pre-made PCs (Markdown). Copy to your notes or VTT."
                 : mode === "props"
-                  ? "Pick a theme, click an idea to load it, edit if you like, then generate a handout image—or write your own from scratch."
+                  ? "Choose an item type, write a description, and generate a handout image."
                   : "Submit to generate top-down, cartography-style locale and battle maps (grid-friendly, not scene illustrations)."}
           </p>
         ) : null}
@@ -2000,12 +2012,17 @@ function buildSceneBattleMapPrompt(
     .join("\n");
 }
 
-const PREFERRED_PROP_TYPES_FOR_SCENES: PropType[] = [
-  "notice",
-  "map_handout",
-  "rune_tablet",
-  "scroll",
-  "journal",
+const PREFERRED_ITEM_CATEGORIES: PropItemCategory[] = [
+  "paper",
+  "potion",
+  "weapon",
+  "relic",
+  "container",
+  "armor",
+  "tool",
+  "other",
+  "food_drink",
+  "wearable",
 ];
 
 function inferSceneSubject(scene: AdventureSceneSnippet): string {
@@ -2038,67 +2055,102 @@ function inferSceneSubject(scene: AdventureSceneSnippet): string {
   return nounPhrase || "the matter at hand";
 }
 
-function chooseScenePropType(scene: AdventureSceneSnippet, index: number): PropType {
+function chooseItemCategory(scene: AdventureSceneSnippet, index: number): PropItemCategory {
   const lowered = `${scene.title}\n${scene.context}`.toLowerCase();
-  if (/\b(map|route|path|trail|passage|layout|region)\b/.test(lowered)) {
-    return "map_handout";
+  if (/\b(potion|vial|elixir|phial|brew|alchem|acid|dose|tonic|serum)\b/.test(lowered)) {
+    return "potion";
   }
-  if (/\b(rune|glyph|ward|sigil|inscription)\b/.test(lowered)) {
-    return "rune_tablet";
+  if (/\b(sword|axe|bow|spear|dagger|mace|hammer|crossbow|blade|halberd|glaive)\b/.test(lowered)) {
+    return "weapon";
   }
-  if (/\b(notice|warning|proclamation|wanted|bounty|sign|poster)\b/.test(lowered)) {
-    return "notice";
+  if (/\b(armor|breastplate|helmet|helm|gauntlet|shield|pauldron|mail|plate)\b/.test(lowered)) {
+    return "armor";
   }
-  if (/\b(log|record|diary|journal|ledger|entry)\b/.test(lowered)) {
-    return "journal";
+  if (/\b(chest|coffer|crate|casket|sack|bag|barrel|lockbox|cask|strongbox)\b/.test(lowered)) {
+    return "container";
   }
-  if (/\b(scroll|decree|edict|ritual|prayer)\b/.test(lowered)) {
-    return "scroll";
+  if (/\b(key|lock|tool|tongs|chisel|tongs|lever|pick(?!pocket)|compass)\b/.test(lowered)) {
+    return "tool";
   }
-  return PREFERRED_PROP_TYPES_FOR_SCENES[index % PREFERRED_PROP_TYPES_FOR_SCENES.length]!;
+  if (/\b(food|feast|roast|bread|wine|ale|cheese|supper|banquet|tankard)\b/.test(lowered)) {
+    return "food_drink";
+  }
+  if (/\b(ring|cloak|boot|glove|amulet|circlet|necklace|brooch|jewel)\b/.test(lowered)) {
+    return "wearable";
+  }
+  if (/\b(relic|idol|holy|shrine|amulet|talisman|symbol|altar|totem)\b/.test(lowered)) {
+    return "relic";
+  }
+  if (/\b(map|route|path|letter|scroll|decree|notice|parchment|ledger|writ|broad|contract|journal|tally)\b/.test(
+    lowered,
+  )) {
+    return "paper";
+  }
+  if (/\b(rune|glyph|ward|sigil|inscription|tablet|stone)\b/.test(lowered)) {
+    return "relic";
+  }
+  return PREFERRED_ITEM_CATEGORIES[index % PREFERRED_ITEM_CATEGORIES.length]!;
 }
 
-function buildSceneArtifactText(subject: string, propType: PropType): string {
+function buildAutoPropDescription(
+  subject: string,
+  itemCategory: PropItemCategory,
+): string {
   const s = subject.charAt(0).toUpperCase() + subject.slice(1);
-  switch (propType) {
-    case "map_handout":
+  switch (itemCategory) {
+    case "paper":
       return [
-        "Hand-drawn route: main path east through the pines; two X marks past the second fork; watchtower ringed and redrawn.",
-        `Focus: ${s}.`,
-        'Margin (small): "Not after the third bell."',
-      ].join("\n");
-    case "rune_tablet":
+        `A paper handout for the table tied to: ${s}.`,
+        "Folded or flat parchment, ink, maybe wax; short in-world text with a time or a place a local would recognize.",
+        "Weathering: finger smudges, a pressed fold, a ring stain. No anachronistic print layout.",
+      ].join(" ");
+    case "potion":
       return [
-        "Runes in a broken ring: outer lines warn strangers off; one line names the place or keeper.",
-        `Center, worn smooth: ${s}.`,
-        "Hairline crack along the base—the ward failed here once.",
-      ].join("\n");
-    case "notice":
+        `A single vial or bottle relevant to: ${s}.`,
+        "Glass or ceramic, stopper, possible wax seal. Liquid color described; a scratched label with one to three in-world words.",
+        "Faint sediment or oil sheen; not a modern drug bottle.",
+      ].join(" ");
+    case "weapon":
       return [
-        "PUBLIC NOTICE",
-        `Subject: ${s}. This is a real risk—do not treat it as gossip.`,
-        "Anyone with information: report to the wardhouse by the next full moon. Do not go out after dark alone; take a lantern and company.",
-        "—Posted in haste; seal still soft at one corner.",
-      ].join("\n");
-    case "journal":
+        `A weapon on a neutral ground that fits: ${s}.`,
+        "Steel, wood, and leather; honest wear, oil, small maker’s or quartermaster’s mark, no gore, no people in frame.",
+      ].join(" ");
+    case "armor":
       return [
-        "Weather wrong—fog came early.",
-        `Note on ${s}: the bells you hear before their time are not the usual watch.`,
-        "Supplies left under the third stair, oiled and wrapped. Head east if I do not return.",
-      ].join("\n");
-    case "scroll":
+        `A piece of armor or a shield for context: ${s}.`,
+        "Straps, dents, paint or simple blazon as fits; the object is the whole frame, not a person wearing it.",
+      ].join(" ");
+    case "tool":
       return [
-        "Decree (official seal):",
-        `${s}.`,
-        "The river-locked door stays barred. If the seal breaks, sound the iron horn once—no more.",
-        "Signed and sealed; wax unbroken on the fold.",
-      ].join("\n");
+        `A tool or key appropriate to: ${s}.`,
+        "Wood and iron, wear, maybe a small stamped mark, sized for a hand.",
+      ].join(" ");
+    case "container":
+      return [
+        `A container that could matter for: ${s}.`,
+        "Wood, iron, leather; hasp or rope; travel dust, a scratched initial on the lid corner.",
+      ].join(" ");
+    case "wearable":
+      return [
+        `A wearable or accessory (laid out) suggested by: ${s}.`,
+        "Metal and cloth or leather, clasp or stitch detail; not a full mannequin scene.",
+      ].join(" ");
+    case "food_drink":
+      return [
+        `A still life of food or drink fitting: ${s}.`,
+        "Platter, crust, flagon, or board; period table fare, appetizing, no hands or faces.",
+      ].join(" ");
+    case "relic":
+      return [
+        `A small relic, carved stone, or metal emblem tied to: ${s}.`,
+        "Patina, a chain or mount, simple carved or cast symbols; the object is the focus.",
+      ].join(" ");
+    case "other":
     default:
       return [
-        "Short note, folded small:",
-        `About ${s}: carry this; show it to the priest or the sergeant before you act.`,
-        "—End of the note; no more room on the page.",
-      ].join("\n");
+        `A single fantasy prop object connected to: ${s}.`,
+        "Clear material read, believable wear, no busy background.",
+      ].join(" ");
   }
 }
 
@@ -2107,19 +2159,19 @@ function buildAutoPropPayloadFromScene(
   form: FormState,
   index: number,
 ): PropFormState {
-  const propType = chooseScenePropType(scene, index);
+  const itemCategory = chooseItemCategory(scene, index);
   const sceneSubject = inferSceneSubject(scene);
   return {
     ...initialPropForm,
-    propType,
+    itemCategory,
     title: `Handout — ${scene.title}`.slice(0, 120),
-    bodyText: buildSceneArtifactText(sceneSubject, propType).slice(0, 950),
+    description: buildAutoPropDescription(sceneSubject, itemCategory).slice(0, 1200),
     settingHint: form.setting || initialPropForm.settingHint,
     style: initialPropForm.style,
     ageWear: initialPropForm.ageWear,
     extraNotes: [
       form.extraNotes,
-      "Text on the object should read as in-world only (no labels like DM, handout, sketch, or prop).",
+      "Any writing or marks on the object should be in-world only (no labels like DM, handout, or prop).",
     ]
       .filter(Boolean)
       .join(" "),
@@ -2198,19 +2250,20 @@ function buildAutoPropPayloadFromAdventure(
     if (section === "secrets" && secrets.length < 2) secrets.push(line.replace(/^[-*]\s*/, ""));
   }
 
-  const bodyText = [
-    "To whoever finds this,",
+  const description = [
+    "A folded or sealed letter. To whoever finds this—",
     hooks[0] || "The town is not safe after dark.",
     hooks[1] || "Do not trust anyone wearing the old crest.",
     secrets[0] || "The key is where the river meets the old stone—under the silt.",
     secrets[1] || "Destroy this after you read it.",
-  ].join("\n");
+    "Ink on parchment, wax seal, creased from handling.",
+  ].join(" ");
 
   return {
     ...initialPropForm,
-    propType: "letter",
+    itemCategory: "paper" as const,
     title: `Handout: ${title}`,
-    bodyText,
+    description,
     settingHint: form.setting || initialPropForm.settingHint,
     extraNotes: form.extraNotes,
   };

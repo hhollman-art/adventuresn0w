@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { buildPropImagePrompt, type PropImageInput, type PropType } from "@/lib/propImagePrompt";
+import { buildPropImagePrompt, type PropImageInput, type PropItemCategory } from "@/lib/propImagePrompt";
 import {
   formatImageApiErrorForClient,
   parseOpenAIImageApiFailure,
@@ -10,19 +10,41 @@ type OpenAIImageResponse = {
   error?: { message?: string; code?: string; type?: string };
 };
 
-function parsePropType(value: unknown): PropType {
+const LEGACY_PROP_TYPE: Record<string, PropItemCategory> = {
+  letter: "paper",
+  scroll: "paper",
+  journal: "paper",
+  notice: "paper",
+  map_handout: "paper",
+  rune_tablet: "relic",
+  book_of_hours: "paper",
+  indenture: "paper",
+  court_writ: "paper",
+  broadsheet: "paper",
+  heraldic_grant: "paper",
+  merchants_ledger: "paper",
+};
+
+function parseItemCategory(value: unknown): PropItemCategory {
   const raw = String(value ?? "").trim();
+  if (LEGACY_PROP_TYPE[raw]) {
+    return LEGACY_PROP_TYPE[raw]!;
+  }
   if (
-    raw === "letter" ||
-    raw === "scroll" ||
-    raw === "journal" ||
-    raw === "notice" ||
-    raw === "map_handout" ||
-    raw === "rune_tablet"
+    raw === "paper" ||
+    raw === "potion" ||
+    raw === "weapon" ||
+    raw === "armor" ||
+    raw === "tool" ||
+    raw === "container" ||
+    raw === "wearable" ||
+    raw === "food_drink" ||
+    raw === "relic" ||
+    raw === "other"
   ) {
     return raw;
   }
-  return "letter";
+  return "paper";
 }
 
 function parseSize(value: unknown): "1024x1024" | "1536x1024" | "1024x1536" {
@@ -57,10 +79,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
+  const b = body as { description?: string; bodyText?: string; itemCategory?: string; propType?: string };
+  const desc = String(b.description ?? b.bodyText ?? "").trim();
+
   const input: PropImageInput = {
-    propType: parsePropType(body.propType),
+    itemCategory: parseItemCategory(b.itemCategory ?? b.propType),
     title: String(body.title ?? "").trim(),
-    bodyText: String(body.bodyText ?? "").trim(),
+    description: desc,
     style: String(body.style ?? "").trim(),
     ageWear: String(body.ageWear ?? "").trim(),
     settingHint: String(body.settingHint ?? "").trim(),
@@ -107,7 +132,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      images: [{ kind: input.propType, imageDataUrl: `data:image/png;base64,${b64}` }],
+      images: [{ kind: input.itemCategory, imageDataUrl: `data:image/png;base64,${b64}` }],
       model,
       size,
       quality,
