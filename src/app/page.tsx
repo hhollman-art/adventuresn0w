@@ -13,8 +13,9 @@ import {
   MAX_AUTO_SCENE_IMAGES,
   type AdventureSceneSnippet,
 } from "@/lib/extractAdventureScenes";
+import { PROP_IDEA_CATEGORIES, type PropIdea } from "@/lib/propIdeaCatalog";
 
-type GenerateMode = "adventure" | "characters" | "maps";
+type GenerateMode = "adventure" | "characters" | "maps" | "props";
 
 type GeneratedImage = {
   kind: string;
@@ -65,7 +66,8 @@ const initialMapForm: MapFormState = {
   tone: "rain-slick stone, broken walkways, cold bioluminescence",
   context:
     "Party corners a beast in the flooded lower ring: a chokepoint skirmish in a gatehouse, then a balcony finale over black water.",
-  gridNotes: "5 ft. squares; keep interior rooms ~25–40 ft across",
+  gridNotes:
+    "5 ft. squares; rooms ~25–40 ft. Clear lines and open shapes for movement—less painterly detail, more plan readability.",
   extraNotes: "",
   imageSize: "1536x1024",
   imageQuality: "high",
@@ -79,6 +81,18 @@ const initialPropForm: PropFormState = {
   style: "ink on parchment, medieval calligraphy",
   ageWear: "creased corners, faint water stains, wax seal remnants",
   settingHint: "rainy port city in a grim fantasy kingdom",
+  extraNotes: "",
+  imageSize: "1024x1536",
+  imageQuality: "high",
+};
+
+const initialPropFormStandalone: PropFormState = {
+  propType: "letter",
+  title: "",
+  bodyText: "",
+  style: "ink on cream paper, legible for a table handout",
+  ageWear: "light edge wear, believable for adventuring use",
+  settingHint: "generic fantasy, any tone you set below",
   extraNotes: "",
   imageSize: "1024x1536",
   imageQuality: "high",
@@ -304,6 +318,7 @@ export default function Home(props: PageProps<"/">) {
   const [mode, setMode] = useState<GenerateMode>("adventure");
   const [form, setForm] = useState<FormState>(initialForm);
   const [mapForm, setMapForm] = useState<MapFormState>(initialMapForm);
+  const [propForm, setPropForm] = useState<PropFormState>(initialPropFormStandalone);
   const [markdown, setMarkdown] = useState("");
   const [model, setModel] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -325,11 +340,29 @@ export default function Home(props: PageProps<"/">) {
     setImageError(null);
     setMapImages([]);
     setImageModel(null);
-    setProgressStage(mode === "maps" ? "map_locale_generating" : "adventure_generating");
+    setProgressStage(
+      mode === "maps"
+        ? "map_locale_generating"
+        : mode === "props"
+          ? "prop_generating"
+          : "adventure_generating",
+    );
 
     try {
       if (mode === "maps") {
         const ok = await generateMapImage(mapForm);
+        if (ok) {
+          setProgressStage("complete");
+        }
+        return;
+      }
+      if (mode === "props") {
+        if (!propForm.title.trim() && !propForm.bodyText.trim()) {
+          setError("Add a short title and/or the text to show on the handout (or pick an idea).");
+          setProgressStage("idle");
+          return;
+        }
+        const ok = await generateStandalonePropImage(propForm);
         if (ok) {
           setProgressStage("complete");
         }
@@ -395,7 +428,7 @@ export default function Home(props: PageProps<"/">) {
           setImageModel(null);
 
           const mapContext = buildAutoMapContextFromAdventure(generatedMarkdown, form);
-          const mapExtraNotes = [
+            const mapExtraNotes = [
             form.adventureLength === "campaign"
               ? "Focus on Session 1 playable map details."
               : "",
@@ -406,6 +439,7 @@ export default function Home(props: PageProps<"/">) {
                   ? "combat-heavy—favor tactical arenas, cover, chokepoints"
                   : "balanced—mix open and tactical spaces"
             }).`,
+            "Visual style: cartography first (line, symbol, flat tone)—minimize painterly or illustrative rendering.",
           ]
             .filter(Boolean)
             .join(" ");
@@ -418,7 +452,7 @@ export default function Home(props: PageProps<"/">) {
             tone: form.tone,
             context: mapContext,
             gridNotes:
-              "5 ft. squares for tactical spaces; keep rooms and pathways readable for tabletop movement.",
+              "5 ft. squares; keep rooms, corridors, and blocked edges obvious. Prefer clear line weights and flat terrain fills over artistic shading.",
             extraNotes: mapExtraNotes,
             imageSize: "1536x1024",
             imageQuality: "high",
@@ -553,8 +587,18 @@ export default function Home(props: PageProps<"/">) {
     await generateMapImage(mapForm);
   }
 
+  function imageDownloadBaseName(): string {
+    if (markdown.trim()) {
+      return fileBaseName(markdown, mode);
+    }
+    if (mode === "props") {
+      return slugify(propForm.title) || "ddeasy-prop";
+    }
+    return slugify(mapForm.locationName) || "ddeasy-maps";
+  }
+
   function downloadMapImage(imageDataUrl: string, labelOrKind: string) {
-    const base = fileBaseName(markdown || mapForm.locationName, "maps");
+    const base = imageDownloadBaseName();
     const part = slugFilePart(labelOrKind);
     const filename = `${base}-${part}.png`;
     triggerDownloadFromDataUrl(imageDataUrl, filename);
@@ -591,6 +635,50 @@ export default function Home(props: PageProps<"/">) {
     }
   }
 
+  function applyPropIdea(idea: PropIdea) {
+    setPropForm((f) => ({
+      ...f,
+      title: idea.title,
+      bodyText: idea.bodyText,
+      propType: idea.propType,
+      style: idea.style,
+      ageWear: idea.ageWear,
+      settingHint: idea.settingHint,
+      extraNotes: idea.extraNotes ?? "",
+    }));
+  }
+
+  async function generateStandalonePropImage(payload: PropFormState) {
+    setImageLoading(true);
+    setImageError(null);
+    setMapImages([]);
+    setImageModel(null);
+    setProgressStage("prop_generating");
+    try {
+      const result = await fetchPropImageResult(payload);
+      if (result.error) {
+        setImageError(result.error);
+        setProgressStage("error");
+        return false;
+      }
+      const label = payload.title.trim() || "Prop handout";
+      setMapImages(
+        result.images.map((img) => ({
+          ...img,
+          label,
+        })),
+      );
+      setImageModel(result.model);
+      return true;
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : "Network error");
+      setProgressStage("error");
+      return false;
+    } finally {
+      setImageLoading(false);
+    }
+  }
+
   function copyMarkdown() {
     if (!markdown) return;
     void navigator.clipboard.writeText(markdown);
@@ -613,7 +701,9 @@ export default function Home(props: PageProps<"/">) {
         ? "Adventure"
         : mode === "characters"
           ? "Characters"
-          : "Maps");
+          : mode === "props"
+            ? "Props"
+            : "Maps");
     const doc = buildStandaloneHtmlDocument(title, markdownToBasicHtml(markdown));
     const name = `${fileBaseName(markdown, mode)}.html`;
     triggerDownload(
@@ -636,18 +726,22 @@ export default function Home(props: PageProps<"/">) {
             ? "Adventure (5.2)"
             : mode === "characters"
               ? "Pre-made characters (5.2)"
-              : "Maps (5.2)"}
+              : mode === "props"
+                ? "Props (handouts)"
+                : "Maps (5.2)"}
         </h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
           {mode === "adventure"
             ? "Pick a length: short session, one-nighter, or campaign framework. Original and SRD-aware—not official WotC content."
             : mode === "characters"
               ? "Claude builds a ready-to-play party: stats, gear, and hooks. SRD-open options only."
-              : "Generate detailed locale and battle map images with OpenAI (no ASCII maps)."}
+              : mode === "props"
+                ? "Build written handouts (letters, notices, map scraps, inscriptions) with OpenAI. Browse idea lists by theme, then edit and generate—no adventure required."
+                : "Generate cartographic-style locale and battle maps with OpenAI (top-down, grid-friendly, not fine-art illustrations)."}
         </p>
 
         <div
-          className="mt-4 grid grid-cols-3 gap-1 rounded-lg border p-1 text-xs font-medium sm:text-sm"
+          className="mt-4 grid grid-cols-2 gap-1 rounded-lg border p-1 text-xs font-medium sm:grid-cols-4"
           style={{ borderColor: "var(--border)" }}
           role="tablist"
           aria-label="Generation mode"
@@ -684,6 +778,22 @@ export default function Home(props: PageProps<"/">) {
             }}
           >
             Characters
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "props"}
+            onClick={() => {
+              setMode("props");
+              setPropForm(initialPropFormStandalone);
+            }}
+            className="rounded-md px-2 py-2 transition sm:px-3"
+            style={{
+              background: mode === "props" ? "var(--accent)" : "transparent",
+              color: mode === "props" ? "#000" : "var(--muted)",
+            }}
+          >
+            Props
           </button>
           <button
             type="button"
@@ -804,7 +914,7 @@ export default function Home(props: PageProps<"/">) {
                   rows={5}
                   className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
                   style={{ borderColor: "var(--border)" }}
-                  placeholder="Paste a summary, bullet beats, or describe what happens here so the image maps match your table."
+                  placeholder="Describe locations, travel routes, and encounter spaces so the map reads like a plan your table can use."
                 />
               </label>
               <Field
@@ -868,6 +978,142 @@ export default function Home(props: PageProps<"/">) {
               >
                 {imageLoading ? "Rendering map image…" : "Generate map image"}
               </button>
+            </>
+          ) : null}
+          {mode === "props" ? (
+            <>
+              <SelectField
+                label="Handout format"
+                value={propForm.propType}
+                onChange={(v) =>
+                  setPropForm((f) => ({
+                    ...f,
+                    propType: v as PropType,
+                  }))
+                }
+                options={[
+                  { value: "letter", label: "Letter" },
+                  { value: "scroll", label: "Scroll / decree" },
+                  { value: "journal", label: "Journal / ledger page" },
+                  { value: "notice", label: "Posted notice" },
+                  { value: "map_handout", label: "Small map / diagram" },
+                  { value: "rune_tablet", label: "Rune tablet / inscription" },
+                ]}
+              />
+              <p className="text-xs text-[var(--muted)]">
+                Idea lists (weapons, kitchen, warehouse, and more) fill the fields below. Edit any text, then use{" "}
+                <span className="text-[var(--text)]/90">Generate prop image</span> at the bottom.
+              </p>
+              <div className="flex flex-col gap-2">
+                {PROP_IDEA_CATEGORIES.map((cat) => (
+                  <details
+                    key={cat.id}
+                    className="group rounded-lg border text-xs"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <summary className="cursor-pointer list-none px-3 py-2 font-medium text-[var(--text)] marker:content-none">
+                      <span className="text-[var(--muted)] group-open:opacity-80">{cat.label}</span>
+                      <span className="ml-1 block text-[0.7rem] font-normal text-[var(--muted)] sm:inline sm:pl-1">
+                        — {cat.description}
+                      </span>
+                    </summary>
+                    <div className="flex flex-col gap-1 border-t p-2" style={{ borderColor: "var(--border)" }}>
+                      {cat.ideas.map((idea) => (
+                        <button
+                          key={idea.title}
+                          type="button"
+                          onClick={() => applyPropIdea(idea)}
+                          className="rounded-md border px-2 py-1.5 text-left text-xs leading-snug text-[var(--text)] transition hover:bg-[var(--bg)]"
+                          style={{ borderColor: "var(--border)" }}
+                        >
+                          <span className="font-medium">{idea.title}</span>
+                          <span className="mt-0.5 block line-clamp-2 text-[var(--muted)]">
+                            {idea.bodyText.replace(/\n/g, " · ").slice(0, 120)}
+                            {idea.bodyText.length > 120 ? "…" : ""}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
+              <Field
+                label="Prop title"
+                value={propForm.title}
+                onChange={(v) => setPropForm((f) => ({ ...f, title: v }))}
+                placeholder="e.g. Warehouse tally — barge 7"
+              />
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-[var(--muted)]">Text to show (in-world writing)</span>
+                <textarea
+                  value={propForm.bodyText}
+                  onChange={(e) => setPropForm((f) => ({ ...f, bodyText: e.target.value }))}
+                  rows={6}
+                  className="rounded-lg border bg-[var(--bg)] px-3 py-2 font-mono text-xs text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                  style={{ borderColor: "var(--border)" }}
+                  placeholder="What should appear on the object—decrees, tallies, warnings, runes, etc."
+                />
+              </label>
+              <Field
+                label="Look / materials"
+                value={propForm.style}
+                onChange={(v) => setPropForm((f) => ({ ...f, style: v }))}
+                placeholder="e.g. ink on parchment, chalk on board, stenciled crate"
+              />
+              <Field
+                label="Age and wear"
+                value={propForm.ageWear}
+                onChange={(v) => setPropForm((f) => ({ ...f, ageWear: v }))}
+                placeholder="e.g. water stains, torn corner, fresh wax"
+              />
+              <Field
+                label="Setting hint"
+                value={propForm.settingHint}
+                onChange={(v) => setPropForm((f) => ({ ...f, settingHint: v }))}
+                placeholder="Where it comes from in your world (tone, place)"
+              />
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-[var(--muted)]">Extra notes (optional)</span>
+                <textarea
+                  value={propForm.extraNotes}
+                  onChange={(e) => setPropForm((f) => ({ ...f, extraNotes: e.target.value }))}
+                  rows={2}
+                  className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                  style={{ borderColor: "var(--border)" }}
+                  placeholder="Anything else for the image model (e.g. no gore, keep text legible)"
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <SelectField
+                  label="Image size"
+                  value={propForm.imageSize}
+                  onChange={(v) =>
+                    setPropForm((f) => ({
+                      ...f,
+                      imageSize: v as PropFormState["imageSize"],
+                    }))
+                  }
+                  options={[
+                    { value: "1024x1536", label: "Portrait (1024×1536)" },
+                    { value: "1536x1024", label: "Landscape (1536×1024)" },
+                    { value: "1024x1024", label: "Square (1024×1024)" },
+                  ]}
+                />
+                <SelectField
+                  label="Image quality"
+                  value={propForm.imageQuality}
+                  onChange={(v) =>
+                    setPropForm((f) => ({
+                      ...f,
+                      imageQuality: v as PropFormState["imageQuality"],
+                    }))
+                  }
+                  options={[
+                    { value: "high", label: "High detail" },
+                    { value: "medium", label: "Medium detail" },
+                  ]}
+                />
+              </div>
             </>
           ) : null}
           {mode === "adventure" ? (
@@ -1111,7 +1357,9 @@ export default function Home(props: PageProps<"/">) {
                 ? "Generate adventure"
                 : mode === "characters"
                   ? "Generate characters"
-                  : "Generate maps"}
+                  : mode === "props"
+                    ? "Generate prop image"
+                    : "Generate maps"}
           </button>
         </form>
       </section>
@@ -1239,7 +1487,7 @@ export default function Home(props: PageProps<"/">) {
           </div>
         ) : null}
 
-        {markdown && mode !== "maps" ? (
+        {markdown && mode !== "maps" && mode !== "props" ? (
           <article
             className="adventure-md mt-6 max-w-none text-[var(--text)]"
             dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(markdown) }}
@@ -1250,18 +1498,24 @@ export default function Home(props: PageProps<"/">) {
               ? "Submit to generate a 5.2-style adventure in Markdown (length matches your selection)."
               : mode === "characters"
                 ? "Submit the form to generate pre-made PCs (Markdown). Copy to your notes or VTT."
-                : "Submit to generate locale and battle image maps using OpenAI."}
+                : mode === "props"
+                  ? "Pick a theme, click an idea to load it, edit if you like, then generate a handout image—or write your own from scratch."
+                  : "Submit to generate top-down, cartography-style locale and battle maps (grid-friendly, not scene illustrations)."}
           </p>
         ) : null}
 
         {loading ? (
           <p className="mt-8 animate-pulse text-sm text-[var(--muted)]">
-            Calling Claude…
+            {mode === "adventure" || mode === "characters"
+              ? "Calling Claude…"
+              : "Working on images… this can take a minute."}
           </p>
         ) : null}
         {imageLoading ? (
           <p className="mt-2 animate-pulse text-sm text-[var(--muted)]">
-            Rendering image maps and handouts (batched API calls)…
+            {mode === "props"
+              ? "Rendering prop image…"
+              : "Rendering maps and handouts (batched API calls)…"}
           </p>
         ) : null}
       </section>
@@ -1395,6 +1649,15 @@ function getProgressItems(
     return [
       { label: "Generate locale map image", state: stateFor(stage, "map_locale_generating", "map_done") },
       { label: "Generate battle map image", state: stateFor(stage, "map_battle_generating", "map_done") },
+    ];
+  }
+
+  if (mode === "props") {
+    return [
+      {
+        label: "Generate prop handout image",
+        state: stateFor(stage, "prop_generating", "complete"),
+      },
     ];
   }
 
@@ -1557,7 +1820,9 @@ function fileBaseName(md: string, mode: GenerateMode): string {
       ? "ddeasy-adventure"
       : mode === "characters"
         ? "ddeasy-characters"
-        : "ddeasy-maps";
+        : mode === "props"
+          ? "ddeasy-props"
+          : "ddeasy-maps";
   return `${prefix}-${new Date().toISOString().slice(0, 10)}`;
 }
 
@@ -1716,7 +1981,7 @@ function buildSceneBattleMapPrompt(
 ): string {
   const toneBlock = buildAutoMapContextFromAdventure(fullMarkdown, form);
   return [
-    "Generate ONE top-down tactical battle map for THIS scene only (VTT-ready, implied 5 ft. grid, no printed labels or room names on the image).",
+    "Generate ONE top-down tactical battle map for this scene only. Cartographic / floor-plan clarity: walls, doorways, cover, and walkable space must read like a survey map, not a painted set or cinematic key art. VTT-ready, implied 5 ft. grid, no labels or room names on the image.",
     "",
     scene.context.slice(0, 4000),
     "",
@@ -1770,7 +2035,7 @@ function inferSceneSubject(scene: AdventureSceneSnippet): string {
     ?.replace(/^[^a-zA-Z0-9]+/, "")
     .trim()
     .slice(0, 56);
-  return nounPhrase || "this accursed business";
+  return nounPhrase || "the matter at hand";
 }
 
 function chooseScenePropType(scene: AdventureSceneSnippet, index: number): PropType {
@@ -1794,43 +2059,45 @@ function chooseScenePropType(scene: AdventureSceneSnippet, index: number): PropT
 }
 
 function buildSceneArtifactText(subject: string, propType: PropType): string {
+  const s = subject.charAt(0).toUpperCase() + subject.slice(1);
   switch (propType) {
     case "map_handout":
       return [
-        "The parchment remembers rain—ink feathers along a ridgeline traced three times, as if someone feared their own hand.",
-        `${subject.charAt(0).toUpperCase() + subject.slice(1)}: a thin line wanders east through blotched pines; two careful X marks past the second fork, a tight circle around a watchtower scratched out and redrawn.`,
-        'A cramped margin, almost swallowed: "Not after the third bell."',
+        "Hand-drawn route: main path east through the pines; two X marks past the second fork; watchtower ringed and redrawn.",
+        `Focus: ${s}.`,
+        'Margin (small): "Not after the third bell."',
       ].join("\n");
     case "rune_tablet":
       return [
-        "Stone remembers heat. Glyphs march in a broken ring—two lines warn travelers away; one praises the keeper who failed.",
-        `At the heart, worn smooth: ${subject}.`,
-        "Below, a hairline crack where the ward opened once—and should not again.",
+        "Runes in a broken ring: outer lines warn strangers off; one line names the place or keeper.",
+        `Center, worn smooth: ${s}.`,
+        "Hairline crack along the base—the ward failed here once.",
       ].join("\n");
     case "notice":
       return [
-        "PUBLIC WARNING",
-        `Let every honest house take heed—${subject} is not to be mocked as rumor.`,
-        "Witnesses may speak plainly at the wardhouse before the next full moon; none after dark without a lantern and a friend.",
-        "Signed in haste—wax still weeps at the edge.",
+        "PUBLIC NOTICE",
+        `Subject: ${s}. This is a real risk—do not treat it as gossip.`,
+        "Anyone with information: report to the wardhouse by the next full moon. Do not go out after dark alone; take a lantern and company.",
+        "—Posted in haste; seal still soft at one corner.",
       ].join("\n");
     case "journal":
       return [
-        "Day I dare not name—the fog is wrong.",
-        `${subject.charAt(0).toUpperCase() + subject.slice(1)}—if you read this, do not trust the bells that ring early.`,
-        "I left what I could wrapped in oiled cloth beneath the third stair. May the road remember me kindly.",
+        "Weather wrong—fog came early.",
+        `Note on ${s}: the bells you hear before their time are not the usual watch.`,
+        "Supplies left under the third stair, oiled and wrapped. Head east if I do not return.",
       ].join("\n");
     case "scroll":
       return [
-        "By seal and smoke, let it be known—",
-        `${subject.charAt(0).toUpperCase() + subject.slice(1)}.`,
-        "Let no hand open what the river locked. Should the circle be broken, sound the iron horn once only.",
-        "Thus bound under wax where the flame tastes honest.",
+        "Decree (official seal):",
+        `${s}.`,
+        "The river-locked door stays barred. If the seal breaks, sound the iron horn once—no more.",
+        "Signed and sealed; wax unbroken on the fold.",
       ].join("\n");
     default:
       return [
-        "A scrap too stubborn to burn.",
-        `${subject.charAt(0).toUpperCase() + subject.slice(1)}—whoever carries this, let it find a braver pocket than mine.`,
+        "Short note, folded small:",
+        `About ${s}: carry this; show it to the priest or the sergeant before you act.`,
+        "—End of the note; no more room on the page.",
       ].join("\n");
   }
 }
@@ -1852,7 +2119,7 @@ function buildAutoPropPayloadFromScene(
     ageWear: initialPropForm.ageWear,
     extraNotes: [
       form.extraNotes,
-      "Any visible writing must be entirely in-world (letters, decrees, marginalia). Do not print meta or production phrases (no words like sketch, fragment, handout, annotation, caption, DM, prop, or similar).",
+      "Text on the object should read as in-world only (no labels like DM, handout, sketch, or prop).",
     ]
       .filter(Boolean)
       .join(" "),
@@ -1898,7 +2165,7 @@ function buildAutoMapContextFromAdventure(markdown: string, form: FormState): st
     form.titleHint ? `Theme: ${form.titleHint}` : "",
     form.villainOrThreat ? `Threat: ${form.villainOrThreat}` : "",
     form.extraNotes ? `Notes: ${form.extraNotes}` : "",
-    "Generate a combat-usable map for the main conflict and a readable locale overview.",
+    "Generate a combat-usable, cartography-style map for the main conflict and a clear locale overview (paths and regions, not a scenic painting).",
   ]
     .filter(Boolean)
     .join("\n");
@@ -1932,11 +2199,11 @@ function buildAutoPropPayloadFromAdventure(
   }
 
   const bodyText = [
-    `To whoever finds this,`,
-    hooks[0] || "The town is not safe after dusk.",
-    hooks[1] || "Trust no one wearing the old crest.",
-    secrets[0] || "The key is hidden where the river meets the stone.",
-    secrets[1] || "Burn this letter after reading.",
+    "To whoever finds this,",
+    hooks[0] || "The town is not safe after dark.",
+    hooks[1] || "Do not trust anyone wearing the old crest.",
+    secrets[0] || "The key is where the river meets the old stone—under the silt.",
+    secrets[1] || "Destroy this after you read it.",
   ].join("\n");
 
   return {

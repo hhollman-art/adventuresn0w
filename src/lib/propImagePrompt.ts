@@ -72,7 +72,7 @@ Content details:
 Rendering requirements:
 - Image should look like a physical in-world artifact suitable for D&D table handouts.
 - Prioritize clear visual storytelling for illustration-oriented props (items, signs, emblems, symbols, marks, or fragments).
-- Any visible writing must read as diegetic in-world text (letters, decrees, marginalia, chiseled words). Do not render meta or production phrases (avoid words like sketch, fragment, handout, annotation, caption, DM, prop, or similar as prominent lettering).
+- Any visible writing should read as in-world text (signs, letters, chiseled words). Do not show meta labels (no “DM,” “handout,” “sketch,” or similar as main lettering).
 - Long text is optional; use short labels, runes, or no text when that better serves the prop.
 - If text is present, keep it legible and naturally integrated into the object/surface (not always centered).
 - No watermarks, no logos, no UI overlays.
