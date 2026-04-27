@@ -14,6 +14,8 @@ export type AdventureInput = {
   partySize: string;
   sessionLength: string;
   extraNotes: string;
+  /** Optional saved realm Markdown; when set, the model should treat it as canonical setting context. */
+  realmSeedMarkdown?: string;
 };
 
 const LENGTH_DESCRIPTION: Record<AdventureLength, string> = {
@@ -124,8 +126,23 @@ function magicItemRulesBlock(levelRange: string, length: AdventureLength): strin
 - ${scopeNote}`;
 }
 
+function realmSeedReferenceBlock(markdown: string): string {
+  const body = markdown.trim();
+  if (!body) return "";
+  return `
+## Canonical realm reference (saved document)
+The following Markdown is a **realm / setting document** the user saved from this app. Treat named geography, factions, settlements, tone, and established lore as **authoritative world context** for this adventure. Invent new local story, encounters, and NPCs as needed at a scale that fits the adventure; **avoid** contradicting this reference unless the adventure parameters above explicitly call for a twist, alternate branch, or deliberate reinterpretation.
+
+---
+${body}
+---
+
+`;
+}
+
 export function buildUserMessage(input: AdventureInput): string {
   const lengthLabel = LENGTH_DESCRIPTION[input.adventureLength];
+  const realmRef = realmSeedReferenceBlock(input.realmSeedMarkdown ?? "");
 
   return `Create ONE adventure document in Markdown.
 
@@ -145,8 +162,7 @@ ${magicItemRulesBlock(input.levelRange, input.adventureLength)}
 - Typical party size: ${input.partySize}
 - Target session length / table time: ${input.sessionLength}
 - Additional requests: ${input.extraNotes || "(none)"}
-
-## Rules (all lengths)
+${realmRef}## Rules (all lengths)
 - Structure play as **scene chapters** (see Output format): NPCs, items, encounters, checks, and treasure must appear **in the scene text** where they matter, not only in later lists.
 - Assume **D&D version 5.2** conventions (ability checks, DC guidance, encounter pacing, and terminology consistent with the 5.2 / CC SRD lineage). Do not claim affiliation with Wizards of the Coast.
 - Use **only SRD-open or original** creature names and stat summaries. If you include a creature, give a tight **stat block summary** (AC, HP, key attacks, signature ability) in plain prose or a compact bullet list—not copied proprietary text.

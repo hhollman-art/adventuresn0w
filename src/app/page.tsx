@@ -1,12 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ADVENTURE_LENGTH_HOVER_HELP,
   type AdventureLength,
   type CombatIntensity,
 } from "@/lib/adventurePrompt";
 import { REALM_SIZE_LABEL, type RealmSize } from "@/lib/realmPrompt";
+import {
+  appendGenerationLibraryItem,
+  clearGenerationLibrary,
+  deleteGenerationLibraryItem,
+  deleteGenerationLibraryItems,
+  LIBRARY_KIND_LABEL,
+  loadGenerationLibraryItems,
+  type LibraryItem,
+  type LibraryKind,
+} from "@/lib/generationLibrary";
+import {
+  appendRealmSeed,
+  deleteRealmSeed,
+  loadRealmSeeds,
+  realmSeedOptionLabel,
+  suggestedSeedName,
+  type SavedRealmSeed,
+} from "@/lib/realmSeeds";
 import type { MapPackKind } from "@/lib/mapImagePrompt";
 import type { PropItemCategory } from "@/lib/propImagePrompt";
 import {
@@ -15,7 +33,39 @@ import {
   type AdventureSceneSnippet,
 } from "@/lib/extractAdventureScenes";
 
-type GenerateMode = "realm" | "adventure" | "characters" | "maps" | "props";
+type GenerateMode =
+  | "realm"
+  | "adventure"
+  | "characters"
+  | "maps"
+  | "props"
+  | "library";
+
+/** Sidebar width is capped (~max-w-md); never squeeze six tabs in one row there. */
+const MODE_TAB_ORDER: readonly GenerateMode[] = [
+  "realm",
+  "adventure",
+  "characters",
+  "props",
+  "maps",
+  "library",
+] as const;
+
+const MODE_TAB_LABEL: Record<GenerateMode, string> = {
+  realm: "Realm",
+  adventure: "Adventure",
+  characters: "Characters",
+  props: "Props",
+  maps: "Maps",
+  library: "Library",
+};
+
+type PendingRealmSeed = {
+  realmSize: RealmSize;
+  titleHint: string;
+  briefDescription: string;
+  markdown: string;
+};
 
 type GeneratedImage = {
   kind: string;
@@ -200,16 +250,23 @@ function parseResponseBodyJson(
   }
 }
 
-async function fetchMapImageResult(payload: MapFormState): Promise<{
+async function fetchMapImageResult(
+  payload: MapFormState,
+  libraryReferenceMarkdown?: string,
+): Promise<{
   images: Array<{ kind: string; imageDataUrl: string }>;
   model: string | null;
   error: string | null;
 }> {
   try {
+    const trimmedRef = libraryReferenceMarkdown?.trim();
     const res = await fetch("/api/generate-map-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        ...(trimmedRef ? { libraryReferenceMarkdown: trimmedRef } : {}),
+      }),
     });
     const raw = await res.text();
     const parsed = parseResponseBodyJson(res, raw);
@@ -360,12 +417,18 @@ async function mapWithConcurrency<T, R>(
 async function fetchAdventureResultStream(
   payload: FormState,
   callbacks: { onChunk: (chunk: string) => void; onModel: (model: string) => void },
+  realmSeedMarkdown?: string,
 ): Promise<{ markdown: string; model: string | null; error: string | null }> {
   try {
+    const trimmedSeed = realmSeedMarkdown?.trim();
     const res = await fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-      body: JSON.stringify({ ...payload, stream: true }),
+      body: JSON.stringify({
+        ...payload,
+        ...(trimmedSeed ? { realmSeedMarkdown: trimmedSeed } : {}),
+        stream: true,
+      }),
     });
     if (!res.ok) {
       const errBody = await res.text();
@@ -553,11 +616,97 @@ export default function Home(props: PageProps<"/">) {
   const [autoGenerateAdventureProps, setAutoGenerateAdventureProps] = useState(true);
   const [autoGenerateRealmMapImage, setAutoGenerateRealmMapImage] = useState(true);
   const [progressStage, setProgressStage] = useState<ProgressStage>("idle");
+  const [realmSeeds, setRealmSeeds] = useState<SavedRealmSeed[]>([]);
+  const [selectedRealmSeedId, setSelectedRealmSeedId] = useState("");
+  const [pendingRealmSeed, setPendingRealmSeed] = useState<PendingRealmSeed | null>(
+    null,
+  );
+  const [pendingSeedNameDraft, setPendingSeedNameDraft] = useState("");
+  const [realmSeedDialogError, setRealmSeedDialogError] = useState("");
+
+  useEffect(() => {
+    setRealmSeeds(loadRealmSeeds());
+  }, []);
+
+  useEffect(() => {
+    if (!selectedRealmSeedId) return;
+    if (!realmSeeds.some((s) => s.id === selectedRealmSeedId)) {
+      setSelectedRealmSeedId("");
+    }
+  }, [realmSeeds, selectedRealmSeedId]);
+
+  useEffect(() => {
+    if (pendingRealmSeed) setRealmSeedDialogError("");
+  }, [pendingRealmSeed]);
+
+  function selectMode(next: GenerateMode) {
+    setMode(next);
+    switch (next) {
+      case "realm":
+        setRealmForm(initialRealmForm);
+        break;
+      case "adventure":
+        setForm(initialForm);
+        break;
+      case "characters":
+        setForm(initialFormCharacters);
+        break;
+      case "props":
+        setPropForm(initialPropFormStandalone);
+        break;
+      case "maps":
+        setMapForm(initialMapForm);
+        break;
+      case "library":
+        break;
+      default:
+        break;
+    }
+  }
+
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
+  const [selectedLibraryId, setSelectedLibraryId] = useState<string | null>(
+    null,
+  );
+  const [libraryKindFilter, setLibraryKindFilter] = useState<
+    LibraryKind | "all"
+  >("all");
+  /** Checked rows for bulk delete (ids may include items hidden by filter). */
+  const [libraryCheckedIds, setLibraryCheckedIds] = useState<string[]>([]);
+  /** Maps tab: optional Library entry whose Markdown grounds the image prompt. */
+  const [mapLibraryReferenceId, setMapLibraryReferenceId] = useState("");
+
+  useEffect(() => {
+    setLibraryItems(loadGenerationLibraryItems());
+  }, []);
+
+  useEffect(() => {
+    const valid = new Set(libraryItems.map((i) => i.id));
+    setLibraryCheckedIds((prev) => prev.filter((id) => valid.has(id)));
+  }, [libraryItems]);
+
+  useEffect(() => {
+    if (!mapLibraryReferenceId) return;
+    if (!libraryItems.some((i) => i.id === mapLibraryReferenceId)) {
+      setMapLibraryReferenceId("");
+    }
+  }, [libraryItems, mapLibraryReferenceId]);
+
+  function mapLibraryReferenceMarkdownForApi(): string | undefined {
+    if (!mapLibraryReferenceId.trim()) return undefined;
+    const item = libraryItems.find((i) => i.id === mapLibraryReferenceId);
+    if (!item) return undefined;
+    const md = item.markdown.trim();
+    if (md) return md;
+    return `# ${item.title}\n\n*(${LIBRARY_KIND_LABEL[item.kind]} — this library entry has no saved text; use the map form fields as the primary brief.)*`;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (mode === "library") return;
     setLoading(true);
     setError(null);
+    setPendingRealmSeed(null);
     setMarkdown("");
     setModel(null);
     setImageError(null);
@@ -575,9 +724,22 @@ export default function Home(props: PageProps<"/">) {
 
     try {
       if (mode === "maps") {
-        const ok = await generateMapImage(mapForm);
-        if (ok) {
+        const mapResult = await generateMapImage(
+          mapForm,
+          mapLibraryReferenceMarkdownForApi(),
+        );
+        if (mapResult.ok) {
           setProgressStage("complete");
+          setLibraryItems(
+            appendGenerationLibraryItem({
+              kind: "maps",
+              title: mapForm.locationName.trim() || "Maps",
+              markdown: "",
+              textModel: null,
+              imageModel: mapResult.model,
+              images: mapResult.images,
+            }),
+          );
         }
         return;
       }
@@ -587,9 +749,22 @@ export default function Home(props: PageProps<"/">) {
           setProgressStage("idle");
           return;
         }
-        const ok = await generateStandalonePropImage(propForm);
-        if (ok) {
+        const propResult = await generateStandalonePropImage(propForm);
+        if (propResult.ok) {
           setProgressStage("complete");
+          setLibraryItems(
+            appendGenerationLibraryItem({
+              kind: "props",
+              title:
+                propForm.title.trim() ||
+                propForm.description.trim().slice(0, 72) ||
+                "Prop handout",
+              markdown: "",
+              textModel: null,
+              imageModel: propResult.model,
+              images: propResult.images,
+            }),
+          );
         }
         return;
       }
@@ -611,6 +786,19 @@ export default function Home(props: PageProps<"/">) {
         if (streamed.markdown) {
           setMarkdown(streamed.markdown);
           setModel(streamed.model ?? null);
+          const briefDescription = realmForm.description.trim().slice(0, 400);
+          const titleSnap = realmForm.titleHint.trim();
+          let realmLibImages: GeneratedImage[] = [];
+          let realmLibImgModel: string | null = null;
+          setPendingRealmSeed({
+            realmSize: realmForm.realmSize,
+            titleHint: titleSnap,
+            briefDescription,
+            markdown: streamed.markdown,
+          });
+          setPendingSeedNameDraft(
+            suggestedSeedName(streamed.markdown, titleSnap),
+          );
           if (autoGenerateRealmMapImage) {
             setImageLoading(true);
             setImageError(null);
@@ -628,13 +816,14 @@ export default function Home(props: PageProps<"/">) {
               if (r.error) {
                 setImageError(r.error);
               } else {
-                setMapImages(
-                  r.images.map((img) => ({
-                    ...img,
-                    label: "Realm map",
-                  })),
-                );
+                const imgs = r.images.map((img) => ({
+                  ...img,
+                  label: "Realm map",
+                }));
+                setMapImages(imgs);
                 setImageModel(r.model);
+                realmLibImages = imgs;
+                realmLibImgModel = r.model;
               }
             } finally {
               setImageLoading(false);
@@ -643,6 +832,18 @@ export default function Home(props: PageProps<"/">) {
           } else {
             setProgressStage("complete");
           }
+          const realmLibTitle =
+            firstHeading(streamed.markdown) ?? titleSnap || "Realm";
+          setLibraryItems(
+            appendGenerationLibraryItem({
+              kind: "realm",
+              title: realmLibTitle,
+              markdown: streamed.markdown,
+              textModel: streamed.model ?? null,
+              imageModel: realmLibImgModel,
+              images: realmLibImages,
+            }),
+          );
           setRealmForm(emptyRealmForm);
         } else {
           setError("No generated text returned.");
@@ -666,10 +867,17 @@ export default function Home(props: PageProps<"/">) {
       let generatedMarkdown = "";
       let generatedModel: string | null = null;
       if (mode === "adventure") {
-        const streamed = await fetchAdventureResultStream(form, {
-          onChunk: (chunk) => setMarkdown((prev) => prev + chunk),
-          onModel: (m) => setModel(m),
-        });
+        const seedMarkdown = selectedRealmSeedId
+          ? realmSeeds.find((s) => s.id === selectedRealmSeedId)?.markdown
+          : undefined;
+        const streamed = await fetchAdventureResultStream(
+          form,
+          {
+            onChunk: (chunk) => setMarkdown((prev) => prev + chunk),
+            onModel: (m) => setModel(m),
+          },
+          seedMarkdown,
+        );
         if (streamed.error) {
           setError(streamed.error);
           return;
@@ -706,6 +914,8 @@ export default function Home(props: PageProps<"/">) {
         setMarkdown(generatedMarkdown);
         setModel(generatedModel ?? null);
         setProgressStage("adventure_done");
+        let recordImages: GeneratedImage[] = [];
+        let recordImageModel: string | null = null;
         if (
           mode === "adventure" &&
           (autoGenerateAdventureMap || autoGenerateAdventureProps)
@@ -842,6 +1052,8 @@ export default function Home(props: PageProps<"/">) {
               }
             }
 
+            recordImages = collected;
+            recordImageModel = workflowModel;
             setMapImages(collected);
             setImageModel(workflowModel);
             if (workflowError) {
@@ -856,6 +1068,22 @@ export default function Home(props: PageProps<"/">) {
         } else {
           setProgressStage("complete");
         }
+        const libKind: LibraryKind =
+          mode === "characters" ? "characters" : "adventure";
+        const libTitle =
+          firstHeading(generatedMarkdown) ??
+          form.titleHint.trim() ||
+          (libKind === "characters" ? "Characters" : "Adventure");
+        setLibraryItems(
+          appendGenerationLibraryItem({
+            kind: libKind,
+            title: libTitle,
+            markdown: generatedMarkdown,
+            textModel: generatedModel,
+            imageModel: recordImageModel,
+            images: recordImages,
+          }),
+        );
       } else {
         setError("No generated text returned.");
         setProgressStage("error");
@@ -869,10 +1097,29 @@ export default function Home(props: PageProps<"/">) {
   }
 
   async function handleGenerateMapImage() {
-    await generateMapImage(mapForm);
+    const r = await generateMapImage(
+      mapForm,
+      mapLibraryReferenceMarkdownForApi(),
+    );
+    if (r.ok) {
+      setLibraryItems(
+        appendGenerationLibraryItem({
+          kind: "maps",
+          title: mapForm.locationName.trim() || "Maps",
+          markdown: "",
+          textModel: null,
+          imageModel: r.model,
+          images: r.images,
+        }),
+      );
+    }
   }
 
   function imageDownloadBaseName(): string {
+    const lib = activeLibraryExport();
+    if (lib) {
+      return slugify(lib.title) || `ddeasy-${lib.kind}`;
+    }
     if (markdown.trim()) {
       return fileBaseName(markdown, mode);
     }
@@ -889,38 +1136,50 @@ export default function Home(props: PageProps<"/">) {
     triggerDownloadFromDataUrl(imageDataUrl, filename);
   }
 
-  async function generateMapImage(payload: MapFormState) {
+  async function generateMapImage(
+    payload: MapFormState,
+    libraryRefMarkdown?: string,
+  ): Promise<
+    | { ok: true; images: GeneratedImage[]; model: string | null }
+    | { ok: false }
+  > {
     setImageLoading(true);
     setImageError(null);
     setMapImages([]);
     setImageModel(null);
 
     try {
-      const result = await fetchMapImageResult(payload);
+      const result = await fetchMapImageResult(payload, libraryRefMarkdown);
       if (result.error) {
         setImageError(result.error);
         setProgressStage("error");
-        return false;
+        return { ok: false };
       }
       const hasLocale = result.images.some((img) => img.kind === "locale");
       const hasBattle = result.images.some((img) => img.kind === "battle");
       if (hasLocale) {
         setProgressStage(hasBattle ? "map_battle_generating" : "map_locale_generating");
       }
-      setMapImages(result.images.map((img) => ({ ...img })));
+      const images = result.images.map((img) => ({ ...img }));
+      setMapImages(images);
       setImageModel(result.model);
       setProgressStage("map_done");
-      return true;
+      return { ok: true, images, model: result.model };
     } catch (err) {
       setImageError(err instanceof Error ? err.message : "Network error");
       setProgressStage("error");
-      return false;
+      return { ok: false };
     } finally {
       setImageLoading(false);
     }
   }
 
-  async function generateStandalonePropImage(payload: PropFormState) {
+  async function generateStandalonePropImage(
+    payload: PropFormState,
+  ): Promise<
+    | { ok: true; images: GeneratedImage[]; model: string | null }
+    | { ok: false }
+  > {
     setImageLoading(true);
     setImageError(null);
     setMapImages([]);
@@ -931,63 +1190,193 @@ export default function Home(props: PageProps<"/">) {
       if (result.error) {
         setImageError(result.error);
         setProgressStage("error");
-        return false;
+        return { ok: false };
       }
       const label = payload.title.trim() || "Prop handout";
-      setMapImages(
-        result.images.map((img) => ({
-          ...img,
-          label,
-        })),
-      );
+      const images = result.images.map((img) => ({
+        ...img,
+        label,
+      }));
+      setMapImages(images);
       setImageModel(result.model);
-      return true;
+      return { ok: true, images, model: result.model };
     } catch (err) {
       setImageError(err instanceof Error ? err.message : "Network error");
       setProgressStage("error");
-      return false;
+      return { ok: false };
     } finally {
       setImageLoading(false);
     }
   }
 
+  function activeLibraryExport(): LibraryItem | null {
+    return mode === "library" && selectedLibraryId
+      ? libraryItems.find((i) => i.id === selectedLibraryId) ?? null
+      : null;
+  }
+
+  function exportMarkdownForDownload(): string {
+    return activeLibraryExport()?.markdown ?? markdown;
+  }
+
+  function exportModeForDownload(): GenerateMode {
+    const lib = activeLibraryExport();
+    if (lib) return lib.kind;
+    if (mode === "library") return "adventure";
+    return mode;
+  }
+
   function copyMarkdown() {
-    if (!markdown) return;
-    void navigator.clipboard.writeText(markdown);
+    const md = exportMarkdownForDownload();
+    if (!md.trim()) return;
+    void navigator.clipboard.writeText(md);
   }
 
   function downloadMarkdown() {
-    if (!markdown) return;
-    const name = `${fileBaseName(markdown, mode)}.md`;
+    const md = exportMarkdownForDownload();
+    if (!md.trim()) return;
+    const m = exportModeForDownload();
+    const name = `${fileBaseName(md, m)}.md`;
     triggerDownload(
-      new Blob([markdown], { type: "text/markdown;charset=utf-8" }),
+      new Blob([md], { type: "text/markdown;charset=utf-8" }),
       name,
     );
   }
 
   function downloadHtml() {
-    if (!markdown) return;
+    const md = exportMarkdownForDownload();
+    if (!md.trim()) return;
+    const m = exportModeForDownload();
     const title =
-      firstHeading(markdown) ??
-      (mode === "realm"
+      firstHeading(md) ??
+      (m === "realm"
         ? "Realm"
-        : mode === "adventure"
+        : m === "adventure"
           ? "Adventure"
-          : mode === "characters"
+          : m === "characters"
             ? "Characters"
-            : mode === "props"
+            : m === "props"
               ? "Props"
               : "Maps");
-    const doc = buildStandaloneHtmlDocument(title, markdownToBasicHtml(markdown));
-    const name = `${fileBaseName(markdown, mode)}.html`;
+    const doc = buildStandaloneHtmlDocument(title, markdownToBasicHtml(md));
+    const name = `${fileBaseName(md, m)}.html`;
     triggerDownload(
       new Blob([doc], { type: "text/html;charset=utf-8" }),
       name,
     );
   }
 
+  const selectedLibraryItem =
+    mode === "library" && selectedLibraryId
+      ? libraryItems.find((i) => i.id === selectedLibraryId) ?? null
+      : null;
+  const filteredLibraryItems =
+    libraryKindFilter === "all"
+      ? libraryItems
+      : libraryItems.filter((i) => i.kind === libraryKindFilter);
+  const previewMarkdown =
+    mode === "library" ? (selectedLibraryItem?.markdown ?? "") : markdown;
+  const previewImages: GeneratedImage[] =
+    mode === "library"
+      ? selectedLibraryItem
+        ? (selectedLibraryItem.images as GeneratedImage[])
+        : []
+      : mapImages;
+  const previewTextModel =
+    mode === "library" && selectedLibraryItem
+      ? selectedLibraryItem.textModel
+      : model;
+  const previewImageModel =
+    mode === "library" && selectedLibraryItem
+      ? selectedLibraryItem.imageModel
+      : imageModel;
+  const outputLayoutKind: LibraryKind =
+    mode === "library"
+      ? selectedLibraryItem?.kind ?? "adventure"
+      : (mode as LibraryKind);
+
   return (
     <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:gap-10">
+      {pendingRealmSeed ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="realm-seed-name-title"
+        >
+          <div
+            className="w-full max-w-md rounded-xl border p-6 shadow-lg"
+            style={{
+              background: "var(--surface)",
+              borderColor: "var(--border)",
+            }}
+          >
+            <h2
+              id="realm-seed-name-title"
+              className="text-lg font-semibold text-[var(--text)]"
+            >
+              Save realm seed
+            </h2>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Give this realm a name for the adventure tab library. You can edit the
+              suggestion or skip if you do not need a saved seed.
+            </p>
+            <label className="mt-4 flex flex-col gap-1.5 text-sm">
+              <span className="font-medium text-[var(--muted)]">Seed name</span>
+              <input
+                value={pendingSeedNameDraft}
+                onChange={(e) => {
+                  setRealmSeedDialogError("");
+                  setPendingSeedNameDraft(e.target.value);
+                }}
+                className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                style={{ borderColor: "var(--border)" }}
+                autoFocus
+              />
+            </label>
+            {realmSeedDialogError ? (
+              <p className="mt-2 text-sm text-red-500">{realmSeedDialogError}</p>
+            ) : null}
+            <div className="mt-6 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const name = pendingSeedNameDraft.trim();
+                  if (!name) {
+                    setRealmSeedDialogError("Enter a name, or choose Skip.");
+                    return;
+                  }
+                  setRealmSeeds(
+                    appendRealmSeed({
+                      seedName: name,
+                      realmSize: pendingRealmSeed.realmSize,
+                      titleHint: pendingRealmSeed.titleHint,
+                      briefDescription: pendingRealmSeed.briefDescription,
+                      markdown: pendingRealmSeed.markdown,
+                    }),
+                  );
+                  setPendingRealmSeed(null);
+                }}
+                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-black transition enabled:hover:opacity-90"
+                style={{ background: "var(--accent)" }}
+              >
+                Save to library
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRealmSeedDialogError("");
+                  setPendingRealmSeed(null);
+                }}
+                className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--bg)]"
+                style={{ borderColor: "var(--border)" }}
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <section
         className="w-full shrink-0 rounded-xl border p-6 lg:max-w-md"
         style={{
@@ -995,118 +1384,261 @@ export default function Home(props: PageProps<"/">) {
           borderColor: "var(--border)",
         }}
       >
-        <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">
-          {mode === "realm"
-            ? "Realm (5.2)"
-            : mode === "adventure"
-              ? "Adventure (5.2)"
-              : mode === "characters"
-                ? "Pre-made characters (5.2)"
-                : mode === "props"
-                  ? "Props (handouts)"
-                  : "Maps (5.2)"}
-        </h1>
-        <p className="mt-2 text-sm text-[var(--muted)]">
-          {mode === "realm"
-            ? "Choose the scale of the place (from a whole world down to a local cluster), then describe what you want. Claude returns table-ready setting Markdown—original, not WotC copy."
-            : mode === "adventure"
-              ? "Pick a length: short session or one-nighter. Original and SRD-aware—not official WotC content."
-              : mode === "characters"
-                ? "Claude builds a ready-to-play party: stats, gear, and hooks. SRD-open options only."
-                : mode === "props"
-                  ? "Build handout images: paper props, potions, arms and armor, tools, and more. Pick an item type, describe it, generate—no adventure required."
-                  : "Generate cartographic-style locale and battle maps with OpenAI (top-down, grid-friendly, not fine-art illustrations)."}
-        </p>
-
-        <div
-          className="mt-4 grid grid-cols-2 gap-1 rounded-lg border p-1 text-xs font-medium sm:grid-cols-3 lg:grid-cols-5"
-          style={{ borderColor: "var(--border)" }}
-          role="tablist"
-          aria-label="Generation mode"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "realm"}
-            onClick={() => {
-              setMode("realm");
-              setRealmForm(initialRealmForm);
-            }}
-            className="rounded-md px-2 py-2 transition sm:px-3"
+        <div>
+          <p
+            id="mode-tablist-label"
+            className="mb-2 text-sm font-semibold text-[var(--text)]"
+          >
+            What do you want to create?
+          </p>
+          <div
+            className="rounded-xl border p-2"
             style={{
-              background: mode === "realm" ? "var(--accent)" : "transparent",
-              color: mode === "realm" ? "#000" : "var(--muted)",
+              borderColor: "var(--border)",
+              background: "rgba(0,0,0,0.12)",
             }}
           >
-            Realm
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "adventure"}
-            onClick={() => {
-              setMode("adventure");
-              setForm(initialForm);
-            }}
-            className="rounded-md px-2 py-2 transition sm:px-3"
-            style={{
-              background: mode === "adventure" ? "var(--accent)" : "transparent",
-              color: mode === "adventure" ? "#000" : "var(--muted)",
-            }}
-          >
-            Adventure
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "characters"}
-            onClick={() => {
-              setMode("characters");
-              setForm(initialFormCharacters);
-            }}
-            className="rounded-md px-2 py-2 transition sm:px-3"
-            style={{
-              background:
-                mode === "characters" ? "var(--accent)" : "transparent",
-              color: mode === "characters" ? "#000" : "var(--muted)",
-            }}
-          >
-            Characters
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "props"}
-            onClick={() => {
-              setMode("props");
-              setPropForm(initialPropFormStandalone);
-            }}
-            className="rounded-md px-2 py-2 transition sm:px-3"
-            style={{
-              background: mode === "props" ? "var(--accent)" : "transparent",
-              color: mode === "props" ? "#000" : "var(--muted)",
-            }}
-          >
-            Props
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "maps"}
-            onClick={() => {
-              setMode("maps");
-              setMapForm(initialMapForm);
-            }}
-            className="rounded-md px-2 py-2 transition sm:px-3"
-            style={{
-              background: mode === "maps" ? "var(--accent)" : "transparent",
-              color: mode === "maps" ? "#000" : "var(--muted)",
-            }}
-          >
-            Maps
-          </button>
+            <div
+              className="grid grid-cols-2 gap-2 sm:grid-cols-3"
+              role="tablist"
+              aria-labelledby="mode-tablist-label"
+            >
+              {MODE_TAB_ORDER.map((tabId) => {
+                const selected = mode === tabId;
+                return (
+                  <button
+                    key={tabId}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => selectMode(tabId)}
+                    className={`min-h-[2.75rem] rounded-lg border px-2 py-2 text-center text-sm font-medium leading-tight transition sm:min-h-[2.5rem] sm:px-3 sm:py-2.5 ${
+                      selected
+                        ? "border-[var(--accent)] bg-[var(--accent)] text-black shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
+                        : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--muted)] hover:text-[var(--text)]"
+                    } focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]`}
+                  >
+                    {MODE_TAB_LABEL[tabId]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
+        <h1 className="mt-6 text-xl font-semibold tracking-tight text-[var(--text)]">
+          {mode === "library"
+            ? "Library"
+            : mode === "realm"
+              ? "Realm (5.2)"
+              : mode === "adventure"
+                ? "Adventure (5.2)"
+                : mode === "characters"
+                  ? "Pre-made characters (5.2)"
+                  : mode === "props"
+                    ? "Props (handouts)"
+                    : "Maps (5.2)"}
+        </h1>
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          {mode === "library"
+            ? "Browse everything this app has generated in this browser—text and images. Open an entry to preview it in Output, copy Markdown, or download files."
+            : mode === "realm"
+              ? "Choose the scale of the place (from a whole world down to a local cluster), then describe what you want. Claude returns table-ready setting Markdown—original, not WotC copy."
+              : mode === "adventure"
+                ? "Pick a length: short session or one-nighter. Original and SRD-aware—not official WotC content."
+                : mode === "characters"
+                  ? "Claude builds a ready-to-play party: stats, gear, and hooks. SRD-open options only."
+                  : mode === "props"
+                    ? "Build handout images: paper props, potions, arms and armor, tools, and more. Pick an item type, describe it, generate—no adventure required."
+                    : "Generate cartographic-style locale and battle maps with OpenAI (top-down, grid-friendly, not fine-art illustrations)."}
+        </p>
+
+        {mode === "library" ? (
+          <div className="mt-6 flex max-h-[min(70vh,560px)] flex-col gap-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <SelectField
+                label="Show"
+                value={libraryKindFilter}
+                onChange={(v) =>
+                  setLibraryKindFilter(v as LibraryKind | "all")
+                }
+                options={[
+                  { value: "all", label: "All kinds" },
+                  { value: "realm", label: LIBRARY_KIND_LABEL.realm },
+                  { value: "adventure", label: LIBRARY_KIND_LABEL.adventure },
+                  {
+                    value: "characters",
+                    label: LIBRARY_KIND_LABEL.characters,
+                  },
+                  { value: "maps", label: LIBRARY_KIND_LABEL.maps },
+                  { value: "props", label: LIBRARY_KIND_LABEL.props },
+                ]}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const visible = filteredLibraryItems.map((i) => i.id);
+                    const allVisibleChecked =
+                      visible.length > 0 &&
+                      visible.every((id) => libraryCheckedIds.includes(id));
+                    if (allVisibleChecked) {
+                      setLibraryCheckedIds((prev) =>
+                        prev.filter((id) => !visible.includes(id)),
+                      );
+                    } else {
+                      setLibraryCheckedIds((prev) =>
+                        Array.from(new Set([...prev, ...visible])),
+                      );
+                    }
+                  }}
+                  disabled={filteredLibraryItems.length === 0}
+                  className="rounded-lg border px-3 py-2 text-xs font-semibold text-[var(--text)] transition enabled:hover:bg-[var(--bg)] disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  {filteredLibraryItems.length > 0 &&
+                  filteredLibraryItems.every((i) =>
+                    libraryCheckedIds.includes(i.id),
+                  )
+                    ? "Clear selection"
+                    : "Select visible"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (libraryCheckedIds.length === 0) return;
+                    if (
+                      !window.confirm(
+                        `Delete ${libraryCheckedIds.length} selected item(s)? This cannot be undone.`,
+                      )
+                    ) {
+                      return;
+                    }
+                    const remove = new Set(libraryCheckedIds);
+                    setLibraryItems(
+                      deleteGenerationLibraryItems(libraryCheckedIds),
+                    );
+                    setLibraryCheckedIds([]);
+                    if (selectedLibraryId && remove.has(selectedLibraryId)) {
+                      setSelectedLibraryId(null);
+                    }
+                  }}
+                  disabled={libraryCheckedIds.length === 0}
+                  className="rounded-lg border px-3 py-2 text-xs font-semibold text-[var(--text)] transition enabled:hover:bg-[var(--bg)] disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  Delete selected
+                  {libraryCheckedIds.length > 0
+                    ? ` (${libraryCheckedIds.length})`
+                    : ""}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      libraryItems.length > 0 &&
+                      !window.confirm(
+                        "Remove every saved generation from this browser?",
+                      )
+                    ) {
+                      return;
+                    }
+                    setLibraryItems(clearGenerationLibrary());
+                    setSelectedLibraryId(null);
+                    setLibraryCheckedIds([]);
+                  }}
+                  className="rounded-lg border px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-950/40"
+                  style={{ borderColor: "rgba(248,113,113,0.45)" }}
+                >
+                  DELETE ALL
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-[var(--muted)]">
+              Stored locally in this browser. Very large image packs can hit
+              storage limits; oldest library entries are removed first when space
+              runs out. Use the checkbox to select entries; click the title area to
+              preview in Output.
+            </p>
+            {filteredLibraryItems.length === 0 ? (
+              <p className="text-sm text-[var(--muted)]">
+                Nothing here yet. Each successful realm, adventure, character
+                sheet, map pack, or prop run is added automatically.
+              </p>
+            ) : (
+              <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
+                {filteredLibraryItems.map((item) => {
+                  const isChecked = libraryCheckedIds.includes(item.id);
+                  const isPreview = selectedLibraryId === item.id;
+                  return (
+                    <li key={item.id}>
+                      <div
+                        className={`flex gap-3 rounded-lg border p-3 text-sm transition ${
+                          isChecked ? "bg-[rgba(201,162,39,0.09)]" : ""
+                        }`}
+                        style={{
+                          borderColor: "var(--border)",
+                          outline: isPreview
+                            ? "2px solid var(--accent)"
+                            : "none",
+                        }}
+                      >
+                        <label className="mt-1 flex shrink-0 cursor-pointer items-start">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              setLibraryCheckedIds((prev) =>
+                                prev.includes(item.id)
+                                  ? prev.filter((x) => x !== item.id)
+                                  : [...prev, item.id],
+                              );
+                            }}
+                            className="h-4 w-4 accent-[var(--accent)]"
+                            aria-label={`Select “${item.title}” for bulk delete`}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="min-w-0 flex-1 text-left"
+                          onClick={() => setSelectedLibraryId(item.id)}
+                        >
+                          <span className="font-semibold text-[var(--text)]">
+                            {item.title}
+                          </span>
+                          <span className="mt-1 block text-xs text-[var(--muted)]">
+                            {LIBRARY_KIND_LABEL[item.kind]} ·{" "}
+                            {new Date(item.createdAt).toLocaleString()}
+                            {!item.markdown.trim() && item.images.length > 0
+                              ? " · images only"
+                              : null}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          className="shrink-0 self-start rounded-md border px-2 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                          style={{ borderColor: "var(--border)" }}
+                          onClick={() => {
+                            const next = deleteGenerationLibraryItem(item.id);
+                            setLibraryItems(next);
+                            setLibraryCheckedIds((prev) =>
+                              prev.filter((x) => x !== item.id),
+                            );
+                            if (selectedLibraryId === item.id) {
+                              setSelectedLibraryId(null);
+                            }
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
           {mode === "maps" ? (
             <>
@@ -1173,6 +1705,30 @@ export default function Home(props: PageProps<"/">) {
                   ))}
                 </div>
               </fieldset>
+              <SelectField
+                label="Library reference"
+                value={mapLibraryReferenceId}
+                onChange={setMapLibraryReferenceId}
+                options={[
+                  {
+                    value: "",
+                    label:
+                      libraryItems.length > 0
+                        ? "None — map form only"
+                        : "None — save runs in Library first",
+                  },
+                  ...libraryItems.map((i) => ({
+                    value: i.id,
+                    label: `${i.title.length > 52 ? `${i.title.slice(0, 52)}…` : i.title} (${LIBRARY_KIND_LABEL[i.kind]})`,
+                  })),
+                ]}
+              />
+              <p className="text-xs text-[var(--muted)]">
+                Optional: pick any Library item so geography and names from that
+                saved text guide the map. Your scene context and grid notes below
+                still apply; entries with images only use title and kind as a
+                thin hint.
+              </p>
               <Field
                 label="Location or region name"
                 value={mapForm.locationName}
@@ -1543,6 +2099,50 @@ export default function Home(props: PageProps<"/">) {
           ) : null}
           {mode === "adventure" ? (
             <div
+              className="flex flex-col gap-3 rounded-lg border p-3 text-sm"
+              style={{ borderColor: "var(--border)" }}
+            >
+              <SelectField
+                label="Realm seed"
+                value={selectedRealmSeedId}
+                onChange={setSelectedRealmSeedId}
+                options={[
+                  {
+                    value: "",
+                    label:
+                      realmSeeds.length > 0
+                        ? "None — setting comes from the fields below only"
+                        : "None — generate a realm first; it is saved automatically",
+                  },
+                  ...realmSeeds.map((s) => ({
+                    value: s.id,
+                    label: realmSeedOptionLabel(s),
+                  })),
+                ]}
+              />
+              <p className="text-xs text-[var(--muted)]">
+                Finished realms are stored in this browser and can anchor adventure geography,
+                factions, and lore. Your adventure brief below still controls plot, level band,
+                and tone.
+              </p>
+              {selectedRealmSeedId ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = deleteRealmSeed(selectedRealmSeedId);
+                    setRealmSeeds(next);
+                    setSelectedRealmSeedId("");
+                  }}
+                  className="self-start rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] transition hover:bg-[var(--bg)]"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  Delete this saved realm
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+          {mode === "adventure" ? (
+            <div
               className="flex flex-col gap-2 rounded-lg border p-3 text-sm"
               style={{ borderColor: "var(--border)" }}
             >
@@ -1725,6 +2325,7 @@ export default function Home(props: PageProps<"/">) {
                       : "Generate maps"}
           </button>
         </form>
+        )}
       </section>
 
       <section
@@ -1736,9 +2337,9 @@ export default function Home(props: PageProps<"/">) {
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-medium">Output</h2>
-          {markdown || mapImages.length > 0 ? (
+          {previewMarkdown.trim() || previewImages.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {markdown ? (
+              {previewMarkdown.trim() ? (
                 <>
                   <button
                     type="button"
@@ -1769,29 +2370,31 @@ export default function Home(props: PageProps<"/">) {
             </div>
           ) : null}
         </div>
-        {model || imageModel ? (
+        {previewTextModel || previewImageModel ? (
           <p className="mt-1 text-xs text-[var(--muted)]">
-            {model ? `Text model: ${model}` : null}
-            {model && imageModel ? " · " : null}
-            {imageModel ? `Image model: ${imageModel}` : null}
+            {previewTextModel ? `Text model: ${previewTextModel}` : null}
+            {previewTextModel && previewImageModel ? " · " : null}
+            {previewImageModel ? `Image model: ${previewImageModel}` : null}
           </p>
         ) : null}
-        <ProgressPanel
-          mode={mode}
-          stage={progressStage}
-          loading={loading}
-          imageLoading={imageLoading}
-          autoMapEnabled={autoGenerateAdventureMap}
-          autoPropsEnabled={autoGenerateAdventureProps}
-          autoRealmMapEnabled={autoGenerateRealmMapImage}
-        />
-        {markdown ? (
+        {mode !== "library" ? (
+          <ProgressPanel
+            mode={mode}
+            stage={progressStage}
+            loading={loading}
+            imageLoading={imageLoading}
+            autoMapEnabled={autoGenerateAdventureMap}
+            autoPropsEnabled={autoGenerateAdventureProps}
+            autoRealmMapEnabled={autoGenerateRealmMapImage}
+          />
+        ) : null}
+        {previewMarkdown.trim() ? (
           <p className="mt-2 max-w-xl text-xs leading-relaxed text-[var(--muted)]">
             Tip: open the <strong className="text-[var(--text)]/80">.md</strong> file in
             Obsidian or VS Code; open the <strong className="text-[var(--text)]/80">.html</strong>{" "}
             in your browser and use <strong className="text-[var(--text)]/80">Print → Save as PDF</strong>{" "}
             for a PDF.{" "}
-            {mode === "maps"
+            {outputLayoutKind === "maps"
               ? "You can download locale and battle images as PNG for VTTs or handouts."
                 : "You can also paste Markdown into Google Docs / Word."}
           </p>
@@ -1814,29 +2417,51 @@ export default function Home(props: PageProps<"/">) {
           </p>
         ) : null}
 
-        {mode === "realm" ? (
+        {outputLayoutKind === "realm" ? (
           <>
-            {markdown ? (
+            {previewMarkdown.trim() ? (
               <article
                 className="adventure-md mt-6 max-w-none text-[var(--text)]"
-                dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(markdown) }}
+                dangerouslySetInnerHTML={{
+                  __html: simpleMarkdownToHtml(previewMarkdown),
+                }}
               />
             ) : null}
-            <MapImageOutputBlock mapImages={mapImages} onDownloadMap={downloadMapImage} />
+            <MapImageOutputBlock
+              mapImages={previewImages}
+              onDownloadMap={downloadMapImage}
+            />
           </>
         ) : (
           <>
-            <MapImageOutputBlock mapImages={mapImages} onDownloadMap={downloadMapImage} />
-            {markdown && mode !== "maps" && mode !== "props" ? (
+            <MapImageOutputBlock
+              mapImages={previewImages}
+              onDownloadMap={downloadMapImage}
+            />
+            {previewMarkdown.trim() &&
+            outputLayoutKind !== "maps" &&
+            outputLayoutKind !== "props" ? (
               <article
                 className="adventure-md mt-6 max-w-none text-[var(--text)]"
-                dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(markdown) }}
+                dangerouslySetInnerHTML={{
+                  __html: simpleMarkdownToHtml(previewMarkdown),
+                }}
               />
             ) : null}
           </>
         )}
 
-        {!loading && !error && !markdown && mapImages.length === 0 ? (
+        {mode === "library" && !selectedLibraryItem ? (
+          <p className="mt-8 text-sm text-[var(--muted)]">
+            Select an entry in the Library list to preview its text and images
+            here.
+          </p>
+        ) : null}
+        {!loading &&
+        !error &&
+        !previewMarkdown.trim() &&
+        previewImages.length === 0 &&
+        mode !== "library" ? (
           <p className="mt-8 text-sm text-[var(--muted)]">
             {mode === "realm"
               ? "Pick a realm size, describe what you want, and generate table-ready setting Markdown."
@@ -2044,6 +2669,10 @@ function getProgressItems(
   autoPropsEnabled: boolean,
   autoRealmMapEnabled: boolean,
 ): Array<{ label: string; state: "pending" | "active" | "done" }> {
+  if (mode === "library") {
+    return [];
+  }
+
   if (mode === "characters") {
     return [
       { label: "Generate characters", state: stateFor(stage, "adventure_generating", "complete") },
@@ -2251,6 +2880,9 @@ function firstHeading(md: string): string | null {
 }
 
 function fileBaseName(md: string, mode: GenerateMode): string {
+  if (mode === "library") {
+    return slugify(firstHeading(md) ?? "") || "ddeasy-library";
+  }
   const fromTitle = firstHeading(md);
   const slug = slugify(fromTitle ?? "");
   if (slug) return slug;

@@ -34,6 +34,16 @@ function parseQuality(value: unknown): "medium" | "high" {
   return raw === "medium" ? "medium" : "high";
 }
 
+const MAX_LIBRARY_REF_CHARS = 48_000;
+
+function parseLibraryReferenceMarkdown(value: unknown): string | undefined {
+  const raw = String(value ?? "").trim();
+  if (!raw) return undefined;
+  return raw.length > MAX_LIBRARY_REF_CHARS
+    ? raw.slice(0, MAX_LIBRARY_REF_CHARS)
+    : raw;
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -53,6 +63,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
+  const libraryReferenceMarkdown = parseLibraryReferenceMarkdown(
+    body.libraryReferenceMarkdown,
+  );
+
   const input: MapImageInput = {
     mapKind: parseMapKind(body.mapKind),
     locationName: String(body.locationName ?? "").trim(),
@@ -62,6 +76,9 @@ export async function POST(request: Request) {
     context: String(body.context ?? "").trim(),
     gridNotes: String(body.gridNotes ?? "").trim(),
     extraNotes: String(body.extraNotes ?? "").trim(),
+    ...(libraryReferenceMarkdown
+      ? { libraryReferenceMarkdown }
+      : {}),
   };
 
   const size = parseSize(body.imageSize);

@@ -33,6 +33,16 @@ function parseCombatIntensity(value: unknown): CombatIntensity {
   return clamped as CombatIntensity;
 }
 
+const MAX_REALM_SEED_CHARS = 96_000;
+
+function parseRealmSeedMarkdown(value: unknown): string | undefined {
+  const raw = String(value ?? "").trim();
+  if (!raw) return undefined;
+  return raw.length > MAX_REALM_SEED_CHARS
+    ? raw.slice(0, MAX_REALM_SEED_CHARS)
+    : raw;
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -49,6 +59,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
+  const realmSeedMarkdown = parseRealmSeedMarkdown(body.realmSeedMarkdown);
+
   const input: AdventureInput = {
     adventureLength: parseAdventureLength(body.adventureLength),
     combatIntensity: parseCombatIntensity(body.combatIntensity),
@@ -60,6 +72,7 @@ export async function POST(request: Request) {
     partySize: String(body.partySize ?? "4").trim(),
     sessionLength: String(body.sessionLength ?? "3–4 hours").trim(),
     extraNotes: String(body.extraNotes ?? "").trim(),
+    ...(realmSeedMarkdown ? { realmSeedMarkdown } : {}),
   };
 
   try {

@@ -3,6 +3,7 @@ import {
   IMAGE_PROMPT_SAFETY_PREAMBLE,
   MAP_CARTOGRAPHER_HAND_LOOK,
 } from "@/lib/openaiImagePrompt";
+import { stripRealmMarkdownForImage } from "@/lib/realmImagePrompt";
 
 export type MapPackKind = "overland" | "battle" | "both";
 
@@ -15,6 +16,8 @@ export type MapImageInput = {
   context: string;
   gridNotes: string;
   extraNotes: string;
+  /** Optional Library Markdown — geography, names, and layout hints from a saved generation. */
+  libraryReferenceMarkdown?: string;
 };
 
 export type MapImageDetail = "medium" | "high";
@@ -49,6 +52,11 @@ export function buildMapImagePrompt(
   );
   const extraNotes = clampImagePromptText(input.extraNotes || "(none)", 500);
 
+  const refRaw = input.libraryReferenceMarkdown?.trim();
+  const referenceBlock = refRaw
+    ? `\n**Saved library reference (geography and names — align the map when compatible):**\nThe user attached text from this app’s **Library** (a saved realm, adventure, character sheet, or other run). Treat **named places, terrain, routes, architecture, and scale cues** as **authoritative** when they fit this map type. For a **locale / overland** image, favor regional layout and exterior geography; for a **battle** map, zoom to encounter-sensible rooms, chokepoints, or site interiors **without** contradicting names or relationships in the reference. If the reference implies a broader scope than this single map, **extract** only what belongs on this plate.\n\n---\n${clampImagePromptText(stripRealmMarkdownForImage(refRaw) || refRaw.slice(0, 4000), 4000)}\n---\n`
+    : "";
+
   return `${IMAGE_PROMPT_SAFETY_PREAMBLE}
 
 Create ONE fantasy map graphic for tabletop play. Prioritize cartography (clear symbols, line weights, and regions players can use) over illustration (no fine-art painting, dramatic lighting, or “concept art” scene).
@@ -56,7 +64,7 @@ Create ONE fantasy map graphic for tabletop play. Prioritize cartography (clear 
 ${MAP_CARTOGRAPHER_HAND_LOOK}
 
 ${mapTypeLine}
-
+${referenceBlock}
 Context:
 - Location name: ${locationName}
 - Party level band: ${levelRange}

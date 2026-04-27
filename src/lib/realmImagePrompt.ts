@@ -33,11 +33,11 @@ export const REALM_MAP_DETAIL_BY_SIZE: Record<RealmSize, string> = {
   continent:
     "Regional map: large terrain bands, major rivers and passes, hub points. **Labels:** name **key** regions, straits, or famous cities the source emphasizes—enough to orient, not every feature.",
   country:
-    "Country-scale: provinces, roads, borders, forests, ports. **Labels:** principal regions, the capital or one other **iconic** city, and any critical geographic names from the source—clear, not a gazetteer.",
+    "Country-scale: internal borders or marches, provinces, large forests and uplands, coasts and **principal ports** where the source implies them. **Rivers:** draw **main rivers** (and major named tributaries the source stresses) as **continuous blue courses**—show mouths, big bends, and confluences; **short river names** on-map where the text names them. **Major roads:** show a **legible network of primary routes** (royal highways, trade roads, pilgrimage spines)—**visibly stronger** than minor tracks; label **named passes, gates, or roads** from the source once each. **Landmarks:** use simple cartographic symbols for iconic peaks, ruins, battlefields, or holy sites the source highlights, with **short labels**. **Settlement labels:** capital, a few **principal** cities or ports, plus region names—prioritize what the source ties to travel and politics; not a gazetteer.",
   region:
-    "Regional zoom: duchy or border march—roads, woods, sites. **Labels:** the province or march name plus **key** towns, fords, keeps, or rivers named in the source that matter for play.",
+    "Regional zoom: duchy or border march—relief, woods, and settlement pattern at readable scale. **Rivers:** map **main rivers** that cross or bound the area and **important streams** the source names—distinct blue linework; label **rivers, fords, and key crossings** that matter for play. **Roads:** show **major roads** linking **named** towns plus secondary links to keeps or border posts; **named bridges, passes, or toll gates** from the source get a label. **Landmarks:** castles, monasteries, quarries, standing stones, notorious ruins—small symbols with **short labels** for iconic sites. **Labels:** province or march name, **key** towns, fords, keeps, and geographic features the source emphasizes—legible, not crowded.",
   local:
-    "Tightest zoom: valley, sites, short road network—most geographic detail here. **Labels:** name **key** and iconic local places from the source (village, ruin, wood, pass, etc.) in short hand-lettered text; many labels are OK only where they stay legible—still a map, not a novel on parchment.",
+    "Tightest zoom: valley or cluster of sites—**richest** geography and routes. **Rivers & water:** show **named** rivers and streams as a **branching network** (not one anonymous blue stroke); include marshes, mill pools, or falls if the source mentions them. **Roads:** clearly separate **main wagon roads** from lesser paths or trails; show how travel runs between labeled settlements; label **named bridges, ferries, fords, or gates**. **Landmarks:** barrows, watchtowers, border stones, abbey spires, hilltops—memorable spots from the source get **clear symbols and short labels**. **Labels:** **key and iconic** villages, ruins, woods, passes, and crossings in short hand-lettered text—many labels are fine only while the sheet stays readable; still a map, not prose on parchment.",
 };
 
 /**
@@ -95,6 +95,12 @@ Hard requirements:
 - PG-13; no graphic violence or gore.
 - **Include a graphic distance scale (scale bar) with labeled units** in a margin, as above—an atlas / chart convention, not a modern GPS or app UI.
 - **Include text on the map** for **key and iconic** places as above—**each** named **once**; no watermarks, no modern UI, no URLs, no out-of-world meta captions.
-- Output only the image.`;
+${
+    input.realmSize === "country" ||
+    input.realmSize === "region" ||
+    input.realmSize === "local"
+      ? `- **At this scope (country / region / local):** **Main rivers** must appear as **clear, continuous watercourses** with names from the source where given; **major roads** must form a **readable primary network** (stronger than footpaths), including **named passes, bridges, fords, or gates** when the source names them. **Landmarks** (peaks, ruins, seats of power, sacred sites) should be **drawn and labeled** when the source marks them as iconic—not only listed in a margin.\n`
+      : ""
+  }- Output only the image.`;
 
 }
