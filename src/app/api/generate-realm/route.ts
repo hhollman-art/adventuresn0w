@@ -10,6 +10,9 @@ import {
   generateMarkdown,
   generateMarkdownStream,
 } from "@/lib/anthropicGenerate";
+import { parseRealmSeedMarkdown } from "@/lib/requestLimits";
+import { realmPostSchema, badRequest } from "@/lib/apiSchemas";
+import { logApiError } from "@/lib/serverLog";
 
 function parseRealmSize(value: unknown): RealmSize {
   const raw = String(value ?? "").trim();
@@ -34,25 +37,31 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: Partial<RealmInput> & { stream?: boolean };
+  let raw: unknown;
   try {
-    body = await request.json();
+    raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    return badRequest("Invalid JSON body.");
   }
+
+  const parsed = realmPostSchema.safeParse(raw);
+  if (!parsed.success) {
+    return badRequest(parsed.error.issues.map((i) => i.message).join("; ") || "Invalid body.");
+  }
+
+  const body = parsed.data;
+  const realmSeedMarkdown = parseRealmSeedMarkdown(body.realmSeedMarkdown);
 
   const input: RealmInput = {
     realmSize: parseRealmSize(body.realmSize),
     titleHint: String(body.titleHint ?? "").trim(),
     description: String(body.description ?? "").trim(),
     extraNotes: String(body.extraNotes ?? "").trim(),
+    ...(realmSeedMarkdown ? { realmSeedMarkdown } : {}),
   };
 
   if (!input.description) {
-    return NextResponse.json(
-      { error: "Describe what you want in the realm (description is required)." },
-      { status: 400 },
-    );
+    return badRequest("Describe what you want in the realm (description is required).");
   }
 
   try {
@@ -84,6 +93,7 @@ export async function POST(request: Request) {
           controller.close();
         } catch (err) {
           const { message, status } = formatAnthropicError(err);
+          logApiError("realm_stream_failed", { status: String(status), message });
           write({ type: "error", error: message, status });
           controller.close();
         }
@@ -99,6 +109,7 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     const { message, status } = formatAnthropicError(err);
+    logApiError("realm_generate_failed", { status: String(status), message });
     return NextResponse.json({ error: message }, { status });
   }
 }

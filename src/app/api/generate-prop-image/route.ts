@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { buildPropImagePrompt, type PropImageInput, type PropItemCategory } from "@/lib/propImagePrompt";
 import {
-  formatImageApiErrorForClient,
-  parseOpenAIImageApiFailure,
-} from "@/lib/openaiImagePrompt";
-
-type OpenAIImageResponse = {
-  data?: Array<{ b64_json?: string }>;
-  error?: { message?: string; code?: string; type?: string };
-};
+  defaultOpenAIImageModel,
+  openAIImageErrorNextResponse,
+  parseImageQuality,
+  parseImageSize,
+  requestOpenAIImagePng,
+} from "@/lib/openaiImageClient";
+import { propImagePostSchema, badRequest } from "@/lib/apiSchemas";
+import { logApiError, logApiWarning } from "@/lib/serverLog";
 
 const LEGACY_PROP_TYPE: Record<string, PropItemCategory> = {
   letter: "paper",
@@ -47,19 +47,6 @@ function parseItemCategory(value: unknown): PropItemCategory {
   return "paper";
 }
 
-function parseSize(value: unknown): "1024x1024" | "1536x1024" | "1024x1536" {
-  const raw = String(value ?? "").trim();
-  if (raw === "1536x1024" || raw === "1024x1536" || raw === "1024x1024") {
-    return raw;
-  }
-  return "1024x1536";
-}
-
-function parseQuality(value: unknown): "medium" | "high" {
-  const raw = String(value ?? "").trim();
-  return raw === "medium" ? "medium" : "high";
-}
-
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -69,21 +56,23 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: Partial<PropImageInput> & {
-    imageSize?: string;
-    imageQuality?: string;
-  };
+  let raw: unknown;
   try {
-    body = await request.json();
+    raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    return badRequest("Invalid JSON body.");
   }
 
-  const b = body as { description?: string; bodyText?: string; itemCategory?: string; propType?: string };
-  const desc = String(b.description ?? b.bodyText ?? "").trim();
+  const parsed = propImagePostSchema.safeParse(raw);
+  if (!parsed.success) {
+    return badRequest(parsed.error.issues.map((i) => i.message).join("; ") || "Invalid body.");
+  }
+
+  const body = parsed.data;
+  const desc = String(body.description ?? body.bodyText ?? "").trim();
 
   const input: PropImageInput = {
-    itemCategory: parseItemCategory(b.itemCategory ?? b.propType),
+    itemCategory: parseItemCategory(body.itemCategory ?? body.propType),
     title: String(body.title ?? "").trim(),
     description: desc,
     style: String(body.style ?? "").trim(),
@@ -92,53 +81,33 @@ export async function POST(request: Request) {
     extraNotes: String(body.extraNotes ?? "").trim(),
   };
 
-  const size = parseSize(body.imageSize);
-  const quality = parseQuality(body.imageQuality);
-  const model = process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-1";
+  const size = parseImageSize(body.imageSize, "1024x1536");
+  const quality = parseImageQuality(body.imageQuality);
+  const model = defaultOpenAIImageModel();
 
   try {
-    const response = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        prompt: buildPropImagePrompt(input),
-        size,
-        quality,
-      }),
+    const gen = await requestOpenAIImagePng({
+      apiKey,
+      model,
+      prompt: buildPropImagePrompt(input),
+      size,
+      quality,
     });
-
-    const payload = (await response.json()) as OpenAIImageResponse;
-    if (!response.ok) {
-      const parsed = parseOpenAIImageApiFailure(response, payload);
-      return NextResponse.json(
-        {
-          error: formatImageApiErrorForClient(parsed),
-          requestId: parsed.requestId,
-        },
-        { status: 502 },
-      );
-    }
-
-    const b64 = payload.data?.[0]?.b64_json;
-    if (!b64) {
-      return NextResponse.json(
-        { error: "Image API returned no image data." },
-        { status: 502 },
-      );
+    if (!gen.ok) {
+      const err = openAIImageErrorNextResponse(gen.response, gen.payload);
+      logApiWarning("prop_image_openai_failed", { model, status: String(gen.response.status) });
+      return NextResponse.json(err.body, { status: err.status });
     }
 
     return NextResponse.json({
-      images: [{ kind: input.itemCategory, imageDataUrl: `data:image/png;base64,${b64}` }],
+      images: [{ kind: input.itemCategory, imageDataUrl: `data:image/png;base64,${gen.b64}` }],
       model,
       size,
       quality,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    logApiError("prop_image_route_failed", { message });
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

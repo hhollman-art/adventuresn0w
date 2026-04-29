@@ -17,18 +17,17 @@ export type LibraryItem = {
   images: LibraryImage[];
 };
 
-const STORAGE_KEY = "ddeasy-generation-library-v1";
+/** Legacy localStorage key; used once to migrate into IndexedDB. */
+const LEGACY_STORAGE_KEY = "ddeasy-generation-library-v1";
+const IDB_NAME = "ddeasy-generation-library-v2";
+const IDB_STORE = "kv";
+const IDB_ITEMS_KEY = "items";
+
 const MAX_ITEMS = 24;
 const MAX_MARKDOWN_CHARS = 280_000;
 const MAX_IMAGES_PER_ITEM = 14;
 
-const KINDS: LibraryKind[] = [
-  "realm",
-  "adventure",
-  "characters",
-  "maps",
-  "props",
-];
+const KINDS: LibraryKind[] = ["realm", "adventure", "characters", "maps", "props"];
 
 export const LIBRARY_KIND_LABEL: Record<LibraryKind, string> = {
   realm: "Realm",
@@ -52,7 +51,8 @@ function isLibraryImage(x: unknown): x is LibraryImage {
   );
 }
 
-function fixLibraryItem(o: Record<string, unknown>): LibraryItem | null {
+/** Exported for tests — validates one persisted row. */
+export function fixLibraryItem(o: Record<string, unknown>): LibraryItem | null {
   if (
     typeof o.id !== "string" ||
     typeof o.createdAt !== "string" ||
@@ -66,9 +66,7 @@ function fixLibraryItem(o: Record<string, unknown>): LibraryItem | null {
   const textModel =
     o.textModel === null || typeof o.textModel === "string" ? o.textModel : null;
   const imageModel =
-    o.imageModel === null || typeof o.imageModel === "string"
-      ? o.imageModel
-      : null;
+    o.imageModel === null || typeof o.imageModel === "string" ? o.imageModel : null;
   const images = o.images.filter(isLibraryImage);
   return {
     id: o.id,
@@ -82,11 +80,8 @@ function fixLibraryItem(o: Record<string, unknown>): LibraryItem | null {
   };
 }
 
-export function loadGenerationLibraryItems(): LibraryItem[] {
-  if (typeof window === "undefined") return [];
+function parseJsonArray(raw: string): LibraryItem[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
     return parsed
@@ -99,6 +94,100 @@ export function loadGenerationLibraryItems(): LibraryItem[] {
   } catch {
     return [];
   }
+}
+
+let dbPromise: Promise<IDBDatabase> | null = null;
+
+function openDb(): Promise<IDBDatabase> {
+  if (typeof indexedDB === "undefined") {
+    return Promise.reject(new Error("indexedDB unavailable"));
+  }
+  if (!dbPromise) {
+    dbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onerror = () => reject(req.error ?? new Error("IDB open failed"));
+      req.onsuccess = () => resolve(req.result);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) {
+          db.createObjectStore(IDB_STORE);
+        }
+      };
+    });
+  }
+  return dbPromise;
+}
+
+async function idbGetItems(): Promise<LibraryItem[] | undefined> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readonly");
+    const req = tx.objectStore(IDB_STORE).get(IDB_ITEMS_KEY);
+    req.onerror = () => reject(req.error ?? new Error("IDB get failed"));
+    req.onsuccess = () => {
+      const v = req.result;
+      if (v === undefined) resolve(undefined);
+      else if (Array.isArray(v)) resolve(v as LibraryItem[]);
+      else resolve(undefined);
+    };
+  });
+}
+
+async function idbSetItems(items: LibraryItem[]): Promise<void> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error ?? new Error("IDB write failed"));
+    tx.objectStore(IDB_STORE).put(items, IDB_ITEMS_KEY);
+  });
+}
+
+/** Serialize writes to avoid lost updates when multiple saves race. */
+let writeMutex = Promise.resolve();
+
+function withWriteLock<T>(fn: () => Promise<T>): Promise<T> {
+  const run = writeMutex.then(fn, fn);
+  writeMutex = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
+async function loadItemsInternal(): Promise<LibraryItem[]> {
+  if (typeof window === "undefined") return [];
+
+  try {
+    let items = await idbGetItems();
+    if (items === undefined) {
+      const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacy) {
+        items = parseJsonArray(legacy);
+        try {
+          await idbSetItems(items);
+          localStorage.removeItem(LEGACY_STORAGE_KEY);
+        } catch {
+          /* keep legacy */
+        }
+      } else {
+        items = [];
+        try {
+          await idbSetItems([]);
+        } catch {
+          /* IDB may be unavailable */
+        }
+      }
+    }
+    return items.map((x) => ({ ...x }));
+  } catch {
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    return legacy ? parseJsonArray(legacy) : [];
+  }
+}
+
+export async function loadGenerationLibraryItems(): Promise<LibraryItem[]> {
+  return loadItemsInternal();
 }
 
 export type NewLibraryItemInput = {
@@ -135,78 +224,96 @@ function normalizeInput(input: NewLibraryItemInput): LibraryItem {
   };
 }
 
-function persistList(list: LibraryItem[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+async function persistListAttempt(list: LibraryItem[]): Promise<void> {
+  await idbSetItems(list);
+  try {
+    localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(list));
+  } catch {
+    /* backup only */
+  }
 }
 
 /**
  * Saves a generation run to the library. Drops oldest entries if storage quota is exceeded.
  */
-export function appendGenerationLibraryItem(
+export async function appendGenerationLibraryItem(
   input: NewLibraryItemInput,
-): LibraryItem[] {
+): Promise<LibraryItem[]> {
   if (typeof window === "undefined") return [];
-  const item = normalizeInput(input);
-  let list = [item, ...loadGenerationLibraryItems()].slice(0, MAX_ITEMS);
+  return withWriteLock(async () => {
+    const item = normalizeInput(input);
+    let list = [item, ...(await loadItemsInternal())].slice(0, MAX_ITEMS);
 
-  const shrinkForQuota = (): boolean => {
-    if (list.length <= 1) return false;
-    list = list.slice(0, -1);
-    return true;
-  };
+    const shrinkForQuota = (): boolean => {
+      if (list.length <= 1) return false;
+      list = list.slice(0, -1);
+      return true;
+    };
 
-  for (;;) {
-    try {
-      persistList(list);
-      return list;
-    } catch {
-      if (!shrinkForQuota()) {
-        try {
-          item.images = [];
-          list = [item, ...loadGenerationLibraryItems()].slice(0, MAX_ITEMS);
-          persistList(list);
-          return list;
-        } catch {
-          return loadGenerationLibraryItems();
+    for (;;) {
+      try {
+        await persistListAttempt(list);
+        return list;
+      } catch {
+        if (!shrinkForQuota()) {
+          try {
+            item.images = [];
+            list = [item, ...(await loadItemsInternal())].slice(0, MAX_ITEMS);
+            await persistListAttempt(list);
+            return list;
+          } catch {
+            return loadItemsInternal();
+          }
         }
       }
     }
-  }
+  });
 }
 
-export function deleteGenerationLibraryItem(id: string): LibraryItem[] {
+export async function deleteGenerationLibraryItem(id: string): Promise<LibraryItem[]> {
   if (typeof window === "undefined") return [];
-  const next = loadGenerationLibraryItems().filter((x) => x.id !== id);
-  try {
-    persistList(next);
-  } catch {
-    /* ignore */
-  }
-  return next;
+  return withWriteLock(async () => {
+    const next = (await loadItemsInternal()).filter((x) => x.id !== id);
+    try {
+      await persistListAttempt(next);
+    } catch {
+      /* ignore */
+    }
+    return next;
+  });
 }
 
-export function deleteGenerationLibraryItems(ids: string[]): LibraryItem[] {
+export async function deleteGenerationLibraryItems(ids: string[]): Promise<LibraryItem[]> {
   if (typeof window === "undefined" || ids.length === 0) {
-    return loadGenerationLibraryItems();
+    return loadItemsInternal();
   }
-  const drop = new Set(ids);
-  const next = loadGenerationLibraryItems().filter((x) => !drop.has(x.id));
-  try {
-    persistList(next);
-  } catch {
-    /* ignore */
-  }
-  return next;
+  return withWriteLock(async () => {
+    const drop = new Set(ids);
+    const next = (await loadItemsInternal()).filter((x) => !drop.has(x.id));
+    try {
+      await persistListAttempt(next);
+    } catch {
+      /* ignore */
+    }
+    return next;
+  });
 }
 
-export function clearGenerationLibrary(): LibraryItem[] {
+export async function clearGenerationLibrary(): Promise<LibraryItem[]> {
   if (typeof window === "undefined") return [];
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    /* ignore */
-  }
-  return [];
+  return withWriteLock(async () => {
+    try {
+      await idbSetItems([]);
+    } catch {
+      /* ignore */
+    }
+    try {
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    return [];
+  });
 }
 
 export function firstMarkdownHeading(md: string): string | null {

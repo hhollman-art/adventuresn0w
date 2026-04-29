@@ -84,6 +84,8 @@ export type RealmInput = {
   titleHint: string;
   description: string;
   extraNotes: string;
+  /** Optional prior realm Markdown — extend, zoom, or stay consistent with established canon. */
+  realmSeedMarkdown?: string;
 };
 
 export const REALM_SYSTEM_PROMPT = `You are an experienced Dungeons & Dragons worldbuilder and campaign consultant.
@@ -100,8 +102,27 @@ Rules:
 - **Markdown only** for the main document. No preamble or out-of-universe “As an AI…” text.
 - End with a short **DM cheatsheet** or bullet recap if the document is long.`;
 
+function realmCreationSeedReferenceBlock(markdown: string): string {
+  const body = markdown.trim();
+  if (!body) return "";
+  return `
+## Prior realm document (canonical reference)
+The user attached a **realm / setting document** they saved earlier in this app. Treat **named geography, factions, settlements, history beats, and tone** there as **authoritative canon** for this run.
+
+- **Respect the requested realm size** in this message: you may **zoom in** (add finer local detail), **reframe** to a neighboring scope, or **sketch a wider lens** if the brief asks—while staying **consistent** with the seed.
+- **Do not** silently rename core places or rewrite major facts unless the user's brief (below) explicitly asks for a reboot, alternate branch, reinterpretation, or “what if.”
+- If the brief conflicts with the seed, **follow the brief** and note the tension briefly in the output only when it helps the DM.
+
+---
+${body}
+---
+
+`;
+}
+
 export function buildRealmUserMessage(input: RealmInput): string {
   const { label, detail } = REALM_SIZE_LABEL[input.realmSize];
+  const seedRef = realmCreationSeedReferenceBlock(input.realmSeedMarkdown ?? "");
   const worldContinentBlock =
     input.realmSize === "world" || input.realmSize === "continent"
       ? `
@@ -124,8 +145,7 @@ ${REALM_POLITICS_AT_SCOPE[input.realmSize]}
 
 ## Realm size
 **${label}** — ${detail}
-${worldContinentBlock}
-## Brief
+${worldContinentBlock}${seedRef}## Brief
 ${input.description.trim() || "No additional brief; use realm size and notes only."}
 
 ## Title or theme (optional)

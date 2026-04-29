@@ -5,14 +5,14 @@ import {
 } from "@/lib/realmImagePrompt";
 import type { RealmSize } from "@/lib/realmPrompt";
 import {
-  formatImageApiErrorForClient,
-  parseOpenAIImageApiFailure,
-} from "@/lib/openaiImagePrompt";
-
-type OpenAIImageResponse = {
-  data?: Array<{ b64_json?: string }>;
-  error?: { message?: string; code?: string; type?: string };
-};
+  defaultOpenAIImageModel,
+  openAIImageErrorNextResponse,
+  parseImageQuality,
+  parseImageSize,
+  requestOpenAIImagePng,
+} from "@/lib/openaiImageClient";
+import { realmImagePostSchema, badRequest } from "@/lib/apiSchemas";
+import { logApiError, logApiWarning } from "@/lib/serverLog";
 
 function parseRealmSize(value: unknown): RealmSize {
   const raw = String(value ?? "").trim();
@@ -28,19 +28,6 @@ function parseRealmSize(value: unknown): RealmSize {
   return "country";
 }
 
-function parseSize(value: unknown): "1024x1024" | "1536x1024" | "1024x1536" {
-  const raw = String(value ?? "").trim();
-  if (raw === "1536x1024" || raw === "1024x1536" || raw === "1024x1024") {
-    return raw;
-  }
-  return "1536x1024";
-}
-
-function parseQuality(value: unknown): "medium" | "high" {
-  const raw = String(value ?? "").trim();
-  return raw === "medium" ? "medium" : "high";
-}
-
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -50,22 +37,22 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: Partial<RealmImageInput> & {
-    imageSize?: string;
-    imageQuality?: string;
-  };
+  let raw: unknown;
   try {
-    body = await request.json();
+    raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    return badRequest("Invalid JSON body.");
   }
 
+  const parsed = realmImagePostSchema.safeParse(raw);
+  if (!parsed.success) {
+    return badRequest(parsed.error.issues.map((i) => i.message).join("; ") || "Invalid body.");
+  }
+
+  const body = parsed.data;
   const realmMarkdown = String(body.realmMarkdown ?? "").trim();
   if (!realmMarkdown) {
-    return NextResponse.json(
-      { error: "Realm text is required to build the map image." },
-      { status: 400 },
-    );
+    return badRequest("Realm text is required to build the map image.");
   }
 
   const input: RealmImageInput = {
@@ -74,50 +61,29 @@ export async function POST(request: Request) {
     realmMarkdown,
   };
 
-  const size = parseSize(body.imageSize);
-  const quality = parseQuality(body.imageQuality);
-  const model = process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-1";
+  const size = parseImageSize(body.imageSize);
+  const quality = parseImageQuality(body.imageQuality);
+  const model = defaultOpenAIImageModel();
 
   try {
-    const response = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        prompt: buildRealmCartographyImagePrompt(input),
-        size,
-        quality,
-      }),
+    const gen = await requestOpenAIImagePng({
+      apiKey,
+      model,
+      prompt: buildRealmCartographyImagePrompt(input),
+      size,
+      quality,
     });
-
-    const payload = (await response.json()) as OpenAIImageResponse;
-    if (!response.ok) {
-      const parsed = parseOpenAIImageApiFailure(response, payload);
-      return NextResponse.json(
-        {
-          error: formatImageApiErrorForClient(parsed),
-          requestId: parsed.requestId,
-        },
-        { status: 502 },
-      );
-    }
-
-    const b64 = payload.data?.[0]?.b64_json;
-    if (!b64) {
-      return NextResponse.json(
-        { error: "Image API returned no image data." },
-        { status: 502 },
-      );
+    if (!gen.ok) {
+      const err = openAIImageErrorNextResponse(gen.response, gen.payload);
+      logApiWarning("realm_image_openai_failed", { model, status: String(gen.response.status) });
+      return NextResponse.json(err.body, { status: err.status });
     }
 
     return NextResponse.json({
       images: [
         {
           kind: "realm",
-          imageDataUrl: `data:image/png;base64,${b64}`,
+          imageDataUrl: `data:image/png;base64,${gen.b64}`,
         },
       ],
       model,
@@ -126,6 +92,7 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    logApiError("realm_image_route_failed", { message });
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

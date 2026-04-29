@@ -1,18 +1,25 @@
 {
   "name": "ddeasy",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:node": "node node_modules/next/dist/bin/next dev --turbopack",
     "build": "next build",
+    "build:node": "node node_modules/next/dist/bin/next build",
     "start": "next start",
-    "lint": "next lint"
+    "start:node": "node node_modules/next/dist/bin/next start",
+    "lint": "next lint",
+    "lint:node": "node node_modules/next/dist/bin/next lint",
+    "test": "node node_modules/vitest/vitest.mjs run",
+    "test:watch": "node node_modules/vitest/vitest.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "next": "^15.3.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.0",
@@ -20,9 +27,11 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitest/coverage-v8": "^4.1.5",
     "eslint": "^9.0.0",
     "eslint-config-next": "^15.3.0",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.5"
   }
 }

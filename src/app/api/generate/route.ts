@@ -11,13 +11,15 @@ import {
   generateMarkdown,
   generateMarkdownStream,
 } from "@/lib/anthropicGenerate";
+import { parseRealmSeedMarkdown } from "@/lib/requestLimits";
+import { adventurePostSchema, badRequest } from "@/lib/apiSchemas";
+import { logApiError } from "@/lib/serverLog";
 
 function parseAdventureLength(value: unknown): AdventureLength {
   const raw = String(value ?? "").trim();
   if (raw === "one_night" || raw === "one-night" || raw === "onenight") {
     return "one_night";
   }
-  /** Legacy UI value; treat as one-nighter scope. */
   if (raw === "campaign") {
     return "one_night";
   }
@@ -33,16 +35,6 @@ function parseCombatIntensity(value: unknown): CombatIntensity {
   return clamped as CombatIntensity;
 }
 
-const MAX_REALM_SEED_CHARS = 96_000;
-
-function parseRealmSeedMarkdown(value: unknown): string | undefined {
-  const raw = String(value ?? "").trim();
-  if (!raw) return undefined;
-  return raw.length > MAX_REALM_SEED_CHARS
-    ? raw.slice(0, MAX_REALM_SEED_CHARS)
-    : raw;
-}
-
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -52,13 +44,19 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: Partial<AdventureInput> & { stream?: boolean };
+  let raw: unknown;
   try {
-    body = await request.json();
+    raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    return badRequest("Invalid JSON body.");
   }
 
+  const parsed = adventurePostSchema.safeParse(raw);
+  if (!parsed.success) {
+    return badRequest(parsed.error.issues.map((i) => i.message).join("; ") || "Invalid body.");
+  }
+
+  const body = parsed.data;
   const realmSeedMarkdown = parseRealmSeedMarkdown(body.realmSeedMarkdown);
 
   const input: AdventureInput = {
@@ -104,6 +102,7 @@ export async function POST(request: Request) {
           controller.close();
         } catch (err) {
           const { message, status } = formatAnthropicError(err);
+          logApiError("adventure_stream_failed", { status: String(status), message });
           write({ type: "error", error: message, status });
           controller.close();
         }
@@ -119,6 +118,7 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     const { message, status } = formatAnthropicError(err);
+    logApiError("adventure_generate_failed", { status: String(status), message });
     return NextResponse.json({ error: message }, { status });
   }
 }

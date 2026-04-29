@@ -5,6 +5,8 @@ import {
   type PremadeCharacterInput,
 } from "@/lib/characterPrompt";
 import { formatAnthropicError, generateMarkdown } from "@/lib/anthropicGenerate";
+import { charactersPostSchema, badRequest } from "@/lib/apiSchemas";
+import { logApiError } from "@/lib/serverLog";
 
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -15,12 +17,19 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: Partial<PremadeCharacterInput>;
+  let raw: unknown;
   try {
-    body = await request.json();
+    raw = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    return badRequest("Invalid JSON body.");
   }
+
+  const parsed = charactersPostSchema.safeParse(raw);
+  if (!parsed.success) {
+    return badRequest(parsed.error.issues.map((i) => i.message).join("; ") || "Invalid body.");
+  }
+
+  const body = parsed.data;
 
   const input: PremadeCharacterInput = {
     partyConcept: String(body.partyConcept ?? "").trim(),
@@ -40,6 +49,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ markdown, model });
   } catch (err) {
     const { message, status } = formatAnthropicError(err);
+    logApiError("characters_generate_failed", { status: String(status), message });
     return NextResponse.json({ error: message }, { status });
   }
 }

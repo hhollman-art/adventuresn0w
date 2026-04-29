@@ -1,3 +1,8 @@
+import {
+  ADVENTURE_MAP_RULE_ONE_NIGHT_LINE,
+  ADVENTURE_MAP_RULE_SHORT_LINE,
+} from "@/lib/battleMapDirectives";
+
 export type AdventureLength = "short" | "one_night";
 
 /** 1 = minimal combat, 5 = encounter-dense. */
@@ -42,13 +47,13 @@ function lengthSpecificRules(length: AdventureLength): string {
       return `- Scope: one session worth of material; 3–5 scenes; one main climax.
 - **Scene chapters:** each scene is a self-contained \`###\` block under **## Locations / scenes** with NPCs, items, encounters, checks, and treasure written **into that scene’s text** (see global scene-chapter rules below).
 - Pacing: enough detail to run without improvisation gaps, but not a novel.
-- **Maps:** include one locale map concept and 2-3 battle map concepts written as image-generation briefs for OpenAI (top-down, grid-friendly). **Name key and iconic** regions, sites, rooms, and landmarks in the brief so generated map art can label them—**one** consistent name per place (no duplicate or synonymous labels for the same feature).`;
+${ADVENTURE_MAP_RULE_SHORT_LINE}`;
     case "one_night":
       return `- Scope: one evening; prefer **1 primary location** (or two tiny linked sites); 3–4 tight beats plus a climax.
 - **Scene chapters:** each beat is a \`###\` block under **## The night** with all NPC, item, encounter, check, and treasure detail **in that block**—not only in a later appendix.
 - Every scene should push toward the finale; cut travel fluff and side quests.
 - Session length should match the user's target time band; default to brisk pacing.
-- **Maps:** one tight locale map concept plus two battle map concepts written for OpenAI image generation. **Name key and iconic** areas in each brief so map art can label them—**one** name per mappable place (no redundant synonyms).`;
+${ADVENTURE_MAP_RULE_ONE_NIGHT_LINE}`;
   }
 }
 
@@ -109,7 +114,7 @@ function combatIntensityBlock(level: CombatIntensity): string {
 - Scale: **1** = lightest · **5** = heaviest combat.
 - **Match this adventure to level ${level}.** ${line}
 - In **scene chapters** (each \`###\` beat under Locations or The night), calibrate **how many** distinct fight set-pieces, **how many** stat-worthy foes, and encounter **difficulty** (trivial vs boss) to this scale.
-- Battle map concepts should align: fewer maps at 1–2; more tactical battlefields at 4–5.`;
+- Battle map concepts should align: fewer maps at 1–2; more tactical battlefields at 4–5. **Each battle brief stays encounter-scale** (one zoomed-in footprint), not continent- or castle-wide layouts.`;
 }
 
 function magicItemRulesBlock(levelRange: string, length: AdventureLength): string {
@@ -170,7 +175,7 @@ ${realmRef}## Rules (all lengths)
 - Keep NPC class levels plausible for the adventure's target party level band.
 - For each major NPC, add a compact combat profile for quick use in battle: ability scores (**STR, DEX, CON, INT, WIS, CHA**), **AC**, **HP**, speed, proficiency bonus (if relevant), and 1–3 key attacks or actions.
 - Keep NPC combat profiles concise and original (summary format, not copied proprietary stat blocks).
-- **Maps:** do not output ASCII grids. Instead, provide concise image-generation briefs suitable for OpenAI map rendering (top-down, VTT-friendly). **Name** important areas, rooms, and landmarks in the brief so map images can show short on-map labels—**one** name per place (no duplicate labels for the same feature).
+- **Maps:** do not output ASCII grids. Provide concise image-generation briefs for OpenAI (top-down, VTT-friendly, **5 ft × 5 ft** battle grids). **Battle briefs = tight tactical zoom** and **diagram / graph-paper** usefulness for minis (not scenic illustrations). **Name** important areas so map images can show short on-map labels—**one** name per place (no duplicate labels for the same feature).
 - **Magic items:** include level-appropriate magic loot and consumables where treasure matters; **## Treasure & rewards** should briefly **summarize** permanents and notable consumables, while scene chapters remain the **authoritative** place where items are found or offered.
 
 ## Rules (this length only)
@@ -187,7 +192,7 @@ You write table-ready adventures compatible with **D&D 5.2** (Creative Commons S
 The user will specify scope: **short adventure** or **one-nighter**. Match depth and structure to that scope.
 The user will also set **combat intensity** on a **1–5** scale; honor it when choosing how many encounters, how lethal fights are, and how much table time goes to tactical combat versus other pillars.
 Write each **scene** as a self-contained **chapter**: embed NPCs, items, encounters, checks, and treasure in that scene’s prose so the DM never has to cross-reference empty scene stubs.
-When maps are requested, output image-generation briefs (for OpenAI) rather than ASCII maps; name key and iconic locations in those briefs (one name per place, no duplicate labels for the same feature) so generated maps can show short labels.
+When maps are requested, output image-generation briefs (for OpenAI) rather than ASCII maps—**battle briefs describe encounter-scale areas** (zoomed-in play space, not whole mega-sites), assume a **uniform 5 ft × 5 ft** tactical grid, and favor **diagram / graph-paper** clarity for **miniature battles** over painterly illustration (visible grid for play). Name key locations (one name per place, no duplicate labels) so generated maps can show short labels.
 
 Constraints:
 - Original names and story; no pastiche of published WotC adventures.

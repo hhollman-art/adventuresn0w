@@ -21,6 +21,15 @@ export const MAP_CARTOGRAPHER_HAND_LOOK =
   "Short inked or printed-style **labels** for important places belong on a working map—keep them few and legible, not a wall of text. " +
   "**Avoid redundant labeling:** name each place or feature **at most once** on the map; do not repeat the same name in multiple callouts, do not place the map title and an identical near-title label, and do not use two labels for the same landmark (e.g. full name + nickname pointing to the same spot).";
 
+/**
+ * Battle maps: prioritize graph-paper / floor-plan diagrams for miniatures, not illustrated scenes.
+ */
+export const MAP_BATTLE_GRAPH_PAPER_LOOK =
+  "Battle map **look (critical):** this must read like **graph paper or squared drafting paper** with a **technical floor plan** inked on it—built for **mini bases and measuring movement**, not as a scenic illustration. " +
+  "Think **diagram first**: flat 2D, plain light paper ground (off-white or faint blue grid stock ok), walls and features as **clean ink outlines** with **flat or near-flat fills**—not painted environments. " +
+  "**Do not** use dramatic lighting, strong cast shadows, atmospheric haze, painterly gradients, “hero” composition, or busy illustrative props that swallow squares. **Minor** hand-inked warmth (tiny line wobble, light tone) is allowed—**only** if it stays **minor** and never competes with the grid or clear wall edges. " +
+  "Short inked **labels** for key spots are fine (same redundancy rules as other maps). The finished piece should feel closer to **a playable battlemat sketch** than to **key art**.";
+
 export function clampImagePromptText(text: string, maxLen: number): string {
   const t = text.replace(/\s+/g, " ").trim();
   if (t.length <= maxLen) return t;
