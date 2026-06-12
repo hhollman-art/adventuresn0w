@@ -27,7 +27,9 @@ import {
   type SavedRealmSeed,
 } from "@/lib/realmSeeds";
 import type { MapPackKind } from "@/lib/mapImagePrompt";
+import type { MapDistanceUnits } from "@/lib/mapDistanceUnits";
 import type { PropItemCategory } from "@/lib/propImagePrompt";
+import { renderMarkdownToHtml } from "@/lib/markdownRender";
 import {
   extractAdventureScenes,
   MAX_AUTO_SCENE_IMAGES,
@@ -35,7 +37,9 @@ import {
 } from "@/lib/extractAdventureScenes";
 import {
   AUTO_ADVENTURE_BATTLE_GRID_NOTES,
+  AUTO_ADVENTURE_BATTLE_GRID_NOTES_METRIC,
   BATTLE_MAP_SCENE_PROMPT_LEAD,
+  BATTLE_MAP_SCENE_PROMPT_LEAD_METRIC,
   SAMPLE_MAP_FORM_GRID_NOTES,
 } from "@/lib/battleMapDirectives";
 
@@ -279,7 +283,8 @@ function parseResponseBodyJson(
 
 async function fetchMapImageResult(
   payload: MapFormState,
-  libraryReferenceMarkdown?: string,
+  libraryReferenceMarkdown: string | undefined,
+  mapDistanceUnits: MapDistanceUnits,
 ): Promise<{
   images: Array<{ kind: string; imageDataUrl: string }>;
   model: string | null;
@@ -292,6 +297,7 @@ async function fetchMapImageResult(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...payload,
+        mapDistanceUnits,
         ...(trimmedRef ? { libraryReferenceMarkdown: trimmedRef } : {}),
       }),
     });
@@ -329,6 +335,7 @@ type RealmImagePayload = {
   realmSize: RealmSize;
   titleHint: string;
   realmMarkdown: string;
+  mapDistanceUnits: MapDistanceUnits;
   imageSize: "1024x1024" | "1536x1024" | "1024x1536";
   imageQuality: "medium" | "high";
 };
@@ -645,6 +652,8 @@ export default function Home(props: PageProps<"/">) {
   const [autoGenerateAdventureMap, setAutoGenerateAdventureMap] = useState(true);
   const [autoGenerateAdventureProps, setAutoGenerateAdventureProps] = useState(true);
   const [autoGenerateRealmMapImage, setAutoGenerateRealmMapImage] = useState(true);
+  const [mapDistanceUnits, setMapDistanceUnits] =
+    useState<MapDistanceUnits>("imperial");
   const [progressStage, setProgressStage] = useState<ProgressStage>("idle");
   const [realmSeeds, setRealmSeeds] = useState<SavedRealmSeed[]>([]);
   const [selectedRealmSeedId, setSelectedRealmSeedId] = useState("");
@@ -858,6 +867,7 @@ export default function Home(props: PageProps<"/">) {
                 realmSize: realmForm.realmSize,
                 titleHint: realmForm.titleHint,
                 realmMarkdown: streamed.markdown,
+                mapDistanceUnits,
                 imageSize: "1536x1024",
                 imageQuality: "medium",
               });
@@ -982,7 +992,7 @@ export default function Home(props: PageProps<"/">) {
                   ? "combat-heavy—favor tactical arenas, cover, chokepoints"
                   : "balanced—mix open and tactical spaces"
             }).`,
-            "Hand-drawn look: quill or pen on parchment or scroll. Include short text labels for key and iconic areas from the context (rooms, regions, doors, landmarks) where they matter for play—legible, not dense.",
+            "Overview / locale map: **full-color atlas** (distinct oceans, seas, major lakes, sharp coasts, **capitals + major cities**, **primary trade routes**)—functional reference, not painterly world art. Battle maps: **graph-paper** tactical diagrams; short legible labels for key areas from context.",
           ]
             .filter(Boolean)
             .join(" ");
@@ -994,7 +1004,10 @@ export default function Home(props: PageProps<"/">) {
             partySize: form.partySize,
             tone: form.tone,
             context: mapContext,
-            gridNotes: AUTO_ADVENTURE_BATTLE_GRID_NOTES,
+            gridNotes:
+              mapDistanceUnits === "metric"
+                ? AUTO_ADVENTURE_BATTLE_GRID_NOTES_METRIC
+                : AUTO_ADVENTURE_BATTLE_GRID_NOTES,
             extraNotes: mapExtraNotes,
             imageSize: "1536x1024",
             imageQuality: "high",
@@ -1009,18 +1022,22 @@ export default function Home(props: PageProps<"/">) {
             if (autoGenerateAdventureMap) {
               setProgressStage("map_locale_generating");
               if (scenes.length === 0) {
-                const r = await fetchMapImageResult(mapBase);
+                const r = await fetchMapImageResult(mapBase, undefined, mapDistanceUnits);
                 if (r.error) workflowError = r.error;
                 else {
                   collected.push(...r.images.map((img) => ({ ...img })));
                   workflowModel = r.model;
                 }
               } else {
-                const rLocale = await fetchMapImageResult({
-                  ...mapBase,
-                  mapKind: "overland",
-                  context: mapContext,
-                });
+                const rLocale = await fetchMapImageResult(
+                  {
+                    ...mapBase,
+                    mapKind: "overland",
+                    context: mapContext,
+                  },
+                  undefined,
+                  mapDistanceUnits,
+                );
                 if (rLocale.error) {
                   workflowError = rLocale.error;
                 } else {
@@ -1037,20 +1054,25 @@ export default function Home(props: PageProps<"/">) {
                       scenes,
                       AUTO_IMAGE_CONCURRENCY,
                       async (scene) => {
-                        const r = await fetchMapImageResult({
-                          ...mapBase,
-                          mapKind: "battle",
-                          locationName: `${mapBase.locationName} — ${scene.title}`.slice(
-                            0,
-                            200,
-                          ),
-                          context: buildSceneBattleMapPrompt(
-                            scene,
-                            mapBase,
-                            generatedMarkdown,
-                            form,
-                          ),
-                        });
+                        const r = await fetchMapImageResult(
+                          {
+                            ...mapBase,
+                            mapKind: "battle",
+                            locationName: `${mapBase.locationName} — ${scene.title}`.slice(
+                              0,
+                              200,
+                            ),
+                            context: buildSceneBattleMapPrompt(
+                              scene,
+                              mapBase,
+                              generatedMarkdown,
+                              form,
+                              mapDistanceUnits,
+                            ),
+                          },
+                          undefined,
+                          mapDistanceUnits,
+                        );
                         if (r.error) {
                           throw new Error(r.error);
                         }
@@ -1177,7 +1199,11 @@ export default function Home(props: PageProps<"/">) {
     setImageModel(null);
 
     try {
-      const result = await fetchMapImageResult(payload, libraryRefMarkdown);
+      const result = await fetchMapImageResult(
+        payload,
+        libraryRefMarkdown,
+        mapDistanceUnits,
+      );
       if (result.error) {
         setImageError(result.error);
         setProgressStage("error");
@@ -1286,12 +1312,20 @@ export default function Home(props: PageProps<"/">) {
             : m === "props"
               ? "Props"
               : "Maps");
-    const doc = buildStandaloneHtmlDocument(title, markdownToBasicHtml(md));
+    const doc = buildStandaloneHtmlDocument(
+      title,
+      markdownToBasicHtml(md, m === "adventure" || m === "realm"),
+    );
     const name = `${fileBaseName(md, m)}.html`;
     triggerDownload(
       new Blob([doc], { type: "text/html;charset=utf-8" }),
       name,
     );
+  }
+
+  function printGeneration() {
+    if (!previewMarkdown.trim() && previewImages.length === 0) return;
+    window.print();
   }
 
   const selectedLibraryItem =
@@ -1322,12 +1356,15 @@ export default function Home(props: PageProps<"/">) {
     mode === "library"
       ? selectedLibraryItem?.kind ?? "adventure"
       : (mode as LibraryKind);
+  /** Cover + per-## “sheets” for print/PDF and merging into a binder or magazine-style compilation */
+  const bookletPaperModuleLayout =
+    outputLayoutKind === "adventure" || outputLayoutKind === "realm";
 
   return (
     <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:gap-10">
       {pendingRealmSeed ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="realm-seed-name-title"
@@ -1407,7 +1444,7 @@ export default function Home(props: PageProps<"/">) {
         </div>
       ) : null}
       <section
-        className="w-full shrink-0 rounded-xl border p-6 lg:max-w-md"
+        className="no-print w-full shrink-0 rounded-xl border p-6 lg:max-w-md"
         style={{
           background: "var(--surface)",
           borderColor: "var(--border)",
@@ -1479,7 +1516,7 @@ export default function Home(props: PageProps<"/">) {
                   ? "Claude builds a ready-to-play party: stats, gear, and hooks. SRD-open options only."
                   : mode === "props"
                     ? "Build handout images: paper props, potions, arms and armor, tools, and more. Pick an item type, describe it, generate—no adventure required."
-                    : "Generate locale maps (cartographic) and battle maps (graph-paper-style diagrams for miniatures) with OpenAI—top-down, grid-friendly, not scenic illustrations."}
+                    : "Generate **full-color** locale / overland maps (atlas-style: cities, routes, clear water) and **graph-paper** battle maps for miniatures with OpenAI—top-down, not scenic illustrations."}
         </p>
 
         {mode === "library" ? (
@@ -1732,6 +1769,40 @@ export default function Home(props: PageProps<"/">) {
                       </span>
                     </label>
                   ))}
+                </div>
+              </fieldset>
+              <fieldset
+                className="flex flex-col gap-2 rounded-lg border p-3 text-sm"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <legend className="text-sm font-medium text-[var(--muted)]">
+                  Map scale
+                </legend>
+                <p className="text-xs text-[var(--muted)]">
+                  Distance labels on the <strong className="font-medium text-[var(--text)]/90">scale bar</strong> and{" "}
+                  <strong className="font-medium text-[var(--text)]/90">battle grid</strong> (ft vs m). Default: imperial.
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      name="mapDistanceUnitsMaps"
+                      checked={mapDistanceUnits === "imperial"}
+                      onChange={() => setMapDistanceUnits("imperial")}
+                      className="accent-[var(--accent)]"
+                    />
+                    <span>Imperial (miles, feet)</span>
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      name="mapDistanceUnitsMaps"
+                      checked={mapDistanceUnits === "metric"}
+                      onChange={() => setMapDistanceUnits("metric")}
+                      className="accent-[var(--accent)]"
+                    />
+                    <span>Metric (km, meters)</span>
+                  </label>
                 </div>
               </fieldset>
               <SelectField
@@ -2112,6 +2183,39 @@ export default function Home(props: PageProps<"/">) {
                   placeholder="Constraints, inspirations to avoid, safety tools, level band…"
                 />
               </label>
+              <fieldset
+                className="flex flex-col gap-2 rounded-lg border p-3 text-sm"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <legend className="text-sm font-medium text-[var(--muted)]">
+                  Realm map scale
+                </legend>
+                <p className="text-xs text-[var(--muted)]">
+                  Applies to the auto-generated realm map image (scale bar units).
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      name="mapDistanceUnitsRealm"
+                      checked={mapDistanceUnits === "imperial"}
+                      onChange={() => setMapDistanceUnits("imperial")}
+                      className="accent-[var(--accent)]"
+                    />
+                    <span>Imperial (miles, leagues)</span>
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      name="mapDistanceUnitsRealm"
+                      checked={mapDistanceUnits === "metric"}
+                      onChange={() => setMapDistanceUnits("metric")}
+                      className="accent-[var(--accent)]"
+                    />
+                    <span>Metric (km)</span>
+                  </label>
+                </div>
+              </fieldset>
               <label
                 className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
                 style={{ borderColor: "var(--border)" }}
@@ -2300,6 +2404,41 @@ export default function Home(props: PageProps<"/">) {
               </span>
             </label>
           ) : null}
+          {mode === "adventure" && autoGenerateAdventureMap ? (
+            <fieldset
+              className="flex flex-col gap-2 rounded-lg border p-3 text-sm"
+              style={{ borderColor: "var(--border)" }}
+            >
+              <legend className="text-sm font-medium text-[var(--muted)]">
+                Auto-map scale
+              </legend>
+              <p className="text-xs text-[var(--muted)]">
+                Same as the Maps tab: units for overview scale bars and battle grids.
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="radio"
+                    name="mapDistanceUnitsAdventure"
+                    checked={mapDistanceUnits === "imperial"}
+                    onChange={() => setMapDistanceUnits("imperial")}
+                    className="accent-[var(--accent)]"
+                  />
+                  <span>Imperial (miles, feet)</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="radio"
+                    name="mapDistanceUnitsAdventure"
+                    checked={mapDistanceUnits === "metric"}
+                    onChange={() => setMapDistanceUnits("metric")}
+                    className="accent-[var(--accent)]"
+                  />
+                  <span>Metric (km, meters)</span>
+                </label>
+              </div>
+            </fieldset>
+          ) : null}
           {mode === "adventure" ? (
             <label
               className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
@@ -2442,7 +2581,7 @@ export default function Home(props: PageProps<"/">) {
       </section>
 
       <section
-        className="min-h-[50vh] flex-1 rounded-xl border p-6"
+        className="print-generation-root min-h-[50vh] flex-1 rounded-xl border p-6"
         style={{
           background: "var(--surface)",
           borderColor: "var(--border)",
@@ -2451,7 +2590,7 @@ export default function Home(props: PageProps<"/">) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-medium">Output</h2>
           {previewMarkdown.trim() || previewImages.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
+            <div className="no-print flex flex-wrap gap-2">
               {previewMarkdown.trim() ? (
                 <>
                   <button
@@ -2480,42 +2619,54 @@ export default function Home(props: PageProps<"/">) {
                   </button>
                 </>
               ) : null}
+              <button
+                type="button"
+                onClick={printGeneration}
+                className="rounded-md px-3 py-1.5 text-xs font-medium text-black transition hover:opacity-90"
+                style={{ background: "var(--accent)" }}
+              >
+                Print
+              </button>
             </div>
           ) : null}
         </div>
         {previewTextModel || previewImageModel ? (
-          <p className="mt-1 text-xs text-[var(--muted)]">
+          <p className="no-print mt-1 text-xs text-[var(--muted)]">
             {previewTextModel ? `Text model: ${previewTextModel}` : null}
             {previewTextModel && previewImageModel ? " · " : null}
             {previewImageModel ? `Image model: ${previewImageModel}` : null}
           </p>
         ) : null}
         {mode !== "library" ? (
-          <ProgressPanel
-            mode={mode}
-            stage={progressStage}
-            loading={loading}
-            imageLoading={imageLoading}
-            autoMapEnabled={autoGenerateAdventureMap}
-            autoPropsEnabled={autoGenerateAdventureProps}
-            autoRealmMapEnabled={autoGenerateRealmMapImage}
-          />
+          <div className="no-print">
+            <ProgressPanel
+              mode={mode}
+              stage={progressStage}
+              loading={loading}
+              imageLoading={imageLoading}
+              autoMapEnabled={autoGenerateAdventureMap}
+              autoPropsEnabled={autoGenerateAdventureProps}
+              autoRealmMapEnabled={autoGenerateRealmMapImage}
+            />
+          </div>
         ) : null}
         {previewMarkdown.trim() ? (
-          <p className="mt-2 max-w-xl text-xs leading-relaxed text-[var(--muted)]">
-            Tip: open the <strong className="text-[var(--text)]/80">.md</strong> file in
-            Obsidian or VS Code; open the <strong className="text-[var(--text)]/80">.html</strong>{" "}
-            in your browser and use <strong className="text-[var(--text)]/80">Print → Save as PDF</strong>{" "}
-            for a PDF.{" "}
+          <p className="no-print mt-2 max-w-xl text-xs leading-relaxed text-[var(--muted)]">
+            Tip: use <strong className="text-[var(--text)]/80">Print</strong> above for markdown and
+            map images together. For long docs, export <strong className="text-[var(--text)]/80">.md</strong>{" "}
+            (Obsidian / VS Code) or <strong className="text-[var(--text)]/80">.html</strong> and use{" "}
+            <strong className="text-[var(--text)]/80">Print → Save as PDF</strong>.{" "}
             {outputLayoutKind === "maps"
               ? "You can download locale and battle images as PNG for VTTs or handouts."
+              : bookletPaperModuleLayout
+                ? "Adventures and realms render as cover + chapter **sheets**—print or PDF each, then combine PDFs in your viewer for a booklet or magazine-style compilation."
                 : "You can also paste Markdown into Google Docs / Word."}
           </p>
         ) : null}
 
         {error ? (
           <p
-            className="mt-4 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-sm text-red-200"
+            className="no-print mt-4 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-sm text-red-200"
             role="alert"
           >
             {error}
@@ -2523,7 +2674,7 @@ export default function Home(props: PageProps<"/">) {
         ) : null}
         {imageError ? (
           <p
-            className="mt-3 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-sm text-red-200"
+            className="no-print mt-3 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-sm text-red-200"
             role="alert"
           >
             {imageError}
@@ -2534,9 +2685,12 @@ export default function Home(props: PageProps<"/">) {
           <>
             {previewMarkdown.trim() ? (
               <article
-                className="adventure-md mt-6 max-w-none text-[var(--text)]"
+                className={`adventure-md mt-6 max-w-none text-[var(--text)]${bookletPaperModuleLayout ? " paper-module-layout" : ""}`}
                 dangerouslySetInnerHTML={{
-                  __html: simpleMarkdownToHtml(previewMarkdown),
+                  __html: simpleMarkdownToHtml(
+                    previewMarkdown,
+                    bookletPaperModuleLayout,
+                  ),
                 }}
               />
             ) : null}
@@ -2555,9 +2709,12 @@ export default function Home(props: PageProps<"/">) {
             outputLayoutKind !== "maps" &&
             outputLayoutKind !== "props" ? (
               <article
-                className="adventure-md mt-6 max-w-none text-[var(--text)]"
+                className={`adventure-md mt-6 max-w-none text-[var(--text)]${bookletPaperModuleLayout ? " paper-module-layout" : ""}`}
                 dangerouslySetInnerHTML={{
-                  __html: simpleMarkdownToHtml(previewMarkdown),
+                  __html: simpleMarkdownToHtml(
+                    previewMarkdown,
+                    bookletPaperModuleLayout,
+                  ),
                 }}
               />
             ) : null}
@@ -2565,7 +2722,7 @@ export default function Home(props: PageProps<"/">) {
         )}
 
         {mode === "library" && !selectedLibraryItem ? (
-          <p className="mt-8 text-sm text-[var(--muted)]">
+          <p className="no-print mt-8 text-sm text-[var(--muted)]">
             Select an entry in the Library list to preview its text and images
             here.
           </p>
@@ -2575,7 +2732,7 @@ export default function Home(props: PageProps<"/">) {
         !previewMarkdown.trim() &&
         previewImages.length === 0 &&
         mode !== "library" ? (
-          <p className="mt-8 text-sm text-[var(--muted)]">
+          <p className="no-print mt-8 text-sm text-[var(--muted)]">
             {mode === "realm"
               ? "Pick a realm size, describe what you want, and generate table-ready setting Markdown."
               : mode === "adventure"
@@ -2584,19 +2741,19 @@ export default function Home(props: PageProps<"/">) {
                   ? "Submit the form to generate pre-made PCs (Markdown). Copy to your notes or VTT."
                   : mode === "props"
                     ? "Choose an item type, write a description, and generate a handout image."
-                    : "Submit to generate top-down locale maps (cartography) and battle maps (graph-paper-style diagrams for minis; grid-friendly, not scenic art)."}
+                    : "Submit to generate **full-color** locale / overland maps (atlas clarity, cities & routes) and **graph-paper** battle maps for minis."}
           </p>
         ) : null}
 
         {loading ? (
-          <p className="mt-8 animate-pulse text-sm text-[var(--muted)]">
+          <p className="no-print mt-8 animate-pulse text-sm text-[var(--muted)]">
             {mode === "adventure" || mode === "characters" || mode === "realm"
               ? "Calling Claude…"
               : "Working on images… this can take a minute."}
           </p>
         ) : null}
         {imageLoading ? (
-          <p className="mt-2 animate-pulse text-sm text-[var(--muted)]">
+          <p className="no-print mt-2 animate-pulse text-sm text-[var(--muted)]">
             {mode === "props"
               ? "Rendering prop image…"
               : mode === "realm"
@@ -2639,7 +2796,7 @@ function MapImageOutputBlock({
               <button
                 type="button"
                 onClick={() => onDownloadMap(img.imageDataUrl, downloadSlug)}
-                className="shrink-0 rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                className="no-print shrink-0 rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
                 style={{ borderColor: "var(--border)" }}
               >
                 Download PNG
@@ -2876,92 +3033,12 @@ function stateFor(
   return "pending";
 }
 
-/** Minimal Markdown → HTML for headings, lists, bold, fenced code, paragraphs. */
-function simpleMarkdownToHtml(md: string): string {
-  const lines = md.replace(/\r\n/g, "\n").split("\n");
-  const out: string[] = [];
-  let inUl = false;
-  let inFence = false;
-  const codeBuf: string[] = [];
+function simpleMarkdownToHtml(md: string, paperModuleLayout = false): string {
+  return renderMarkdownToHtml(md, "preview", paperModuleLayout);
+}
 
-  const flushUl = () => {
-    if (inUl) {
-      out.push("</ul>");
-      inUl = false;
-    }
-  };
-
-  const flushCode = () => {
-    if (codeBuf.length === 0) return;
-    const raw = codeBuf.join("\n");
-    codeBuf.length = 0;
-    const escaped = raw
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;");
-    out.push(
-      `<pre class="my-3 overflow-x-auto rounded-lg border border-[var(--border)] bg-black/50 p-3 text-left font-mono text-xs leading-tight text-[var(--text)]"><code>${escaped}</code></pre>`,
-    );
-  };
-
-  const inline = (s: string) =>
-    s
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("```")) {
-      flushUl();
-      if (inFence) {
-        flushCode();
-        inFence = false;
-      } else {
-        inFence = true;
-      }
-      continue;
-    }
-    if (inFence) {
-      codeBuf.push(line);
-      continue;
-    }
-
-    const t = line.trim();
-    if (t.startsWith("# ")) {
-      flushUl();
-      out.push(`<h1 class="text-2xl font-bold mt-6 mb-3">${inline(t.slice(2))}</h1>`);
-      continue;
-    }
-    if (t.startsWith("## ")) {
-      flushUl();
-      out.push(
-        `<h2 class="text-lg font-semibold mt-6 mb-2 text-[var(--accent)]">${inline(t.slice(3))}</h2>`,
-      );
-      continue;
-    }
-    if (t.startsWith("### ")) {
-      flushUl();
-      out.push(`<h3 class="text-base font-semibold mt-4 mb-2">${inline(t.slice(4))}</h3>`);
-      continue;
-    }
-    if (t.startsWith("- ") || t.startsWith("* ")) {
-      if (!inUl) {
-        out.push('<ul class="list-disc pl-5 space-y-1 my-2">');
-        inUl = true;
-      }
-      out.push(`<li>${inline(t.slice(2))}</li>`);
-      continue;
-    }
-    flushUl();
-    if (t === "") {
-      out.push("<br/>");
-    } else {
-      out.push(`<p class="my-2 leading-relaxed text-[var(--text)]/95">${inline(t)}</p>`);
-    }
-  }
-  flushUl();
-  if (inFence) flushCode();
-  return out.join("\n");
+function markdownToBasicHtml(md: string, paperModuleLayout = false): string {
+  return renderMarkdownToHtml(md, "export", paperModuleLayout);
 }
 
 function triggerDownload(blob: Blob, filename: string) {
@@ -3025,91 +3102,6 @@ function slugify(s: string): string {
   return t;
 }
 
-function markdownToBasicHtml(md: string): string {
-  const lines = md.replace(/\r\n/g, "\n").split("\n");
-  const out: string[] = [];
-  let inUl = false;
-  let inFence = false;
-  const codeBuf: string[] = [];
-
-  const flushUl = () => {
-    if (inUl) {
-      out.push("</ul>");
-      inUl = false;
-    }
-  };
-
-  const flushCode = () => {
-    if (codeBuf.length === 0) return;
-    const raw = codeBuf.join("\n");
-    codeBuf.length = 0;
-    const escaped = raw
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;");
-    out.push(
-      `<pre class="map-pre"><code>${escaped}</code></pre>`,
-    );
-  };
-
-  const inline = (s: string) =>
-    s
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("```")) {
-      flushUl();
-      if (inFence) {
-        flushCode();
-        inFence = false;
-      } else {
-        inFence = true;
-      }
-      continue;
-    }
-    if (inFence) {
-      codeBuf.push(line);
-      continue;
-    }
-
-    const t = line.trim();
-    if (t.startsWith("# ")) {
-      flushUl();
-      out.push(`<h1>${inline(t.slice(2))}</h1>`);
-      continue;
-    }
-    if (t.startsWith("## ")) {
-      flushUl();
-      out.push(`<h2>${inline(t.slice(3))}</h2>`);
-      continue;
-    }
-    if (t.startsWith("### ")) {
-      flushUl();
-      out.push(`<h3>${inline(t.slice(4))}</h3>`);
-      continue;
-    }
-    if (t.startsWith("- ") || t.startsWith("* ")) {
-      if (!inUl) {
-        out.push("<ul>");
-        inUl = true;
-      }
-      out.push(`<li>${inline(t.slice(2))}</li>`);
-      continue;
-    }
-    flushUl();
-    if (t === "") {
-      out.push("<p><br /></p>");
-    } else {
-      out.push(`<p>${inline(t)}</p>`);
-    }
-  }
-  flushUl();
-  if (inFence) flushCode();
-  return out.join("\n");
-}
-
 function buildStandaloneHtmlDocument(title: string, bodyHtml: string): string {
   const safeTitle = title
     .replace(/&/g, "&amp;")
@@ -3122,14 +3114,57 @@ function buildStandaloneHtmlDocument(title: string, bodyHtml: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${safeTitle}</title>
   <style>
-    body { font-family: system-ui, Segoe UI, Roboto, sans-serif; margin: 0; color: #111; background: #fff; }
-    main { max-width: 44rem; margin: 0 auto; padding: 2rem 1.25rem 3rem; line-height: 1.55; }
+    body { font-family: system-ui, Segoe UI, Roboto, sans-serif; margin: 0; color: #111; background: #f2f2f0; line-height: 1.55; }
+    main { max-width: 54rem; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
     h1 { font-size: 1.75rem; margin: 0 0 1rem; }
+    h1.module-cover-title { font-size: 1.95rem; margin: 0 0 1rem; letter-spacing: -0.02em; }
     h2 { font-size: 1.2rem; margin: 2rem 0 0.75rem; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
     h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+    h4.module-keyed-heading { margin: 1rem 0 0.35rem; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #555; }
     p { margin: 0.5rem 0; }
     ul { margin: 0.5rem 0 0.75rem 1.25rem; }
     li { margin: 0.25rem 0; }
+    /* Stapled pamphlet sheets (exported adventures) */
+    .module-adventure-document { max-width: 8.5in; margin: 0 auto; background: #fafaf8; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #dcdcd8; }
+    .module-cover {
+      background: #fff;
+      padding: 2rem 2.25rem 2.5rem;
+      margin: 0 0 1.25rem;
+      border: 1px solid #d0d0cc;
+      border-radius: 2px;
+      min-height: 10.5in;
+      box-sizing: border-box;
+    }
+    .module-sheet {
+      background: #fff;
+      padding: 1.75rem 2.25rem 2.25rem;
+      margin: 0 0 1.25rem;
+      border: 1px solid #d0d0cc;
+      border-radius: 2px;
+      min-height: 10in;
+      box-sizing: border-box;
+    }
+    .module-sheet-heading {
+      font-size: 1.28rem;
+      margin: 0 0 0.85rem;
+      padding-bottom: 0.35rem;
+      color: #1a1a1a;
+      border-bottom: 2px solid #333;
+    }
+    .module-h3 { font-size: 1.05rem; margin: 1.15rem 0 0.45rem; }
+    blockquote.module-read-aloud {
+      margin: 0.9rem 0;
+      padding: 0.6rem 0.85rem;
+      border-left: 4px solid #927228;
+      background: #f9f9f7;
+      color: #1a1a1a;
+      font-style: italic;
+    }
+    blockquote.module-read-aloud .read-aloud-inner { margin: 0.4rem 0; }
+    .module-table-scroll { overflow-x: auto; }
+    .module-glance-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 0.6rem 0; }
+    .module-glance-th, .module-glance-td { border: 1px solid #c8c8c8; padding: 0.4rem 0.55rem; vertical-align: top; text-align: left; }
+    .module-glance-th { background: #f0f0f0; font-weight: 600; }
     .map-pre {
       overflow-x: auto;
       background: #f0f0f0;
@@ -3143,8 +3178,28 @@ function buildStandaloneHtmlDocument(title: string, bodyHtml: string): string {
     }
     .map-pre code { white-space: pre; }
     @media print {
+      @page { size: letter; margin: 0.55in; }
       body { background: #fff; }
       main { max-width: none; padding: 0; }
+      .module-adventure-document { border: none; box-shadow: none; background: #fff; max-width: none; }
+      .module-cover {
+        page-break-after: always;
+        min-height: 0;
+        margin: 0;
+        border: none;
+        padding: 0;
+      }
+      .module-sheet {
+        min-height: 0;
+        margin: 0;
+        border: none;
+        padding: 0;
+        background: #fff;
+      }
+      .module-adventure-has-cover .module-sheet { page-break-before: always; }
+      .module-adventure-no-cover .module-sheet ~ .module-sheet { page-break-before: always; }
+      .module-read-aloud, .module-glance-table { break-inside: avoid-page; }
+      .module-sheet-heading { page-break-after: avoid; }
     }
   </style>
 </head>
@@ -3167,10 +3222,15 @@ function buildSceneBattleMapPrompt(
   mapBase: MapFormState,
   fullMarkdown: string,
   form: FormState,
+  mapDistanceUnits: MapDistanceUnits,
 ): string {
   const toneBlock = buildAutoMapContextFromAdventure(fullMarkdown, form);
+  const lead =
+    mapDistanceUnits === "metric"
+      ? BATTLE_MAP_SCENE_PROMPT_LEAD_METRIC
+      : BATTLE_MAP_SCENE_PROMPT_LEAD;
   return [
-    BATTLE_MAP_SCENE_PROMPT_LEAD,
+    lead,
     "",
     scene.context.slice(0, 4000),
     "",
@@ -3394,7 +3454,7 @@ function buildAutoMapContextFromAdventure(markdown: string, form: FormState): st
     form.titleHint ? `Theme: ${form.titleHint}` : "",
     form.villainOrThreat ? `Threat: ${form.villainOrThreat}` : "",
     form.extraNotes ? `Notes: ${form.extraNotes}` : "",
-    "Generate a combat-usable, hand-inked cartography-style map (quill/pen on parchment, not illustrative art) for the main conflict and a clear locale overview (paths and regions, not a scenic painting).",
+    "Generate **full-color atlas-style** locale / area overview (oceans vs seas vs lakes, borders, **capitals**, **major cities**, **trade routes**) and a **graph-paper** tactical battle diagram for the main conflict—not scenic painted art.",
   ]
     .filter(Boolean)
     .join("\n");

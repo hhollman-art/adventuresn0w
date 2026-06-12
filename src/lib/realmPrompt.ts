@@ -100,7 +100,8 @@ Rules:
 - Include **concrete, usable** elements: place names, tensions, a few entry hooks, travel times only when helpful (relative bands are fine for large scales).
 - Prefer **clarity and usability** over encyclopedic length.
 - **Markdown only** for the main document. No preamble or out-of-universe “As an AI…” text.
-- End with a short **DM cheatsheet** or bullet recap if the document is long.`;
+- End with a short **DM cheatsheet** or bullet recap if the document is long.
+- **Print assembly:** each top-level \`## …\` heading becomes its **own printable sheet/chapter** in this app's HTML viewer when exported—structure sections like **magazine spreads** so each heading carries enough substance to combine into a booklet alongside adventures (PDF merge / binder).`;
 
 function realmCreationSeedReferenceBlock(markdown: string): string {
   const body = markdown.trim();
@@ -161,7 +162,7 @@ ${politicsBlock}
 ## Output
 Use a logical heading structure, for example (adapt to scale; include Trade; for Country/Region/Local, include **Politics** as its own \`##\` section after Geography or after Peoples—keep it scannable):
 # Title (realm / region name)
-## Elevator pitch
+## Prologue
 ## Geography & climate (as much as fits the chosen size; at World/Continent, emphasize terrain and broad climate before settlement lists)
 ## Peoples, cultures, and power structures
 ${
@@ -175,6 +176,8 @@ ${
 ## Adventurer hooks
 ## Glossary of names
 ## DM cheatsheet (bullets: who wants what, where conflict is)
+
+**Book / magazine compilation (this app)** — The HTML exporter wraps \`# Title\` … through the moment **before** the first \`##\` as a **cover sheet**, then renders **each top-level \`## …\`** as its **own printable page block**, matching adventures so DMs can **merge realm + adventure PDFs** into one binder or stitched magazine file. Treat each \`##\` like a **chapter spread**: substantive, skimmable body—bullets and optional Markdown **pipe tables** for at-a-glance gazetteer facts work well; avoid headings with almost no content beneath them unless deliberate.
 
 Match depth, settlement count, and geographic detail to **${label}** and the scope description at the top.`;
 }

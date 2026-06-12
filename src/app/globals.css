@@ -28,3 +28,175 @@ textarea:focus::placeholder {
   color: transparent;
   opacity: 0;
 }
+
+/* Printed booklet styling — adventures & realms: cover + one sheet per ## */
+article.adventure-md .module-glance-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+article.adventure-md .module-glance-th,
+article.adventure-md .module-glance-td {
+  border: 1px solid var(--border);
+  padding: 0.38rem 0.55rem;
+  vertical-align: top;
+}
+
+article.adventure-md .module-glance-th {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+article.adventure-md .module-glance-td {
+  font-size: 0.8125rem;
+}
+
+article.adventure-md .module-read-aloud p {
+  margin: 0.35rem 0;
+}
+
+@media screen {
+  article.adventure-md.paper-module-layout .module-adventure-document {
+    max-width: 8.5in;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  article.adventure-md.paper-module-layout .module-cover,
+  article.adventure-md.paper-module-layout .module-sheet {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 1.85rem 2rem;
+    margin-bottom: 1.75rem;
+    box-sizing: border-box;
+    min-height: min(88vh, 11in);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  }
+
+  article.adventure-md.paper-module-layout .module-cover h1 {
+    margin-top: 0;
+  }
+
+  article.adventure-md.paper-module-layout .module-sheet-heading {
+    margin-top: 0;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 0.35rem;
+  }
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+    size: letter;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  /*
+   * Output panel uses Tailwind + CSS variables (--text, etc.).
+   * Redefine variables here so previews stay readable on paper.
+   */
+  .print-generation-root {
+    --bg: #fff;
+    --surface: #fff;
+    --text: #111;
+    --muted: #444;
+    --border: #ccc;
+    --accent-dim: #5c5b00;
+    --accent: #6b5810;
+
+    border: none !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    color: var(--text) !important;
+    max-width: none !important;
+  }
+
+  .print-generation-root img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-generation-root h2.text-lg {
+    font-size: 1.35rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .print-generation-root .module-glance-th,
+  .print-generation-root .module-glance-td {
+    border-color: var(--border) !important;
+  }
+
+  .print-generation-root .module-glance-th {
+    background: #eee !important;
+    color: #111 !important;
+  }
+
+  .print-generation-root .module-read-aloud {
+    background: #f6f6f3 !important;
+    color: #111 !important;
+    border-left-color: var(--accent) !important;
+    page-break-inside: avoid;
+  }
+
+  .print-generation-root .module-keyed-heading {
+    color: #333 !important;
+  }
+
+  .print-generation-root .module-sheet-heading {
+    color: #1a1a1a !important;
+    border-bottom-color: var(--accent) !important;
+  }
+
+  .print-generation-root .module-cover {
+    page-break-after: always !important;
+    break-after: page !important;
+    margin-bottom: 0 !important;
+    border: none !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .print-generation-root .module-sheet {
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+    border: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .print-generation-root .module-adventure-has-cover .module-sheet {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  .print-generation-root .module-adventure-no-cover .module-sheet ~ .module-sheet {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  .print-generation-root .module-glance-table {
+    break-inside: avoid-page !important;
+  }
+
+  main {
+    display: block !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    gap: 0 !important;
+    padding: 0 !important;
+  }
+}

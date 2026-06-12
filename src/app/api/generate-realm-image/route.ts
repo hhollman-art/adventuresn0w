@@ -13,6 +13,7 @@ import {
 } from "@/lib/openaiImageClient";
 import { realmImagePostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError, logApiWarning } from "@/lib/serverLog";
+import { parseMapDistanceUnits } from "@/lib/mapDistanceUnits";
 
 function parseRealmSize(value: unknown): RealmSize {
   const raw = String(value ?? "").trim();
@@ -57,6 +58,7 @@ export async function POST(request: Request) {
 
   const input: RealmImageInput = {
     realmSize: parseRealmSize(body.realmSize),
+    mapDistanceUnits: parseMapDistanceUnits(body.mapDistanceUnits),
     titleHint: String(body.titleHint ?? "").trim(),
     realmMarkdown,
   };

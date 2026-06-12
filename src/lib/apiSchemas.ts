@@ -1,6 +1,15 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
 
+/** Accepts null / sloppy strings; output is always undefined | imperial | metric. */
+const mapDistanceUnitsSchema = z.preprocess(
+  (v) => {
+    if (v === null || v === undefined) return undefined;
+    return String(v).trim().toLowerCase() === "metric" ? "metric" : "imperial";
+  },
+  z.enum(["imperial", "metric"]).optional(),
+);
+
 export const adventurePostSchema = z.object({
   adventureLength: z.string().optional(),
   combatIntensity: z.union([z.number(), z.string()]).optional(),
@@ -46,6 +55,7 @@ export const mapImagePostSchema = z.object({
   libraryReferenceMarkdown: z.string().optional(),
   imageSize: z.string().optional(),
   imageQuality: z.string().optional(),
+  mapDistanceUnits: mapDistanceUnitsSchema,
 });
 
 export const propImagePostSchema = z.object({
@@ -68,6 +78,7 @@ export const realmImagePostSchema = z.object({
   realmMarkdown: z.string().optional(),
   imageSize: z.string().optional(),
   imageQuality: z.string().optional(),
+  mapDistanceUnits: mapDistanceUnitsSchema,
 });
 
 export function badRequest(message: string) {

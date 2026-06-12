@@ -62,7 +62,7 @@ function outputHeadings(length: AdventureLength): string {
     case "short":
       return `Use exactly these top-level headings in order:
 # Title
-## Elevator pitch
+## Prologue
 ## Hooks for the party
 ## Key NPCs
 ## Locations / scenes (playable beats — scene chapters go here)
@@ -72,6 +72,8 @@ function outputHeadings(length: AdventureLength): string {
 ## Secrets & clues
 ## Treasure & rewards
 ## DM cheatsheet (timers, if-then branches, level-up band)
+
+Treat this outline like a professionally published pamphlet scan: synopsis + tables up front (see Layout rules), keyed \`###\` scenes bulk in the middle, map brief blocks where listed, appendix-style cheats at the tail.
 
 Under **## Key NPCs**, use a **short index only** (name, role, first scene)—not the only place for stats. Under **## Encounters & challenges** and **## Treasure & rewards**, use **brief at-a-glance or totals**; the **authoritative** encounter specs and loot live **inside each \`###\` scene** under **## Locations / scenes**.`;
     case "one_night":
@@ -87,9 +89,42 @@ Under **## Key NPCs**, use a **short index only** (name, role, first scene)—no
 ## Climax & aftermath
 ## DM cheatsheet (timers, shortcuts, safety valves)
 
+Pamphlet pacing: tighter front matter tables, brisk hooks, keyed \`###\` beats in **The night**, optional recap sections after.
+
 **## Key NPCs** = short index only. **## Encounters & challenges** = optional recap; full fights live in each \`###\` under **## The night**. If the climax is its own beat, spell it out in **## Climax & aftermath** with the same chapter detail (NPCs, encounter, checks, treasure).`;
   }
 }
+
+/** Conventions echoed in commercially published tabletop adventure supplements (layout only — never imitate specific published adventures). */
+const PUBLISHED_MODULE_LAYOUT_HINTS = `
+**Publication-style layout (organize like a commercially released adventure pamphlet)**  
+Mirror how professional **tabletop adventure PDFs/booklets** are arranged: synopsis and facts early, keyed encounter detail later, and **distinct** player narration vs GM mechanics—all with **your own names, factions, lore, boxed text, and stat summaries** (do **not** copy or closely paraphrase any copyrighted module, map, boxed text, or non-SRD stat block).
+
+**Front matter habits** — Right under \`# Title\`, add a short **subtitle or tagline** line (plain text, no extra heading). In **## Prologue** / **## Pitch**, open with tight overview prose, then a **Markdown pipe table** titled implicitly by a bold intro line (**Adventure at a glance** as normal bold text):
+
+| Aspect | Detail |
+|:---|:---|
+| **Levels / tier** | (from inputs) |
+| **Running time** | (match user session target) |
+| **Party size** | (from inputs) |
+| **Themes & pillars** | combat / exploration / social mix |
+| **Premise sketch** | one sentence on the threat |
+
+Optional second row for **Sensitivity / vibe** only if stakes warrant it—keep tasteful.
+
+**Hooks** — In **Hooks…**, style bullets like pamphlets do: bold lead (**Patron hook.** **Wandering party hook.** etc.) followed by crisp text.
+
+**Scene chapters (\`###\`)** — For buildings, dungeon wings, layered sites: nest **keyed locales** using \`#### Area A — Tile\` / \`#### Location 3 — Alias\`-style headings (dungeon-key granularity). Beneath each, mix **purpose**, occupants, traps, exits, treasures. Prefer a **Treasure.** / **Developments.** / **Sensory cues.** subsection when it helps skim-reading.
+
+**Read-aloud voice** — When you give narration players hear at the table, wrap it in Markdown **blockquote** lines (\`>\`). Start the first quoted paragraph with bold \`**Read-aloud**\` (or inline **Read-aloud —**) before the narration. Keep read-aloud **original** prose; GM directions stay **outside** the blockquotes in normal bullets.
+
+**Branches** — Add short **Developments** or "**If … then …**" bullets where published modules clarify consequences and escalations after major beats.
+
+Map brief headings **Locale / Battle** stay unchanged in position relative to Locations as already specified elsewhere.
+
+**Print pagination (HTML / PDF in this app)**  
+The exporter wraps \`# Title\` … through the moment **before** the first \`##\` as one **cover sheet**, then renders **every \`## …\`** as its own physical **page/spread block**—like turning pages in a stapled pamphlet when you Print or Save as PDF. **Realm gazetteers from this tool use the same layout**, so adventure PDFs and realm PDFs can be **merged or ordered** into one binder / magazine-style compilation with consistent spreads. Aim for **enough substantive material per \`##\`** that each sheet feels purposeful; **map-key sections** (\`## Locale / area map concept\`, \`## Battle map concepts\`) stay **tight bulletin lists**, not prose walls. Prefer **readable density**—bullets, skimmable subheads—over empty page breaks beneath a solitary heading.`;
+
 
 /** Appended to every user message so scenes carry full table data in-line. */
 const SCENE_CHAPTER_RULES = `
@@ -98,7 +133,8 @@ const SCENE_CHAPTER_RULES = `
 - Each **scene** reads like a **book chapter for the DM**: open it with a \`###\` heading (clear scene title). The DM should run that block **top-to-bottom** without hunting other sections for the same information.
 - **In the same scene text**, include everything that matters **when it appears**: NPCs present (with **Class X (Level Y)** and the full compact combat profile the **first time** they matter in that scene), notable **items or props**, **encounters** (combat, social, or hazard—including stat summaries for anything fight-worthy), **skill checks** with suggested DCs or bands, and **treasure** gained or offered here—including **level-appropriate** magic items or consumables when loot is part of the beat. Use bold mini-labels (**NPCs:** **Items:** **Encounter:** **Checks:** **Treasure:**) or tight bullets so it scans fast.
 - Sections like **Key NPCs**, **Encounters & challenges**, and **Treasure & rewards** are **indexes or summaries** only when you also put the **authoritative runnable detail** in the scene chapter where it is used.
-- Give **every playable beat** its own \`### …\` heading under **## Locations / scenes** or **## The night** (clear titles). The companion app can then offer **one battle map and one prop image per scene** from that structure.`;
+- Give **every playable beat** its own \`### …\` heading under **## Locations / scenes** or **## The night** (clear titles). The companion app can then offer **one battle map and one prop image per scene** from that structure.
+${PUBLISHED_MODULE_LAYOUT_HINTS}`;
 
 const COMBAT_GUIDANCE: Record<CombatIntensity, string> = {
   1: "Very light: prioritize exploration, social play, puzzles, chases, and hazards. Include **at most one** brief skirmish or non-lethal confrontation unless players force more. Do **not** stack multiple mandatory fights.",
@@ -168,6 +204,7 @@ ${magicItemRulesBlock(input.levelRange, input.adventureLength)}
 - Target session length / table time: ${input.sessionLength}
 - Additional requests: ${input.extraNotes || "(none)"}
 ${realmRef}## Rules (all lengths)
+- **Layout:** organize like a commercially published adventure supplement (pamphlet / PDF)—overview before detail, skim-friendly headings, keyed sub-areas (\`####\`) when warranted, markdown blockquotes (\`>\`) for **read-aloud** narration, concise DM bullets beside or after them (see Scene rules). **All prose must be wholly original.** Do **not** copy or closely paraphrase any copyrighted tabletop module.
 - Structure play as **scene chapters** (see Output format): NPCs, items, encounters, checks, and treasure must appear **in the scene text** where they matter, not only in later lists.
 - Assume **D&D version 5.2** conventions (ability checks, DC guidance, encounter pacing, and terminology consistent with the 5.2 / CC SRD lineage). Do not claim affiliation with Wizards of the Coast.
 - Use **only SRD-open or original** creature names and stat summaries. If you include a creature, give a tight **stat block summary** (AC, HP, key attacks, signature ability) in plain prose or a compact bullet list—not copied proprietary text.
@@ -175,7 +212,7 @@ ${realmRef}## Rules (all lengths)
 - Keep NPC class levels plausible for the adventure's target party level band.
 - For each major NPC, add a compact combat profile for quick use in battle: ability scores (**STR, DEX, CON, INT, WIS, CHA**), **AC**, **HP**, speed, proficiency bonus (if relevant), and 1–3 key attacks or actions.
 - Keep NPC combat profiles concise and original (summary format, not copied proprietary stat blocks).
-- **Maps:** do not output ASCII grids. Provide concise image-generation briefs for OpenAI (top-down, VTT-friendly, **5 ft × 5 ft** battle grids). **Battle briefs = tight tactical zoom** and **diagram / graph-paper** usefulness for minis (not scenic illustrations). **Name** important areas so map images can show short on-map labels—**one** name per place (no duplicate labels for the same feature).
+- **Maps:** do not output ASCII grids. Provide concise image-generation briefs for OpenAI (top-down, VTT-friendly). **Locale / world overview** = **rich illustrated atlas** (relief, biome texture, oceans vs seas vs large lakes, sharp coasts and borders); **several continent-scale landmasses with ocean between** unless the setting is explicitly one land or a specific geography; **capital + major cities** with **clear symbol types**; **major trade roads and sea lanes** as named corridors (**give each primary route a short name** the artist can letter on-map). **Battle** briefs use **5 ft × 5 ft** grids, **tight tactical zoom**, **grid-first illustrated battlemat** (detailed floors/props, not isometric scenes). **Name** important areas so map images can show short on-map labels—**one** name per place (no duplicate labels for the same feature); briefs should hint **label categories** where natural (realm vs city vs sea vs route).
 - **Magic items:** include level-appropriate magic loot and consumables where treasure matters; **## Treasure & rewards** should briefly **summarize** permanents and notable consumables, while scene chapters remain the **authoritative** place where items are found or offered.
 
 ## Rules (this length only)
@@ -192,12 +229,12 @@ You write table-ready adventures compatible with **D&D 5.2** (Creative Commons S
 The user will specify scope: **short adventure** or **one-nighter**. Match depth and structure to that scope.
 The user will also set **combat intensity** on a **1–5** scale; honor it when choosing how many encounters, how lethal fights are, and how much table time goes to tactical combat versus other pillars.
 Write each **scene** as a self-contained **chapter**: embed NPCs, items, encounters, checks, and treasure in that scene’s prose so the DM never has to cross-reference empty scene stubs.
-When maps are requested, output image-generation briefs (for OpenAI) rather than ASCII maps—**battle briefs describe encounter-scale areas** (zoomed-in play space, not whole mega-sites), assume a **uniform 5 ft × 5 ft** tactical grid, and favor **diagram / graph-paper** clarity for **miniature battles** over painterly illustration (visible grid for play). Name key locations (one name per place, no duplicate labels) so generated maps can show short labels.
+When maps are requested, output image-generation briefs (for OpenAI) rather than ASCII maps—**locale / world briefs** are **rich full-color illustrated atlases** (terrain and hydrology detail, clear borders, **separate continents or large islands where the setting needs it**, **capitals and major cities** with distinct roles, **primary routes each with a usable name** for on-map lettering)—**top-down** reference plates, not sideways cinematic landscape posters. **Battle** briefs describe encounter-scale areas, assume **5 ft × 5 ft**, and favor **grid-first illustrated** battlemats (detailed floors, **bold** grid)—not isometric key art. Name key locations (one per place, no duplicate labels) so generated maps can show short, **high-contrast** labels.
 
 Constraints:
 - Original names and story; no pastiche of published WotC adventures.
 - When referencing rules, stay generic and 5.2-aligned (do not reproduce non-SRD stat blocks verbatim).
-- Prefer actionable DM notes: boxed read-aloud is optional; clarity beats length.
+- Prefer **pamphlet-style clarity**: synopsis + skim-friendly tables early, keyed locations with **Markdown blockquotes (\`>\`) for read-aloud** when narration helps, mechanics and DCs outside quotes; brevity still matters—omit filler boxed text players never trigger.
 - For every major NPC, assign a clear class and level using 5.2-style class names.
 - For every major NPC, include battle-ready key stats: STR/DEX/CON/INT/WIS/CHA plus AC, HP, and key actions.
 - Treasure includes **level-appropriate** magic items and consumables; item **rarity and power** must align with the user's stated party level band and adventure scope.

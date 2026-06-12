@@ -14,6 +14,7 @@ import {
 import { parseLibraryReferenceMarkdown } from "@/lib/requestLimits";
 import { mapImagePostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError, logApiWarning } from "@/lib/serverLog";
+import { parseMapDistanceUnits } from "@/lib/mapDistanceUnits";
 
 function parseMapKind(value: unknown): MapPackKind {
   const raw = String(value ?? "").trim();
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
 
   const input: MapImageInput = {
     mapKind: parseMapKind(body.mapKind),
+    mapDistanceUnits: parseMapDistanceUnits(body.mapDistanceUnits),
     locationName: String(body.locationName ?? "").trim(),
     levelRange: String(body.levelRange ?? "3–4").trim(),
     partySize: String(body.partySize ?? "4").trim(),
