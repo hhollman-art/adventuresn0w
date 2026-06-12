@@ -70,6 +70,16 @@ const MODE_TAB_LABEL: Record<GenerateMode, string> = {
   library: "Library",
 };
 
+/** Decorative tab icons (fantasy theme); hidden from screen readers. */
+const MODE_TAB_ICON: Record<GenerateMode, string> = {
+  realm: "\u{1F3F0}", // castle
+  adventure: "\u2694\uFE0F", // crossed swords
+  characters: "\u{1F9D9}", // mage
+  props: "\u{1F3FA}", // amphora
+  maps: "\u{1F5FA}\uFE0F", // world map
+  library: "\u{1F4DC}", // scroll
+};
+
 type PendingRealmSeed = {
   realmSize: RealmSize;
   titleHint: string;
@@ -1423,7 +1433,7 @@ export default function Home(props: PageProps<"/">) {
                   );
                   setPendingRealmSeed(null);
                 }}
-                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-black transition enabled:hover:opacity-90"
+                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition enabled:hover:opacity-90"
                 style={{ background: "var(--accent)" }}
               >
                 Save to library
@@ -1444,7 +1454,7 @@ export default function Home(props: PageProps<"/">) {
         </div>
       ) : null}
       <section
-        className="no-print w-full shrink-0 rounded-xl border p-6 lg:max-w-md"
+        className="fantasy-panel no-print w-full shrink-0 rounded-xl border p-6 lg:max-w-md"
         style={{
           background: "var(--surface)",
           borderColor: "var(--border)",
@@ -1461,7 +1471,7 @@ export default function Home(props: PageProps<"/">) {
             className="rounded-xl border p-2"
             style={{
               borderColor: "var(--border)",
-              background: "rgba(0,0,0,0.12)",
+              background: "rgba(154,116,22,0.08)",
             }}
           >
             <div
@@ -1480,10 +1490,11 @@ export default function Home(props: PageProps<"/">) {
                     onClick={() => selectMode(tabId)}
                     className={`min-h-[2.75rem] rounded-lg border px-2 py-2 text-center text-sm font-medium leading-tight transition sm:min-h-[2.5rem] sm:px-3 sm:py-2.5 ${
                       selected
-                        ? "border-[var(--accent)] bg-[var(--accent)] text-black shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
+                        ? "border-[var(--accent)] bg-[var(--accent)] text-white shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
                         : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--muted)] hover:text-[var(--text)]"
                     } focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]`}
                   >
+                    <span aria-hidden="true">{MODE_TAB_ICON[tabId]} </span>
                     {MODE_TAB_LABEL[tabId]}
                   </button>
                 );
@@ -1492,7 +1503,7 @@ export default function Home(props: PageProps<"/">) {
           </div>
         </div>
 
-        <h1 className="mt-6 text-xl font-semibold tracking-tight text-[var(--text)]">
+        <h1 className="font-display mt-6 text-xl font-bold text-[var(--text)]">
           {mode === "library"
             ? "Library"
             : mode === "realm"
@@ -1505,6 +1516,9 @@ export default function Home(props: PageProps<"/">) {
                     ? "Props (handouts)"
                     : "Maps (5.2)"}
         </h1>
+        <div className="fantasy-divider mt-2" aria-hidden="true">
+          <span className="text-sm leading-none">&#10022;</span>
+        </div>
         <p className="mt-2 text-sm text-[var(--muted)]">
           {mode === "library"
             ? "Browse everything this app has generated in this browser—text and images. Open an entry to preview it in Output, copy Markdown, or download files."
@@ -1613,7 +1627,7 @@ export default function Home(props: PageProps<"/">) {
                     setSelectedLibraryId(null);
                     setLibraryCheckedIds([]);
                   }}
-                  className="rounded-lg border px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-950/40"
+                  className="rounded-lg border px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100"
                   style={{ borderColor: "rgba(248,113,113,0.45)" }}
                 >
                   DELETE ALL
@@ -2561,7 +2575,7 @@ export default function Home(props: PageProps<"/">) {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-black transition enabled:hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition enabled:hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             style={{ background: "var(--accent)" }}
           >
             {loading
@@ -2581,14 +2595,16 @@ export default function Home(props: PageProps<"/">) {
       </section>
 
       <section
-        className="print-generation-root min-h-[50vh] flex-1 rounded-xl border p-6"
+        className="fantasy-panel print-generation-root min-h-[50vh] flex-1 rounded-xl border p-6"
         style={{
           background: "var(--surface)",
           borderColor: "var(--border)",
         }}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-medium">Output</h2>
+          <h2 className="font-display text-lg font-semibold text-[var(--accent)]">
+            <span aria-hidden="true">&#10022; </span>Output
+          </h2>
           {previewMarkdown.trim() || previewImages.length > 0 ? (
             <div className="no-print flex flex-wrap gap-2">
               {previewMarkdown.trim() ? (
@@ -2622,7 +2638,7 @@ export default function Home(props: PageProps<"/">) {
               <button
                 type="button"
                 onClick={printGeneration}
-                className="rounded-md px-3 py-1.5 text-xs font-medium text-black transition hover:opacity-90"
+                className="rounded-md px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
                 style={{ background: "var(--accent)" }}
               >
                 Print
@@ -2666,7 +2682,7 @@ export default function Home(props: PageProps<"/">) {
 
         {error ? (
           <p
-            className="no-print mt-4 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-sm text-red-200"
+            className="no-print mt-4 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
             role="alert"
           >
             {error}
@@ -2674,7 +2690,7 @@ export default function Home(props: PageProps<"/">) {
         ) : null}
         {imageError ? (
           <p
-            className="no-print mt-3 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-sm text-red-200"
+            className="no-print mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
             role="alert"
           >
             {imageError}
@@ -2913,7 +2929,7 @@ function ProgressPanel({
             key={item.label}
             className={
               item.state === "done"
-                ? "text-xs font-medium text-emerald-400"
+                ? "text-xs font-medium text-emerald-700"
                 : item.state === "active"
                   ? "text-xs text-[var(--text)]"
                   : "text-xs text-[var(--muted)]"

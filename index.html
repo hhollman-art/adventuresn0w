@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0f1419" />
+  <meta name="theme-color" content="#f0e6cf" />
   <title>D&amp;D Easy — Launcher</title>
   <style>
     :root {
-      --bg: #0f1419;
-      --surface: #1a222c;
-      --border: #2d3a47;
-      --text: #e8eef4;
-      --muted: #8a9ba8;
-      --accent: #c9a227;
-      --accent-dim: #8f7320;
+      --bg: #f0e6cf;
+      --surface: #faf4e4;
+      --border: #d6c49c;
+      --text: #2f2616;
+      --muted: #75653f;
+      --accent: #9a7416;
+      --accent-dim: #c9a227;
     }
 
     * { box-sizing: border-box; }
@@ -25,7 +25,9 @@
       align-items: center;
       justify-content: center;
       background: var(--bg);
-      background-image: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201, 162, 39, 0.08), transparent);
+      background-image:
+        radial-gradient(ellipse 90% 70% at 50% 0%, rgba(255, 250, 235, 0.85), transparent 70%),
+        radial-gradient(ellipse 120% 90% at 50% 110%, rgba(150, 113, 50, 0.16), transparent 65%);
       color: var(--text);
       font-family: system-ui, "Segoe UI", Roboto, sans-serif;
       padding: 1.5rem;
@@ -38,7 +40,10 @@
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 2.25rem 2.5rem 2rem;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+      box-shadow:
+        0 0 0 1px rgba(255, 252, 245, 0.75) inset,
+        0 0 0 4px rgba(154, 116, 22, 0.07) inset,
+        0 2px 10px rgba(95, 70, 25, 0.15);
       text-align: center;
     }
 
@@ -95,14 +100,14 @@
       padding: 0.7rem 2.2rem;
       border-radius: 10px;
       background: var(--accent);
-      color: #0f1419;
+      color: #fff;
       font-weight: 600;
       font-size: 1rem;
       text-decoration: none;
       transition: background 0.15s ease;
     }
 
-    a.launch:hover { background: #dab43a; }
+    a.launch:hover { background: #b1891f; }
 
     a.launch.disabled {
       background: var(--accent-dim);
@@ -120,7 +125,7 @@
     }
 
     .hint code {
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(154, 116, 22, 0.08);
       border: 1px solid var(--border);
       border-radius: 5px;
       padding: 0.1rem 0.4rem;

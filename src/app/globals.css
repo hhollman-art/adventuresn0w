@@ -1,19 +1,81 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0f1419;
-  --surface: #1a222c;
-  --border: #2d3a47;
-  --text: #e8eef4;
-  --muted: #8a9ba8;
-  --accent: #c9a227;
-  --accent-dim: #8f7320;
+  /* Light parchment fantasy palette */
+  --bg: #f0e6cf;
+  --surface: #faf4e4;
+  --border: #d6c49c;
+  --text: #2f2616;
+  --muted: #75653f;
+  --accent: #9a7416;
+  --accent-dim: #c9a227;
 }
 
 body {
-  background: var(--bg);
+  background-color: var(--bg);
+  /* Layered parchment: warm vignette edges + faint mottling for an aged-paper feel */
+  background-image:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(255, 250, 235, 0.85), transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 110%, rgba(150, 113, 50, 0.16), transparent 65%),
+    radial-gradient(circle at 12% 25%, rgba(160, 125, 60, 0.05) 0%, transparent 28%),
+    radial-gradient(circle at 85% 60%, rgba(160, 125, 60, 0.06) 0%, transparent 30%),
+    radial-gradient(circle at 40% 85%, rgba(160, 125, 60, 0.04) 0%, transparent 25%);
+  background-attachment: fixed;
   color: var(--text);
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ---- Fantasy chrome ---------------------------------------------------- */
+
+/* Display font (Cinzel, loaded in layout.tsx) for big titles */
+.font-display {
+  font-family: var(--font-display, Georgia, "Times New Roman", serif);
+  letter-spacing: 0.04em;
+}
+
+/* Site banner across the top */
+.site-banner {
+  border-bottom: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(154, 116, 22, 0.1), rgba(154, 116, 22, 0.02)),
+    var(--surface);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+
+.site-banner-title {
+  background: linear-gradient(180deg, #8a6712, #5e4509);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Ornamental rule: line — diamond — line */
+.fantasy-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--accent);
+}
+
+.fantasy-divider::before,
+.fantasy-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-dim));
+}
+
+.fantasy-divider::after {
+  background: linear-gradient(90deg, var(--accent-dim), transparent);
+}
+
+/* Panels get a faint gilded double-border, like an illuminated page */
+.fantasy-panel {
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgba(255, 252, 245, 0.75) inset,
+    0 0 0 4px rgba(154, 116, 22, 0.07) inset,
+    0 2px 10px rgba(95, 70, 25, 0.12);
 }
 
 /* Placeholder hint uses muted color; hide it on focus so grey text is not shown while editing */
@@ -43,7 +105,7 @@ article.adventure-md .module-glance-td {
 }
 
 article.adventure-md .module-glance-th {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(154, 116, 22, 0.1);
   font-weight: 600;
   font-size: 0.8125rem;
 }
@@ -72,7 +134,7 @@ article.adventure-md .module-read-aloud p {
     margin-bottom: 1.75rem;
     box-sizing: border-box;
     min-height: min(88vh, 11in);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 2px 12px rgba(95, 70, 25, 0.18);
   }
 
   article.adventure-md.paper-module-layout .module-cover h1 {

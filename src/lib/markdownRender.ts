@@ -18,13 +18,13 @@ type MdClassSet = {
 
 const PREVIEW_CLASSES: MdClassSet = {
   pre:
-    "my-3 overflow-x-auto rounded-lg border border-[var(--border)] bg-black/50 p-3 text-left font-mono text-xs leading-tight text-[var(--text)]",
+    "my-3 overflow-x-auto rounded-lg border border-[var(--border)] bg-[rgba(154,116,22,0.07)] p-3 text-left font-mono text-xs leading-tight text-[var(--text)]",
   h1: "text-2xl font-bold mt-6 mb-3",
   h2: "module-sheet-heading text-lg font-semibold mt-0 mb-3 text-[var(--accent)]",
   h3: "text-base font-semibold mt-4 mb-2",
   ulOpen: 'list-disc pl-5 space-y-1 my-2',
   blockquote:
-    'module-read-aloud my-4 rounded-r-lg border-l-4 bg-[rgba(255,255,255,0.04)] py-3 pl-4 pr-3 text-[var(--text)]/95 italic',
+    'module-read-aloud my-4 rounded-r-lg border-l-4 bg-[rgba(154,116,22,0.07)] py-3 pl-4 pr-3 text-[var(--text)]/95 italic',
   quoteP: "my-2 leading-relaxed not-italic first:mt-0 last:mb-0",
   p: "my-2 leading-relaxed text-[var(--text)]/95",
   h4Keyed:
