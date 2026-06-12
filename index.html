@@ -156,15 +156,41 @@
   </main>
 
   <script>
-    const APP_URL = "http://localhost:3000";
+    // Set this to the deployed app URL (e.g. "https://ddeasy.vercel.app")
+    // once the app is hosted. Visitors on GitHub Pages are then sent there.
+    const PUBLIC_APP_URL = "";
+    const LOCAL_APP_URL = "http://localhost:3000";
+
     const dot = document.getElementById("status-dot");
     const text = document.getElementById("status-text");
     const launch = document.getElementById("launch");
+    const hint = document.querySelector(".hint");
+
+    const onGitHubPages = location.hostname.endsWith("github.io");
+
+    if (PUBLIC_APP_URL) {
+      launch.href = PUBLIC_APP_URL;
+      launch.classList.remove("disabled");
+      dot.className = "dot online";
+      text.textContent = "Taking you to the app\u2026";
+      location.replace(PUBLIC_APP_URL);
+    } else if (onGitHubPages) {
+      // No public deployment configured: GitHub Pages cannot run the
+      // Next.js server, so explain instead of probing the visitor's localhost.
+      dot.className = "dot offline";
+      text.textContent = "No public deployment configured yet";
+      hint.innerHTML =
+        "This page is served by GitHub Pages, which only hosts static files. " +
+        "The D&amp;D Easy app needs a Node server for its AI generation, so it must be " +
+        "deployed to a host like Vercel. Run it locally with <code>npm run dev</code>.";
+    } else {
+      checkServer();
+    }
 
     async function checkServer() {
       try {
         // no-cors: a resolved fetch means something answered on the port.
-        await fetch(APP_URL, { mode: "no-cors", cache: "no-store" });
+        await fetch(LOCAL_APP_URL, { mode: "no-cors", cache: "no-store" });
         dot.className = "dot online";
         text.textContent = "App is running on localhost:3000";
         launch.classList.remove("disabled");
@@ -175,8 +201,6 @@
         setTimeout(checkServer, 3000);
       }
     }
-
-    checkServer();
   </script>
 </body>
 </html>
