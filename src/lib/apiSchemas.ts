@@ -56,6 +56,7 @@ export const mapImagePostSchema = z.object({
   imageSize: z.string().optional(),
   imageQuality: z.string().optional(),
   mapDistanceUnits: mapDistanceUnitsSchema,
+  stream: z.boolean().optional(),
 });
 
 export const propImagePostSchema = z.object({
@@ -70,6 +71,7 @@ export const propImagePostSchema = z.object({
   extraNotes: z.string().optional(),
   imageSize: z.string().optional(),
   imageQuality: z.string().optional(),
+  stream: z.boolean().optional(),
 });
 
 export const realmImagePostSchema = z.object({
@@ -79,6 +81,7 @@ export const realmImagePostSchema = z.object({
   imageSize: z.string().optional(),
   imageQuality: z.string().optional(),
   mapDistanceUnits: mapDistanceUnitsSchema,
+  stream: z.boolean().optional(),
 });
 
 export function badRequest(message: string) {

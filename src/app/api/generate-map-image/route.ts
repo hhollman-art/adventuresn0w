@@ -15,6 +15,7 @@ import { parseLibraryReferenceMarkdown } from "@/lib/requestLimits";
 import { mapImagePostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError, logApiWarning } from "@/lib/serverLog";
 import { parseMapDistanceUnits } from "@/lib/mapDistanceUnits";
+import { createHeartbeatJsonResponse } from "@/lib/sseStream";
 
 function parseMapKind(value: unknown): MapPackKind {
   const raw = String(value ?? "").trim();
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
         ? ["battle"]
         : ["locale", "battle"];
 
-  try {
+  const work = async (): Promise<{ status: number; body: unknown }> => {
     const images: Array<{ kind: "locale" | "battle"; imageDataUrl: string }> = [];
     for (const variant of variants) {
       const gen = await requestOpenAIImagePng({
@@ -84,14 +85,27 @@ export async function POST(request: Request) {
       });
       if (!gen.ok) {
         const err = openAIImageErrorNextResponse(gen.response, gen.payload);
-        logApiWarning("map_image_openai_failed", { variant, model, status: String(gen.response.status) });
-        return NextResponse.json(err.body, { status: err.status });
+        logApiWarning("map_image_openai_failed", {
+          variant,
+          model,
+          status: String(gen.response.status),
+        });
+        return { status: err.status, body: err.body };
       }
 
       images.push({ kind: variant, imageDataUrl: `data:image/png;base64,${gen.b64}` });
     }
 
-    return NextResponse.json({ images, model, size, quality });
+    return { status: 200, body: { images, model, size, quality } };
+  };
+
+  if (body.stream) {
+    return createHeartbeatJsonResponse({ work, logTag: "map_image_route_failed" });
+  }
+
+  try {
+    const { status, body: out } = await work();
+    return NextResponse.json(out, { status });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     logApiError("map_image_route_failed", { message });

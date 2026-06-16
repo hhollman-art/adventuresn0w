@@ -14,6 +14,7 @@ import {
 import { realmImagePostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError, logApiWarning } from "@/lib/serverLog";
 import { parseMapDistanceUnits } from "@/lib/mapDistanceUnits";
+import { createHeartbeatJsonResponse } from "@/lib/sseStream";
 
 function parseRealmSize(value: unknown): RealmSize {
   const raw = String(value ?? "").trim();
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
   const quality = parseImageQuality(body.imageQuality);
   const model = defaultOpenAIImageModel();
 
-  try {
+  const work = async (): Promise<{ status: number; body: unknown }> => {
     const gen = await requestOpenAIImagePng({
       apiKey,
       model,
@@ -77,21 +78,36 @@ export async function POST(request: Request) {
     });
     if (!gen.ok) {
       const err = openAIImageErrorNextResponse(gen.response, gen.payload);
-      logApiWarning("realm_image_openai_failed", { model, status: String(gen.response.status) });
-      return NextResponse.json(err.body, { status: err.status });
+      logApiWarning("realm_image_openai_failed", {
+        model,
+        status: String(gen.response.status),
+      });
+      return { status: err.status, body: err.body };
     }
 
-    return NextResponse.json({
-      images: [
-        {
-          kind: "realm",
-          imageDataUrl: `data:image/png;base64,${gen.b64}`,
-        },
-      ],
-      model,
-      size,
-      quality,
+    return {
+      status: 200,
+      body: {
+        images: [
+          { kind: "realm", imageDataUrl: `data:image/png;base64,${gen.b64}` },
+        ],
+        model,
+        size,
+        quality,
+      },
+    };
+  };
+
+  if (body.stream) {
+    return createHeartbeatJsonResponse({
+      work,
+      logTag: "realm_image_route_failed",
     });
+  }
+
+  try {
+    const { status, body: out } = await work();
+    return NextResponse.json(out, { status });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     logApiError("realm_image_route_failed", { message });

@@ -9,6 +9,7 @@ import {
 } from "@/lib/openaiImageClient";
 import { propImagePostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError, logApiWarning } from "@/lib/serverLog";
+import { createHeartbeatJsonResponse } from "@/lib/sseStream";
 
 const LEGACY_PROP_TYPE: Record<string, PropItemCategory> = {
   letter: "paper",
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
   const quality = parseImageQuality(body.imageQuality);
   const model = defaultOpenAIImageModel();
 
-  try {
+  const work = async (): Promise<{ status: number; body: unknown }> => {
     const gen = await requestOpenAIImagePng({
       apiKey,
       model,
@@ -95,16 +96,39 @@ export async function POST(request: Request) {
     });
     if (!gen.ok) {
       const err = openAIImageErrorNextResponse(gen.response, gen.payload);
-      logApiWarning("prop_image_openai_failed", { model, status: String(gen.response.status) });
-      return NextResponse.json(err.body, { status: err.status });
+      logApiWarning("prop_image_openai_failed", {
+        model,
+        status: String(gen.response.status),
+      });
+      return { status: err.status, body: err.body };
     }
 
-    return NextResponse.json({
-      images: [{ kind: input.itemCategory, imageDataUrl: `data:image/png;base64,${gen.b64}` }],
-      model,
-      size,
-      quality,
+    return {
+      status: 200,
+      body: {
+        images: [
+          {
+            kind: input.itemCategory,
+            imageDataUrl: `data:image/png;base64,${gen.b64}`,
+          },
+        ],
+        model,
+        size,
+        quality,
+      },
+    };
+  };
+
+  if (body.stream) {
+    return createHeartbeatJsonResponse({
+      work,
+      logTag: "prop_image_route_failed",
     });
+  }
+
+  try {
+    const { status, body: out } = await work();
+    return NextResponse.json(out, { status });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     logApiError("prop_image_route_failed", { message });

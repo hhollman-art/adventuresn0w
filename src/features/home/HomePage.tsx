@@ -10,11 +10,9 @@ import {
 import { REALM_SIZE_LABEL, type RealmSize } from "@/lib/realmPrompt";
 import {
   appendGenerationLibraryItem,
-  clearGenerationLibrary,
-  deleteGenerationLibraryItem,
-  deleteGenerationLibraryItems,
   LIBRARY_KIND_LABEL,
   loadGenerationLibraryItems,
+  updateGenerationLibraryItem,
   type LibraryItem,
   type LibraryKind,
 } from "@/lib/generationLibrary";
@@ -24,12 +22,14 @@ import {
   loadRealmSeeds,
   realmSeedOptionLabel,
   suggestedSeedName,
+  updateRealmSeed,
   type SavedRealmSeed,
 } from "@/lib/realmSeeds";
 import type { MapPackKind } from "@/lib/mapImagePrompt";
 import type { MapDistanceUnits } from "@/lib/mapDistanceUnits";
 import type { PropItemCategory } from "@/lib/propImagePrompt";
 import { renderMarkdownToHtml } from "@/lib/markdownRender";
+import { postHeartbeatJson } from "@/lib/sseClient";
 import {
   extractAdventureScenes,
   MAX_AUTO_SCENE_IMAGES,
@@ -85,6 +85,26 @@ type PendingRealmSeed = {
   titleHint: string;
   briefDescription: string;
   markdown: string;
+};
+
+/**
+ * Working draft for the manual seed editor. `id` is null when creating a brand
+ * new seed by hand, or the existing seed id when editing one in place.
+ */
+type SeedEditorDraft = {
+  id: string | null;
+  name: string;
+  realmSize: RealmSize;
+  briefDescription: string;
+  markdown: string;
+};
+
+const EMPTY_SEED_DRAFT: SeedEditorDraft = {
+  id: null,
+  name: "",
+  realmSize: "region",
+  briefDescription: "",
+  markdown: "",
 };
 
 type GeneratedImage = {
@@ -302,30 +322,21 @@ async function fetchMapImageResult(
 }> {
   try {
     const trimmedRef = libraryReferenceMarkdown?.trim();
-    const res = await fetch("/api/generate-map-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...payload,
-        mapDistanceUnits,
-        ...(trimmedRef ? { libraryReferenceMarkdown: trimmedRef } : {}),
-      }),
+    const { status, body } = await postHeartbeatJson("/api/generate-map-image", {
+      ...payload,
+      mapDistanceUnits,
+      ...(trimmedRef ? { libraryReferenceMarkdown: trimmedRef } : {}),
     });
-    const raw = await res.text();
-    const parsed = parseResponseBodyJson(res, raw);
-    if (!parsed.ok) {
-      return { images: [], model: null, error: parsed.userMessage };
-    }
-    const data = parsed.data as {
+    const data = body as {
       images?: Array<{ kind: string; imageDataUrl: string }>;
       model?: string;
       error?: string;
     };
-    if (!res.ok) {
+    if (status < 200 || status >= 300 || data.error) {
       return {
         images: [],
         model: null,
-        error: data.error ?? `Image request failed (${res.status})`,
+        error: data.error ?? `Image request failed (${status})`,
       };
     }
     if (!data.images?.length) {
@@ -358,26 +369,20 @@ async function fetchRealmImageResult(
   error: string | null;
 }> {
   try {
-    const res = await fetch("/api/generate-realm-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const raw = await res.text();
-    const parsed = parseResponseBodyJson(res, raw);
-    if (!parsed.ok) {
-      return { images: [], model: null, error: parsed.userMessage };
-    }
-    const data = parsed.data as {
+    const { status, body } = await postHeartbeatJson(
+      "/api/generate-realm-image",
+      payload as unknown as Record<string, unknown>,
+    );
+    const data = body as {
       images?: Array<{ kind: string; imageDataUrl: string }>;
       model?: string;
       error?: string;
     };
-    if (!res.ok) {
+    if (status < 200 || status >= 300 || data.error) {
       return {
         images: [],
         model: null,
-        error: data.error ?? `Image request failed (${res.status})`,
+        error: data.error ?? `Image request failed (${status})`,
       };
     }
     if (!data.images?.length) {
@@ -399,26 +404,20 @@ async function fetchPropImageResult(payload: PropFormState): Promise<{
   error: string | null;
 }> {
   try {
-    const res = await fetch("/api/generate-prop-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const raw = await res.text();
-    const parsed = parseResponseBodyJson(res, raw);
-    if (!parsed.ok) {
-      return { images: [], model: null, error: parsed.userMessage };
-    }
-    const data = parsed.data as {
+    const { status, body } = await postHeartbeatJson(
+      "/api/generate-prop-image",
+      payload as unknown as Record<string, unknown>,
+    );
+    const data = body as {
       images?: Array<{ kind: string; imageDataUrl: string }>;
       model?: string;
       error?: string;
     };
-    if (!res.ok) {
+    if (status < 200 || status >= 300 || data.error) {
       return {
         images: [],
         model: null,
-        error: data.error ?? `Image request failed (${res.status})`,
+        error: data.error ?? `Image request failed (${status})`,
       };
     }
     if (!data.images?.length) {
@@ -458,21 +457,82 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
+type StreamResult = { markdown: string; model: string | null; error: string | null };
+
+/**
+ * Heuristic for phones/tablets. Auto image generation makes several long
+ * (often minute-plus) requests; mobile OSes drop those idle connections when
+ * the screen locks or the browser backgrounds the tab, which surfaces as a
+ * "load failure" right after the text result. We default that heavy work off
+ * on mobile so the primary text result loads reliably (users can still opt in).
+ */
+function isLikelyMobileDevice(): boolean {
+  if (typeof window === "undefined") return false;
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent || "" : "";
+  const mobileUa =
+    /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle|BlackBerry|Opera Mini|IEMobile/i.test(
+      ua,
+    );
+  const narrow = window.matchMedia?.("(max-width: 820px)").matches ?? false;
+  return mobileUa || narrow;
+}
+
+/**
+ * Non-streaming fallback used when the SSE connection drops mid-result, which
+ * is common on mobile networks that close idle streamed connections. Sends a
+ * single request and waits for the whole result in one response.
+ */
+async function fetchMarkdownResultNonStreaming(
+  url: string,
+  requestBody: Record<string, unknown>,
+  onModel: (model: string) => void,
+): Promise<StreamResult> {
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...requestBody, stream: false }),
+    });
+    const raw = await res.text();
+    const p = parseResponseBodyJson(res, raw);
+    if (!p.ok) {
+      return { markdown: "", model: null, error: p.userMessage };
+    }
+    const data = p.data as { markdown?: string; model?: string; error?: string };
+    if (!res.ok) {
+      return {
+        markdown: "",
+        model: null,
+        error: data.error ?? `Request failed (${res.status})`,
+      };
+    }
+    const model = data.model ?? null;
+    if (model) onModel(model);
+    return { markdown: (data.markdown ?? "").trim(), model, error: null };
+  } catch (err) {
+    return {
+      markdown: "",
+      model: null,
+      error: err instanceof Error ? err.message : "Network error",
+    };
+  }
+}
+
 async function fetchAdventureResultStream(
   payload: FormState,
   callbacks: { onChunk: (chunk: string) => void; onModel: (model: string) => void },
   realmSeedMarkdown?: string,
-): Promise<{ markdown: string; model: string | null; error: string | null }> {
+): Promise<StreamResult> {
+  const trimmedSeed = realmSeedMarkdown?.trim();
+  const requestBody: Record<string, unknown> = {
+    ...payload,
+    ...(trimmedSeed ? { realmSeedMarkdown: trimmedSeed } : {}),
+  };
   try {
-    const trimmedSeed = realmSeedMarkdown?.trim();
     const res = await fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-      body: JSON.stringify({
-        ...payload,
-        ...(trimmedSeed ? { realmSeedMarkdown: trimmedSeed } : {}),
-        stream: true,
-      }),
+      body: JSON.stringify({ ...requestBody, stream: true }),
     });
     if (!res.ok) {
       const errBody = await res.text();
@@ -486,7 +546,12 @@ async function fetchAdventureResultStream(
       };
     }
     if (!res.body) {
-      return { markdown: "", model: null, error: "No response stream received." };
+      // Browser doesn't expose a readable stream; use the non-streaming path.
+      return fetchMarkdownResultNonStreaming(
+        "/api/generate",
+        requestBody,
+        callbacks.onModel,
+      );
     }
 
     const reader = res.body.getReader();
@@ -536,12 +601,14 @@ async function fetchAdventureResultStream(
       }
     }
     return { markdown: markdown.trim(), model, error: null };
-  } catch (err) {
-    return {
-      markdown: "",
-      model: null,
-      error: err instanceof Error ? err.message : "Network error",
-    };
+  } catch {
+    // Stream interrupted (typical on mobile networks). Retry once without
+    // streaming so the user still gets a complete result.
+    return fetchMarkdownResultNonStreaming(
+      "/api/generate",
+      requestBody,
+      callbacks.onModel,
+    );
   }
 }
 
@@ -557,20 +624,20 @@ async function fetchRealmResultStream(
   payload: RealmFormState,
   callbacks: { onChunk: (chunk: string) => void; onModel: (model: string) => void },
   realmSeedMarkdown?: string,
-): Promise<{ markdown: string; model: string | null; error: string | null }> {
+): Promise<StreamResult> {
+  const trimmedSeed = realmSeedMarkdown?.trim();
+  const requestBody: Record<string, unknown> = {
+    realmSize: payload.realmSize,
+    titleHint: payload.titleHint,
+    description: payload.description,
+    extraNotes: payload.extraNotes,
+    ...(trimmedSeed ? { realmSeedMarkdown: trimmedSeed } : {}),
+  };
   try {
-    const trimmedSeed = realmSeedMarkdown?.trim();
     const res = await fetch("/api/generate-realm", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-      body: JSON.stringify({
-        realmSize: payload.realmSize,
-        titleHint: payload.titleHint,
-        description: payload.description,
-        extraNotes: payload.extraNotes,
-        ...(trimmedSeed ? { realmSeedMarkdown: trimmedSeed } : {}),
-        stream: true,
-      }),
+      body: JSON.stringify({ ...requestBody, stream: true }),
     });
     if (!res.ok) {
       const errBody = await res.text();
@@ -584,7 +651,11 @@ async function fetchRealmResultStream(
       };
     }
     if (!res.body) {
-      return { markdown: "", model: null, error: "No response stream received." };
+      return fetchMarkdownResultNonStreaming(
+        "/api/generate-realm",
+        requestBody,
+        callbacks.onModel,
+      );
     }
 
     const reader = res.body.getReader();
@@ -634,12 +705,14 @@ async function fetchRealmResultStream(
       }
     }
     return { markdown: markdown.trim(), model, error: null };
-  } catch (err) {
-    return {
-      markdown: "",
-      model: null,
-      error: err instanceof Error ? err.message : "Network error",
-    };
+  } catch {
+    // Stream interrupted (typical on mobile networks). Retry once without
+    // streaming so the user still gets a complete result.
+    return fetchMarkdownResultNonStreaming(
+      "/api/generate-realm",
+      requestBody,
+      callbacks.onModel,
+    );
   }
 }
 
@@ -675,9 +748,21 @@ export default function Home(props: PageProps<"/">) {
   );
   const [pendingSeedNameDraft, setPendingSeedNameDraft] = useState("");
   const [realmSeedDialogError, setRealmSeedDialogError] = useState("");
+  /** Manual create/edit editor for realm seeds; null when closed. */
+  const [seedEditor, setSeedEditor] = useState<SeedEditorDraft | null>(null);
+  const [seedEditorError, setSeedEditorError] = useState("");
 
   useEffect(() => {
     setRealmSeeds(loadRealmSeeds());
+  }, []);
+
+  // On mobile, default the slow auto image generation off for reliability.
+  useEffect(() => {
+    if (isLikelyMobileDevice()) {
+      setAutoGenerateAdventureMap(false);
+      setAutoGenerateAdventureProps(false);
+      setAutoGenerateRealmMapImage(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -697,6 +782,91 @@ export default function Home(props: PageProps<"/">) {
   useEffect(() => {
     if (pendingRealmSeed) setRealmSeedDialogError("");
   }, [pendingRealmSeed]);
+
+  function openNewSeedEditor() {
+    setSeedEditorError("");
+    setSeedEditor({ ...EMPTY_SEED_DRAFT });
+  }
+
+  function openEditSeedEditor(id: string) {
+    const seed = realmSeeds.find((s) => s.id === id);
+    if (!seed) return;
+    setSeedEditorError("");
+    setSeedEditor({
+      id: seed.id,
+      name: seed.seedName?.trim() || seed.titleHint.trim() || "",
+      realmSize: seed.realmSize,
+      briefDescription: seed.briefDescription,
+      markdown: seed.markdown,
+    });
+  }
+
+  function openResultEditor() {
+    setResultEditorError("");
+    setResultEditor({ markdown });
+  }
+
+  async function saveResultEditor() {
+    if (!resultEditor) return;
+    const md = resultEditor.markdown;
+    if (!md.trim()) {
+      setResultEditorError("The text cannot be empty.");
+      return;
+    }
+    setMarkdown(md);
+    // Keep the auto-saved library copy in sync so exports stay consistent.
+    if (currentResultLibraryId) {
+      const existing = libraryItems.find(
+        (i) => i.id === currentResultLibraryId,
+      );
+      const title = firstHeading(md) ?? existing?.title ?? "";
+      setLibraryItems(
+        await updateGenerationLibraryItem(currentResultLibraryId, {
+          title,
+          markdown: md,
+        }),
+      );
+    }
+    setResultEditor(null);
+    setResultEditorError("");
+  }
+
+  function saveSeedEditor() {
+    if (!seedEditor) return;
+    const name = seedEditor.name.trim();
+    const markdown = seedEditor.markdown.trim();
+    if (!name) {
+      setSeedEditorError("Enter a name for this seed.");
+      return;
+    }
+    if (!markdown) {
+      setSeedEditorError("Add some realm details—the content cannot be empty.");
+      return;
+    }
+    const brief = seedEditor.briefDescription.trim().slice(0, 280);
+    if (seedEditor.id) {
+      setRealmSeeds(
+        updateRealmSeed(seedEditor.id, {
+          seedName: name,
+          realmSize: seedEditor.realmSize,
+          titleHint: name,
+          briefDescription: brief,
+          markdown,
+        }),
+      );
+    } else {
+      const next = appendRealmSeed({
+        seedName: name,
+        realmSize: seedEditor.realmSize,
+        titleHint: name,
+        briefDescription: brief,
+        markdown,
+      });
+      setRealmSeeds(next);
+    }
+    setSeedEditor(null);
+    setSeedEditorError("");
+  }
 
   function selectMode(next: GenerateMode) {
     setMode(next);
@@ -724,25 +894,21 @@ export default function Home(props: PageProps<"/">) {
   }
 
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
-  const [selectedLibraryId, setSelectedLibraryId] = useState<string | null>(
+  /** Library id of the current on-screen result, so text edits can persist. */
+  const [currentResultLibraryId, setCurrentResultLibraryId] = useState<
+    string | null
+  >(null);
+  /** Editor for the current generated text result; null when closed. */
+  const [resultEditor, setResultEditor] = useState<{ markdown: string } | null>(
     null,
   );
-  const [libraryKindFilter, setLibraryKindFilter] = useState<
-    LibraryKind | "all"
-  >("all");
-  /** Checked rows for bulk delete (ids may include items hidden by filter). */
-  const [libraryCheckedIds, setLibraryCheckedIds] = useState<string[]>([]);
+  const [resultEditorError, setResultEditorError] = useState("");
   /** Maps tab: optional Library entry whose Markdown grounds the image prompt. */
   const [mapLibraryReferenceId, setMapLibraryReferenceId] = useState("");
 
   useEffect(() => {
     void loadGenerationLibraryItems().then(setLibraryItems);
   }, []);
-
-  useEffect(() => {
-    const valid = new Set(libraryItems.map((i) => i.id));
-    setLibraryCheckedIds((prev) => prev.filter((id) => valid.has(id)));
-  }, [libraryItems]);
 
   useEffect(() => {
     if (!mapLibraryReferenceId) return;
@@ -766,6 +932,7 @@ export default function Home(props: PageProps<"/">) {
     setLoading(true);
     setError(null);
     setPendingRealmSeed(null);
+    setCurrentResultLibraryId(null);
     setMarkdown("");
     setModel(null);
     setImageError(null);
@@ -902,16 +1069,16 @@ export default function Home(props: PageProps<"/">) {
           }
           const realmLibTitle =
             firstHeading(streamed.markdown) ?? (titleSnap || "Realm");
-          setLibraryItems(
-            await appendGenerationLibraryItem({
-              kind: "realm",
-              title: realmLibTitle,
-              markdown: streamed.markdown,
-              textModel: streamed.model ?? null,
-              imageModel: realmLibImgModel,
-              images: realmLibImages,
-            }),
-          );
+          const realmLib = await appendGenerationLibraryItem({
+            kind: "realm",
+            title: realmLibTitle,
+            markdown: streamed.markdown,
+            textModel: streamed.model ?? null,
+            imageModel: realmLibImgModel,
+            images: realmLibImages,
+          });
+          setLibraryItems(realmLib);
+          setCurrentResultLibraryId(realmLib[0]?.id ?? null);
           setRealmForm(emptyRealmForm);
         } else {
           setError("No generated text returned.");
@@ -1153,16 +1320,16 @@ export default function Home(props: PageProps<"/">) {
           firstHeading(generatedMarkdown) ??
           (form.titleHint.trim() ||
             (libKind === "characters" ? "Characters" : "Adventure"));
-        setLibraryItems(
-          await appendGenerationLibraryItem({
-            kind: libKind,
-            title: libTitle,
-            markdown: generatedMarkdown,
-            textModel: generatedModel,
-            imageModel: recordImageModel,
-            images: recordImages,
-          }),
-        );
+        const textLib = await appendGenerationLibraryItem({
+          kind: libKind,
+          title: libTitle,
+          markdown: generatedMarkdown,
+          textModel: generatedModel,
+          imageModel: recordImageModel,
+          images: recordImages,
+        });
+        setLibraryItems(textLib);
+        setCurrentResultLibraryId(textLib[0]?.id ?? null);
       } else {
         setError("No generated text returned.");
         setProgressStage("error");
@@ -1274,9 +1441,7 @@ export default function Home(props: PageProps<"/">) {
   }
 
   function activeLibraryExport(): LibraryItem | null {
-    return mode === "library" && selectedLibraryId
-      ? libraryItems.find((i) => i.id === selectedLibraryId) ?? null
-      : null;
+    return null;
   }
 
   function exportMarkdownForDownload(): string {
@@ -1338,34 +1503,13 @@ export default function Home(props: PageProps<"/">) {
     window.print();
   }
 
-  const selectedLibraryItem =
-    mode === "library" && selectedLibraryId
-      ? libraryItems.find((i) => i.id === selectedLibraryId) ?? null
-      : null;
-  const filteredLibraryItems =
-    libraryKindFilter === "all"
-      ? libraryItems
-      : libraryItems.filter((i) => i.kind === libraryKindFilter);
-  const previewMarkdown =
-    mode === "library" ? (selectedLibraryItem?.markdown ?? "") : markdown;
+  const previewMarkdown = mode === "library" ? "" : markdown;
   const previewImages: GeneratedImage[] =
-    mode === "library"
-      ? selectedLibraryItem
-        ? (selectedLibraryItem.images as GeneratedImage[])
-        : []
-      : mapImages;
-  const previewTextModel =
-    mode === "library" && selectedLibraryItem
-      ? selectedLibraryItem.textModel
-      : model;
-  const previewImageModel =
-    mode === "library" && selectedLibraryItem
-      ? selectedLibraryItem.imageModel
-      : imageModel;
+    mode === "library" ? [] : mapImages;
+  const previewTextModel = mode === "library" ? null : model;
+  const previewImageModel = mode === "library" ? null : imageModel;
   const outputLayoutKind: LibraryKind =
-    mode === "library"
-      ? selectedLibraryItem?.kind ?? "adventure"
-      : (mode as LibraryKind);
+    mode === "library" ? "adventure" : (mode as LibraryKind);
   /** Cover + per-## “sheets” for print/PDF and merging into a binder or magazine-style compilation */
   const bookletPaperModuleLayout =
     outputLayoutKind === "adventure" || outputLayoutKind === "realm";
@@ -1453,6 +1597,200 @@ export default function Home(props: PageProps<"/">) {
           </div>
         </div>
       ) : null}
+      {seedEditor ? (
+        <div
+          className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="seed-editor-title"
+        >
+          <div
+            className="flex max-h-full w-full max-w-lg flex-col overflow-y-auto rounded-xl border p-6 shadow-lg"
+            style={{
+              background: "var(--surface)",
+              borderColor: "var(--border)",
+            }}
+          >
+            <h2
+              id="seed-editor-title"
+              className="text-lg font-semibold text-[var(--text)]"
+            >
+              {seedEditor.id ? "Edit realm seed" : "Add realm seed manually"}
+            </h2>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Type or paste your own realm. The content grounds new realms and
+              adventures, just like a generated seed. Markdown is supported.
+            </p>
+            <label className="mt-4 flex flex-col gap-1.5 text-sm">
+              <span className="font-medium text-[var(--muted)]">Seed name</span>
+              <input
+                value={seedEditor.name}
+                onChange={(e) => {
+                  setSeedEditorError("");
+                  setSeedEditor((d) => (d ? { ...d, name: e.target.value } : d));
+                }}
+                className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                style={{ borderColor: "var(--border)" }}
+                placeholder="e.g. The Ash Covenant coast"
+                autoFocus
+              />
+            </label>
+            <label className="mt-3 flex flex-col gap-1.5 text-sm">
+              <span className="font-medium text-[var(--muted)]">Realm size</span>
+              <select
+                value={seedEditor.realmSize}
+                onChange={(e) => {
+                  const realmSize = e.target.value as RealmSize;
+                  setSeedEditor((d) => (d ? { ...d, realmSize } : d));
+                }}
+                className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                style={{ borderColor: "var(--border)" }}
+              >
+                {REALM_SIZES.map((size) => (
+                  <option key={size} value={size}>
+                    {REALM_SIZE_LABEL[size].label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="mt-3 flex flex-col gap-1.5 text-sm">
+              <span className="font-medium text-[var(--muted)]">
+                Short description (optional)
+              </span>
+              <span className="text-xs text-[var(--muted)]">
+                A one-line summary shown in the seed picker for recognition.
+              </span>
+              <input
+                value={seedEditor.briefDescription}
+                onChange={(e) => {
+                  setSeedEditor((d) =>
+                    d ? { ...d, briefDescription: e.target.value } : d,
+                  );
+                }}
+                className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                style={{ borderColor: "var(--border)" }}
+                placeholder="e.g. Volcanic coast ruled by a fire-priest covenant"
+              />
+            </label>
+            <label className="mt-3 flex flex-col gap-1.5 text-sm">
+              <span className="font-medium text-[var(--muted)]">
+                Realm details
+              </span>
+              <span className="text-xs text-[var(--muted)]">
+                Geography, factions, history, key locations—whatever should carry
+                into generated realms and adventures. Required.
+              </span>
+              <textarea
+                value={seedEditor.markdown}
+                onChange={(e) => {
+                  setSeedEditorError("");
+                  setSeedEditor((d) =>
+                    d ? { ...d, markdown: e.target.value } : d,
+                  );
+                }}
+                rows={12}
+                className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                style={{ borderColor: "var(--border)" }}
+                placeholder={"# The Ash Covenant Coast\n\nA volcanic stretch of coastline where..."}
+              />
+            </label>
+            {seedEditorError ? (
+              <p className="mt-2 text-sm text-red-500">{seedEditorError}</p>
+            ) : null}
+            <div className="mt-6 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={saveSeedEditor}
+                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition enabled:hover:opacity-90"
+                style={{ background: "var(--accent)" }}
+              >
+                {seedEditor.id ? "Save changes" : "Add to library"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSeedEditorError("");
+                  setSeedEditor(null);
+                }}
+                className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--bg)]"
+                style={{ borderColor: "var(--border)" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {resultEditor ? (
+        <div
+          className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="result-editor-title"
+        >
+          <div
+            className="flex max-h-full w-full max-w-2xl flex-col overflow-y-auto rounded-xl border p-6 shadow-lg"
+            style={{
+              background: "var(--surface)",
+              borderColor: "var(--border)",
+            }}
+          >
+            <h2
+              id="result-editor-title"
+              className="text-lg font-semibold text-[var(--text)]"
+            >
+              Edit generated text
+            </h2>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Revise the Markdown of this result. Edits update the preview and
+              your copy / download / print exports, and are saved with the
+              auto-saved copy in this browser.
+            </p>
+            <label className="mt-4 flex flex-col gap-1.5 text-sm">
+              <span className="font-medium text-[var(--muted)]">
+                Content (Markdown)
+              </span>
+              <textarea
+                value={resultEditor.markdown}
+                onChange={(e) => {
+                  setResultEditorError("");
+                  setResultEditor((d) =>
+                    d ? { ...d, markdown: e.target.value } : d,
+                  );
+                }}
+                rows={20}
+                className="rounded-lg border bg-[var(--bg)] px-3 py-2 font-mono text-xs text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                style={{ borderColor: "var(--border)" }}
+                autoFocus
+              />
+            </label>
+            {resultEditorError ? (
+              <p className="mt-2 text-sm text-red-500">{resultEditorError}</p>
+            ) : null}
+            <div className="mt-6 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => void saveResultEditor()}
+                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition enabled:hover:opacity-90"
+                style={{ background: "var(--accent)" }}
+              >
+                Save changes
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setResultEditorError("");
+                  setResultEditor(null);
+                }}
+                className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--bg)]"
+                style={{ borderColor: "var(--border)" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <section
         className="fantasy-panel no-print w-full shrink-0 rounded-xl border p-6 lg:max-w-md"
         style={{
@@ -1521,7 +1859,7 @@ export default function Home(props: PageProps<"/">) {
         </div>
         <p className="mt-2 text-sm text-[var(--muted)]">
           {mode === "library"
-            ? "Browse everything this app has generated in this browser—text and images. Open an entry to preview it in Output, copy Markdown, or download files."
+            ? "Manage your saved realm seeds—the reusable settings that ground new realms and adventures. Edit the text of any generation right where it appears, using the Edit button in the Output panel."
             : mode === "realm"
               ? "Choose the scale of the place (from a whole world down to a local cluster), then describe what you want. Claude returns table-ready setting Markdown—original, not WotC copy."
               : mode === "adventure"
@@ -1534,187 +1872,104 @@ export default function Home(props: PageProps<"/">) {
         </p>
 
         {mode === "library" ? (
-          <div className="mt-6 flex max-h-[min(70vh,560px)] flex-col gap-4">
-            <div className="flex flex-wrap items-end gap-3">
-              <SelectField
-                label="Show"
-                value={libraryKindFilter}
-                onChange={(v) =>
-                  setLibraryKindFilter(v as LibraryKind | "all")
-                }
-                options={[
-                  { value: "all", label: "All kinds" },
-                  { value: "realm", label: LIBRARY_KIND_LABEL.realm },
-                  { value: "adventure", label: LIBRARY_KIND_LABEL.adventure },
-                  {
-                    value: "characters",
-                    label: LIBRARY_KIND_LABEL.characters,
-                  },
-                  { value: "maps", label: LIBRARY_KIND_LABEL.maps },
-                  { value: "props", label: LIBRARY_KIND_LABEL.props },
-                ]}
-              />
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const visible = filteredLibraryItems.map((i) => i.id);
-                    const allVisibleChecked =
-                      visible.length > 0 &&
-                      visible.every((id) => libraryCheckedIds.includes(id));
-                    if (allVisibleChecked) {
-                      setLibraryCheckedIds((prev) =>
-                        prev.filter((id) => !visible.includes(id)),
-                      );
-                    } else {
-                      setLibraryCheckedIds((prev) =>
-                        Array.from(new Set([...prev, ...visible])),
-                      );
-                    }
-                  }}
-                  disabled={filteredLibraryItems.length === 0}
-                  className="rounded-lg border px-3 py-2 text-xs font-semibold text-[var(--text)] transition enabled:hover:bg-[var(--bg)] disabled:cursor-not-allowed disabled:opacity-50"
-                  style={{ borderColor: "var(--border)" }}
-                >
-                  {filteredLibraryItems.length > 0 &&
-                  filteredLibraryItems.every((i) =>
-                    libraryCheckedIds.includes(i.id),
-                  )
-                    ? "Clear selection"
-                    : "Select visible"}
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (libraryCheckedIds.length === 0) return;
-                    if (
-                      !window.confirm(
-                        `Delete ${libraryCheckedIds.length} selected item(s)? This cannot be undone.`,
-                      )
-                    ) {
-                      return;
-                    }
-                    const remove = new Set(libraryCheckedIds);
-                    setLibraryItems(
-                      await deleteGenerationLibraryItems(libraryCheckedIds),
-                    );
-                    setLibraryCheckedIds([]);
-                    if (selectedLibraryId && remove.has(selectedLibraryId)) {
-                      setSelectedLibraryId(null);
-                    }
-                  }}
-                  disabled={libraryCheckedIds.length === 0}
-                  className="rounded-lg border px-3 py-2 text-xs font-semibold text-[var(--text)] transition enabled:hover:bg-[var(--bg)] disabled:cursor-not-allowed disabled:opacity-50"
-                  style={{ borderColor: "var(--border)" }}
-                >
-                  Delete selected
-                  {libraryCheckedIds.length > 0
-                    ? ` (${libraryCheckedIds.length})`
-                    : ""}
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (
-                      libraryItems.length > 0 &&
-                      !window.confirm(
-                        "Remove every saved generation from this browser?",
-                      )
-                    ) {
-                      return;
-                    }
-                    setLibraryItems(await clearGenerationLibrary());
-                    setSelectedLibraryId(null);
-                    setLibraryCheckedIds([]);
-                  }}
-                  className="rounded-lg border px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100"
-                  style={{ borderColor: "rgba(248,113,113,0.45)" }}
-                >
-                  DELETE ALL
-                </button>
-              </div>
+          <div
+            className="mt-6 flex flex-col gap-3 rounded-lg border p-4"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-display text-base font-bold text-[var(--text)]">
+                Realm seeds
+              </h2>
+              <button
+                type="button"
+                onClick={openNewSeedEditor}
+                className="rounded-lg px-3 py-2 text-xs font-semibold text-white transition enabled:hover:opacity-90"
+                style={{ background: "var(--accent)" }}
+              >
+                Add seed manually
+              </button>
             </div>
-            <p className="text-xs text-[var(--muted)]">
-              Stored in this browser using IndexedDB, with a small localStorage
-              backup. Larger image packs fit than with localStorage alone; if
-              space still runs out, oldest entries drop first. Use the checkbox to
-              select entries; click the title area to preview in Output.
-            </p>
-            {filteredLibraryItems.length === 0 ? (
+            <div className="flex flex-col gap-1.5 text-xs text-[var(--muted)]">
+              <p>
+                Seeds are reusable settings that{" "}
+                <strong className="text-[var(--text)]">ground</strong> new
+                generations: pick one in the Realm tab to expand or zoom a place,
+                or in the Adventure tab to anchor geography, factions, and lore
+                so everything stays consistent.
+              </p>
+              <p>
+                Every realm you generate is saved here automatically. Use{" "}
+                <strong className="text-[var(--text)]">Add seed manually</strong>{" "}
+                to write or paste your own (name, scale, optional one-line
+                summary, and the realm details that get fed into generation),{" "}
+                <strong className="text-[var(--text)]">Edit</strong> to refine an
+                existing seed, or <strong className="text-[var(--text)]">
+                  {" "}
+                  Delete
+                </strong>{" "}
+                to remove one. Markdown is supported in the details. Everything
+                is stored only in this browser.
+              </p>
+            </div>
+            {realmSeeds.length === 0 ? (
               <p className="text-sm text-[var(--muted)]">
-                Nothing here yet. Each successful realm, adventure, character
-                sheet, map pack, or prop run is added automatically.
+                No seeds yet. Generate a realm (it is saved automatically), or
+                use “Add seed manually” to write your own.
               </p>
             ) : (
-              <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
-                {filteredLibraryItems.map((item) => {
-                  const isChecked = libraryCheckedIds.includes(item.id);
-                  const isPreview = selectedLibraryId === item.id;
-                  return (
-                    <li key={item.id}>
-                      <div
-                        className={`flex gap-3 rounded-lg border p-3 text-sm transition ${
-                          isChecked ? "bg-[rgba(201,162,39,0.09)]" : ""
-                        }`}
-                        style={{
-                          borderColor: "var(--border)",
-                          outline: isPreview
-                            ? "2px solid var(--accent)"
-                            : "none",
-                        }}
-                      >
-                        <label className="mt-1 flex shrink-0 cursor-pointer items-start">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => {
-                              setLibraryCheckedIds((prev) =>
-                                prev.includes(item.id)
-                                  ? prev.filter((x) => x !== item.id)
-                                  : [...prev, item.id],
-                              );
-                            }}
-                            className="h-4 w-4 accent-[var(--accent)]"
-                            aria-label={`Select “${item.title}” for bulk delete`}
-                          />
-                        </label>
+              <ul className="flex max-h-[min(40vh,320px)] flex-col gap-2 overflow-y-auto pr-1">
+                {realmSeeds.map((seed) => (
+                  <li key={seed.id}>
+                    <div
+                      className="flex gap-3 rounded-lg border p-3 text-sm"
+                      style={{ borderColor: "var(--border)" }}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <span className="font-semibold text-[var(--text)]">
+                          {seed.seedName?.trim() ||
+                            seed.titleHint.trim() ||
+                            "Saved realm"}
+                        </span>
+                        <span className="mt-1 block text-xs text-[var(--muted)]">
+                          {REALM_SIZE_LABEL[seed.realmSize].label} ·{" "}
+                          {new Date(seed.createdAt).toLocaleString()}
+                        </span>
+                        {seed.briefDescription.trim() ? (
+                          <span className="mt-1 block truncate text-xs text-[var(--muted)]">
+                            {seed.briefDescription.trim()}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="flex shrink-0 flex-col gap-1.5 self-start">
                         <button
                           type="button"
-                          className="min-w-0 flex-1 text-left"
-                          onClick={() => setSelectedLibraryId(item.id)}
+                          onClick={() => openEditSeedEditor(seed.id)}
+                          className="rounded-md border px-2 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                          style={{ borderColor: "var(--border)" }}
                         >
-                          <span className="font-semibold text-[var(--text)]">
-                            {item.title}
-                          </span>
-                          <span className="mt-1 block text-xs text-[var(--muted)]">
-                            {LIBRARY_KIND_LABEL[item.kind]} ·{" "}
-                            {new Date(item.createdAt).toLocaleString()}
-                            {!item.markdown.trim() && item.images.length > 0
-                              ? " · images only"
-                              : null}
-                          </span>
+                          Edit
                         </button>
                         <button
                           type="button"
-                          className="shrink-0 self-start rounded-md border px-2 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                          style={{ borderColor: "var(--border)" }}
-                          onClick={async () => {
-                            const next = await deleteGenerationLibraryItem(item.id);
-                            setLibraryItems(next);
-                            setLibraryCheckedIds((prev) =>
-                              prev.filter((x) => x !== item.id),
-                            );
-                            if (selectedLibraryId === item.id) {
-                              setSelectedLibraryId(null);
+                          onClick={() => {
+                            const next = deleteRealmSeed(seed.id);
+                            setRealmSeeds(next);
+                            if (selectedRealmSeedId === seed.id) {
+                              setSelectedRealmSeedId("");
+                            }
+                            if (selectedRealmCreationSeedId === seed.id) {
+                              setSelectedRealmCreationSeedId("");
                             }
                           }}
+                          className="rounded-md border px-2 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
+                          style={{ borderColor: "rgba(248,113,113,0.45)" }}
                         >
                           Delete
                         </button>
                       </div>
-                    </li>
-                  );
-                })}
+                    </div>
+                  </li>
+                ))}
               </ul>
             )}
           </div>
@@ -2161,6 +2416,17 @@ export default function Home(props: PageProps<"/">) {
                     Delete this saved realm
                   </button>
                 ) : null}
+                <p className="text-xs text-[var(--muted)]">
+                  Add or edit seeds by hand in the{" "}
+                  <button
+                    type="button"
+                    onClick={() => selectMode("library")}
+                    className="font-medium text-[var(--accent)] underline underline-offset-2"
+                  >
+                    Library tab
+                  </button>
+                  .
+                </p>
               </div>
               <Field
                 label="Working name or theme (optional)"
@@ -2351,6 +2617,17 @@ export default function Home(props: PageProps<"/">) {
                   Delete this saved realm
                 </button>
               ) : null}
+              <p className="text-xs text-[var(--muted)]">
+                Add or edit seeds by hand in the{" "}
+                <button
+                  type="button"
+                  onClick={() => selectMode("library")}
+                  className="font-medium text-[var(--accent)] underline underline-offset-2"
+                >
+                  Library tab
+                </button>
+                .
+              </p>
             </div>
           ) : null}
           {mode === "adventure" ? (
@@ -2609,6 +2886,16 @@ export default function Home(props: PageProps<"/">) {
             <div className="no-print flex flex-wrap gap-2">
               {previewMarkdown.trim() ? (
                 <>
+                  {mode !== "library" ? (
+                    <button
+                      type="button"
+                      onClick={openResultEditor}
+                      className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                      style={{ borderColor: "var(--border)" }}
+                    >
+                      Edit
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     onClick={copyMarkdown}
@@ -2737,10 +3024,12 @@ export default function Home(props: PageProps<"/">) {
           </>
         )}
 
-        {mode === "library" && !selectedLibraryItem ? (
+        {mode === "library" ? (
           <p className="no-print mt-8 text-sm text-[var(--muted)]">
-            Select an entry in the Library list to preview its text and images
-            here.
+            The Library manages your saved realm seeds. Generate a realm,
+            adventure, or characters from the tabs above—then use{" "}
+            <strong className="text-[var(--text)]">Edit</strong> here in Output to
+            revise the text.
           </p>
         ) : null}
         {!loading &&

@@ -270,6 +270,34 @@ export async function appendGenerationLibraryItem(
   });
 }
 
+/**
+ * Edit the saved text of a generation in place (title and/or Markdown body).
+ * Images and models are preserved. Unknown ids are a no-op.
+ */
+export async function updateGenerationLibraryItem(
+  id: string,
+  patch: { title: string; markdown: string },
+): Promise<LibraryItem[]> {
+  if (typeof window === "undefined") return [];
+  return withWriteLock(async () => {
+    const next = (await loadItemsInternal()).map((x) =>
+      x.id === id
+        ? {
+            ...x,
+            title: patch.title.trim() || LIBRARY_KIND_LABEL[x.kind],
+            markdown: patch.markdown.slice(0, MAX_MARKDOWN_CHARS),
+          }
+        : x,
+    );
+    try {
+      await persistListAttempt(next);
+    } catch {
+      /* ignore */
+    }
+    return next;
+  });
+}
+
 export async function deleteGenerationLibraryItem(id: string): Promise<LibraryItem[]> {
   if (typeof window === "undefined") return [];
   return withWriteLock(async () => {

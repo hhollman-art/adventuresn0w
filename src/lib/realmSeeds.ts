@@ -82,6 +82,37 @@ export function appendRealmSeed(params: {
   return next;
 }
 
+/**
+ * Update an existing seed in place (used by the manual seed editor). Unknown
+ * ids are a no-op. Returns the refreshed list.
+ */
+export function updateRealmSeed(
+  id: string,
+  patch: {
+    seedName: string;
+    realmSize: RealmSize;
+    titleHint: string;
+    briefDescription: string;
+    markdown: string;
+  },
+): SavedRealmSeed[] {
+  if (typeof window === "undefined") return [];
+  const next = loadRealmSeeds().map((s) =>
+    s.id === id
+      ? {
+          ...s,
+          seedName: patch.seedName.trim(),
+          realmSize: patch.realmSize,
+          titleHint: patch.titleHint,
+          briefDescription: patch.briefDescription,
+          markdown: patch.markdown,
+        }
+      : s,
+  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  return next;
+}
+
 export function deleteRealmSeed(id: string): SavedRealmSeed[] {
   if (typeof window === "undefined") return [];
   const next = loadRealmSeeds().filter((s) => s.id !== id);

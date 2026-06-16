@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import { Cinzel } from "next/font/google";
 import "./globals.css";
 import pkg from "../../package.json";
@@ -26,15 +27,26 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={cinzel.variable}>
       <body className="min-h-screen antialiased">
-        <header className="site-banner no-print px-4 py-4 text-center sm:py-5">
-          <p className="font-display site-banner-title text-2xl font-bold sm:text-3xl">
-            <span aria-hidden="true">&#9876;&#65039; </span>
-            D&amp;D Easy
-            <span aria-hidden="true"> &#9876;&#65039;</span>
-          </p>
+        <header className="site-banner no-print relative px-4 py-4 text-center sm:py-5">
+          <Link href="/" className="inline-block">
+            <span className="font-display site-banner-title block text-2xl font-bold sm:text-3xl">
+              <span aria-hidden="true">&#9876;&#65039; </span>
+              D&amp;D Easy
+              <span aria-hidden="true"> &#9876;&#65039;</span>
+            </span>
+          </Link>
           <p className="mt-1 text-xs tracking-[0.2em] text-[var(--muted)] uppercase">
             Forge realms &middot; Weave adventures &middot; Summon heroes
           </p>
+          <nav className="mt-2 sm:absolute sm:top-1/2 sm:right-5 sm:mt-0 sm:-translate-y-1/2">
+            <Link
+              href="/help"
+              className="inline-block rounded-lg border px-3 py-1.5 text-xs font-semibold text-[var(--accent)] transition hover:bg-[var(--bg)]"
+              style={{ borderColor: "var(--border)" }}
+            >
+              <span aria-hidden="true">&#128214; </span>How to use
+            </Link>
+          </nav>
         </header>
         {children}
         <p

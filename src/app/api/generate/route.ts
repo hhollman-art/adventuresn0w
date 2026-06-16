@@ -9,8 +9,8 @@ import {
 import {
   formatAnthropicError,
   generateMarkdown,
-  generateMarkdownStream,
 } from "@/lib/anthropicGenerate";
+import { createMarkdownSseResponse } from "@/lib/sseStream";
 import { parseRealmSeedMarkdown } from "@/lib/requestLimits";
 import { adventurePostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError } from "@/lib/serverLog";
@@ -84,37 +84,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ markdown, model });
     }
 
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream<Uint8Array>({
-      async start(controller) {
-        const write = (payload: unknown) => {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
-        };
-        try {
-          const result = await generateMarkdownStream({
-            apiKey,
-            system: SYSTEM_PROMPT,
-            user: userMessage,
-            onModel: (model) => write({ type: "meta", model }),
-            onText: (chunk) => write({ type: "chunk", text: chunk }),
-          });
-          write({ type: "done", markdown: result.markdown, model: result.model });
-          controller.close();
-        } catch (err) {
-          const { message, status } = formatAnthropicError(err);
-          logApiError("adventure_stream_failed", { status: String(status), message });
-          write({ type: "error", error: message, status });
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-      },
+    return createMarkdownSseResponse({
+      apiKey,
+      system: SYSTEM_PROMPT,
+      user: userMessage,
+      logTag: "adventure_stream_failed",
     });
   } catch (err) {
     const { message, status } = formatAnthropicError(err);
