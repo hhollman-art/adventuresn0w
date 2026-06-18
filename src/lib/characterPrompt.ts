@@ -1,3 +1,8 @@
+export type CharacterSlotSpec = {
+  className?: string;
+  race?: string;
+};
+
 export type PremadeCharacterInput = {
   partyConcept: string;
   levelRange: string;
@@ -5,7 +10,21 @@ export type PremadeCharacterInput = {
   setting: string;
   characterCount: string;
   extraNotes: string;
+  characterSpecs?: CharacterSlotSpec[];
 };
+
+function formatCharacterSpecsBlock(specs: CharacterSlotSpec[] | undefined): string {
+  if (!specs?.length) {
+    return "- (No per-PC class or race locks — build a balanced, complementary party.)";
+  }
+  return specs
+    .map((s, i) => {
+      const cls = s.className?.trim() || "Any (your choice)";
+      const race = s.race?.trim() || "Any (your choice)";
+      return `- PC ${i + 1}: **Class** ${cls}; **Race** ${race}`;
+    })
+    .join("\n");
+}
 
 export function buildPremadeCharactersMessage(input: PremadeCharacterInput): string {
   return `Create a roster of **pre-made player characters** ready to pick up and play in one session.
@@ -17,6 +36,12 @@ export function buildPremadeCharactersMessage(input: PremadeCharacterInput): str
 - Setting / world flavor: ${input.setting || "(generic fantasy)"}
 - Number of characters: ${input.characterCount}
 - Additional requests: ${input.extraNotes || "(none)"}
+
+## Per-PC class & race (SRD-open)
+${formatCharacterSpecsBlock(input.characterSpecs)}
+- Honor each **Class** / **Race** lock exactly when not "Any".
+- When a slot is "Any", pick to complement the rest of the party (avoid redundant builds unless the concept calls for it).
+- Do not assign the same class+race combo twice unless the table explicitly locked it.
 
 ## Rules
 - Assume **D&D version 5.2** character creation assumptions (CC SRD lineage). Do not claim affiliation with Wizards of the Coast.

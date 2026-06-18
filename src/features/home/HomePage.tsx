@@ -18,6 +18,7 @@ import {
 } from "@/lib/generationLibrary";
 import {
   appendRealmSeed,
+  defaultSavedSeedLabel,
   deleteRealmSeed,
   ddeasySeedOptionLabel,
   loadRealmSeeds,
@@ -25,12 +26,21 @@ import {
   suggestedSeedName,
   updateRealmSeed,
   SEED_KIND_LABEL,
+  SEED_KINDS,
   type SavedRealmSeed,
   type SeedKind,
 } from "@/lib/realmSeeds";
 import type { MapPackKind } from "@/lib/mapImagePrompt";
 import type { MapDistanceUnits } from "@/lib/mapDistanceUnits";
 import type { PropItemCategory } from "@/lib/propImagePrompt";
+import {
+  classSelectOptions,
+  defaultCharacterSlots,
+  parsePartyCount,
+  raceSelectOptions,
+  resizeCharacterSlots,
+  type CharacterSlotSpec,
+} from "@/lib/srdCharacterOptions";
 import { renderMarkdownToHtml } from "@/lib/markdownRender";
 import { postHeartbeatJson } from "@/lib/sseClient";
 import {
@@ -114,6 +124,64 @@ function autoSaveGeneratedSeed(params: {
     markdown: params.markdown,
   });
   return { savedSeedId: seeds[0]!.id, seeds, seedName };
+}
+
+const MAP_PACK_LABEL: Record<MapFormState["mapKind"], string> = {
+  overland: "Locale / overland",
+  battle: "Battle maps",
+  both: "Both (overland + battle)",
+};
+
+function buildMapSeedMarkdown(form: MapFormState): string {
+  const title = form.locationName.trim() || "Map pack";
+  const lines = [`# ${title}`, ""];
+  lines.push(`- **Pack type:** ${MAP_PACK_LABEL[form.mapKind]}`);
+  if (form.tone.trim()) lines.push(`- **Tone / biome:** ${form.tone.trim()}`);
+  if (form.levelRange.trim()) {
+    lines.push(`- **Level range:** ${form.levelRange.trim()}`);
+  }
+  if (form.partySize.trim()) {
+    lines.push(`- **Party size:** ${form.partySize.trim()}`);
+  }
+  if (form.context.trim()) {
+    lines.push("", "## Scene context", "", form.context.trim());
+  }
+  if (form.gridNotes.trim()) {
+    lines.push("", "## Grid / scale", "", form.gridNotes.trim());
+  }
+  if (form.extraNotes.trim()) {
+    lines.push("", "## Extra notes", "", form.extraNotes.trim());
+  }
+  return lines.join("\n");
+}
+
+function propCategoryLabel(category: PropFormState["itemCategory"]): string {
+  return category.replace(/_/g, " ");
+}
+
+function buildPropSeedMarkdown(form: PropFormState): string {
+  const title =
+    form.title.trim() ||
+    form.description.trim().slice(0, 72) ||
+    "Prop handout";
+  const lines = [`# ${title}`, ""];
+  lines.push(`- **Item type:** ${propCategoryLabel(form.itemCategory)}`);
+  if (form.description.trim()) {
+    lines.push("", "## Description", "", form.description.trim());
+  }
+  if (form.style.trim()) {
+    lines.push("", "## Style", "", form.style.trim());
+  }
+  if (form.ageWear.trim()) {
+    lines.push("", "## Age / wear", "", form.ageWear.trim());
+  }
+  if (form.settingHint.trim()) {
+    lines.push("", "## Setting hint", "", form.settingHint.trim());
+  }
+  if (form.extraNotes.trim()) {
+    lines.push("", "## Extra notes", "", form.extraNotes.trim());
+  }
+  return lines.join("\n");
 }
 
 /**
@@ -782,6 +850,10 @@ export default function Home(props: PageProps<"/">) {
   /** Manual create/edit editor for D&DEasy seeds; null when closed. */
   const [seedEditor, setSeedEditor] = useState<SeedEditorDraft | null>(null);
   const [seedEditorError, setSeedEditorError] = useState("");
+  /** Characters tab: per-PC class & race picks (length follows party size). */
+  const [characterSlots, setCharacterSlots] = useState<CharacterSlotSpec[]>(() =>
+    defaultCharacterSlots(),
+  );
 
   useEffect(() => {
     setDdeasySeeds(loadRealmSeeds());
@@ -813,6 +885,22 @@ export default function Home(props: PageProps<"/">) {
   useEffect(() => {
     if (pendingRealmSeed) setSeedDialogError("");
   }, [pendingRealmSeed]);
+
+  function promptSavedSeed(params: {
+    kind: SeedKind;
+    realmSize?: RealmSize;
+    titleHint: string;
+    briefDescription: string;
+    markdown: string;
+  }) {
+    const autoSaved = autoSaveGeneratedSeed(params);
+    setDdeasySeeds(autoSaved.seeds);
+    setPendingRealmSeed({
+      ...params,
+      savedSeedId: autoSaved.savedSeedId,
+    });
+    setPendingSeedNameDraft(autoSaved.seedName);
+  }
 
   function openNewSeedEditor() {
     setSeedEditorError("");
@@ -872,11 +960,7 @@ export default function Home(props: PageProps<"/">) {
       return;
     }
     if (!markdown) {
-      setSeedEditorError(
-        seedEditor.kind === "adventure"
-          ? "Add some adventure details—the content cannot be empty."
-          : "Add some realm details—the content cannot be empty.",
-      );
+      setSeedEditorError("Add seed details—the content cannot be empty.");
       return;
     }
     const brief = seedEditor.briefDescription.trim().slice(0, 280);
@@ -919,6 +1003,7 @@ export default function Home(props: PageProps<"/">) {
         break;
       case "characters":
         setForm(initialFormCharacters);
+        setCharacterSlots(defaultCharacterSlots());
         break;
       case "props":
         setPropForm(initialPropFormStandalone);
@@ -1007,6 +1092,16 @@ export default function Home(props: PageProps<"/">) {
               images: mapResult.images,
             }),
           );
+          const titleSnap = mapForm.locationName.trim();
+          promptSavedSeed({
+            kind: "maps",
+            titleHint: titleSnap,
+            briefDescription: [mapForm.tone.trim(), mapForm.context.trim()]
+              .filter(Boolean)
+              .join(" · ")
+              .slice(0, 400),
+            markdown: buildMapSeedMarkdown(mapForm),
+          });
         }
         return;
       }
@@ -1032,6 +1127,15 @@ export default function Home(props: PageProps<"/">) {
               images: propResult.images,
             }),
           );
+          const titleSnap =
+            propForm.title.trim() ||
+            propForm.description.trim().slice(0, 72);
+          promptSavedSeed({
+            kind: "props",
+            titleHint: titleSnap,
+            briefDescription: propForm.description.trim().slice(0, 400),
+            markdown: buildPropSeedMarkdown(propForm),
+          });
         }
         return;
       }
@@ -1065,23 +1169,13 @@ export default function Home(props: PageProps<"/">) {
           const titleSnap = realmForm.titleHint.trim();
           let realmLibImages: GeneratedImage[] = [];
           let realmLibImgModel: string | null = null;
-          const autoSaved = autoSaveGeneratedSeed({
+          promptSavedSeed({
             kind: "realm",
             realmSize: realmForm.realmSize,
             titleHint: titleSnap,
             briefDescription,
             markdown: streamed.markdown,
           });
-          setDdeasySeeds(autoSaved.seeds);
-          setPendingRealmSeed({
-            kind: "realm",
-            realmSize: realmForm.realmSize,
-            titleHint: titleSnap,
-            briefDescription,
-            markdown: streamed.markdown,
-            savedSeedId: autoSaved.savedSeedId,
-          });
-          setPendingSeedNameDraft(autoSaved.seedName);
           if (autoGenerateRealmMapImage) {
             setImageLoading(true);
             setImageError(null);
@@ -1147,6 +1241,13 @@ export default function Home(props: PageProps<"/">) {
               setting: form.setting,
               characterCount: form.partySize,
               extraNotes: form.extraNotes,
+              characterSpecs: resizeCharacterSlots(
+                characterSlots,
+                parsePartyCount(form.partySize),
+              ).map((s) => ({
+                className: s.className.trim() || undefined,
+                race: s.race.trim() || undefined,
+              })),
             };
       let generatedMarkdown = "";
       let generatedModel: string | null = null;
@@ -1379,31 +1480,34 @@ export default function Home(props: PageProps<"/">) {
         });
         setLibraryItems(textLib);
         setCurrentResultLibraryId(textLib[0]?.id ?? null);
-        if (mode === "adventure") {
+        if (mode === "adventure" || mode === "characters") {
           const titleSnap = form.titleHint.trim();
-          const briefDescription = [
-            form.setting.trim(),
-            form.villainOrThreat.trim(),
-            form.tone.trim(),
-          ]
-            .filter(Boolean)
-            .join(" · ")
-            .slice(0, 400);
-          const autoSaved = autoSaveGeneratedSeed({
-            kind: "adventure",
+          const briefDescription =
+            mode === "adventure"
+              ? [
+                  form.setting.trim(),
+                  form.villainOrThreat.trim(),
+                  form.tone.trim(),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+                  .slice(0, 400)
+              : [
+                  form.setting.trim(),
+                  form.tone.trim(),
+                  form.levelRange.trim()
+                    ? `Levels ${form.levelRange.trim()}`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+                  .slice(0, 400);
+          promptSavedSeed({
+            kind: mode === "characters" ? "characters" : "adventure",
             titleHint: titleSnap,
             briefDescription,
             markdown: generatedMarkdown,
           });
-          setDdeasySeeds(autoSaved.seeds);
-          setPendingRealmSeed({
-            kind: "adventure",
-            titleHint: titleSnap,
-            briefDescription,
-            markdown: generatedMarkdown,
-            savedSeedId: autoSaved.savedSeedId,
-          });
-          setPendingSeedNameDraft(autoSaved.seedName);
         }
       } else {
         setError("No generated text returned.");
@@ -1612,9 +1716,10 @@ export default function Home(props: PageProps<"/">) {
               Name your D&DEasy seed
             </h2>
             <p className="mt-2 text-sm text-[var(--muted)]">
-              This {pendingRealmSeed.kind === "adventure" ? "adventure" : "realm"}{" "}
-              is already saved in the Library tab. Confirm or edit the name below,
-              or choose Done to keep the suggested name.
+              This{" "}
+              {SEED_KIND_LABEL[pendingRealmSeed.kind].toLowerCase()} is already
+              saved in the Library tab. Confirm or edit the name below, or choose
+              Done to keep the suggested name.
             </p>
             <label className="mt-4 flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-[var(--muted)]">Seed name</span>
@@ -1697,8 +1802,8 @@ export default function Home(props: PageProps<"/">) {
                 : "Add seed manually"}
             </h2>
             <p className="mt-2 text-sm text-[var(--muted)]">
-              Type or paste your own setting or adventure. The content grounds
-              new realms and adventures, just like a generated seed. Markdown is
+              Type or paste content for any generator tab. Seeds ground future
+              realms, adventures, characters, maps, and props. Markdown is
               supported.
             </p>
             <label className="mt-4 flex flex-col gap-1.5 text-sm">
@@ -1712,8 +1817,11 @@ export default function Home(props: PageProps<"/">) {
                 className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
                 style={{ borderColor: "var(--border)" }}
               >
-                <option value="realm">{SEED_KIND_LABEL.realm}</option>
-                <option value="adventure">{SEED_KIND_LABEL.adventure}</option>
+                {SEED_KINDS.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {SEED_KIND_LABEL[kind]}
+                  </option>
+                ))}
               </select>
             </label>
             <label className="mt-3 flex flex-col gap-1.5 text-sm">
@@ -1772,15 +1880,10 @@ export default function Home(props: PageProps<"/">) {
               />
             </label>
             <label className="mt-3 flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-[var(--muted)]">
-                {seedEditor.kind === "adventure"
-                  ? "Adventure details"
-                  : "Realm details"}
-              </span>
+              <span className="font-medium text-[var(--muted)]">Seed details</span>
               <span className="text-xs text-[var(--muted)]">
-                {seedEditor.kind === "adventure"
-                  ? "Premise, factions, key scenes, NPCs, twists—whatever should carry into generated adventures and realms. Required."
-                  : "Geography, factions, history, key locations—whatever should carry into generated realms and adventures. Required."}
+                The brief, notes, or generated text that should carry into future
+                runs on this tab (and related tabs). Required.
               </span>
               <textarea
                 value={seedEditor.markdown}
@@ -1961,7 +2064,7 @@ export default function Home(props: PageProps<"/">) {
         </div>
         <p className="mt-2 text-sm text-[var(--muted)]">
           {mode === "library"
-            ? "Manage your D&DEasy seeds—the reusable settings that ground new realms and adventures. Edit the text of any generation right where it appears, using the Edit button in the Output panel."
+            ? "Manage your D&DEasy seeds—the reusable settings that ground every generator tab. Edit the text of any generation right where it appears, using the Edit button in the Output panel."
             : mode === "realm"
               ? "Choose the scale of the place (from a whole world down to a local cluster), then describe what you want. Claude returns table-ready setting Markdown—original, not WotC copy."
               : mode === "adventure"
@@ -1996,13 +2099,12 @@ export default function Home(props: PageProps<"/">) {
                 Seeds are reusable settings that{" "}
                 <strong className="text-[var(--text)]">ground</strong> new
                 generations. Manage <strong className="text-[var(--text)]">D&DEasy seeds</strong>{" "}
-                here—both realm and adventure types. Pick one in the Realm tab to
-                expand or zoom a place, or in the Adventure tab to anchor
-                geography, factions, and lore so everything stays consistent.
+                for every tab—realm, adventure, characters, maps, and props. Pick
+                one in the Realm or Adventure tab to anchor geography, factions,
+                and lore so everything stays consistent.
               </p>
               <p>
-                Every realm and adventure you generate is saved here automatically.
-                Use{" "}
+                Every generation is saved here automatically. Use{" "}
                 <strong className="text-[var(--text)]">Add seed manually</strong>{" "}
                 to write or paste your own (type, name, optional one-line
                 summary, and the details that get fed into generation),{" "}
@@ -2017,8 +2119,8 @@ export default function Home(props: PageProps<"/">) {
             </div>
             {ddeasySeeds.length === 0 ? (
               <p className="text-sm text-[var(--muted)]">
-                No seeds yet. Generate a realm or adventure, or use “Add seed
-                manually” to write your own.
+                No seeds yet. Generate from any tab, or use “Add seed manually”
+                to write your own.
               </p>
             ) : (
               <ul className="flex max-h-[min(40vh,320px)] flex-col gap-2 overflow-y-auto pr-1">
@@ -2042,9 +2144,7 @@ export default function Home(props: PageProps<"/">) {
                           <span className="font-semibold text-[var(--text)]">
                             {seed.seedName?.trim() ||
                               seed.titleHint.trim() ||
-                              (seed.kind === "adventure"
-                                ? "Saved adventure"
-                                : "Saved realm")}
+                              defaultSavedSeedLabel(seed.kind)}
                           </span>
                         </span>
                         <span className="mt-1 block text-xs text-[var(--muted)]">
@@ -2923,10 +3023,69 @@ export default function Home(props: PageProps<"/">) {
                 <Field
                   label="How many PCs (optional)"
                   value={form.partySize}
-                  onChange={(v) => setForm((f) => ({ ...f, partySize: v }))}
+                  onChange={(v) => {
+                    setForm((f) => ({ ...f, partySize: v }));
+                    setCharacterSlots((slots) =>
+                      resizeCharacterSlots(slots, parsePartyCount(v)),
+                    );
+                  }}
                   placeholder={CHARACTERS_SAMPLE_PARTY_PLACEHOLDER}
                 />
               )}
+              {mode === "characters" ? (
+                <fieldset
+                  className="flex flex-col gap-3 rounded-lg border p-3 text-sm"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  <legend className="text-sm font-medium text-[var(--muted)]">
+                    Class &amp; race per PC
+                  </legend>
+                  <p className="text-xs text-[var(--muted)]">
+                    SRD-open options only. Leave <strong className="text-[var(--text)]">Any</strong>{" "}
+                    on a slot to let the AI pick a complementary build.
+                  </p>
+                  {resizeCharacterSlots(
+                    characterSlots,
+                    parsePartyCount(form.partySize),
+                  ).map((slot, index) => (
+                    <div
+                      key={index}
+                      className="grid grid-cols-1 gap-2 rounded-md border p-2 sm:grid-cols-[3.5rem_1fr_1fr]"
+                      style={{ borderColor: "var(--border)" }}
+                    >
+                      <span className="self-center text-xs font-semibold text-[var(--text)]">
+                        PC {index + 1}
+                      </span>
+                      <SelectField
+                        label="Class"
+                        value={slot.className}
+                        onChange={(className) => {
+                          setCharacterSlots((slots) => {
+                            const count = parsePartyCount(form.partySize);
+                            const next = resizeCharacterSlots(slots, count);
+                            next[index] = { ...next[index]!, className };
+                            return next;
+                          });
+                        }}
+                        options={classSelectOptions()}
+                      />
+                      <SelectField
+                        label="Race"
+                        value={slot.race}
+                        onChange={(race) => {
+                          setCharacterSlots((slots) => {
+                            const count = parsePartyCount(form.partySize);
+                            const next = resizeCharacterSlots(slots, count);
+                            next[index] = { ...next[index]!, race };
+                            return next;
+                          });
+                        }}
+                        options={raceSelectOptions()}
+                      />
+                    </div>
+                  ))}
+                </fieldset>
+              ) : null}
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="font-medium text-[var(--muted)]">
                   Extra notes (optional)

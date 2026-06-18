@@ -38,6 +38,10 @@ export async function POST(request: Request) {
     setting: String(body.setting ?? "").trim(),
     characterCount: String(body.characterCount ?? "4").trim() || "4",
     extraNotes: String(body.extraNotes ?? "").trim(),
+    characterSpecs: body.characterSpecs?.map((s) => ({
+      className: s.className?.trim() || undefined,
+      race: s.race?.trim() || undefined,
+    })),
   };
 
   try {

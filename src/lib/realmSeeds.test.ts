@@ -55,4 +55,18 @@ describe("realmSeeds", () => {
     const raw = JSON.parse(storage.store[STORAGE_KEY]!) as SavedRealmSeed[];
     expect(raw[0]?.kind).toBe("adventure");
   });
+
+  it("persists characters seeds and reloads them", () => {
+    appendRealmSeed({
+      kind: "characters",
+      seedName: "City watch party",
+      titleHint: "City watch party",
+      briefDescription: "Disgraced guards · heroic",
+      markdown: "# The Night Watch\n\nFour level-3 PCs...",
+    });
+
+    const loaded = loadRealmSeeds();
+    expect(loaded[0]?.kind).toBe("characters");
+    expect(loaded[0]?.seedName).toBe("City watch party");
+  });
 });

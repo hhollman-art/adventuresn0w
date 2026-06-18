@@ -41,6 +41,14 @@ export const charactersPostSchema = z.object({
   setting: z.string().optional(),
   characterCount: z.string().optional(),
   extraNotes: z.string().optional(),
+  characterSpecs: z
+    .array(
+      z.object({
+        className: z.string().optional(),
+        race: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
 export const mapImagePostSchema = z.object({

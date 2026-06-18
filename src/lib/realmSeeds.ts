@@ -3,13 +3,29 @@ import { REALM_SIZE_LABEL, type RealmSize } from "@/lib/realmPrompt";
 const STORAGE_KEY = "ddeasy-realm-seeds-v1";
 const MAX_SEEDS = 25;
 
-/** Seeds can ground either a new realm or a new adventure. */
-export type SeedKind = "realm" | "adventure";
+/** Seeds can ground any generator tab (realm, adventure, characters, maps, props). */
+export type SeedKind =
+  | "realm"
+  | "adventure"
+  | "characters"
+  | "maps"
+  | "props";
 
 export const SEED_KIND_LABEL: Record<SeedKind, string> = {
   realm: "Realm",
   adventure: "Adventure",
+  characters: "Characters",
+  maps: "Maps",
+  props: "Props",
 };
+
+export const SEED_KINDS: SeedKind[] = [
+  "realm",
+  "adventure",
+  "characters",
+  "maps",
+  "props",
+];
 
 export type SavedRealmSeed = {
   id: string;
@@ -39,7 +55,7 @@ function isRealmSize(v: unknown): v is RealmSize {
 }
 
 function isSeedKind(v: unknown): v is SeedKind {
-  return v === "realm" || v === "adventure";
+  return typeof v === "string" && (SEED_KINDS as string[]).includes(v);
 }
 
 function normalizeSavedSeed(x: unknown): SavedRealmSeed | null {
@@ -187,13 +203,33 @@ export function suggestedSeedName(
   if (fromHint) return fromHint;
   const fromTitle = firstMarkdownTitle(markdown);
   if (fromTitle) return fromTitle;
-  return kind === "adventure" ? "My adventure" : "My realm";
+  const fallbacks: Record<SeedKind, string> = {
+    realm: "My realm",
+    adventure: "My adventure",
+    characters: "My party",
+    maps: "My map pack",
+    props: "My prop",
+  };
+  return fallbacks[kind];
+}
+
+export function defaultSavedSeedLabel(kind: SeedKind): string {
+  const labels: Record<SeedKind, string> = {
+    realm: "Saved realm",
+    adventure: "Saved adventure",
+    characters: "Saved characters",
+    maps: "Saved map pack",
+    props: "Saved prop",
+  };
+  return labels[kind];
 }
 
 /** Short label describing a seed's scope, used in pickers and lists. */
 export function seedScopeLabel(s: SavedRealmSeed): string {
-  if (s.kind === "adventure") return SEED_KIND_LABEL.adventure;
-  return s.realmSize ? REALM_SIZE_LABEL[s.realmSize].label : SEED_KIND_LABEL.realm;
+  if (s.kind === "realm" && s.realmSize) {
+    return REALM_SIZE_LABEL[s.realmSize].label;
+  }
+  return SEED_KIND_LABEL[s.kind];
 }
 
 /** Label for &lt;select&gt; options (keep reasonably short). */
@@ -202,7 +238,7 @@ export function ddeasySeedOptionLabel(s: SavedRealmSeed): string {
     s.seedName?.trim() ||
     s.titleHint.trim() ||
     firstMarkdownTitle(s.markdown) ||
-    (s.kind === "adventure" ? "Saved adventure" : "Saved realm");
+    defaultSavedSeedLabel(s.kind);
   const scope = seedScopeLabel(s);
   const date = new Date(s.createdAt).toLocaleDateString(undefined, {
     month: "short",
