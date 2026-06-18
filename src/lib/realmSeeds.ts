@@ -3,10 +3,21 @@ import { REALM_SIZE_LABEL, type RealmSize } from "@/lib/realmPrompt";
 const STORAGE_KEY = "ddeasy-realm-seeds-v1";
 const MAX_SEEDS = 25;
 
+/** Seeds can ground either a new realm or a new adventure. */
+export type SeedKind = "realm" | "adventure";
+
+export const SEED_KIND_LABEL: Record<SeedKind, string> = {
+  realm: "Realm",
+  adventure: "Adventure",
+};
+
 export type SavedRealmSeed = {
   id: string;
   createdAt: string;
-  realmSize: RealmSize;
+  /** Which generator this seed is primarily intended to ground. */
+  kind: SeedKind;
+  /** Only meaningful for realm seeds; undefined for adventure seeds. */
+  realmSize?: RealmSize;
   /** User-chosen library name (set when saving after generation). */
   seedName?: string;
   titleHint: string;
@@ -27,19 +38,50 @@ function isRealmSize(v: unknown): v is RealmSize {
   return typeof v === "string" && (REALM_SIZES as string[]).includes(v);
 }
 
-function isSavedRealmSeed(x: unknown): x is SavedRealmSeed {
-  if (typeof x !== "object" || x === null) return false;
+function isSeedKind(v: unknown): v is SeedKind {
+  return v === "realm" || v === "adventure";
+}
+
+function normalizeSavedSeed(x: unknown): SavedRealmSeed | null {
+  if (typeof x !== "object" || x === null) return null;
   const o = x as Record<string, unknown>;
-  return (
-    typeof o.id === "string" &&
-    typeof o.createdAt === "string" &&
-    typeof o.markdown === "string" &&
-    o.markdown.length > 0 &&
-    isRealmSize(o.realmSize) &&
-    typeof o.titleHint === "string" &&
-    typeof o.briefDescription === "string" &&
-    (o.seedName === undefined || typeof o.seedName === "string")
-  );
+  if (
+    typeof o.id !== "string" ||
+    typeof o.createdAt !== "string" ||
+    typeof o.markdown !== "string" ||
+    o.markdown.length === 0 ||
+    typeof o.titleHint !== "string" ||
+    typeof o.briefDescription !== "string" ||
+    (o.seedName !== undefined && typeof o.seedName !== "string")
+  ) {
+    return null;
+  }
+  // Backward compatibility: seeds saved before kinds existed are realm seeds.
+  const kind: SeedKind = isSeedKind(o.kind) ? o.kind : "realm";
+  const realmSize = isRealmSize(o.realmSize) ? o.realmSize : undefined;
+  // Realm seeds must carry a scale; fall back to "region" for legacy rows.
+  if (kind === "realm" && realmSize === undefined) {
+    return {
+      id: o.id,
+      createdAt: o.createdAt,
+      kind,
+      realmSize: "region",
+      seedName: o.seedName as string | undefined,
+      titleHint: o.titleHint,
+      briefDescription: o.briefDescription,
+      markdown: o.markdown,
+    };
+  }
+  return {
+    id: o.id,
+    createdAt: o.createdAt,
+    kind,
+    ...(kind === "realm" ? { realmSize } : {}),
+    seedName: o.seedName as string | undefined,
+    titleHint: o.titleHint,
+    briefDescription: o.briefDescription,
+    markdown: o.markdown,
+  };
 }
 
 export function loadRealmSeeds(): SavedRealmSeed[] {
@@ -49,15 +91,18 @@ export function loadRealmSeeds(): SavedRealmSeed[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isSavedRealmSeed);
+    return parsed
+      .map(normalizeSavedSeed)
+      .filter((s): s is SavedRealmSeed => s !== null);
   } catch {
     return [];
   }
 }
 
 export function appendRealmSeed(params: {
+  kind: SeedKind;
   seedName: string;
-  realmSize: RealmSize;
+  realmSize?: RealmSize;
   titleHint: string;
   briefDescription: string;
   markdown: string;
@@ -70,7 +115,10 @@ export function appendRealmSeed(params: {
   const entry: SavedRealmSeed = {
     id,
     createdAt: new Date().toISOString(),
-    realmSize: params.realmSize,
+    kind: params.kind,
+    ...(params.kind === "realm"
+      ? { realmSize: params.realmSize ?? "region" }
+      : {}),
     seedName: params.seedName.trim(),
     titleHint: params.titleHint,
     briefDescription: params.briefDescription,
@@ -89,8 +137,9 @@ export function appendRealmSeed(params: {
 export function updateRealmSeed(
   id: string,
   patch: {
+    kind: SeedKind;
     seedName: string;
-    realmSize: RealmSize;
+    realmSize?: RealmSize;
     titleHint: string;
     briefDescription: string;
     markdown: string;
@@ -101,8 +150,11 @@ export function updateRealmSeed(
     s.id === id
       ? {
           ...s,
+          kind: patch.kind,
+          ...(patch.kind === "realm"
+            ? { realmSize: patch.realmSize ?? s.realmSize ?? "region" }
+            : { realmSize: undefined }),
           seedName: patch.seedName.trim(),
-          realmSize: patch.realmSize,
           titleHint: patch.titleHint,
           briefDescription: patch.briefDescription,
           markdown: patch.markdown,
@@ -126,20 +178,32 @@ function firstMarkdownTitle(md: string): string {
 }
 
 /** Default name shown in the “save seed” dialog after generation. */
-export function suggestedSeedName(markdown: string, titleHint: string): string {
+export function suggestedSeedName(
+  markdown: string,
+  titleHint: string,
+  kind: SeedKind = "realm",
+): string {
   const fromHint = titleHint.trim();
   if (fromHint) return fromHint;
-  return firstMarkdownTitle(markdown) || "My realm";
+  const fromTitle = firstMarkdownTitle(markdown);
+  if (fromTitle) return fromTitle;
+  return kind === "adventure" ? "My adventure" : "My realm";
+}
+
+/** Short label describing a seed's scope, used in pickers and lists. */
+export function seedScopeLabel(s: SavedRealmSeed): string {
+  if (s.kind === "adventure") return SEED_KIND_LABEL.adventure;
+  return s.realmSize ? REALM_SIZE_LABEL[s.realmSize].label : SEED_KIND_LABEL.realm;
 }
 
 /** Label for &lt;select&gt; options (keep reasonably short). */
-export function realmSeedOptionLabel(s: SavedRealmSeed): string {
+export function ddeasySeedOptionLabel(s: SavedRealmSeed): string {
   const name =
     s.seedName?.trim() ||
     s.titleHint.trim() ||
     firstMarkdownTitle(s.markdown) ||
-    "Saved realm";
-  const scope = REALM_SIZE_LABEL[s.realmSize].label;
+    (s.kind === "adventure" ? "Saved adventure" : "Saved realm");
+  const scope = seedScopeLabel(s);
   const date = new Date(s.createdAt).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
@@ -151,3 +215,6 @@ export function realmSeedOptionLabel(s: SavedRealmSeed): string {
   const tail = short ? ` — ${short}` : "";
   return `${name} (${scope}, ${date})${tail}`;
 }
+
+/** @deprecated Use ddeasySeedOptionLabel */
+export const realmSeedOptionLabel = ddeasySeedOptionLabel;

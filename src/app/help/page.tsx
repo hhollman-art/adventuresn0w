@@ -66,10 +66,10 @@ export default function HelpPage() {
           also have it draw a matching realm map image.
         </p>
         <p className="mt-2 leading-relaxed text-[var(--text)]/90">
-          After generating, you&apos;ll be offered to save the realm as a{" "}
-          <strong>realm seed</strong> — a named summary kept in your browser.
-          Seeds appear as a dropdown on the Adventure tab, so adventures can be
-          set inside a realm you made earlier.
+          After generating, the realm is saved automatically as a{" "}
+          <strong>D&DEasy seed</strong> — a named summary kept in your browser.
+          Seeds appear as a dropdown on the Realm and Adventure tabs, so new
+          generations can stay consistent with settings you made earlier.
         </p>
 
         <SectionHeading>Adventure</SectionHeading>
@@ -78,8 +78,9 @@ export default function HelpPage() {
           <strong>Short</strong> for part of a session or{" "}
           <strong>One-nighter</strong> for a full evening — then optionally set
           tone, level range, party size, a villain, and how combat-heavy it
-          should be (the 1–5 slider). Choose a realm seed to anchor the
-          adventure in one of your saved settings. The app can also
+          should be (the 1–5 slider). Choose a D&DEasy seed to anchor the
+          adventure in one of your saved settings. Adventures you generate are
+          also saved as D&DEasy seeds automatically. The app can also
           automatically generate battle maps and prop handouts for key scenes
           it finds in the finished adventure.
         </p>

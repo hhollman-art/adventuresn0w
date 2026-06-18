@@ -19,11 +19,14 @@ import {
 import {
   appendRealmSeed,
   deleteRealmSeed,
+  ddeasySeedOptionLabel,
   loadRealmSeeds,
-  realmSeedOptionLabel,
+  seedScopeLabel,
   suggestedSeedName,
   updateRealmSeed,
+  SEED_KIND_LABEL,
   type SavedRealmSeed,
+  type SeedKind,
 } from "@/lib/realmSeeds";
 import type { MapPackKind } from "@/lib/mapImagePrompt";
 import type { MapDistanceUnits } from "@/lib/mapDistanceUnits";
@@ -81,11 +84,37 @@ const MODE_TAB_ICON: Record<GenerateMode, string> = {
 };
 
 type PendingRealmSeed = {
-  realmSize: RealmSize;
+  kind: SeedKind;
+  realmSize?: RealmSize;
   titleHint: string;
   briefDescription: string;
   markdown: string;
+  /** Auto-saved on generation; dialog Save renames this row in place. */
+  savedSeedId: string;
 };
+
+function autoSaveGeneratedSeed(params: {
+  kind: SeedKind;
+  realmSize?: RealmSize;
+  titleHint: string;
+  briefDescription: string;
+  markdown: string;
+}): { savedSeedId: string; seeds: SavedRealmSeed[]; seedName: string } {
+  const seedName = suggestedSeedName(
+    params.markdown,
+    params.titleHint,
+    params.kind,
+  );
+  const seeds = appendRealmSeed({
+    kind: params.kind,
+    seedName,
+    realmSize: params.realmSize,
+    titleHint: params.titleHint,
+    briefDescription: params.briefDescription,
+    markdown: params.markdown,
+  });
+  return { savedSeedId: seeds[0]!.id, seeds, seedName };
+}
 
 /**
  * Working draft for the manual seed editor. `id` is null when creating a brand
@@ -93,6 +122,7 @@ type PendingRealmSeed = {
  */
 type SeedEditorDraft = {
   id: string | null;
+  kind: SeedKind;
   name: string;
   realmSize: RealmSize;
   briefDescription: string;
@@ -101,6 +131,7 @@ type SeedEditorDraft = {
 
 const EMPTY_SEED_DRAFT: SeedEditorDraft = {
   id: null,
+  kind: "realm",
   name: "",
   realmSize: "region",
   briefDescription: "",
@@ -738,22 +769,22 @@ export default function Home(props: PageProps<"/">) {
   const [mapDistanceUnits, setMapDistanceUnits] =
     useState<MapDistanceUnits>("imperial");
   const [progressStage, setProgressStage] = useState<ProgressStage>("idle");
-  const [realmSeeds, setRealmSeeds] = useState<SavedRealmSeed[]>([]);
+  const [ddeasySeeds, setDdeasySeeds] = useState<SavedRealmSeed[]>([]);
   const [selectedRealmSeedId, setSelectedRealmSeedId] = useState("");
-  /** Realm tab: optional saved realm whose Markdown grounds a new realm run. */
+  /** Realm tab: optional saved seed whose Markdown grounds a new realm run. */
   const [selectedRealmCreationSeedId, setSelectedRealmCreationSeedId] =
     useState("");
   const [pendingRealmSeed, setPendingRealmSeed] = useState<PendingRealmSeed | null>(
     null,
   );
   const [pendingSeedNameDraft, setPendingSeedNameDraft] = useState("");
-  const [realmSeedDialogError, setRealmSeedDialogError] = useState("");
-  /** Manual create/edit editor for realm seeds; null when closed. */
+  const [seedDialogError, setSeedDialogError] = useState("");
+  /** Manual create/edit editor for D&DEasy seeds; null when closed. */
   const [seedEditor, setSeedEditor] = useState<SeedEditorDraft | null>(null);
   const [seedEditorError, setSeedEditorError] = useState("");
 
   useEffect(() => {
-    setRealmSeeds(loadRealmSeeds());
+    setDdeasySeeds(loadRealmSeeds());
   }, []);
 
   // On mobile, default the slow auto image generation off for reliability.
@@ -767,20 +798,20 @@ export default function Home(props: PageProps<"/">) {
 
   useEffect(() => {
     if (!selectedRealmSeedId) return;
-    if (!realmSeeds.some((s) => s.id === selectedRealmSeedId)) {
+    if (!ddeasySeeds.some((s) => s.id === selectedRealmSeedId)) {
       setSelectedRealmSeedId("");
     }
-  }, [realmSeeds, selectedRealmSeedId]);
+  }, [ddeasySeeds, selectedRealmSeedId]);
 
   useEffect(() => {
     if (!selectedRealmCreationSeedId) return;
-    if (!realmSeeds.some((s) => s.id === selectedRealmCreationSeedId)) {
+    if (!ddeasySeeds.some((s) => s.id === selectedRealmCreationSeedId)) {
       setSelectedRealmCreationSeedId("");
     }
-  }, [realmSeeds, selectedRealmCreationSeedId]);
+  }, [ddeasySeeds, selectedRealmCreationSeedId]);
 
   useEffect(() => {
-    if (pendingRealmSeed) setRealmSeedDialogError("");
+    if (pendingRealmSeed) setSeedDialogError("");
   }, [pendingRealmSeed]);
 
   function openNewSeedEditor() {
@@ -789,13 +820,14 @@ export default function Home(props: PageProps<"/">) {
   }
 
   function openEditSeedEditor(id: string) {
-    const seed = realmSeeds.find((s) => s.id === id);
+    const seed = ddeasySeeds.find((s) => s.id === id);
     if (!seed) return;
     setSeedEditorError("");
     setSeedEditor({
       id: seed.id,
+      kind: seed.kind,
       name: seed.seedName?.trim() || seed.titleHint.trim() || "",
-      realmSize: seed.realmSize,
+      realmSize: seed.realmSize ?? "region",
       briefDescription: seed.briefDescription,
       markdown: seed.markdown,
     });
@@ -840,15 +872,22 @@ export default function Home(props: PageProps<"/">) {
       return;
     }
     if (!markdown) {
-      setSeedEditorError("Add some realm details—the content cannot be empty.");
+      setSeedEditorError(
+        seedEditor.kind === "adventure"
+          ? "Add some adventure details—the content cannot be empty."
+          : "Add some realm details—the content cannot be empty.",
+      );
       return;
     }
     const brief = seedEditor.briefDescription.trim().slice(0, 280);
+    const realmSize =
+      seedEditor.kind === "realm" ? seedEditor.realmSize : undefined;
     if (seedEditor.id) {
-      setRealmSeeds(
+      setDdeasySeeds(
         updateRealmSeed(seedEditor.id, {
+          kind: seedEditor.kind,
           seedName: name,
-          realmSize: seedEditor.realmSize,
+          realmSize,
           titleHint: name,
           briefDescription: brief,
           markdown,
@@ -856,13 +895,14 @@ export default function Home(props: PageProps<"/">) {
       );
     } else {
       const next = appendRealmSeed({
+        kind: seedEditor.kind,
         seedName: name,
-        realmSize: seedEditor.realmSize,
+        realmSize,
         titleHint: name,
         briefDescription: brief,
         markdown,
       });
-      setRealmSeeds(next);
+      setDdeasySeeds(next);
     }
     setSeedEditor(null);
     setSeedEditorError("");
@@ -887,6 +927,7 @@ export default function Home(props: PageProps<"/">) {
         setMapForm(initialMapForm);
         break;
       case "library":
+        setDdeasySeeds(loadRealmSeeds());
         break;
       default:
         break;
@@ -1001,7 +1042,7 @@ export default function Home(props: PageProps<"/">) {
           return;
         }
         const realmCreationSeedMd = selectedRealmCreationSeedId
-          ? realmSeeds.find((s) => s.id === selectedRealmCreationSeedId)
+          ? ddeasySeeds.find((s) => s.id === selectedRealmCreationSeedId)
               ?.markdown
           : undefined;
         const streamed = await fetchRealmResultStream(
@@ -1024,15 +1065,23 @@ export default function Home(props: PageProps<"/">) {
           const titleSnap = realmForm.titleHint.trim();
           let realmLibImages: GeneratedImage[] = [];
           let realmLibImgModel: string | null = null;
-          setPendingRealmSeed({
+          const autoSaved = autoSaveGeneratedSeed({
+            kind: "realm",
             realmSize: realmForm.realmSize,
             titleHint: titleSnap,
             briefDescription,
             markdown: streamed.markdown,
           });
-          setPendingSeedNameDraft(
-            suggestedSeedName(streamed.markdown, titleSnap),
-          );
+          setDdeasySeeds(autoSaved.seeds);
+          setPendingRealmSeed({
+            kind: "realm",
+            realmSize: realmForm.realmSize,
+            titleHint: titleSnap,
+            briefDescription,
+            markdown: streamed.markdown,
+            savedSeedId: autoSaved.savedSeedId,
+          });
+          setPendingSeedNameDraft(autoSaved.seedName);
           if (autoGenerateRealmMapImage) {
             setImageLoading(true);
             setImageError(null);
@@ -1103,7 +1152,7 @@ export default function Home(props: PageProps<"/">) {
       let generatedModel: string | null = null;
       if (mode === "adventure") {
         const seedMarkdown = selectedRealmSeedId
-          ? realmSeeds.find((s) => s.id === selectedRealmSeedId)?.markdown
+          ? ddeasySeeds.find((s) => s.id === selectedRealmSeedId)?.markdown
           : undefined;
         const streamed = await fetchAdventureResultStream(
           form,
@@ -1330,6 +1379,32 @@ export default function Home(props: PageProps<"/">) {
         });
         setLibraryItems(textLib);
         setCurrentResultLibraryId(textLib[0]?.id ?? null);
+        if (mode === "adventure") {
+          const titleSnap = form.titleHint.trim();
+          const briefDescription = [
+            form.setting.trim(),
+            form.villainOrThreat.trim(),
+            form.tone.trim(),
+          ]
+            .filter(Boolean)
+            .join(" · ")
+            .slice(0, 400);
+          const autoSaved = autoSaveGeneratedSeed({
+            kind: "adventure",
+            titleHint: titleSnap,
+            briefDescription,
+            markdown: generatedMarkdown,
+          });
+          setDdeasySeeds(autoSaved.seeds);
+          setPendingRealmSeed({
+            kind: "adventure",
+            titleHint: titleSnap,
+            briefDescription,
+            markdown: generatedMarkdown,
+            savedSeedId: autoSaved.savedSeedId,
+          });
+          setPendingSeedNameDraft(autoSaved.seedName);
+        }
       } else {
         setError("No generated text returned.");
         setProgressStage("error");
@@ -1534,18 +1609,19 @@ export default function Home(props: PageProps<"/">) {
               id="realm-seed-name-title"
               className="text-lg font-semibold text-[var(--text)]"
             >
-              Save realm seed
+              Name your D&DEasy seed
             </h2>
             <p className="mt-2 text-sm text-[var(--muted)]">
-              Give this realm a name for the adventure tab library. You can edit the
-              suggestion or skip if you do not need a saved seed.
+              This {pendingRealmSeed.kind === "adventure" ? "adventure" : "realm"}{" "}
+              is already saved in the Library tab. Confirm or edit the name below,
+              or choose Done to keep the suggested name.
             </p>
             <label className="mt-4 flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-[var(--muted)]">Seed name</span>
               <input
                 value={pendingSeedNameDraft}
                 onChange={(e) => {
-                  setRealmSeedDialogError("");
+                  setSeedDialogError("");
                   setPendingSeedNameDraft(e.target.value);
                 }}
                 className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
@@ -1554,8 +1630,8 @@ export default function Home(props: PageProps<"/">) {
                 autoFocus
               />
             </label>
-            {realmSeedDialogError ? (
-              <p className="mt-2 text-sm text-red-500">{realmSeedDialogError}</p>
+            {seedDialogError ? (
+              <p className="mt-2 text-sm text-red-500">{seedDialogError}</p>
             ) : null}
             <div className="mt-6 flex flex-wrap gap-2">
               <button
@@ -1563,11 +1639,12 @@ export default function Home(props: PageProps<"/">) {
                 onClick={() => {
                   const name = pendingSeedNameDraft.trim();
                   if (!name) {
-                    setRealmSeedDialogError("Enter a name, or choose Skip.");
+                    setSeedDialogError("Enter a name, or choose Done.");
                     return;
                   }
-                  setRealmSeeds(
-                    appendRealmSeed({
+                  setDdeasySeeds(
+                    updateRealmSeed(pendingRealmSeed.savedSeedId, {
+                      kind: pendingRealmSeed.kind,
                       seedName: name,
                       realmSize: pendingRealmSeed.realmSize,
                       titleHint: pendingRealmSeed.titleHint,
@@ -1580,18 +1657,18 @@ export default function Home(props: PageProps<"/">) {
                 className="rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition enabled:hover:opacity-90"
                 style={{ background: "var(--accent)" }}
               >
-                Save to library
+                Save name
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  setRealmSeedDialogError("");
+                  setSeedDialogError("");
                   setPendingRealmSeed(null);
                 }}
                 className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--bg)]"
                 style={{ borderColor: "var(--border)" }}
               >
-                Skip
+                Done
               </button>
             </div>
           </div>
@@ -1615,13 +1692,31 @@ export default function Home(props: PageProps<"/">) {
               id="seed-editor-title"
               className="text-lg font-semibold text-[var(--text)]"
             >
-              {seedEditor.id ? "Edit realm seed" : "Add realm seed manually"}
+              {seedEditor.id
+                ? `Edit ${SEED_KIND_LABEL[seedEditor.kind].toLowerCase()} seed`
+                : "Add seed manually"}
             </h2>
             <p className="mt-2 text-sm text-[var(--muted)]">
-              Type or paste your own realm. The content grounds new realms and
-              adventures, just like a generated seed. Markdown is supported.
+              Type or paste your own setting or adventure. The content grounds
+              new realms and adventures, just like a generated seed. Markdown is
+              supported.
             </p>
             <label className="mt-4 flex flex-col gap-1.5 text-sm">
+              <span className="font-medium text-[var(--muted)]">Seed type</span>
+              <select
+                value={seedEditor.kind}
+                onChange={(e) => {
+                  const kind = e.target.value as SeedKind;
+                  setSeedEditor((d) => (d ? { ...d, kind } : d));
+                }}
+                className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <option value="realm">{SEED_KIND_LABEL.realm}</option>
+                <option value="adventure">{SEED_KIND_LABEL.adventure}</option>
+              </select>
+            </label>
+            <label className="mt-3 flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-[var(--muted)]">Seed name</span>
               <input
                 value={seedEditor.name}
@@ -1635,24 +1730,28 @@ export default function Home(props: PageProps<"/">) {
                 autoFocus
               />
             </label>
-            <label className="mt-3 flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-[var(--muted)]">Realm size</span>
-              <select
-                value={seedEditor.realmSize}
-                onChange={(e) => {
-                  const realmSize = e.target.value as RealmSize;
-                  setSeedEditor((d) => (d ? { ...d, realmSize } : d));
-                }}
-                className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
-                style={{ borderColor: "var(--border)" }}
-              >
-                {REALM_SIZES.map((size) => (
-                  <option key={size} value={size}>
-                    {REALM_SIZE_LABEL[size].label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {seedEditor.kind === "realm" ? (
+              <label className="mt-3 flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-[var(--muted)]">
+                  Realm size
+                </span>
+                <select
+                  value={seedEditor.realmSize}
+                  onChange={(e) => {
+                    const realmSize = e.target.value as RealmSize;
+                    setSeedEditor((d) => (d ? { ...d, realmSize } : d));
+                  }}
+                  className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  {REALM_SIZES.map((size) => (
+                    <option key={size} value={size}>
+                      {REALM_SIZE_LABEL[size].label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <label className="mt-3 flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-[var(--muted)]">
                 Short description (optional)
@@ -1674,11 +1773,14 @@ export default function Home(props: PageProps<"/">) {
             </label>
             <label className="mt-3 flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-[var(--muted)]">
-                Realm details
+                {seedEditor.kind === "adventure"
+                  ? "Adventure details"
+                  : "Realm details"}
               </span>
               <span className="text-xs text-[var(--muted)]">
-                Geography, factions, history, key locations—whatever should carry
-                into generated realms and adventures. Required.
+                {seedEditor.kind === "adventure"
+                  ? "Premise, factions, key scenes, NPCs, twists—whatever should carry into generated adventures and realms. Required."
+                  : "Geography, factions, history, key locations—whatever should carry into generated realms and adventures. Required."}
               </span>
               <textarea
                 value={seedEditor.markdown}
@@ -1859,7 +1961,7 @@ export default function Home(props: PageProps<"/">) {
         </div>
         <p className="mt-2 text-sm text-[var(--muted)]">
           {mode === "library"
-            ? "Manage your saved realm seeds—the reusable settings that ground new realms and adventures. Edit the text of any generation right where it appears, using the Edit button in the Output panel."
+            ? "Manage your D&DEasy seeds—the reusable settings that ground new realms and adventures. Edit the text of any generation right where it appears, using the Edit button in the Output panel."
             : mode === "realm"
               ? "Choose the scale of the place (from a whole world down to a local cluster), then describe what you want. Claude returns table-ready setting Markdown—original, not WotC copy."
               : mode === "adventure"
@@ -1878,7 +1980,7 @@ export default function Home(props: PageProps<"/">) {
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display text-base font-bold text-[var(--text)]">
-                Realm seeds
+                Seed Management
               </h2>
               <button
                 type="button"
@@ -1893,15 +1995,17 @@ export default function Home(props: PageProps<"/">) {
               <p>
                 Seeds are reusable settings that{" "}
                 <strong className="text-[var(--text)]">ground</strong> new
-                generations: pick one in the Realm tab to expand or zoom a place,
-                or in the Adventure tab to anchor geography, factions, and lore
-                so everything stays consistent.
+                generations. Manage <strong className="text-[var(--text)]">D&DEasy seeds</strong>{" "}
+                here—both realm and adventure types. Pick one in the Realm tab to
+                expand or zoom a place, or in the Adventure tab to anchor
+                geography, factions, and lore so everything stays consistent.
               </p>
               <p>
-                Every realm you generate is saved here automatically. Use{" "}
+                Every realm and adventure you generate is saved here automatically.
+                Use{" "}
                 <strong className="text-[var(--text)]">Add seed manually</strong>{" "}
-                to write or paste your own (name, scale, optional one-line
-                summary, and the realm details that get fed into generation),{" "}
+                to write or paste your own (type, name, optional one-line
+                summary, and the details that get fed into generation),{" "}
                 <strong className="text-[var(--text)]">Edit</strong> to refine an
                 existing seed, or <strong className="text-[var(--text)]">
                   {" "}
@@ -1911,27 +2015,40 @@ export default function Home(props: PageProps<"/">) {
                 is stored only in this browser.
               </p>
             </div>
-            {realmSeeds.length === 0 ? (
+            {ddeasySeeds.length === 0 ? (
               <p className="text-sm text-[var(--muted)]">
-                No seeds yet. Generate a realm (it is saved automatically), or
-                use “Add seed manually” to write your own.
+                No seeds yet. Generate a realm or adventure, or use “Add seed
+                manually” to write your own.
               </p>
             ) : (
               <ul className="flex max-h-[min(40vh,320px)] flex-col gap-2 overflow-y-auto pr-1">
-                {realmSeeds.map((seed) => (
+                {ddeasySeeds.map((seed) => (
                   <li key={seed.id}>
                     <div
                       className="flex gap-3 rounded-lg border p-3 text-sm"
                       style={{ borderColor: "var(--border)" }}
                     >
                       <div className="min-w-0 flex-1">
-                        <span className="font-semibold text-[var(--text)]">
-                          {seed.seedName?.trim() ||
-                            seed.titleHint.trim() ||
-                            "Saved realm"}
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span
+                            className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                            style={{
+                              borderColor: "var(--accent)",
+                              color: "var(--accent)",
+                            }}
+                          >
+                            {SEED_KIND_LABEL[seed.kind]}
+                          </span>
+                          <span className="font-semibold text-[var(--text)]">
+                            {seed.seedName?.trim() ||
+                              seed.titleHint.trim() ||
+                              (seed.kind === "adventure"
+                                ? "Saved adventure"
+                                : "Saved realm")}
+                          </span>
                         </span>
                         <span className="mt-1 block text-xs text-[var(--muted)]">
-                          {REALM_SIZE_LABEL[seed.realmSize].label} ·{" "}
+                          {seedScopeLabel(seed)} ·{" "}
                           {new Date(seed.createdAt).toLocaleString()}
                         </span>
                         {seed.briefDescription.trim() ? (
@@ -1953,7 +2070,7 @@ export default function Home(props: PageProps<"/">) {
                           type="button"
                           onClick={() => {
                             const next = deleteRealmSeed(seed.id);
-                            setRealmSeeds(next);
+                            setDdeasySeeds(next);
                             if (selectedRealmSeedId === seed.id) {
                               setSelectedRealmSeedId("");
                             }
@@ -2376,27 +2493,27 @@ export default function Home(props: PageProps<"/">) {
                 style={{ borderColor: "var(--border)" }}
               >
                 <SelectField
-                  label="Realm seed (optional)"
+                  label="D&DEasy seed (optional)"
                   value={selectedRealmCreationSeedId}
                   onChange={setSelectedRealmCreationSeedId}
                   options={[
                     {
                       value: "",
                       label:
-                        realmSeeds.length > 0
+                        ddeasySeeds.length > 0
                           ? "None — new realm from your brief only"
-                          : "None — save a realm after generating to use as a seed",
+                          : "None — generate a realm or adventure first; it is saved automatically",
                     },
-                    ...realmSeeds.map((s) => ({
+                    ...ddeasySeeds.map((s) => ({
                       value: s.id,
-                      label: realmSeedOptionLabel(s),
+                      label: ddeasySeedOptionLabel(s),
                     })),
                   ]}
                 />
                 <p className="text-xs text-[var(--muted)]">
-                  Pick a saved realm to stay consistent with its geography and lore, or to
-                  zoom or expand—the realm size you chose above and your description still
-                  drive this run.
+                  Pick a saved D&DEasy seed to stay consistent with its geography
+                  and lore, or to zoom or expand—the realm size you chose above
+                  and your description still drive this run.
                 </p>
                 {selectedRealmCreationSeedId ? (
                   <button
@@ -2404,7 +2521,7 @@ export default function Home(props: PageProps<"/">) {
                     onClick={() => {
                       const id = selectedRealmCreationSeedId;
                       const next = deleteRealmSeed(id);
-                      setRealmSeeds(next);
+                      setDdeasySeeds(next);
                       setSelectedRealmCreationSeedId("");
                       if (selectedRealmSeedId === id) {
                         setSelectedRealmSeedId("");
@@ -2413,7 +2530,7 @@ export default function Home(props: PageProps<"/">) {
                     className="self-start rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] transition hover:bg-[var(--bg)]"
                     style={{ borderColor: "var(--border)" }}
                   >
-                    Delete this saved realm
+                    Delete this seed
                   </button>
                 ) : null}
                 <p className="text-xs text-[var(--muted)]">
@@ -2496,20 +2613,13 @@ export default function Home(props: PageProps<"/">) {
                   </label>
                 </div>
               </fieldset>
-              <label
-                className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
-                style={{ borderColor: "var(--border)" }}
+              <AutoGenerateToggle
+                checked={autoGenerateRealmMapImage}
+                onChange={setAutoGenerateRealmMapImage}
+                icon={"\u{1F5FA}\uFE0F"}
               >
-                <input
-                  type="checkbox"
-                  checked={autoGenerateRealmMapImage}
-                  onChange={(e) => setAutoGenerateRealmMapImage(e.target.checked)}
-                  className="accent-[var(--accent)]"
-                />
-                <span className="text-[var(--muted)]">
-                  Auto-generate a realm map image after the text
-                </span>
-              </label>
+                Auto-generate a realm map image after the text
+              </AutoGenerateToggle>
             </>
           ) : null}
           {mode === "adventure" ? (
@@ -2577,27 +2687,27 @@ export default function Home(props: PageProps<"/">) {
               style={{ borderColor: "var(--border)" }}
             >
               <SelectField
-                label="Realm seed"
+                label="D&DEasy seed"
                 value={selectedRealmSeedId}
                 onChange={setSelectedRealmSeedId}
                 options={[
                   {
                     value: "",
                     label:
-                      realmSeeds.length > 0
+                      ddeasySeeds.length > 0
                         ? "None — setting comes from the fields below only"
-                        : "None — generate a realm first; it is saved automatically",
+                        : "None — generate a realm or adventure first; it is saved automatically",
                   },
-                  ...realmSeeds.map((s) => ({
+                  ...ddeasySeeds.map((s) => ({
                     value: s.id,
-                    label: realmSeedOptionLabel(s),
+                    label: ddeasySeedOptionLabel(s),
                   })),
                 ]}
               />
               <p className="text-xs text-[var(--muted)]">
-                Finished realms are stored in this browser and can anchor adventure geography,
-                factions, and lore. Your adventure brief below still controls plot, level band,
-                and tone.
+                D&DEasy seeds stored in this browser can anchor adventure
+                geography, factions, and lore. Your adventure brief below still
+                controls plot, level band, and tone.
               </p>
               {selectedRealmSeedId ? (
                 <button
@@ -2605,7 +2715,7 @@ export default function Home(props: PageProps<"/">) {
                   onClick={() => {
                     const id = selectedRealmSeedId;
                     const next = deleteRealmSeed(id);
-                    setRealmSeeds(next);
+                    setDdeasySeeds(next);
                     setSelectedRealmSeedId("");
                     if (selectedRealmCreationSeedId === id) {
                       setSelectedRealmCreationSeedId("");
@@ -2614,7 +2724,7 @@ export default function Home(props: PageProps<"/">) {
                   className="self-start rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] transition hover:bg-[var(--bg)]"
                   style={{ borderColor: "var(--border)" }}
                 >
-                  Delete this saved realm
+                  Delete this seed
                 </button>
               ) : null}
               <p className="text-xs text-[var(--muted)]">
@@ -2679,21 +2789,14 @@ export default function Home(props: PageProps<"/">) {
             </div>
           ) : null}
           {mode === "adventure" ? (
-            <label
-              className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
-              style={{ borderColor: "var(--border)" }}
+            <AutoGenerateToggle
+              checked={autoGenerateAdventureMap}
+              onChange={setAutoGenerateAdventureMap}
+              icon={"\u{1F5FA}\uFE0F"}
             >
-              <input
-                type="checkbox"
-                checked={autoGenerateAdventureMap}
-                onChange={(e) => setAutoGenerateAdventureMap(e.target.checked)}
-                className="accent-[var(--accent)]"
-              />
-              <span className="text-[var(--muted)]">
-                Auto-generate maps with adventure (overview + one battle map per scene, up to{" "}
-                {MAX_AUTO_SCENE_IMAGES})
-              </span>
-            </label>
+              Auto-generate maps with adventure (overview + one battle map per scene, up to{" "}
+              {MAX_AUTO_SCENE_IMAGES})
+            </AutoGenerateToggle>
           ) : null}
           {mode === "adventure" && autoGenerateAdventureMap ? (
             <fieldset
@@ -2731,21 +2834,14 @@ export default function Home(props: PageProps<"/">) {
             </fieldset>
           ) : null}
           {mode === "adventure" ? (
-            <label
-              className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
-              style={{ borderColor: "var(--border)" }}
+            <AutoGenerateToggle
+              checked={autoGenerateAdventureProps}
+              onChange={setAutoGenerateAdventureProps}
+              icon={"\u{1F3FA}"}
             >
-              <input
-                type="checkbox"
-                checked={autoGenerateAdventureProps}
-                onChange={(e) => setAutoGenerateAdventureProps(e.target.checked)}
-                className="accent-[var(--accent)]"
-              />
-              <span className="text-[var(--muted)]">
-                Auto-generate prop handouts with adventure (one per scene when scenes are found, up to{" "}
-                {MAX_AUTO_SCENE_IMAGES}; otherwise one handout)
-              </span>
-            </label>
+              Auto-generate prop handouts with adventure (one per scene when scenes are found, up to{" "}
+              {MAX_AUTO_SCENE_IMAGES}; otherwise one handout)
+            </AutoGenerateToggle>
           ) : null}
 
           {mode === "adventure" || mode === "characters" ? (
@@ -3026,7 +3122,7 @@ export default function Home(props: PageProps<"/">) {
 
         {mode === "library" ? (
           <p className="no-print mt-8 text-sm text-[var(--muted)]">
-            The Library manages your saved realm seeds. Generate a realm,
+            The Library manages your D&DEasy seeds. Generate a realm,
             adventure, or characters from the tabs above—then use{" "}
             <strong className="text-[var(--text)]">Edit</strong> here in Output to
             revise the text.
@@ -3119,6 +3215,48 @@ function MapImageOutputBlock({
         );
       })}
     </div>
+  );
+}
+
+function AutoGenerateToggle({
+  checked,
+  onChange,
+  icon,
+  children,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  icon: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label
+      className="flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm transition hover:border-[var(--accent)]"
+      style={{
+        borderColor: checked ? "var(--accent)" : "var(--border)",
+        background: checked ? "rgba(201, 162, 39, 0.14)" : "rgba(201, 162, 39, 0.07)",
+      }}
+    >
+      <span
+        aria-hidden="true"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xl leading-none shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+        style={{
+          background: "rgba(201, 162, 39, 0.28)",
+        }}
+        title="Auto-generate"
+      >
+        {icon}
+      </span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-2.5 shrink-0 accent-[var(--accent)]"
+      />
+      <span className="min-w-0 flex-1 pt-2 font-medium text-[var(--text)]">
+        {children}
+      </span>
+    </label>
   );
 }
 
