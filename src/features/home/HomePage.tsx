@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   ADVENTURE_LENGTH_HOVER_HELP,
   type AdventureLength,
@@ -22,6 +23,7 @@ import {
   deleteRealmSeed,
   ddeasySeedOptionLabel,
   loadRealmSeeds,
+  seedDisplayName,
   seedScopeLabel,
   suggestedSeedName,
   updateRealmSeed,
@@ -34,11 +36,13 @@ import type { MapPackKind } from "@/lib/mapImagePrompt";
 import type { MapDistanceUnits } from "@/lib/mapDistanceUnits";
 import type { PropItemCategory } from "@/lib/propImagePrompt";
 import {
+  addCharacterSlot,
   classSelectOptions,
   defaultCharacterSlots,
-  parsePartyCount,
+  MAX_PARTY_SIZE,
+  MIN_PARTY_SIZE,
   raceSelectOptions,
-  resizeCharacterSlots,
+  removeCharacterSlot,
   type CharacterSlotSpec,
 } from "@/lib/srdCharacterOptions";
 import { renderMarkdownToHtml } from "@/lib/markdownRender";
@@ -266,7 +270,6 @@ const ADVENTURE_SAMPLE_PARTY_PLACEHOLDER = "e.g. 4";
 const ADVENTURE_SAMPLE_SESSION_PLACEHOLDER = "e.g. 3–4 hours";
 
 const CHARACTERS_SAMPLE_LEVEL_PLACEHOLDER = "e.g. 3";
-const CHARACTERS_SAMPLE_PARTY_PLACEHOLDER = "e.g. 4";
 
 /** Defaults merged into auto-generated prop payloads (not shown in the empty props form). */
 const AUTO_PROP_FALLBACK_STYLE = "ink on cream paper, legible for a table handout";
@@ -854,6 +857,8 @@ export default function Home(props: PageProps<"/">) {
   const [characterSlots, setCharacterSlots] = useState<CharacterSlotSpec[]>(() =>
     defaultCharacterSlots(),
   );
+  /** Library tab: seed id shown in the Output panel (view / print / export). */
+  const [viewingSeedId, setViewingSeedId] = useState("");
 
   useEffect(() => {
     setDdeasySeeds(loadRealmSeeds());
@@ -900,6 +905,17 @@ export default function Home(props: PageProps<"/">) {
       savedSeedId: autoSaved.savedSeedId,
     });
     setPendingSeedNameDraft(autoSaved.seedName);
+  }
+
+  useEffect(() => {
+    if (!viewingSeedId) return;
+    if (!ddeasySeeds.some((s) => s.id === viewingSeedId)) {
+      setViewingSeedId("");
+    }
+  }, [ddeasySeeds, viewingSeedId]);
+
+  function viewSeed(id: string) {
+    setViewingSeedId(id);
   }
 
   function openNewSeedEditor() {
@@ -994,6 +1010,9 @@ export default function Home(props: PageProps<"/">) {
 
   function selectMode(next: GenerateMode) {
     setMode(next);
+    if (next !== "library") {
+      setViewingSeedId("");
+    }
     switch (next) {
       case "realm":
         setRealmForm(initialRealmForm);
@@ -1002,7 +1021,7 @@ export default function Home(props: PageProps<"/">) {
         setForm(initialForm);
         break;
       case "characters":
-        setForm(initialFormCharacters);
+        setForm({ ...initialFormCharacters, partySize: "4" });
         setCharacterSlots(defaultCharacterSlots());
         break;
       case "props":
@@ -1239,12 +1258,9 @@ export default function Home(props: PageProps<"/">) {
               levelRange: form.levelRange,
               tone: form.tone,
               setting: form.setting,
-              characterCount: form.partySize,
+              characterCount: String(characterSlots.length),
               extraNotes: form.extraNotes,
-              characterSpecs: resizeCharacterSlots(
-                characterSlots,
-                parsePartyCount(form.partySize),
-              ).map((s) => ({
+              characterSpecs: characterSlots.map((s) => ({
                 className: s.className.trim() || undefined,
                 race: s.race.trim() || undefined,
               })),
@@ -1624,15 +1640,23 @@ export default function Home(props: PageProps<"/">) {
   }
 
   function exportMarkdownForDownload(): string {
-    return activeLibraryExport()?.markdown ?? markdown;
+    return activeLibraryExport()?.markdown ?? previewMarkdown;
   }
 
   function exportModeForDownload(): GenerateMode {
     const lib = activeLibraryExport();
     if (lib) return lib.kind;
+    if (viewingSeed) return viewingSeed.kind;
     if (mode === "library") return "adventure";
     return mode;
   }
+
+  const viewingSeed =
+    mode === "library" && viewingSeedId
+      ? ddeasySeeds.find((s) => s.id === viewingSeedId)
+      : undefined;
+
+  const previewMarkdown = viewingSeed?.markdown ?? (mode === "library" ? "" : markdown);
 
   function copyMarkdown() {
     const md = exportMarkdownForDownload();
@@ -1682,13 +1706,15 @@ export default function Home(props: PageProps<"/">) {
     window.print();
   }
 
-  const previewMarkdown = mode === "library" ? "" : markdown;
   const previewImages: GeneratedImage[] =
     mode === "library" ? [] : mapImages;
   const previewTextModel = mode === "library" ? null : model;
   const previewImageModel = mode === "library" ? null : imageModel;
-  const outputLayoutKind: LibraryKind =
-    mode === "library" ? "adventure" : (mode as LibraryKind);
+  const outputLayoutKind: LibraryKind = viewingSeed
+    ? viewingSeed.kind
+    : mode === "library"
+      ? "adventure"
+      : (mode as LibraryKind);
   /** Cover + per-## “sheets” for print/PDF and merging into a binder or magazine-style compilation */
   const bookletPaperModuleLayout =
     outputLayoutKind === "adventure" || outputLayoutKind === "realm";
@@ -2044,6 +2070,17 @@ export default function Home(props: PageProps<"/">) {
               })}
             </div>
           </div>
+          <Link
+            href="/table"
+            className="mt-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-[var(--muted)] transition hover:border-[var(--accent-dim)] hover:text-[var(--text)]"
+            style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+          >
+            <span aria-hidden="true">&#127922;</span>
+            <span className="flex-1">
+              Ready to play? Run encounters live on the <strong>Virtual Table</strong>
+            </span>
+            <span aria-hidden="true">&rarr;</span>
+          </Link>
         </div>
 
         <h1 className="font-display mt-6 text-xl font-bold text-[var(--text)]">
@@ -2109,12 +2146,10 @@ export default function Home(props: PageProps<"/">) {
                 to write or paste your own (type, name, optional one-line
                 summary, and the details that get fed into generation),{" "}
                 <strong className="text-[var(--text)]">Edit</strong> to refine an
-                existing seed, or <strong className="text-[var(--text)]">
-                  {" "}
-                  Delete
-                </strong>{" "}
-                to remove one. Markdown is supported in the details. Everything
-                is stored only in this browser.
+                existing seed, <strong className="text-[var(--text)]">View</strong> to
+                read or print it in the Output panel, or{" "}
+                <strong className="text-[var(--text)]">Delete</strong> to remove one.
+                Markdown is supported. Everything is stored only in this browser.
               </p>
             </div>
             {ddeasySeeds.length === 0 ? (
@@ -2124,11 +2159,18 @@ export default function Home(props: PageProps<"/">) {
               </p>
             ) : (
               <ul className="flex max-h-[min(40vh,320px)] flex-col gap-2 overflow-y-auto pr-1">
-                {ddeasySeeds.map((seed) => (
+                {ddeasySeeds.map((seed) => {
+                  const selected = viewingSeedId === seed.id;
+                  return (
                   <li key={seed.id}>
                     <div
                       className="flex gap-3 rounded-lg border p-3 text-sm"
-                      style={{ borderColor: "var(--border)" }}
+                      style={{
+                        borderColor: selected ? "var(--accent)" : "var(--border)",
+                        background: selected
+                          ? "rgba(201, 162, 39, 0.1)"
+                          : undefined,
+                      }}
                     >
                       <div className="min-w-0 flex-1">
                         <span className="flex flex-wrap items-center gap-2">
@@ -2142,9 +2184,7 @@ export default function Home(props: PageProps<"/">) {
                             {SEED_KIND_LABEL[seed.kind]}
                           </span>
                           <span className="font-semibold text-[var(--text)]">
-                            {seed.seedName?.trim() ||
-                              seed.titleHint.trim() ||
-                              defaultSavedSeedLabel(seed.kind)}
+                            {seedDisplayName(seed)}
                           </span>
                         </span>
                         <span className="mt-1 block text-xs text-[var(--muted)]">
@@ -2160,6 +2200,14 @@ export default function Home(props: PageProps<"/">) {
                       <div className="flex shrink-0 flex-col gap-1.5 self-start">
                         <button
                           type="button"
+                          onClick={() => viewSeed(seed.id)}
+                          className="rounded-md border px-2 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                          style={{ borderColor: "var(--border)" }}
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => openEditSeedEditor(seed.id)}
                           className="rounded-md border px-2 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
                           style={{ borderColor: "var(--border)" }}
@@ -2171,6 +2219,9 @@ export default function Home(props: PageProps<"/">) {
                           onClick={() => {
                             const next = deleteRealmSeed(seed.id);
                             setDdeasySeeds(next);
+                            if (viewingSeedId === seed.id) {
+                              setViewingSeedId("");
+                            }
                             if (selectedRealmSeedId === seed.id) {
                               setSelectedRealmSeedId("");
                             }
@@ -2186,7 +2237,8 @@ export default function Home(props: PageProps<"/">) {
                       </div>
                     </div>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -3019,71 +3071,97 @@ export default function Home(props: PageProps<"/">) {
                     placeholder={ADVENTURE_SAMPLE_SESSION_PLACEHOLDER}
                   />
                 </div>
-              ) : (
-                <Field
-                  label="How many PCs (optional)"
-                  value={form.partySize}
-                  onChange={(v) => {
-                    setForm((f) => ({ ...f, partySize: v }));
-                    setCharacterSlots((slots) =>
-                      resizeCharacterSlots(slots, parsePartyCount(v)),
-                    );
-                  }}
-                  placeholder={CHARACTERS_SAMPLE_PARTY_PLACEHOLDER}
-                />
-              )}
+              ) : null}
               {mode === "characters" ? (
                 <fieldset
                   className="flex flex-col gap-3 rounded-lg border p-3 text-sm"
                   style={{ borderColor: "var(--border)" }}
                 >
-                  <legend className="text-sm font-medium text-[var(--muted)]">
-                    Class &amp; race per PC
+                  <legend className="px-1 text-sm font-medium text-[var(--muted)]">
+                    Party members ({characterSlots.length})
                   </legend>
                   <p className="text-xs text-[var(--muted)]">
                     SRD-open options only. Leave <strong className="text-[var(--text)]">Any</strong>{" "}
-                    on a slot to let the AI pick a complementary build.
+                    on a slot to let the AI pick a complementary build. Add or remove members below
+                    (up to {MAX_PARTY_SIZE}).
                   </p>
-                  {resizeCharacterSlots(
-                    characterSlots,
-                    parsePartyCount(form.partySize),
-                  ).map((slot, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-1 gap-2 rounded-md border p-2 sm:grid-cols-[3.5rem_1fr_1fr]"
-                      style={{ borderColor: "var(--border)" }}
+                  <div className="flex flex-col gap-2">
+                    {characterSlots.map((slot, index) => (
+                      <div
+                        key={index}
+                        className="flex flex-col gap-2 rounded-md border p-3"
+                        style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold tracking-wide text-[var(--text)]">
+                            PC {index + 1}
+                          </span>
+                          {characterSlots.length > MIN_PARTY_SIZE ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = removeCharacterSlot(characterSlots, index);
+                                setCharacterSlots(next);
+                                setForm((f) => ({ ...f, partySize: String(next.length) }));
+                              }}
+                              className="rounded border px-2 py-1 text-[11px] font-semibold text-red-800"
+                              style={{ borderColor: "var(--border)" }}
+                              aria-label={`Remove PC ${index + 1}`}
+                            >
+                              Remove
+                            </button>
+                          ) : null}
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                          <SelectField
+                            label="Class"
+                            value={slot.className}
+                            onChange={(className) => {
+                              setCharacterSlots((slots) => {
+                                const next = [...slots];
+                                next[index] = { ...next[index]!, className };
+                                return next;
+                              });
+                            }}
+                            options={classSelectOptions()}
+                          />
+                          <SelectField
+                            label="Race"
+                            value={slot.race}
+                            onChange={(race) => {
+                              setCharacterSlots((slots) => {
+                                const next = [...slots];
+                                next[index] = { ...next[index]!, race };
+                                return next;
+                              });
+                            }}
+                            options={raceSelectOptions()}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {characterSlots.length < MAX_PARTY_SIZE ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = addCharacterSlot(characterSlots);
+                        setCharacterSlots(next);
+                        setForm((f) => ({ ...f, partySize: String(next.length) }));
+                      }}
+                      className="self-start rounded-md border px-3 py-1.5 text-xs font-semibold"
+                      style={{
+                        borderColor: "var(--accent-dim)",
+                        background: "rgba(201,162,39,0.15)",
+                      }}
                     >
-                      <span className="self-center text-xs font-semibold text-[var(--text)]">
-                        PC {index + 1}
-                      </span>
-                      <SelectField
-                        label="Class"
-                        value={slot.className}
-                        onChange={(className) => {
-                          setCharacterSlots((slots) => {
-                            const count = parsePartyCount(form.partySize);
-                            const next = resizeCharacterSlots(slots, count);
-                            next[index] = { ...next[index]!, className };
-                            return next;
-                          });
-                        }}
-                        options={classSelectOptions()}
-                      />
-                      <SelectField
-                        label="Race"
-                        value={slot.race}
-                        onChange={(race) => {
-                          setCharacterSlots((slots) => {
-                            const count = parsePartyCount(form.partySize);
-                            const next = resizeCharacterSlots(slots, count);
-                            next[index] = { ...next[index]!, race };
-                            return next;
-                          });
-                        }}
-                        options={raceSelectOptions()}
-                      />
-                    </div>
-                  ))}
+                      + Add party member
+                    </button>
+                  ) : (
+                    <p className="text-[11px] text-[var(--muted)]">
+                      Maximum party size ({MAX_PARTY_SIZE}) reached.
+                    </p>
+                  )}
                 </fieldset>
               ) : null}
               <label className="flex flex-col gap-1.5 text-sm">
@@ -3134,9 +3212,20 @@ export default function Home(props: PageProps<"/">) {
         }}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-semibold text-[var(--accent)]">
-            <span aria-hidden="true">&#10022; </span>Output
-          </h2>
+          <div>
+            <h2 className="font-display text-lg font-semibold text-[var(--accent)]">
+              <span aria-hidden="true">&#10022; </span>Output
+            </h2>
+            {viewingSeed ? (
+              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
+                Viewing seed:{" "}
+                <strong className="text-[var(--text)]">
+                  {seedDisplayName(viewingSeed)}
+                </strong>{" "}
+                ({SEED_KIND_LABEL[viewingSeed.kind]})
+              </p>
+            ) : null}
+          </div>
           {previewMarkdown.trim() || previewImages.length > 0 ? (
             <div className="no-print flex flex-wrap gap-2">
               {previewMarkdown.trim() ? (
@@ -3149,6 +3238,15 @@ export default function Home(props: PageProps<"/">) {
                       style={{ borderColor: "var(--border)" }}
                     >
                       Edit
+                    </button>
+                  ) : viewingSeed ? (
+                    <button
+                      type="button"
+                      onClick={() => openEditSeedEditor(viewingSeed.id)}
+                      className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                      style={{ borderColor: "var(--border)" }}
+                    >
+                      Edit seed
                     </button>
                   ) : null}
                   <button
@@ -3279,12 +3377,19 @@ export default function Home(props: PageProps<"/">) {
           </>
         )}
 
-        {mode === "library" ? (
+        {mode === "library" && !previewMarkdown.trim() ? (
           <p className="no-print mt-8 text-sm text-[var(--muted)]">
-            The Library manages your D&DEasy seeds. Generate a realm,
-            adventure, or characters from the tabs above—then use{" "}
-            <strong className="text-[var(--text)]">Edit</strong> here in Output to
-            revise the text.
+            Select <strong className="text-[var(--text)]">View</strong> on a seed
+            to read it here, then use Copy, Download, or Print above—same as
+            generated adventures and realms.
+          </p>
+        ) : null}
+        {mode === "library" && previewMarkdown.trim() ? (
+          <p className="no-print mt-2 max-w-xl text-xs leading-relaxed text-[var(--muted)]">
+            Tip: use <strong className="text-[var(--text)]/80">Print</strong> to
+            save this seed as PDF, or export{" "}
+            <strong className="text-[var(--text)]/80">.md</strong> /{" "}
+            <strong className="text-[var(--text)]/80">.html</strong> for your notes.
           </p>
         ) : null}
         {!loading &&
@@ -3456,12 +3561,12 @@ function SelectField({
   options: Array<{ value: string; label: string }>;
 }) {
   return (
-    <label className="flex flex-col gap-1.5 text-sm">
+    <label className="flex min-w-0 flex-col gap-1.5 text-sm">
       <span className="font-medium text-[var(--muted)]">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+        className="min-w-0 w-full rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
         style={{ borderColor: "var(--border)" }}
       >
         {options.map((option) => (

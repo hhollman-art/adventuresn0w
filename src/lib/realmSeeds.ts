@@ -224,6 +224,16 @@ export function defaultSavedSeedLabel(kind: SeedKind): string {
   return labels[kind];
 }
 
+/** Primary label for a seed in lists, exports, and the output panel. */
+export function seedDisplayName(s: SavedRealmSeed): string {
+  return (
+    s.seedName?.trim() ||
+    s.titleHint.trim() ||
+    firstMarkdownTitle(s.markdown) ||
+    defaultSavedSeedLabel(s.kind)
+  );
+}
+
 /** Short label describing a seed's scope, used in pickers and lists. */
 export function seedScopeLabel(s: SavedRealmSeed): string {
   if (s.kind === "realm" && s.realmSize) {

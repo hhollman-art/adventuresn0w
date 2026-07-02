@@ -62,9 +62,23 @@ export function resizeCharacterSlots(
   slots: CharacterSlotSpec[],
   count: number,
 ): CharacterSlotSpec[] {
-  const next = slots.slice(0, count);
-  while (next.length < count) next.push(emptyCharacterSlot());
+  const clamped = Math.min(MAX_PARTY_SIZE, Math.max(MIN_PARTY_SIZE, count));
+  const next = slots.slice(0, clamped);
+  while (next.length < clamped) next.push(emptyCharacterSlot());
   return next;
+}
+
+export function addCharacterSlot(slots: CharacterSlotSpec[]): CharacterSlotSpec[] {
+  if (slots.length >= MAX_PARTY_SIZE) return slots;
+  return [...slots, emptyCharacterSlot()];
+}
+
+export function removeCharacterSlot(
+  slots: CharacterSlotSpec[],
+  index: number,
+): CharacterSlotSpec[] {
+  if (slots.length <= MIN_PARTY_SIZE || index < 0 || index >= slots.length) return slots;
+  return slots.filter((_, i) => i !== index);
 }
 
 export function classSelectOptions(): Array<{ value: string; label: string }> {

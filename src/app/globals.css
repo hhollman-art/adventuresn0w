@@ -165,6 +165,12 @@ body {
   }
 }
 
+/* Fullscreen play mode (Virtual Table): drop the site chrome so the map owns the screen */
+:fullscreen .site-banner,
+:fullscreen .site-footnote {
+  display: none;
+}
+
 /* Ornamental rule: line — diamond — line */
 .fantasy-divider {
   display: flex;

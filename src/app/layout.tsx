@@ -30,12 +30,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-screen antialiased">
         <header className="site-banner no-print">
           <div className="site-banner-inner">
-            <nav className="site-banner-nav">
+            <nav className="site-banner-nav flex items-center gap-2">
               <Link href="/help" className="site-help-link">
                 <span className="site-help-link-icon" aria-hidden="true">
                   &#128214;
                 </span>
                 How to use
+              </Link>
+              <Link href="/table" className="site-help-link">
+                <span className="site-help-link-icon" aria-hidden="true">
+                  &#127922;
+                </span>
+                Virtual Table
               </Link>
             </nav>
             <div className="site-banner-brand">
@@ -54,7 +60,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </header>
         {children}
         <p
-          className="px-4 py-3 text-center text-xs text-[var(--muted)]"
+          className="site-footnote px-4 py-3 text-center text-xs text-[var(--muted)]"
           aria-label={`Application version ${pkg.version}`}
         >
           {"D&D Easy"} v{pkg.version}
