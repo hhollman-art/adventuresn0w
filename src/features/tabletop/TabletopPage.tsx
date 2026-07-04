@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import Link from "next/link";
 import BattleStage, { type StageTool } from "@/features/tabletop/BattleStage";
@@ -28,6 +28,7 @@ import {
   type SavedCharacterRoster,
 } from "@/lib/tabletop/characterRoster";
 import { addRevealed, allCells, clampTokenPosition, removeRevealed } from "@/lib/tabletop/grid";
+import { rollDice } from "@/lib/tabletop/dice";
 import { FEET_PER_CELL_OPTIONS, formatTokenSizeOption, TOKEN_SIZE_CATEGORY, tokenCellFootprint } from "@/lib/tabletop/gridScale";
 import { VTT_GRID_PRESETS } from "@/lib/tabletop/gridPresets";
 import { prepareMapImage, readImageSource } from "@/lib/tabletop/mapImage";

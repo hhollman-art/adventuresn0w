@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   buildBattleMapGridNotes,
   clampVttGridSize,
-  imageSizeForVttGrid,
   VTT_GRID_PRESETS,
 } from "@/lib/tabletop/gridPresets";
 

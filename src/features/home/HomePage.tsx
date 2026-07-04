@@ -17,7 +17,6 @@ import {
 } from "@/lib/generationLibrary";
 import {
   appendRealmSeed,
-  defaultSavedSeedLabel,
   deleteRealmSeed,
   ddeasySeedOptionLabel,
   loadRealmSeeds,

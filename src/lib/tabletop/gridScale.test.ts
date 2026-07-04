@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  CELL_PX,
   clampFeetPerCell,
   DEFAULT_FEET_PER_CELL,
   formatFeetPerCell,
