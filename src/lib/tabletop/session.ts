@@ -10,6 +10,7 @@ import type {
   TokenKind,
 } from "./types";
 import { emptyBonuses } from "./character";
+import { clampFeetPerCell, clampTokenSizeCategory, DEFAULT_FEET_PER_CELL } from "./gridScale";
 
 export const DEFAULT_GRID_COLS = 30;
 export const DEFAULT_GRID_ROWS = 20;
@@ -25,9 +26,19 @@ export function createDefaultSession(): TabletopSession {
   return {
     version: 1,
     updatedAt: new Date().toISOString(),
+    activePartyId: null,
     mapName: "Blank battlefield",
     mapImageDataUrl: null,
-    grid: { cols: DEFAULT_GRID_COLS, rows: DEFAULT_GRID_ROWS, visible: true, snap: true },
+    mapSourceDataUrl: null,
+    mapGridCols: DEFAULT_GRID_COLS,
+    mapGridRows: DEFAULT_GRID_ROWS,
+    grid: {
+      cols: DEFAULT_GRID_COLS,
+      rows: DEFAULT_GRID_ROWS,
+      feetPerCell: DEFAULT_FEET_PER_CELL,
+      visible: true,
+      snap: true,
+    },
     fog: { enabled: false, revealed: [] },
     tokens: [],
     players: [],
@@ -49,8 +60,7 @@ function fixToken(o: Record<string, unknown>): TabletopToken | null {
     return null;
   }
   const kind = TOKEN_KINDS.includes(o.kind as TokenKind) ? (o.kind as TokenKind) : "monster";
-  const size =
-    typeof o.size === "number" && o.size >= 1 && o.size <= 4 ? Math.round(o.size) : 1;
+  const size = clampTokenSizeCategory(o.size);
   let hp: TabletopToken["hp"] = null;
   if (typeof o.hp === "object" && o.hp !== null) {
     const h = o.hp as Record<string, unknown>;
@@ -109,7 +119,7 @@ function fixItem(o: Record<string, unknown>): CharacterItem | null {
   };
 }
 
-function fixPlayer(o: Record<string, unknown>): PlayerCharacter | null {
+export function fixPlayer(o: Record<string, unknown>): PlayerCharacter | null {
   if (typeof o.id !== "string" || typeof o.name !== "string" || !o.name.trim()) {
     return null;
   }
@@ -147,6 +157,10 @@ function fixPlayer(o: Record<string, unknown>): PlayerCharacter | null {
     speed: clampInt(o.speed, 0, 200, 30),
     notes: str(o.notes),
     items,
+    currentHp:
+      typeof o.currentHp === "number" && Number.isFinite(o.currentHp)
+        ? clampInt(o.currentHp, 0, 999, 0)
+        : null,
     tokenId: typeof o.tokenId === "string" ? o.tokenId : null,
   };
 }
@@ -252,11 +266,22 @@ export function fixSession(value: unknown): TabletopSession | null {
   return {
     version: 1,
     updatedAt: typeof o.updatedAt === "string" ? o.updatedAt : new Date().toISOString(),
+    activePartyId: typeof o.activePartyId === "string" ? o.activePartyId : null,
     mapName: typeof o.mapName === "string" ? o.mapName : "Battle map",
     mapImageDataUrl: typeof o.mapImageDataUrl === "string" ? o.mapImageDataUrl : null,
+    mapSourceDataUrl: typeof o.mapSourceDataUrl === "string" ? o.mapSourceDataUrl : null,
+    mapGridCols:
+      typeof o.mapGridCols === "number" && o.mapGridCols >= 4 && o.mapGridCols <= 100
+        ? Math.round(o.mapGridCols)
+        : cols,
+    mapGridRows:
+      typeof o.mapGridRows === "number" && o.mapGridRows >= 4 && o.mapGridRows <= 100
+        ? Math.round(o.mapGridRows)
+        : rows,
     grid: {
       cols,
       rows,
+      feetPerCell: clampFeetPerCell(grid.feetPerCell),
       visible: grid.visible !== false,
       snap: grid.snap !== false,
     },

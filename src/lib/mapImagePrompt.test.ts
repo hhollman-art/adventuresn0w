@@ -26,7 +26,7 @@ describe("buildMapImagePrompt", () => {
     expect(p).toMatch(/scale bar|Scale bar/i);
   });
 
-  it("includes graph-paper battle guidance for battle variant (imperial default)", () => {
+  it("uses no printed grid for battle variant by default", () => {
     const p = buildMapImagePrompt(
       {
         mapKind: "battle",
@@ -40,7 +40,8 @@ describe("buildMapImagePrompt", () => {
       },
       "battle",
     );
-    expect(p).toContain("graph-paper");
+    expect(p).toContain("No visible grid lines");
+    expect(p).toContain("without a printed grid");
     expect(p).toContain(DEFAULT_BATTLE_GRID_NOTES_FALLBACK);
     expect(p).toContain("5 ft");
   });
@@ -81,5 +82,26 @@ describe("buildMapImagePrompt", () => {
     );
     expect(p).toContain("kilometers");
     expect(p).toMatch(/continent|country/i);
+  });
+
+  it("uses exact VTT grid dimensions when provided", () => {
+    const p = buildMapImagePrompt(
+      {
+        mapKind: "battle",
+        locationName: "X",
+        levelRange: "3",
+        partySize: "4",
+        tone: "grey",
+        context: "fight in a room",
+        gridNotes: "",
+        extraNotes: "",
+        battleGridCols: 30,
+        battleGridRows: 20,
+      },
+      "battle",
+    );
+    expect(p).toContain("30 columns × 20 rows");
+    expect(p).toContain("draw no grid lines");
+    expect(p).not.toContain("12–22 cells");
   });
 });

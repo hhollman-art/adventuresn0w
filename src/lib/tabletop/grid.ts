@@ -51,22 +51,28 @@ export function allCells(cols: number, rows: number): string[] {
   return keys;
 }
 
+import { positionSnapStep } from "./gridScale";
+
 /** Clamp a token's top-left cell so its full footprint stays on the grid. */
 export function clampTokenPosition(
   x: number,
   y: number,
-  size: number,
+  /** Side length in grid cells (from tokenCellFootprint). */
+  cellFootprint: number,
   cols: number,
   rows: number,
   snap: boolean,
 ): { x: number; y: number } {
-  const maxX = Math.max(0, cols - size);
-  const maxY = Math.max(0, rows - size);
+  const maxX = Math.max(0, cols - cellFootprint);
+  const maxY = Math.max(0, rows - cellFootprint);
   let nx = Math.min(Math.max(x, 0), maxX);
   let ny = Math.min(Math.max(y, 0), maxY);
   if (snap) {
-    nx = Math.round(nx);
-    ny = Math.round(ny);
+    const step = positionSnapStep(cellFootprint);
+    nx = Math.round(nx / step) * step;
+    ny = Math.round(ny / step) * step;
+    nx = Math.min(Math.max(nx, 0), maxX);
+    ny = Math.min(Math.max(ny, 0), maxY);
   }
   return { x: nx, y: ny };
 }

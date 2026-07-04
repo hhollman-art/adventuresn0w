@@ -4,8 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from "react";
 import type { TabletopSession, TabletopToken } from "@/lib/tabletop/types";
 import { brushCells, cellKey, clampTokenPosition, parseCellKey } from "@/lib/tabletop/grid";
+import {
+  CELL_PX,
+  formatFeetPerCell,
+  majorLineEveryCells,
+  tokenCellFootprint,
+} from "@/lib/tabletop/gridScale";
 
-export const CELL_PX = 44;
+export { CELL_PX } from "@/lib/tabletop/gridScale";
 
 export type StageTool = "select" | "reveal" | "hide";
 
@@ -40,7 +46,7 @@ export default function BattleStage({
   cameraRef.current = camera;
 
   const isDm = mode === "dm";
-  const { cols, rows } = session.grid;
+  const { cols, rows, feetPerCell } = session.grid;
   const stageW = cols * CELL_PX;
   const stageH = rows * CELL_PX;
 
@@ -51,7 +57,7 @@ export default function BattleStage({
     | {
         kind: "token";
         id: string;
-        size: number;
+        cellFootprint: number;
         offsetX: number;
         offsetY: number;
       }
@@ -87,10 +93,11 @@ export default function BattleStage({
         const token = session.tokens.find((t) => t.id === tokenId);
         if (token) {
           const world = toWorld(e.clientX, e.clientY);
+          const cellFootprint = tokenCellFootprint(token.size, feetPerCell);
           dragRef.current = {
             kind: "token",
             id: token.id,
-            size: token.size,
+            cellFootprint,
             offsetX: world.x / CELL_PX - token.x,
             offsetY: world.y / CELL_PX - token.y,
           };
@@ -136,7 +143,7 @@ export default function BattleStage({
       const pos = clampTokenPosition(
         world.x / CELL_PX - drag.offsetX,
         world.y / CELL_PX - drag.offsetY,
-        drag.size,
+        drag.cellFootprint,
         cols,
         rows,
         false,
@@ -153,7 +160,8 @@ export default function BattleStage({
     if (drag?.kind === "token" && session.grid.snap) {
       const token = session.tokens.find((t) => t.id === drag.id);
       if (token) {
-        const pos = clampTokenPosition(token.x, token.y, token.size, cols, rows, true);
+        const footprint = tokenCellFootprint(token.size, feetPerCell);
+        const pos = clampTokenPosition(token.x, token.y, footprint, cols, rows, true);
         onMoveToken?.(drag.id, pos.x, pos.y);
       }
     }
@@ -170,7 +178,7 @@ export default function BattleStage({
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
     setCamera((cam) => {
-      const nextScale = Math.min(3, Math.max(0.25, cam.scale * (e.deltaY < 0 ? 1.12 : 0.89)));
+      const nextScale = Math.min(5, Math.max(0.2, cam.scale * (e.deltaY < 0 ? 1.12 : 0.89)));
       // Zoom toward the cursor: keep the world point under it fixed.
       const wx = (px - cam.x) / cam.scale;
       const wy = (py - cam.y) / cam.scale;
@@ -240,7 +248,11 @@ export default function BattleStage({
             alt={session.mapName}
             draggable={false}
             className="absolute top-0 left-0 select-none"
-            style={{ width: stageW, height: stageH, objectFit: "fill" }}
+            style={{
+              width: stageW,
+              height: stageH,
+              imageRendering: "auto",
+            }}
           />
         ) : (
           <div
@@ -248,8 +260,12 @@ export default function BattleStage({
             style={{
               width: stageW,
               height: stageH,
-              background:
-                "radial-gradient(ellipse 80% 70% at 50% 40%, #4a4232, #322b1e 70%, #262114)",
+              backgroundColor: "#e8dcc8",
+              backgroundImage: `
+                linear-gradient(to right, rgba(72, 56, 38, 0.14) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(72, 56, 38, 0.14) 1px, transparent 1px)
+              `,
+              backgroundSize: `${CELL_PX}px ${CELL_PX}px`,
             }}
           />
         )}
@@ -262,14 +278,13 @@ export default function BattleStage({
           viewBox={`0 0 ${stageW} ${stageH}`}
         >
           {session.grid.visible && (
-            <g stroke="rgba(255,255,255,0.22)" strokeWidth={1}>
-              {Array.from({ length: cols + 1 }, (_, i) => (
-                <line key={`v${i}`} x1={i * CELL_PX} y1={0} x2={i * CELL_PX} y2={stageH} />
-              ))}
-              {Array.from({ length: rows + 1 }, (_, i) => (
-                <line key={`h${i}`} x1={0} y1={i * CELL_PX} x2={stageW} y2={i * CELL_PX} />
-              ))}
-            </g>
+            <BattleGridLines
+              cols={cols}
+              rows={rows}
+              stageW={stageW}
+              stageH={stageH}
+              feetPerCell={feetPerCell}
+            />
           )}
           {session.fog.enabled && (
             <g fill="#0b0a08" opacity={fogOpacity}>
@@ -295,11 +310,12 @@ export default function BattleStage({
           <TokenChip
             key={token.id}
             token={token}
+            feetPerCell={feetPerCell}
             isDm={isDm}
             selected={token.id === selectedTokenId}
             active={token.id === activeTokenId}
             fogHidesIt={
-              !isDm && session.fog.enabled && !tokenTouchesRevealed(token, revealedSet)
+              !isDm && session.fog.enabled && !tokenTouchesRevealed(token, feetPerCell, revealedSet)
             }
           />
         ))}
@@ -309,21 +325,87 @@ export default function BattleStage({
         className="pointer-events-none absolute right-2 bottom-2 rounded-md px-2 py-1 text-[11px]"
         style={{ background: "rgba(0,0,0,0.55)", color: "rgba(255,255,255,0.85)" }}
       >
-        {session.mapName} &middot; {cols}&times;{rows} &middot; {Math.round(camera.scale * 100)}%
+        {session.mapName} &middot; {cols}&times;{rows} &middot; {formatFeetPerCell(feetPerCell)} &middot;{" "}
+        {Math.round(camera.scale * 100)}%
       </div>
     </div>
   );
 }
 
-function tokenTouchesRevealed(token: TabletopToken, revealed: Set<string>): boolean {
+/** High-contrast grid readable on both light parchment and dark map art. */
+function BattleGridLines({
+  cols,
+  rows,
+  stageW,
+  stageH,
+  feetPerCell,
+}: {
+  cols: number;
+  rows: number;
+  stageW: number;
+  stageH: number;
+  feetPerCell: number;
+}) {
+  const minorV = Array.from({ length: cols + 1 }, (_, i) => i * CELL_PX);
+  const minorH = Array.from({ length: rows + 1 }, (_, i) => i * CELL_PX);
+  const majorStep = majorLineEveryCells(feetPerCell);
+  const majorV = minorV.filter((_, i) => i % majorStep === 0);
+  const majorH = minorH.filter((_, i) => i % majorStep === 0);
+
+  return (
+    <g pointerEvents="none">
+      {/* Minor lines — light halo then dark ink */}
+      <g stroke="#ffffff" strokeWidth={2.5} opacity={0.5}>
+        {minorV.map((x) => (
+          <line key={`mv-halo-${x}`} x1={x} y1={0} x2={x} y2={stageH} />
+        ))}
+        {minorH.map((y) => (
+          <line key={`mh-halo-${y}`} x1={0} y1={y} x2={stageW} y2={y} />
+        ))}
+      </g>
+      <g stroke="#1a1208" strokeWidth={1.25} opacity={0.82}>
+        {minorV.map((x) => (
+          <line key={`mv-${x}`} x1={x} y1={0} x2={x} y2={stageH} />
+        ))}
+        {minorH.map((y) => (
+          <line key={`mh-${y}`} x1={0} y1={y} x2={stageW} y2={y} />
+        ))}
+      </g>
+      {/* Major lines every 25 ft (5 cells at 5 ft) — thicker for measuring */}
+      <g stroke="#ffffff" strokeWidth={4} opacity={0.55}>
+        {majorV.map((x) => (
+          <line key={`Mjv-halo-${x}`} x1={x} y1={0} x2={x} y2={stageH} />
+        ))}
+        {majorH.map((y) => (
+          <line key={`Mjh-halo-${y}`} x1={0} y1={y} x2={stageW} y2={y} />
+        ))}
+      </g>
+      <g stroke="#0a0704" strokeWidth={2} opacity={0.92}>
+        {majorV.map((x) => (
+          <line key={`Mjv-${x}`} x1={x} y1={0} x2={x} y2={stageH} />
+        ))}
+        {majorH.map((y) => (
+          <line key={`Mjh-${y}`} x1={0} y1={y} x2={stageW} y2={y} />
+        ))}
+      </g>
+    </g>
+  );
+}
+
+function tokenTouchesRevealed(
+  token: TabletopToken,
+  feetPerCell: number,
+  revealed: Set<string>,
+): boolean {
+  const footprint = tokenCellFootprint(token.size, feetPerCell);
   for (const key of revealed) {
     const cell = parseCellKey(key);
     if (!cell) continue;
     if (
       cell.x >= Math.floor(token.x) &&
-      cell.x < token.x + token.size &&
+      cell.x < token.x + footprint &&
       cell.y >= Math.floor(token.y) &&
-      cell.y < token.y + token.size
+      cell.y < token.y + footprint
     ) {
       return true;
     }
@@ -333,19 +415,22 @@ function tokenTouchesRevealed(token: TabletopToken, revealed: Set<string>): bool
 
 function TokenChip({
   token,
+  feetPerCell,
   isDm,
   selected,
   active,
   fogHidesIt,
 }: {
   token: TabletopToken;
+  feetPerCell: number;
   isDm: boolean;
   selected: boolean;
   active: boolean;
   fogHidesIt: boolean;
 }) {
   if (fogHidesIt) return null;
-  const px = token.size * CELL_PX;
+  const cellFootprint = tokenCellFootprint(token.size, feetPerCell);
+  const px = cellFootprint * CELL_PX;
   const hpPct =
     token.hp && token.hp.max > 0
       ? Math.min(100, Math.max(0, (token.hp.current / token.hp.max) * 100))

@@ -59,7 +59,7 @@ describe("clampTokenPosition", () => {
     expect(clampTokenPosition(-3, -3, 1, 30, 20, false)).toEqual({ x: 0, y: 0 });
   });
 
-  it("snaps to whole cells when requested", () => {
-    expect(clampTokenPosition(4.6, 2.4, 1, 30, 20, true)).toEqual({ x: 5, y: 2 });
+  it("snaps to half cells for fractional footprints", () => {
+    expect(clampTokenPosition(1.2, 2.3, 0.5, 30, 20, true)).toEqual({ x: 1, y: 2.5 });
   });
 });

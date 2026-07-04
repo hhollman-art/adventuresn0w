@@ -37,6 +37,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 </span>
                 How to use
               </Link>
+              <Link href="/parties" className="site-help-link">
+                <span className="site-help-link-icon" aria-hidden="true">
+                  &#128101;
+                </span>
+                Parties
+              </Link>
               <Link href="/table" className="site-help-link">
                 <span className="site-help-link-icon" aria-hidden="true">
                   &#127922;

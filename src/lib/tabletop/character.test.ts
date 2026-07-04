@@ -79,6 +79,7 @@ const basePlayer = (): PlayerCharacter => ({
   speed: 30,
   notes: "",
   items: [],
+  currentHp: null,
   tokenId: null,
 });
 

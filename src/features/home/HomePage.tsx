@@ -11,7 +11,6 @@ import {
 import { REALM_SIZE_LABEL, type RealmSize } from "@/lib/realmPrompt";
 import {
   appendGenerationLibraryItem,
-  LIBRARY_KIND_LABEL,
   loadGenerationLibraryItems,
   updateGenerationLibraryItem,
   type LibraryItem,
@@ -45,6 +44,8 @@ import {
   removeCharacterSlot,
   type CharacterSlotSpec,
 } from "@/lib/srdCharacterOptions";
+import { saveCharacterRoster } from "@/lib/tabletop/characterRoster";
+import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
 import { renderMarkdownToHtml } from "@/lib/markdownRender";
 import { postHeartbeatJson } from "@/lib/sseClient";
 import {
@@ -53,12 +54,17 @@ import {
   type AdventureSceneSnippet,
 } from "@/lib/extractAdventureScenes";
 import {
-  AUTO_ADVENTURE_BATTLE_GRID_NOTES,
-  AUTO_ADVENTURE_BATTLE_GRID_NOTES_METRIC,
-  BATTLE_MAP_SCENE_PROMPT_LEAD,
-  BATTLE_MAP_SCENE_PROMPT_LEAD_METRIC,
-  SAMPLE_MAP_FORM_GRID_NOTES,
-} from "@/lib/battleMapDirectives";
+  buildBattleMapGridNotes,
+  buildBattleMapScenePromptLead,
+  clampVttGridSize,
+  DEFAULT_VTT_GRID_COLS,
+  DEFAULT_VTT_GRID_ROWS,
+  findVttGridPreset,
+  imageSizeForVttGrid,
+  MAX_VTT_GRID_SIDE,
+  MIN_VTT_GRID_SIDE,
+  VTT_GRID_PRESETS,
+} from "@/lib/tabletop/gridPresets";
 
 type GenerateMode =
   | "realm"
@@ -147,11 +153,13 @@ function buildMapSeedMarkdown(form: MapFormState): string {
   if (form.partySize.trim()) {
     lines.push(`- **Party size:** ${form.partySize.trim()}`);
   }
+  if (form.mapKind !== "overland") {
+    lines.push(
+      `- **VTT grid:** ${form.battleGridCols} × ${form.battleGridRows} squares (grid overlaid by Virtual Table, not printed on art)`,
+    );
+  }
   if (form.context.trim()) {
     lines.push("", "## Scene context", "", form.context.trim());
-  }
-  if (form.gridNotes.trim()) {
-    lines.push("", "## Grid / scale", "", form.gridNotes.trim());
   }
   if (form.extraNotes.trim()) {
     lines.push("", "## Extra notes", "", form.extraNotes.trim());
@@ -214,7 +222,39 @@ type GeneratedImage = {
   kind: string;
   label?: string;
   imageDataUrl: string;
+  gridCols?: number;
+  gridRows?: number;
 };
+
+function battleMapLibraryMeta(form: MapFormState): {
+  gridCols: number;
+  gridRows: number;
+} {
+  return { gridCols: form.battleGridCols, gridRows: form.battleGridRows };
+}
+
+function annotateBattleMapImages(
+  images: GeneratedImage[],
+  form: MapFormState,
+): GeneratedImage[] {
+  const meta = battleMapLibraryMeta(form);
+  return images.map((img) =>
+    img.kind === "battle" ? { ...img, ...meta } : img,
+  );
+}
+
+function mapPayloadForGeneration(
+  form: MapFormState,
+  units: MapDistanceUnits,
+): MapFormState {
+  const usesBattleGrid = form.mapKind === "battle" || form.mapKind === "both";
+  if (!usesBattleGrid) return form;
+  return {
+    ...form,
+    gridNotes: buildBattleMapGridNotes(form.battleGridCols, form.battleGridRows, units),
+    imageSize: imageSizeForVttGrid(form.battleGridCols, form.battleGridRows),
+  };
+}
 type ProgressStage =
   | "idle"
   | "realm_generating"
@@ -235,6 +275,9 @@ type MapFormState = {
   partySize: string;
   tone: string;
   context: string;
+  battleGridCols: number;
+  battleGridRows: number;
+  /** Built automatically at generation time; not shown in the form. */
   gridNotes: string;
   extraNotes: string;
   imageSize: "1024x1024" | "1536x1024" | "1024x1536";
@@ -284,9 +327,11 @@ const initialMapForm: MapFormState = {
   partySize: "",
   tone: "",
   context: "",
+  battleGridCols: DEFAULT_VTT_GRID_COLS,
+  battleGridRows: DEFAULT_VTT_GRID_ROWS,
   gridNotes: "",
   extraNotes: "",
-  imageSize: "1536x1024",
+  imageSize: imageSizeForVttGrid(DEFAULT_VTT_GRID_COLS, DEFAULT_VTT_GRID_ROWS),
   imageQuality: "high",
 };
 
@@ -859,6 +904,7 @@ export default function Home(props: PageProps<"/">) {
   );
   /** Library tab: seed id shown in the Output panel (view / print / export). */
   const [viewingSeedId, setViewingSeedId] = useState("");
+  const [partySaveMessage, setPartySaveMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setDdeasySeeds(loadRealmSeeds());
@@ -1028,6 +1074,7 @@ export default function Home(props: PageProps<"/">) {
         setPropForm(initialPropFormStandalone);
         break;
       case "maps":
+        setDdeasySeeds(loadRealmSeeds());
         setMapForm(initialMapForm);
         break;
       case "library":
@@ -1057,18 +1104,18 @@ export default function Home(props: PageProps<"/">) {
 
   useEffect(() => {
     if (!mapLibraryReferenceId) return;
-    if (!libraryItems.some((i) => i.id === mapLibraryReferenceId)) {
+    if (!ddeasySeeds.some((s) => s.id === mapLibraryReferenceId)) {
       setMapLibraryReferenceId("");
     }
-  }, [libraryItems, mapLibraryReferenceId]);
+  }, [ddeasySeeds, mapLibraryReferenceId]);
 
   function mapLibraryReferenceMarkdownForApi(): string | undefined {
     if (!mapLibraryReferenceId.trim()) return undefined;
-    const item = libraryItems.find((i) => i.id === mapLibraryReferenceId);
-    if (!item) return undefined;
-    const md = item.markdown.trim();
+    const seed = ddeasySeeds.find((s) => s.id === mapLibraryReferenceId);
+    if (!seed) return undefined;
+    const md = seed.markdown.trim();
     if (md) return md;
-    return `# ${item.title}\n\n*(${LIBRARY_KIND_LABEL[item.kind]} — this library entry has no saved text; use the map form fields as the primary brief.)*`;
+    return `# ${seedDisplayName(seed)}\n\n*(${SEED_KIND_LABEL[seed.kind]} — this seed has no saved text; use the map form fields as the primary brief.)*`;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -1095,8 +1142,9 @@ export default function Home(props: PageProps<"/">) {
 
     try {
       if (mode === "maps") {
+        const mapPayload = mapPayloadForGeneration(mapForm, mapDistanceUnits);
         const mapResult = await generateMapImage(
-          mapForm,
+          mapPayload,
           mapLibraryReferenceMarkdownForApi(),
         );
         if (mapResult.ok) {
@@ -1108,7 +1156,7 @@ export default function Home(props: PageProps<"/">) {
               markdown: "",
               textModel: null,
               imageModel: mapResult.model,
-              images: mapResult.images,
+              images: annotateBattleMapImages(mapResult.images, mapForm),
             }),
           );
           const titleSnap = mapForm.locationName.trim();
@@ -1335,7 +1383,7 @@ export default function Home(props: PageProps<"/">) {
                   ? "combat-heavy—favor tactical arenas, cover, chokepoints"
                   : "balanced—mix open and tactical spaces"
             }).`,
-            "Overview / locale map: **full-color atlas** (distinct oceans, seas, major lakes, sharp coasts, **capitals + major cities**, **primary trade routes**)—functional reference, not painterly world art. Battle maps: **graph-paper** tactical diagrams; short legible labels for key areas from context.",
+            "Overview / locale map: **full-color atlas** (distinct oceans, seas, major lakes, sharp coasts, **capitals + major cities**, **primary trade routes**)—functional reference, not painterly world art. Battle maps: **illustrated tactical floors without printed grids** (VTT overlays the grid); short legible labels for key areas from context.",
           ]
             .filter(Boolean)
             .join(" ");
@@ -1347,12 +1395,15 @@ export default function Home(props: PageProps<"/">) {
             partySize: form.partySize,
             tone: form.tone,
             context: mapContext,
-            gridNotes:
-              mapDistanceUnits === "metric"
-                ? AUTO_ADVENTURE_BATTLE_GRID_NOTES_METRIC
-                : AUTO_ADVENTURE_BATTLE_GRID_NOTES,
+            battleGridCols: mapForm.battleGridCols,
+            battleGridRows: mapForm.battleGridRows,
+            gridNotes: buildBattleMapGridNotes(
+              mapForm.battleGridCols,
+              mapForm.battleGridRows,
+              mapDistanceUnits,
+            ),
             extraNotes: mapExtraNotes,
-            imageSize: "1536x1024",
+            imageSize: imageSizeForVttGrid(mapForm.battleGridCols, mapForm.battleGridRows),
             imageQuality: "high",
           };
 
@@ -1423,6 +1474,7 @@ export default function Home(props: PageProps<"/">) {
                         return r.images.map((img) => ({
                           ...img,
                           label: `Battle — ${scene.title}`,
+                          ...battleMapLibraryMeta(mapBase),
                         }));
                       },
                     );
@@ -1557,6 +1609,16 @@ export default function Home(props: PageProps<"/">) {
     const filename = `${base}-${part}.png`;
     triggerDownloadFromDataUrl(imageDataUrl, filename);
   }
+
+  const applyBattleGridSize = (cols: number, rows: number) => {
+    const clamped = clampVttGridSize(cols, rows);
+    setMapForm((f) => ({
+      ...f,
+      battleGridCols: clamped.cols,
+      battleGridRows: clamped.rows,
+      imageSize: imageSizeForVttGrid(clamped.cols, clamped.rows),
+    }));
+  };
 
   async function generateMapImage(
     payload: MapFormState,
@@ -1704,6 +1766,34 @@ export default function Home(props: PageProps<"/">) {
   function printGeneration() {
     if (!previewMarkdown.trim() && previewImages.length === 0) return;
     window.print();
+  }
+
+  async function savePartyForVtt() {
+    const md = exportMarkdownForDownload();
+    if (!md.trim()) return;
+    setPartySaveMessage(null);
+    const parsed = parseCharactersMarkdown(md);
+    if (parsed.players.length === 0) {
+      setPartySaveMessage(
+        "Could not find any characters. Each PC needs a ### heading under ## Characters.",
+      );
+      return;
+    }
+    try {
+      await saveCharacterRoster({
+        name: parsed.rosterName,
+        markdown: md,
+        source: "workshop",
+        players: parsed.players,
+      });
+      setPartySaveMessage(
+        `Saved ${parsed.players.length} character${parsed.players.length === 1 ? "" : "s"} as "${parsed.rosterName}". Open the Party library or Virtual Table to load them.`,
+      );
+    } catch (err) {
+      setPartySaveMessage(
+        err instanceof Error ? err.message : "Could not save party to your library.",
+      );
+    }
   }
 
   const previewImages: GeneratedImage[] =
@@ -2081,6 +2171,17 @@ export default function Home(props: PageProps<"/">) {
             </span>
             <span aria-hidden="true">&rarr;</span>
           </Link>
+          <Link
+            href="/parties"
+            className="mt-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-[var(--muted)] transition hover:border-[var(--accent-dim)] hover:text-[var(--text)]"
+            style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+          >
+            <span aria-hidden="true">&#128101;</span>
+            <span className="flex-1">
+              Manage saved <strong>parties</strong> — review, import, and track campaign progress
+            </span>
+            <span aria-hidden="true">&rarr;</span>
+          </Link>
         </div>
 
         <h1 className="font-display mt-6 text-xl font-bold text-[var(--text)]">
@@ -2110,7 +2211,7 @@ export default function Home(props: PageProps<"/">) {
                   ? "Claude builds a ready-to-play party: stats, gear, and hooks. SRD-open options only."
                   : mode === "props"
                     ? "Build handout images: paper props, potions, arms and armor, tools, and more. Pick an item type, describe it, generate—no adventure required."
-                    : "Generate **full-color** locale / overland maps (atlas-style: cities, routes, clear water) and **graph-paper** battle maps for miniatures with OpenAI—top-down, not scenic illustrations."}
+                    : "Generate **full-color** locale / overland maps (atlas-style: cities, routes, clear water) and **grid-free** battle maps for the Virtual Table with OpenAI—top-down, not scenic illustrations."}
         </p>
 
         {mode === "library" ? (
@@ -2343,6 +2444,13 @@ export default function Home(props: PageProps<"/">) {
                   </label>
                 </div>
               </fieldset>
+              {(mapForm.mapKind === "battle" || mapForm.mapKind === "both") && (
+                <BattleMapGridFieldset
+                  mapForm={mapForm}
+                  onApplyPreset={(cols, rows) => applyBattleGridSize(cols, rows)}
+                  onCustomSize={(cols, rows) => applyBattleGridSize(cols, rows)}
+                />
+              )}
               <SelectField
                 label="Library reference"
                 value={mapLibraryReferenceId}
@@ -2351,21 +2459,19 @@ export default function Home(props: PageProps<"/">) {
                   {
                     value: "",
                     label:
-                      libraryItems.length > 0
+                      ddeasySeeds.length > 0
                         ? "None — map form only"
-                        : "None — save runs in Library first",
+                        : "None — add seeds in the Library tab first",
                   },
-                  ...libraryItems.map((i) => ({
-                    value: i.id,
-                    label: `${i.title.length > 52 ? `${i.title.slice(0, 52)}…` : i.title} (${LIBRARY_KIND_LABEL[i.kind]})`,
+                  ...ddeasySeeds.map((s) => ({
+                    value: s.id,
+                    label: ddeasySeedOptionLabel(s),
                   })),
                 ]}
               />
               <p className="text-xs text-[var(--muted)]">
-                Optional: pick any Library item so geography and names from that
-                saved text guide the map. Your scene context and grid notes below
-                still apply; entries with images only use title and kind as a
-                thin hint.
+                Optional: pick a seed from your Library so geography and names from
+                that saved text guide the map. Your scene context still applies.
               </p>
               <Field
                 label="Location or region name (optional)"
@@ -2409,24 +2515,6 @@ export default function Home(props: PageProps<"/">) {
                   className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
                   style={{ borderColor: "var(--border)" }}
                   placeholder={MAP_SAMPLE_CONTEXT_PLACEHOLDER}
-                />
-              </label>
-              <label className="flex flex-col gap-1.5 text-sm">
-                <span className="font-medium text-[var(--text)]">
-                  Grid / scale preferences (optional)
-                </span>
-                <span className="text-xs text-[var(--muted)]">
-                  Square size, zoom, line weight—anything the image model should enforce.
-                </span>
-                <textarea
-                  value={mapForm.gridNotes}
-                  onChange={(e) =>
-                    setMapForm((f) => ({ ...f, gridNotes: e.target.value }))
-                  }
-                  rows={3}
-                  className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
-                  style={{ borderColor: "var(--border)" }}
-                  placeholder={SAMPLE_MAP_FORM_GRID_NOTES}
                 />
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -2983,6 +3071,13 @@ export default function Home(props: PageProps<"/">) {
                   <span>Metric (km, meters)</span>
                 </label>
               </div>
+              <BattleMapGridFieldset
+                  mapForm={mapForm}
+                  embedded
+                  compactLegend="Battle map grid (Virtual Table)"
+                  onApplyPreset={(cols, rows) => applyBattleGridSize(cols, rows)}
+                  onCustomSize={(cols, rows) => applyBattleGridSize(cols, rows)}
+                />
             </fieldset>
           ) : null}
           {mode === "adventure" ? (
@@ -3273,6 +3368,33 @@ export default function Home(props: PageProps<"/">) {
                   >
                     Download .html
                   </button>
+                  {outputLayoutKind === "characters" ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => void savePartyForVtt()}
+                        className="rounded-md px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                        style={{ background: "var(--accent)" }}
+                        title="Parse this roster and save it for the Virtual Table party panel"
+                      >
+                        Save party for VTT
+                      </button>
+                      <Link
+                        href="/parties"
+                        className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                        style={{ borderColor: "var(--border)" }}
+                      >
+                        Party library
+                      </Link>
+                      <Link
+                        href="/table"
+                        className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                        style={{ borderColor: "var(--accent-dim)" }}
+                      >
+                        Virtual Table
+                      </Link>
+                    </>
+                  ) : null}
                 </>
               ) : null}
               <button
@@ -3291,6 +3413,19 @@ export default function Home(props: PageProps<"/">) {
             {previewTextModel ? `Text model: ${previewTextModel}` : null}
             {previewTextModel && previewImageModel ? " · " : null}
             {previewImageModel ? `Image model: ${previewImageModel}` : null}
+          </p>
+        ) : null}
+        {partySaveMessage ? (
+          <p
+            className="no-print mt-2 rounded-lg border px-3 py-2 text-xs"
+            style={{
+              borderColor: "var(--accent-dim)",
+              background: "rgba(201,162,39,0.12)",
+              color: "var(--text)",
+            }}
+            role="status"
+          >
+            {partySaveMessage}
           </p>
         ) : null}
         {mode !== "library" ? (
@@ -3406,7 +3541,7 @@ export default function Home(props: PageProps<"/">) {
                   ? "Submit the form to generate pre-made PCs (Markdown). Copy to your notes or VTT."
                   : mode === "props"
                     ? "Choose an item type, write a description, and generate a handout image."
-                    : "Submit to generate **full-color** locale / overland maps (atlas clarity, cities & routes) and **graph-paper** battle maps for minis."}
+                    : "Submit to generate **full-color** locale / overland maps (atlas clarity, cities & routes) and **grid-free** battle maps for the VTT."}
           </p>
         ) : null}
 
@@ -3521,6 +3656,124 @@ function AutoGenerateToggle({
         {children}
       </span>
     </label>
+  );
+}
+
+function BattleMapGridFieldset({
+  mapForm,
+  compactLegend,
+  embedded = false,
+  onApplyPreset,
+  onCustomSize,
+}: {
+  mapForm: MapFormState;
+  compactLegend?: string;
+  embedded?: boolean;
+  onApplyPreset: (cols: number, rows: number) => void;
+  onCustomSize: (cols: number, rows: number) => void;
+}) {
+  const presetMatch = findVttGridPreset(mapForm.battleGridCols, mapForm.battleGridRows);
+  const legend = compactLegend ?? "VTT battle map grid";
+
+  const body = (
+    <>
+      <p className="text-xs text-[var(--muted)]">
+        {compactLegend
+          ? "One battle map per scene uses these settings so art aligns on the VTT overlay grid."
+          : (
+            <>
+              Battle maps are generated <strong className="font-medium text-[var(--text)]/90">without printed grid lines</strong>—load on{" "}
+              <Link href="/table" className="text-[var(--accent)] underline-offset-2 hover:underline">
+                /table
+              </Link>{" "}
+              and the Virtual Table draws the grid. Pick dimensions so the overlay aligns with the art.
+            </>
+          )}
+      </p>
+
+      <div>
+        <p className="mb-1 text-xs font-medium text-[var(--text)]">VTT presets</p>
+        <div className="flex flex-wrap gap-1">
+          {VTT_GRID_PRESETS.map((g) => (
+            <button
+              key={g.label}
+              type="button"
+              onClick={() => onApplyPreset(g.cols, g.rows)}
+              className="rounded border px-2 py-1 text-xs"
+              style={{
+                borderColor:
+                  mapForm.battleGridCols === g.cols && mapForm.battleGridRows === g.rows
+                    ? "var(--accent)"
+                    : "var(--border)",
+              }}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-1 text-xs font-medium text-[var(--text)]">Custom grid size</p>
+        <p className="mb-1.5 text-[11px] text-[var(--muted)]">
+          Columns × rows ({MIN_VTT_GRID_SIDE}–{MAX_VTT_GRID_SIDE} each). Values clamp on change.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex flex-col gap-1 text-xs">
+            <span className="font-medium text-[var(--muted)]">Columns</span>
+            <input
+              type="number"
+              min={MIN_VTT_GRID_SIDE}
+              max={MAX_VTT_GRID_SIDE}
+              value={mapForm.battleGridCols}
+              onChange={(e) =>
+                onCustomSize(Number(e.target.value), mapForm.battleGridRows)
+              }
+              className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+              style={{ borderColor: "var(--border)" }}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs">
+            <span className="font-medium text-[var(--muted)]">Rows</span>
+            <input
+              type="number"
+              min={MIN_VTT_GRID_SIDE}
+              max={MAX_VTT_GRID_SIDE}
+              value={mapForm.battleGridRows}
+              onChange={(e) =>
+                onCustomSize(mapForm.battleGridCols, Number(e.target.value))
+              }
+              className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+              style={{ borderColor: "var(--border)" }}
+            />
+          </label>
+        </div>
+        {!presetMatch ? (
+          <p className="mt-1 text-[11px]" style={{ color: "var(--accent)" }}>
+            Custom size: {mapForm.battleGridCols} × {mapForm.battleGridRows}
+          </p>
+        ) : null}
+      </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium text-[var(--text)]">{legend}</p>
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <fieldset
+      className="flex flex-col gap-2 rounded-lg border p-3 text-sm"
+      style={{ borderColor: "var(--border)" }}
+    >
+      <legend className="text-sm font-medium text-[var(--muted)]">{legend}</legend>
+      {body}
+    </fieldset>
   );
 }
 
@@ -3932,10 +4185,11 @@ function buildSceneBattleMapPrompt(
   mapDistanceUnits: MapDistanceUnits,
 ): string {
   const toneBlock = buildAutoMapContextFromAdventure(fullMarkdown, form);
-  const lead =
-    mapDistanceUnits === "metric"
-      ? BATTLE_MAP_SCENE_PROMPT_LEAD_METRIC
-      : BATTLE_MAP_SCENE_PROMPT_LEAD;
+  const lead = buildBattleMapScenePromptLead(
+    mapBase.battleGridCols,
+    mapBase.battleGridRows,
+    mapDistanceUnits,
+  );
   return [
     lead,
     "",
@@ -4161,7 +4415,7 @@ function buildAutoMapContextFromAdventure(markdown: string, form: FormState): st
     form.titleHint ? `Theme: ${form.titleHint}` : "",
     form.villainOrThreat ? `Threat: ${form.villainOrThreat}` : "",
     form.extraNotes ? `Notes: ${form.extraNotes}` : "",
-    "Generate **full-color atlas-style** locale / area overview (oceans vs seas vs lakes, borders, **capitals**, **major cities**, **trade routes**) and a **graph-paper** tactical battle diagram for the main conflict—not scenic painted art.",
+    "Generate **full-color atlas-style** locale / area overview (oceans vs seas vs lakes, borders, **capitals**, **major cities**, **trade routes**) and an **illustrated tactical battle floor** (no printed grid—VTT overlays it) for the main conflict—not scenic painted art.",
   ]
     .filter(Boolean)
     .join("\n");

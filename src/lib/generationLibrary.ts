@@ -4,6 +4,10 @@ export type LibraryImage = {
   kind: string;
   label?: string;
   imageDataUrl: string;
+  /** VTT grid columns when this is a battle map aligned to the virtual table. */
+  gridCols?: number;
+  /** VTT grid rows when this is a battle map aligned to the virtual table. */
+  gridRows?: number;
 };
 
 export type LibraryItem = {
@@ -44,10 +48,18 @@ function isLibraryKind(v: unknown): v is LibraryKind {
 function isLibraryImage(x: unknown): x is LibraryImage {
   if (typeof x !== "object" || x === null) return false;
   const o = x as Record<string, unknown>;
+  const gridColsOk =
+    o.gridCols === undefined ||
+    (typeof o.gridCols === "number" && o.gridCols >= 4 && o.gridCols <= 100);
+  const gridRowsOk =
+    o.gridRows === undefined ||
+    (typeof o.gridRows === "number" && o.gridRows >= 4 && o.gridRows <= 100);
   return (
     typeof o.kind === "string" &&
     typeof o.imageDataUrl === "string" &&
-    (o.label === undefined || typeof o.label === "string")
+    (o.label === undefined || typeof o.label === "string") &&
+    gridColsOk &&
+    gridRowsOk
   );
 }
 

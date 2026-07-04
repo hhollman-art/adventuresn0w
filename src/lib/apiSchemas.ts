@@ -59,6 +59,8 @@ export const mapImagePostSchema = z.object({
   tone: z.string().optional(),
   context: z.string().optional(),
   gridNotes: z.string().optional(),
+  battleGridCols: z.union([z.number(), z.string()]).optional(),
+  battleGridRows: z.union([z.number(), z.string()]).optional(),
   extraNotes: z.string().optional(),
   libraryReferenceMarkdown: z.string().optional(),
   imageSize: z.string().optional(),

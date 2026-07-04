@@ -24,6 +24,15 @@ function parseMapKind(value: unknown): MapPackKind {
   return "both";
 }
 
+function parseBattleGridDimension(value: unknown): number | undefined {
+  const n =
+    typeof value === "number" && Number.isFinite(value)
+      ? Math.round(value)
+      : Math.round(Number(String(value ?? "").trim()));
+  if (!Number.isFinite(n) || n < 4 || n > 100) return undefined;
+  return n;
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -50,6 +59,9 @@ export async function POST(request: Request) {
     body.libraryReferenceMarkdown,
   );
 
+  const battleGridCols = parseBattleGridDimension(body.battleGridCols);
+  const battleGridRows = parseBattleGridDimension(body.battleGridRows);
+
   const input: MapImageInput = {
     mapKind: parseMapKind(body.mapKind),
     mapDistanceUnits: parseMapDistanceUnits(body.mapDistanceUnits),
@@ -60,6 +72,8 @@ export async function POST(request: Request) {
     context: String(body.context ?? "").trim(),
     gridNotes: String(body.gridNotes ?? "").trim(),
     extraNotes: String(body.extraNotes ?? "").trim(),
+    ...(battleGridCols !== undefined ? { battleGridCols } : {}),
+    ...(battleGridRows !== undefined ? { battleGridRows } : {}),
     ...(libraryReferenceMarkdown ? { libraryReferenceMarkdown } : {}),
   };
 

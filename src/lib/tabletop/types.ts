@@ -8,7 +8,7 @@ export type TabletopToken = {
   /** Top-left position in grid cells (fractional when snap is off). */
   x: number;
   y: number;
-  /** Footprint in cells: 1 = Medium, 2 = Large, 3 = Huge, 4 = Gargantuan. */
+  /** D&D size category: 1 Medium, 2 Large, 3 Huge, 4 Gargantuan (space in feet, scaled by grid). */
   size: number;
   hp: { current: number; max: number } | null;
   /** Hidden tokens are invisible on the player view. */
@@ -71,6 +71,8 @@ export type PlayerCharacter = {
   notes: string;
   /** Equipment and other modifiers (armor, magic items, etc.). */
   items: CharacterItem[];
+  /** Last recorded current HP when the party was saved (campaign carry-over). */
+  currentHp: number | null;
   /** The token representing this character on the battle map, if placed. */
   tokenId: string | null;
 };
@@ -95,6 +97,8 @@ export type DiceLogEntry = {
 export type TabletopGrid = {
   cols: number;
   rows: number;
+  /** Side length of each grid square in feet (default 5 ft). */
+  feetPerCell: number;
   visible: boolean;
   snap: boolean;
 };
@@ -108,8 +112,16 @@ export type TabletopFog = {
 export type TabletopSession = {
   version: 1;
   updatedAt: string;
+  /** Saved party library id when this table is linked to a campaign roster. */
+  activePartyId: string | null;
   mapName: string;
+  /** Aligned display image (one pixel per CELL_PX per grid square). */
   mapImageDataUrl: string | null;
+  /** Original upload for re-aligning without re-uploading. */
+  mapSourceDataUrl: string | null;
+  /** Grid squares represented by the map image (must match overlay for alignment). */
+  mapGridCols: number;
+  mapGridRows: number;
   grid: TabletopGrid;
   fog: TabletopFog;
   tokens: TabletopToken[];

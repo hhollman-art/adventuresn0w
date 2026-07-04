@@ -24,8 +24,21 @@ import {
   proficiencyBonus,
   sumItemBonuses,
 } from "@/lib/tabletop/character";
-import { rollDice } from "@/lib/tabletop/dice";
+import {
+  getSavedCharacterRoster,
+  loadSavedCharacterRosters,
+  onRostersChanged,
+  type SavedCharacterRoster,
+} from "@/lib/tabletop/characterRoster";
 import { addRevealed, allCells, clampTokenPosition, removeRevealed } from "@/lib/tabletop/grid";
+import { FEET_PER_CELL_OPTIONS, formatTokenSizeOption, TOKEN_SIZE_CATEGORY, tokenCellFootprint } from "@/lib/tabletop/gridScale";
+import { VTT_GRID_PRESETS } from "@/lib/tabletop/gridPresets";
+import { prepareMapImage, readImageSource } from "@/lib/tabletop/mapImage";
+import {
+  applyPartyImport,
+  consumePendingPartyImport,
+  savePartyFromSession,
+} from "@/lib/tabletop/partyCampaign";
 import { prepareTokenImage } from "@/lib/tabletop/tokenImage";
 import {
   advanceInitiative,
@@ -63,6 +76,7 @@ export default function TabletopPage() {
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [panel, setPanel] = useState<SidePanel>("tokens");
   const mainRef = useRef<HTMLElement | null>(null);
+  const pendingImportHandled = useRef(false);
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
 
   useEffect(() => {
@@ -92,6 +106,18 @@ export default function TabletopPage() {
       return next;
     });
   }, []);
+
+  useEffect(() => {
+    if (!session || pendingImportHandled.current) return;
+    const pending = consumePendingPartyImport();
+    if (!pending) return;
+    pendingImportHandled.current = true;
+    void getSavedCharacterRoster(pending.rosterId).then((roster) => {
+      if (!roster) return;
+      update((s) => applyPartyImport(s, roster, pending, newPlayerToken));
+      setPanel("party");
+    });
+  }, [session, update]);
 
   if (!session) {
     return (
@@ -318,6 +344,66 @@ function PartyPanel({
   onSelectToken: (id: string | null) => void;
 }) {
   const [sheet, setSheet] = useState<PlayerCharacter | "new" | null>(null);
+  const [savedRosters, setSavedRosters] = useState<SavedCharacterRoster[]>([]);
+  const [partyMsg, setPartyMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const reload = () => {
+      void loadSavedCharacterRosters().then(setSavedRosters);
+    };
+    reload();
+    return onRostersChanged(reload);
+  }, []);
+
+  const linkedRoster =
+    savedRosters.find((r) => r.id === session.activePartyId) ??
+    (session.activePartyId ? ({ id: session.activePartyId, name: "Linked party" } as SavedCharacterRoster) : null);
+
+  const saveToLibrary = async (linkNew: boolean) => {
+    if (session.players.length === 0) {
+      setPartyMsg("Add at least one character before saving.");
+      return;
+    }
+    let name: string | undefined;
+    if (!session.activePartyId || linkNew) {
+      const suggested =
+        session.players.length === 1
+          ? session.players[0].name
+          : `Campaign party (${session.players.length})`;
+      const entered = window.prompt("Party name for your library:", suggested);
+      if (entered === null) return;
+      name = entered;
+    }
+    const { roster } = await savePartyFromSession(session, { name });
+    if (!roster) return;
+    const wasLinkedUpdate = session.activePartyId && !linkNew;
+    if (linkNew || !session.activePartyId) {
+      update((s) => ({ ...s, activePartyId: roster.id }));
+    }
+    setSavedRosters(await loadSavedCharacterRosters());
+    setPartyMsg(
+      wasLinkedUpdate
+        ? `Updated "${roster.name}" — levels, gear, items, and HP saved.`
+        : `Saved "${roster.name}" to your party library.`,
+    );
+  };
+
+  const unlinkCampaign = () => {
+    update((s) => ({ ...s, activePartyId: null }));
+    setPartyMsg("Unlinked from campaign party. You can still edit sheets here.");
+  };
+
+  const loadCampaign = (roster: SavedCharacterRoster) => {
+    update((s) =>
+      applyPartyImport(
+        s,
+        roster,
+        { placeTokens: true, linkCampaign: true, replaceExisting: true },
+        newPlayerToken,
+      ),
+    );
+    setPartyMsg(`Loaded campaign "${roster.name}" with tokens placed.`);
+  };
 
   const savePlayer = (draft: PlayerCharacter, placeToken: boolean) => {
     update((s) => {
@@ -389,6 +475,104 @@ function PartyPanel({
 
   return (
     <div className="flex flex-col gap-3 text-sm">
+      <div
+        className="rounded-lg border p-2"
+        style={{ borderColor: "var(--border)", background: "rgba(154,116,22,0.06)" }}
+      >
+        <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <p className="text-xs font-bold">Campaign party</p>
+            {session.activePartyId ? (
+              <p className="text-[11px] text-[var(--muted)]">
+                Linked to{" "}
+                <strong className="text-[var(--text)]">{linkedRoster?.name ?? "saved party"}</strong>
+                . Save after sessions to keep levels, gear, and HP.
+              </p>
+            ) : (
+              <p className="text-[11px] text-[var(--muted)]">
+                Save scratch-built parties for future sessions, or load one from your library.
+              </p>
+            )}
+          </div>
+          <Link
+            href="/parties"
+            className="shrink-0 rounded border px-2 py-1 text-[10px] font-semibold"
+            style={{ borderColor: "var(--accent-dim)" }}
+          >
+            Party library
+          </Link>
+        </div>
+        <div className="mb-2 flex flex-wrap gap-1">
+          {session.activePartyId ? (
+            <>
+              <button
+                type="button"
+                onClick={() => void saveToLibrary(false)}
+                className="rounded border px-2 py-1 text-xs font-semibold"
+                style={{ borderColor: "var(--accent-dim)", background: "rgba(201,162,39,0.2)" }}
+              >
+                Update campaign party
+              </button>
+              <button
+                type="button"
+                onClick={() => void saveToLibrary(true)}
+                className="rounded border px-2 py-1 text-xs"
+                style={{ borderColor: "var(--border)" }}
+              >
+                Save as new party
+              </button>
+              <button
+                type="button"
+                onClick={unlinkCampaign}
+                className="rounded border px-2 py-1 text-xs"
+                style={{ borderColor: "var(--border)" }}
+              >
+                Unlink
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void saveToLibrary(true)}
+              className="rounded border px-2 py-1 text-xs font-semibold"
+              style={{ borderColor: "var(--accent-dim)", background: "rgba(201,162,39,0.2)" }}
+              disabled={session.players.length === 0}
+            >
+              Save to party library
+            </button>
+          )}
+        </div>
+        {savedRosters.length > 0 ? (
+          <div className="flex flex-col gap-1.5">
+            <p className="text-[10px] font-bold tracking-wide text-[var(--muted)] uppercase">
+              Quick load
+            </p>
+            {savedRosters.slice(0, 4).map((roster) => (
+              <div
+                key={roster.id}
+                className="flex flex-wrap items-center justify-between gap-1 rounded border px-2 py-1"
+                style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+              >
+                <span className="min-w-0 truncate text-[11px] font-semibold">{roster.name}</span>
+                <button
+                  type="button"
+                  onClick={() => loadCampaign(roster)}
+                  className="shrink-0 rounded border px-2 py-0.5 text-[10px]"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  Load campaign
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {partyMsg ? (
+          <p className="mt-2 text-[11px]" style={{ color: "var(--accent)" }} role="status">
+            {partyMsg}
+          </p>
+        ) : null}
+      </div>
+
       <button
         type="button"
         onClick={() => setSheet("new")}
@@ -515,7 +699,12 @@ function newPlayerToken(
     x: Math.min(centerX + (session.tokens.length % 5), session.grid.cols - 1),
     y: Math.min(centerY + Math.floor(session.tokens.length / 5), session.grid.rows - 1),
     size: 1,
-    hp: { current: effectiveMaxHp(player), max: effectiveMaxHp(player) },
+    hp: (() => {
+      const max = effectiveMaxHp(player);
+      const current =
+        player.currentHp != null ? Math.min(Math.max(0, player.currentHp), max) : max;
+      return { current, max };
+    })(),
     hidden: false,
     imageDataUrl: null,
   };
@@ -583,6 +772,7 @@ function buildSheetPlayer(
   items: CharacterItem[],
   id: string,
   tokenId: string | null,
+  currentHp: number | null = null,
 ): PlayerCharacter {
   return {
     id,
@@ -607,6 +797,7 @@ function buildSheetPlayer(
     speed: clampNum(f.speed, 0, 200, 30),
     notes: f.notes,
     items: items.filter((item) => item.name.trim()),
+    currentHp,
     tokenId,
   };
 }
@@ -734,7 +925,13 @@ function PlayerSheetModal({
   const [placeToken, setPlaceToken] = useState(true);
   const set = (key: keyof SheetForm) => (value: string) => setF((v) => ({ ...v, [key]: value }));
 
-  const preview = buildSheetPlayer(f, items, draftId, initial?.tokenId ?? null);
+  const preview = buildSheetPlayer(
+    f,
+    items,
+    draftId,
+    initial?.tokenId ?? null,
+    initial?.currentHp ?? null,
+  );
   const itemBonuses = sumItemBonuses(items);
   const effectiveScores = effectiveAbilities(preview.abilities, items);
 
@@ -991,6 +1188,7 @@ function TokensPanel({
     const centerX = Math.max(0, Math.floor(session.grid.cols / 2) - 1);
     const centerY = Math.max(0, Math.floor(session.grid.rows / 2) - 1);
     const id = newId();
+    const footprint = tokenCellFootprint(size, session.grid.feetPerCell);
     update((s) => ({
       ...s,
       tokens: [
@@ -1000,8 +1198,8 @@ function TokensPanel({
           label: name,
           color: color ?? TOKEN_KIND_DEFAULT_COLOR[kind],
           kind,
-          x: Math.min(centerX + (s.tokens.length % 5), s.grid.cols - size),
-          y: Math.min(centerY + Math.floor(s.tokens.length / 5), s.grid.rows - size),
+          x: Math.min(centerX + (s.tokens.length % 5), s.grid.cols - footprint),
+          y: Math.min(centerY + Math.floor(s.tokens.length / 5), s.grid.rows - footprint),
           size,
           hp: Number.isFinite(hpMax) && hpMax > 0 ? { current: hpMax, max: hpMax } : null,
           hidden: false,
@@ -1043,12 +1241,13 @@ function TokensPanel({
             onChange={(e) => setSize(Number(e.target.value))}
             className="rounded border px-2 py-1.5 text-xs"
             style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-            title="Token footprint"
+            title="Creature size (scaled to grid square size)"
           >
-            <option value={1}>Med</option>
-            <option value={2}>Large</option>
-            <option value={3}>Huge</option>
-            <option value={4}>Garg.</option>
+            {TOKEN_SIZE_CATEGORY.map((n) => (
+              <option key={n} value={n}>
+                {formatTokenSizeOption(n, session.grid.feetPerCell)}
+              </option>
+            ))}
           </select>
           <input
             value={maxHp}
@@ -1076,6 +1275,7 @@ function TokensPanel({
         <TokenEditor
           key={selectedToken.id}
           token={selectedToken}
+          feetPerCell={session.grid.feetPerCell}
           onSelect={onSelect}
           update={update}
         />
@@ -1126,10 +1326,12 @@ function TokensPanel({
 
 function TokenEditor({
   token,
+  feetPerCell,
   onSelect,
   update,
 }: {
   token: TabletopToken;
+  feetPerCell: number;
   onSelect: (id: string | null) => void;
   update: (fn: (s: TabletopSession) => TabletopSession) => void;
 }) {
@@ -1157,13 +1359,14 @@ function TokenEditor({
       },
     }));
 
-  const resize = (size: number) =>
+  const resize = (sizeCategory: number) =>
     update((s) => ({
       ...s,
       tokens: s.tokens.map((t) => {
         if (t.id !== token.id) return t;
-        const pos = clampTokenPosition(t.x, t.y, size, s.grid.cols, s.grid.rows, s.grid.snap);
-        return { ...t, size, x: pos.x, y: pos.y };
+        const footprint = tokenCellFootprint(sizeCategory, s.grid.feetPerCell);
+        const pos = clampTokenPosition(t.x, t.y, footprint, s.grid.cols, s.grid.rows, s.grid.snap);
+        return { ...t, size: sizeCategory, x: pos.x, y: pos.y };
       }),
     }));
 
@@ -1257,10 +1460,11 @@ function TokenEditor({
           className="rounded border px-2 py-1 text-xs"
           style={{ borderColor: "var(--border)", background: "var(--bg)" }}
         >
-          <option value={1}>Med</option>
-          <option value={2}>Large</option>
-          <option value={3}>Huge</option>
-          <option value={4}>Garg.</option>
+          {TOKEN_SIZE_CATEGORY.map((n) => (
+            <option key={n} value={n}>
+              {formatTokenSizeOption(n, feetPerCell)}
+            </option>
+          ))}
         </select>
         <label className="flex items-center gap-1 text-xs text-[var(--muted)]">
           Max HP
@@ -1756,8 +1960,9 @@ function MapPanel({
   update: (fn: (s: TabletopSession) => TabletopSession) => void;
 }) {
   const [libraryMaps, setLibraryMaps] = useState<
-    { id: string; label: string; dataUrl: string }[]
+    { id: string; label: string; dataUrl: string; gridCols?: number; gridRows?: number }[]
   >([]);
+  const [mapMsg, setMapMsg] = useState<string | null>(null);
 
   useEffect(() => {
     void loadGenerationLibraryItems().then((items: LibraryItem[]) => {
@@ -1768,54 +1973,142 @@ function MapPanel({
             id: `${item.id}-${i}`,
             label: img.label || `${item.title} (${img.kind})`,
             dataUrl: img.imageDataUrl,
+            gridCols: img.gridCols,
+            gridRows: img.gridRows,
           })),
       );
       setLibraryMaps(maps);
     });
   }, []);
 
-  const setMap = (name: string, dataUrl: string | null) =>
-    update((s) => ({ ...s, mapName: name, mapImageDataUrl: dataUrl }));
+  const clearMap = () =>
+    update((s) => ({
+      ...s,
+      mapName: "Blank battlefield",
+      mapImageDataUrl: null,
+      mapSourceDataUrl: null,
+    }));
+
+  const applyMapImage = async (
+    name: string,
+    source: string | File | null,
+    gridCols = session.grid.cols,
+    gridRows = session.grid.rows,
+  ) => {
+    if (!source) {
+      clearMap();
+      return;
+    }
+    setMapMsg(null);
+    const sourceDataUrl = await readImageSource(source);
+    if (!sourceDataUrl) {
+      setMapMsg("Could not read that image.");
+      return;
+    }
+    const prepared = await prepareMapImage(sourceDataUrl, gridCols, gridRows);
+    if (!prepared) {
+      setMapMsg("Could not align map to the grid.");
+      return;
+    }
+    update((s) => ({
+      ...s,
+      mapName: name,
+      mapSourceDataUrl: sourceDataUrl,
+      mapImageDataUrl: prepared,
+      mapGridCols: gridCols,
+      mapGridRows: gridRows,
+      grid: { ...s.grid, cols: gridCols, rows: gridRows },
+      fog: { ...s.fog, revealed: [] },
+    }));
+    setMapMsg(`Map aligned to ${gridCols}×${gridRows} squares.`);
+  };
+
+  const realignMapToGrid = async (gridCols: number, gridRows: number) => {
+    const source = session.mapSourceDataUrl ?? session.mapImageDataUrl;
+    if (!source) return;
+    setMapMsg(null);
+    const prepared = await prepareMapImage(source, gridCols, gridRows);
+    if (!prepared) {
+      setMapMsg("Could not re-align map.");
+      return;
+    }
+    update((s) => ({
+      ...s,
+      mapImageDataUrl: prepared,
+      mapGridCols: gridCols,
+      mapGridRows: gridRows,
+      grid: { ...s.grid, cols: gridCols, rows: gridRows },
+      fog: { ...s.fog, revealed: [] },
+    }));
+    setMapMsg(`Map re-aligned to ${gridCols}×${gridRows} squares.`);
+  };
+
+  const setGridDimensions = (gridCols: number, gridRows: number) => {
+    if (session.mapImageDataUrl) {
+      void realignMapToGrid(gridCols, gridRows);
+      return;
+    }
+    update((s) => ({
+      ...s,
+      grid: { ...s.grid, cols: gridCols, rows: gridRows },
+      mapGridCols: gridCols,
+      mapGridRows: gridRows,
+      fog: { ...s.fog, revealed: [] },
+    }));
+  };
 
   const onUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setMap(file.name.replace(/\.[^.]+$/, ""), reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
+    void applyMapImage(file.name.replace(/\.[^.]+$/, ""), file);
     e.target.value = "";
   };
 
-  const gridSizes = useMemo(
-    () => [
-      { label: "20 × 15", cols: 20, rows: 15 },
-      { label: "30 × 20", cols: 30, rows: 20 },
-      { label: "40 × 30", cols: 40, rows: 30 },
-      { label: "60 × 40", cols: 60, rows: 40 },
-    ],
-    [],
-  );
+  const gridSizes = VTT_GRID_PRESETS;
 
   return (
     <div className="flex flex-col gap-3 text-sm">
       <div>
-        <p className="mb-1 text-xs font-bold">Grid size</p>
+        <p className="mb-1 text-xs font-bold">Square size</p>
+        <p className="mb-1.5 text-[11px] text-[var(--muted)]">
+          Each grid cell represents this many feet on a side (D&amp;D default is 5 ft). Token
+          sizes (Medium = 5 ft, Large = 10 ft, etc.) scale to match.
+        </p>
+        <div className="flex flex-wrap gap-1">
+          {FEET_PER_CELL_OPTIONS.map((feet) => (
+            <button
+              key={feet}
+              type="button"
+              onClick={() =>
+                update((s) => ({
+                  ...s,
+                  grid: { ...s.grid, feetPerCell: feet },
+                }))
+              }
+              className="rounded border px-2 py-1 text-xs"
+              style={{
+                borderColor:
+                  session.grid.feetPerCell === feet ? "var(--accent)" : "var(--border)",
+              }}
+            >
+              {feet} ft
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-1 text-xs font-bold">Grid dimensions</p>
+        <p className="mb-1.5 text-[11px] text-[var(--muted)]">
+          Count the squares drawn on your map art and pick the matching size so the overlay grid
+          lines up. Changing this re-aligns an loaded map.
+        </p>
         <div className="flex flex-wrap gap-1">
           {gridSizes.map((g) => (
             <button
               key={g.label}
               type="button"
-              onClick={() =>
-                update((s) => ({
-                  ...s,
-                  grid: { ...s.grid, cols: g.cols, rows: g.rows },
-                  fog: { ...s.fog, revealed: [] },
-                }))
-              }
+              onClick={() => setGridDimensions(g.cols, g.rows)}
               className="rounded border px-2 py-1 text-xs"
               style={{
                 borderColor:
@@ -1828,6 +2121,14 @@ function MapPanel({
             </button>
           ))}
         </div>
+        {session.mapImageDataUrl &&
+        (session.mapGridCols !== session.grid.cols ||
+          session.mapGridRows !== session.grid.rows) ? (
+          <p className="mt-1 text-[11px]" style={{ color: "var(--accent)" }}>
+            Map grid ({session.mapGridCols}×{session.mapGridRows}) differs from overlay — pick a
+            preset or re-align.
+          </p>
+        ) : null}
       </div>
 
       <div>
@@ -1877,12 +2178,32 @@ function MapPanel({
               type="button"
               className="rounded border px-2 py-1 text-xs"
               style={{ borderColor: "var(--border)" }}
-              onClick={() => setMap("Blank battlefield", null)}
+              onClick={() => {
+                clearMap();
+                setMapMsg(null);
+              }}
             >
               Clear map
             </button>
           )}
+          {session.mapImageDataUrl && session.mapSourceDataUrl && (
+            <button
+              type="button"
+              className="rounded border px-2 py-1 text-xs"
+              style={{ borderColor: "var(--border)" }}
+              onClick={() =>
+                void realignMapToGrid(session.grid.cols, session.grid.rows)
+              }
+            >
+              Re-align map
+            </button>
+          )}
         </div>
+        {mapMsg ? (
+          <p className="mb-2 text-[11px]" style={{ color: "var(--accent)" }} role="status">
+            {mapMsg}
+          </p>
+        ) : null}
 
         {libraryMaps.length > 0 ? (
           <>
@@ -1892,7 +2213,14 @@ function MapPanel({
                 <button
                   key={m.id}
                   type="button"
-                  onClick={() => setMap(m.label, m.dataUrl)}
+                  onClick={() =>
+                    void applyMapImage(
+                      m.label,
+                      m.dataUrl,
+                      m.gridCols ?? session.grid.cols,
+                      m.gridRows ?? session.grid.rows,
+                    )
+                  }
                   className="overflow-hidden rounded-md border text-left"
                   style={{ borderColor: "var(--border)" }}
                   title={m.label}

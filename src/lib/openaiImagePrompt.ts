@@ -48,6 +48,11 @@ export const MAP_BATTLE_GRAPH_PAPER_LOOK =
   "**Detail budget:** make the space **visually rich** and **story-evocative**—**avoid** empty gray void rooms; **avoid** clutter that **obscures** which squares are walkable—**keep movement lanes and doorways unmistakable**. " +
   "**Room and landmark labels** use **simple block capitals or clean sans-serif**—like **drafting or floor-plan callouts**—**dark ink**, **not** ornate script. **Keep each label clean:** **one line** where possible, **wide word spacing**, **no** tangled overlap with walls or furniture; optional **flat light backing** (not busy ornament) on cluttered floors. Keep them **large enough** to read without zooming. Short **labels** for key spots are fine (same redundancy rules as other maps). The piece should feel like a **finished illustrated battle map** players want to **zoom in on**, not a bare CAD stub.";
 
+/** Battle maps without printed grid lines — VTT overlays the grid at play time. */
+export const MAP_BATTLE_NO_GRID_LOOK =
+  "Battle map **look (no printed grid):** render as a **clean illustrated tactical floor plan**—rich top-down environment art for **miniatures** with **no visible square grid**, **no graph paper**, **no cell borders**, and **no drafting-paper squares**. **Walls, doors, pits, pools, furniture, and terrain** stay **orthogonal** and **readable from above**—not isometric. Think **premium VTT map art** where the **virtual table draws the grid** over your illustration. " +
+  "**Diagram discipline:** clear **walkable vs blocked** space, **unmistakable doorways and chokepoints**, **subtle** ambient shading ok **if** it does not hide walls. **No** cast shadows that break placement. Short **floor-plan style labels** for key rooms only.";
+
 export function clampImagePromptText(text: string, maxLen: number): string {
   const t = text.replace(/\s+/g, " ").trim();
   if (t.length <= maxLen) return t;

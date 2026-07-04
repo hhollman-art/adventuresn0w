@@ -24,6 +24,13 @@ describe("fixSession", () => {
     expect(fixSession({ version: 2 })).toBeNull();
   });
 
+  it("defaults feet per cell to 5 and clamps unknown values", () => {
+    const fixed = fixSession({ version: 1, grid: { feetPerCell: 10 } });
+    expect(fixed!.grid.feetPerCell).toBe(10);
+    expect(fixSession({ version: 1, grid: {} })!.grid.feetPerCell).toBe(5);
+    expect(fixSession({ version: 1, grid: { feetPerCell: 3 } })!.grid.feetPerCell).toBe(5);
+  });
+
   it("drops malformed tokens and clamps grid bounds", () => {
     const fixed = fixSession({
       version: 1,
@@ -63,6 +70,7 @@ describe("fixSession", () => {
           abilities: { str: 8, dex: 16, con: 14, int: 12, wis: 13, cha: 10 },
           ac: 15,
           maxHp: 33,
+          currentHp: null,
           tokenId: "tok1",
           items: [
             {
