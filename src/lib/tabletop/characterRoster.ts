@@ -310,18 +310,6 @@ export async function deleteSavedCharacterRoster(id: string): Promise<SavedChara
   });
 }
 
-/** Clone saved roster players with fresh ids for a one-off import (no campaign link). */
-export function cloneRosterPlayers(
-  roster: SavedCharacterRoster,
-): Omit<PlayerCharacter, "tokenId">[] {
-  return roster.players.map((p) => ({
-    ...p,
-    id: newId(),
-    tokenId: null,
-    items: p.items.map((item) => ({ ...item, id: newId() })),
-  }));
-}
-
 /** Subscribe to party library changes (same tab or other tabs). */
 export function onRostersChanged(listener: () => void): () => void {
   if (typeof window === "undefined") return () => undefined;

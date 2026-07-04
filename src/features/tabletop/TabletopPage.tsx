@@ -4,10 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import Link from "next/link";
 import BattleStage, { type StageTool } from "@/features/tabletop/BattleStage";
-import {
-  loadGenerationLibraryItems,
-  type LibraryItem,
-} from "@/lib/generationLibrary";
+import { useGenerationLibraryImages } from "@/features/tabletop/useGenerationLibraryImages";
 import {
   ABILITY_LIST,
   ITEM_BONUS_FIELDS,
@@ -1336,9 +1333,7 @@ function TokenEditor({
   update: (fn: (s: TabletopSession) => TabletopSession) => void;
 }) {
   const [showLibrary, setShowLibrary] = useState(false);
-  const [libraryImages, setLibraryImages] = useState<
-    { id: string; label: string; dataUrl: string }[] | null
-  >(null);
+  const { images: libraryImages, load: loadLibraryImages } = useGenerationLibraryImages();
 
   const patch = (fn: (t: TabletopToken) => TabletopToken) =>
     update((s) => ({
@@ -1395,21 +1390,7 @@ function TokenEditor({
 
   const toggleLibrary = () => {
     setShowLibrary((v) => !v);
-    if (libraryImages === null) {
-      void loadGenerationLibraryItems().then((items: LibraryItem[]) => {
-        setLibraryImages(
-          items.flatMap((item) =>
-            item.images
-              .filter((img) => img.imageDataUrl.startsWith("data:image"))
-              .map((img, i) => ({
-                id: `${item.id}-${i}`,
-                label: img.label || `${item.title} (${img.kind})`,
-                dataUrl: img.imageDataUrl,
-              })),
-          ),
-        );
-      });
-    }
+    if (libraryImages === null) void loadLibraryImages();
   };
 
   return (
@@ -1959,27 +1940,9 @@ function MapPanel({
   session: TabletopSession;
   update: (fn: (s: TabletopSession) => TabletopSession) => void;
 }) {
-  const [libraryMaps, setLibraryMaps] = useState<
-    { id: string; label: string; dataUrl: string; gridCols?: number; gridRows?: number }[]
-  >([]);
+  const { images: libraryMaps } = useGenerationLibraryImages({ loadOnMount: true });
+  const libraryMapThumbs = libraryMaps ?? [];
   const [mapMsg, setMapMsg] = useState<string | null>(null);
-
-  useEffect(() => {
-    void loadGenerationLibraryItems().then((items: LibraryItem[]) => {
-      const maps = items.flatMap((item) =>
-        item.images
-          .filter((img) => img.imageDataUrl.startsWith("data:image"))
-          .map((img, i) => ({
-            id: `${item.id}-${i}`,
-            label: img.label || `${item.title} (${img.kind})`,
-            dataUrl: img.imageDataUrl,
-            gridCols: img.gridCols,
-            gridRows: img.gridRows,
-          })),
-      );
-      setLibraryMaps(maps);
-    });
-  }, []);
 
   const clearMap = () =>
     update((s) => ({
@@ -2205,22 +2168,15 @@ function MapPanel({
           </p>
         ) : null}
 
-        {libraryMaps.length > 0 ? (
+        {libraryMapThumbs.length > 0 ? (
           <>
             <p className="mb-1 text-xs text-[var(--muted)]">From your library:</p>
             <div className="grid grid-cols-2 gap-2">
-              {libraryMaps.map((m) => (
+              {libraryMapThumbs.map((m) => (
                 <button
                   key={m.id}
                   type="button"
-                  onClick={() =>
-                    void applyMapImage(
-                      m.label,
-                      m.dataUrl,
-                      m.gridCols ?? session.grid.cols,
-                      m.gridRows ?? session.grid.rows,
-                    )
-                  }
+                  onClick={() => void applyMapImage(m.label, m.dataUrl)}
                   className="overflow-hidden rounded-md border text-left"
                   style={{ borderColor: "var(--border)" }}
                   title={m.label}

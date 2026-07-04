@@ -11,9 +11,8 @@ import {
 import { REALM_SIZE_LABEL, type RealmSize } from "@/lib/realmPrompt";
 import {
   appendGenerationLibraryItem,
-  loadGenerationLibraryItems,
   updateGenerationLibraryItem,
-  type LibraryItem,
+  type LibraryImage,
   type LibraryKind,
 } from "@/lib/generationLibrary";
 import {
@@ -218,37 +217,16 @@ const EMPTY_SEED_DRAFT: SeedEditorDraft = {
   markdown: "",
 };
 
-type GeneratedImage = {
-  kind: string;
-  label?: string;
-  imageDataUrl: string;
-  gridCols?: number;
-  gridRows?: number;
-};
+type GeneratedImage = LibraryImage;
 
-function battleMapLibraryMeta(form: MapFormState): {
-  gridCols: number;
-  gridRows: number;
-} {
-  return { gridCols: form.battleGridCols, gridRows: form.battleGridRows };
-}
-
-function annotateBattleMapImages(
-  images: GeneratedImage[],
-  form: MapFormState,
-): GeneratedImage[] {
-  const meta = battleMapLibraryMeta(form);
-  return images.map((img) =>
-    img.kind === "battle" ? { ...img, ...meta } : img,
-  );
-}
+type MapImagePayload = MapFormState & { gridNotes: string };
 
 function mapPayloadForGeneration(
   form: MapFormState,
   units: MapDistanceUnits,
-): MapFormState {
+): MapImagePayload {
   const usesBattleGrid = form.mapKind === "battle" || form.mapKind === "both";
-  if (!usesBattleGrid) return form;
+  if (!usesBattleGrid) return { ...form, gridNotes: "" };
   return {
     ...form,
     gridNotes: buildBattleMapGridNotes(form.battleGridCols, form.battleGridRows, units),
@@ -277,8 +255,6 @@ type MapFormState = {
   context: string;
   battleGridCols: number;
   battleGridRows: number;
-  /** Built automatically at generation time; not shown in the form. */
-  gridNotes: string;
   extraNotes: string;
   imageSize: "1024x1024" | "1536x1024" | "1024x1536";
   imageQuality: "medium" | "high";
@@ -329,7 +305,6 @@ const initialMapForm: MapFormState = {
   context: "",
   battleGridCols: DEFAULT_VTT_GRID_COLS,
   battleGridRows: DEFAULT_VTT_GRID_ROWS,
-  gridNotes: "",
   extraNotes: "",
   imageSize: imageSizeForVttGrid(DEFAULT_VTT_GRID_COLS, DEFAULT_VTT_GRID_ROWS),
   imageQuality: "high",
@@ -459,7 +434,7 @@ function parseResponseBodyJson(
 }
 
 async function fetchMapImageResult(
-  payload: MapFormState,
+  payload: MapImagePayload,
   libraryReferenceMarkdown: string | undefined,
   mapDistanceUnits: MapDistanceUnits,
 ): Promise<{
@@ -998,16 +973,11 @@ export default function Home(props: PageProps<"/">) {
     setMarkdown(md);
     // Keep the auto-saved library copy in sync so exports stay consistent.
     if (currentResultLibraryId) {
-      const existing = libraryItems.find(
-        (i) => i.id === currentResultLibraryId,
-      );
-      const title = firstHeading(md) ?? existing?.title ?? "";
-      setLibraryItems(
-        await updateGenerationLibraryItem(currentResultLibraryId, {
-          title,
-          markdown: md,
-        }),
-      );
+      const title = firstHeading(md) ?? "";
+      await updateGenerationLibraryItem(currentResultLibraryId, {
+        title,
+        markdown: md,
+      });
     }
     setResultEditor(null);
     setResultEditorError("");
@@ -1085,7 +1055,8 @@ export default function Home(props: PageProps<"/">) {
     }
   }
 
-  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
+  /** Maps tab: optional seed whose Markdown grounds the image prompt. */
+  const [mapLibraryReferenceId, setMapLibraryReferenceId] = useState("");
   /** Library id of the current on-screen result, so text edits can persist. */
   const [currentResultLibraryId, setCurrentResultLibraryId] = useState<
     string | null
@@ -1095,12 +1066,6 @@ export default function Home(props: PageProps<"/">) {
     null,
   );
   const [resultEditorError, setResultEditorError] = useState("");
-  /** Maps tab: optional Library entry whose Markdown grounds the image prompt. */
-  const [mapLibraryReferenceId, setMapLibraryReferenceId] = useState("");
-
-  useEffect(() => {
-    void loadGenerationLibraryItems().then(setLibraryItems);
-  }, []);
 
   useEffect(() => {
     if (!mapLibraryReferenceId) return;
@@ -1149,16 +1114,14 @@ export default function Home(props: PageProps<"/">) {
         );
         if (mapResult.ok) {
           setProgressStage("complete");
-          setLibraryItems(
-            await appendGenerationLibraryItem({
-              kind: "maps",
-              title: mapForm.locationName.trim() || "Maps",
-              markdown: "",
-              textModel: null,
-              imageModel: mapResult.model,
-              images: annotateBattleMapImages(mapResult.images, mapForm),
-            }),
-          );
+          await appendGenerationLibraryItem({
+            kind: "maps",
+            title: mapForm.locationName.trim() || "Maps",
+            markdown: "",
+            textModel: null,
+            imageModel: mapResult.model,
+            images: mapResult.images,
+          });
           const titleSnap = mapForm.locationName.trim();
           promptSavedSeed({
             kind: "maps",
@@ -1181,19 +1144,17 @@ export default function Home(props: PageProps<"/">) {
         const propResult = await generateStandalonePropImage(propForm);
         if (propResult.ok) {
           setProgressStage("complete");
-          setLibraryItems(
-            await appendGenerationLibraryItem({
-              kind: "props",
-              title:
-                propForm.title.trim() ||
-                propForm.description.trim().slice(0, 72) ||
-                "Prop handout",
-              markdown: "",
-              textModel: null,
-              imageModel: propResult.model,
-              images: propResult.images,
-            }),
-          );
+          await appendGenerationLibraryItem({
+            kind: "props",
+            title:
+              propForm.title.trim() ||
+              propForm.description.trim().slice(0, 72) ||
+              "Prop handout",
+            markdown: "",
+            textModel: null,
+            imageModel: propResult.model,
+            images: propResult.images,
+          });
           const titleSnap =
             propForm.title.trim() ||
             propForm.description.trim().slice(0, 72);
@@ -1287,7 +1248,6 @@ export default function Home(props: PageProps<"/">) {
             imageModel: realmLibImgModel,
             images: realmLibImages,
           });
-          setLibraryItems(realmLib);
           setCurrentResultLibraryId(realmLib[0]?.id ?? null);
           setRealmForm(emptyRealmForm);
         } else {
@@ -1397,11 +1357,6 @@ export default function Home(props: PageProps<"/">) {
             context: mapContext,
             battleGridCols: mapForm.battleGridCols,
             battleGridRows: mapForm.battleGridRows,
-            gridNotes: buildBattleMapGridNotes(
-              mapForm.battleGridCols,
-              mapForm.battleGridRows,
-              mapDistanceUnits,
-            ),
             extraNotes: mapExtraNotes,
             imageSize: imageSizeForVttGrid(mapForm.battleGridCols, mapForm.battleGridRows),
             imageQuality: "high",
@@ -1412,11 +1367,13 @@ export default function Home(props: PageProps<"/">) {
           let workflowModel: string | null = null;
           let workflowError: string | null = null;
 
+          const mapPayload = mapPayloadForGeneration(mapBase, mapDistanceUnits);
+
           try {
             if (autoGenerateAdventureMap) {
               setProgressStage("map_locale_generating");
               if (scenes.length === 0) {
-                const r = await fetchMapImageResult(mapBase, undefined, mapDistanceUnits);
+                const r = await fetchMapImageResult(mapPayload, undefined, mapDistanceUnits);
                 if (r.error) workflowError = r.error;
                 else {
                   collected.push(...r.images.map((img) => ({ ...img })));
@@ -1424,11 +1381,10 @@ export default function Home(props: PageProps<"/">) {
                 }
               } else {
                 const rLocale = await fetchMapImageResult(
-                  {
-                    ...mapBase,
-                    mapKind: "overland",
-                    context: mapContext,
-                  },
+                  mapPayloadForGeneration(
+                    { ...mapBase, mapKind: "overland", context: mapContext },
+                    mapDistanceUnits,
+                  ),
                   undefined,
                   mapDistanceUnits,
                 );
@@ -1449,21 +1405,24 @@ export default function Home(props: PageProps<"/">) {
                       AUTO_IMAGE_CONCURRENCY,
                       async (scene) => {
                         const r = await fetchMapImageResult(
-                          {
-                            ...mapBase,
-                            mapKind: "battle",
-                            locationName: `${mapBase.locationName} — ${scene.title}`.slice(
-                              0,
-                              200,
-                            ),
-                            context: buildSceneBattleMapPrompt(
-                              scene,
-                              mapBase,
-                              generatedMarkdown,
-                              form,
-                              mapDistanceUnits,
-                            ),
-                          },
+                          mapPayloadForGeneration(
+                            {
+                              ...mapBase,
+                              mapKind: "battle",
+                              locationName: `${mapBase.locationName} — ${scene.title}`.slice(
+                                0,
+                                200,
+                              ),
+                              context: buildSceneBattleMapPrompt(
+                                scene,
+                                mapBase,
+                                generatedMarkdown,
+                                form,
+                                mapDistanceUnits,
+                              ),
+                            },
+                            mapDistanceUnits,
+                          ),
                           undefined,
                           mapDistanceUnits,
                         );
@@ -1474,7 +1433,6 @@ export default function Home(props: PageProps<"/">) {
                         return r.images.map((img) => ({
                           ...img,
                           label: `Battle — ${scene.title}`,
-                          ...battleMapLibraryMeta(mapBase),
                         }));
                       },
                     );
@@ -1546,7 +1504,6 @@ export default function Home(props: PageProps<"/">) {
           imageModel: recordImageModel,
           images: recordImages,
         });
-        setLibraryItems(textLib);
         setCurrentResultLibraryId(textLib[0]?.id ?? null);
         if (mode === "adventure" || mode === "characters") {
           const titleSnap = form.titleHint.trim();
@@ -1590,10 +1547,6 @@ export default function Home(props: PageProps<"/">) {
   }
 
   function imageDownloadBaseName(): string {
-    const lib = activeLibraryExport();
-    if (lib) {
-      return slugify(lib.title) || `ddeasy-${lib.kind}`;
-    }
     if (markdown.trim()) {
       return fileBaseName(markdown, mode);
     }
@@ -1634,7 +1587,7 @@ export default function Home(props: PageProps<"/">) {
 
     try {
       const result = await fetchMapImageResult(
-        payload,
+        mapPayloadForGeneration(payload, mapDistanceUnits),
         libraryRefMarkdown,
         mapDistanceUnits,
       );
@@ -1697,17 +1650,11 @@ export default function Home(props: PageProps<"/">) {
     }
   }
 
-  function activeLibraryExport(): LibraryItem | null {
-    return null;
-  }
-
   function exportMarkdownForDownload(): string {
-    return activeLibraryExport()?.markdown ?? previewMarkdown;
+    return previewMarkdown;
   }
 
   function exportModeForDownload(): GenerateMode {
-    const lib = activeLibraryExport();
-    if (lib) return lib.kind;
     if (viewingSeed) return viewingSeed.kind;
     if (mode === "library") return "adventure";
     return mode;
@@ -4199,7 +4146,11 @@ function buildSceneBattleMapPrompt(
     mapBase.tone,
     "",
     "Grid / layout notes:",
-    mapBase.gridNotes,
+    buildBattleMapGridNotes(
+      mapBase.battleGridCols,
+      mapBase.battleGridRows,
+      mapDistanceUnits,
+    ),
     "",
     "Reference — map briefs from the adventure (tone only):",
     toneBlock.slice(0, 2000),

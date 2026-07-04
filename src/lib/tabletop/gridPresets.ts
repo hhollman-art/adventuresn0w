@@ -18,10 +18,6 @@ export const DEFAULT_VTT_GRID_ROWS = DEFAULT_GRID_ROWS;
 export const MIN_VTT_GRID_SIDE = 4;
 export const MAX_VTT_GRID_SIDE = 100;
 
-export function formatVttGridLabel(cols: number, rows: number): string {
-  return `${cols} × ${rows}`;
-}
-
 export function findVttGridPreset(cols: number, rows: number): VttGridPreset | undefined {
   return VTT_GRID_PRESETS.find((p) => p.cols === cols && p.rows === rows);
 }
@@ -55,6 +51,13 @@ export function buildBattleMapGridNotes(
   const cell = units === "metric" ? "1.5 m × 1.5 m" : "5 ft × 5 ft";
   const sizeLine = `**exactly ${cols} columns × ${rows} rows** (matches Virtual Table framing)`;
   return `**${cell}** tactical scale; ${sizeLine}. **No visible grid lines** on the art—clean illustrated floor plan only (the Virtual Table overlays the grid at play). **Clear** walls and walkable space; label key rooms from context.`;
+}
+
+/** Generic fallback when VTT dimensions are not supplied to the image API. */
+export function defaultBattleGridNotesFallback(units: MapDistanceUnits = "imperial"): string {
+  return units === "metric"
+    ? "Strict **1.5 m × 1.5 m** tactical scale; **illustrated floor plan without grid lines**—Virtual Table overlays the grid; encounter-scale zoom"
+    : "Strict 5 ft × 5 ft tactical scale; **illustrated floor plan without grid lines**—Virtual Table overlays the grid; encounter-scale zoom";
 }
 
 export function buildBattleMapScenePromptLead(

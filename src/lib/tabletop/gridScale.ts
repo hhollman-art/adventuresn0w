@@ -75,7 +75,3 @@ export function formatTokenSizeOption(sizeCategory: TokenSizeCategory, feetPerCe
 export function formatFeetPerCell(feetPerCell: number): string {
   return `${feetPerCell} ft squares`;
 }
-
-export function stagePixelSize(cols: number, rows: number): { width: number; height: number } {
-  return { width: cols * CELL_PX, height: rows * CELL_PX };
-}

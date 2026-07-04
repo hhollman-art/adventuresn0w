@@ -4,10 +4,6 @@ export type LibraryImage = {
   kind: string;
   label?: string;
   imageDataUrl: string;
-  /** VTT grid columns when this is a battle map aligned to the virtual table. */
-  gridCols?: number;
-  /** VTT grid rows when this is a battle map aligned to the virtual table. */
-  gridRows?: number;
 };
 
 export type LibraryItem = {
@@ -48,18 +44,10 @@ function isLibraryKind(v: unknown): v is LibraryKind {
 function isLibraryImage(x: unknown): x is LibraryImage {
   if (typeof x !== "object" || x === null) return false;
   const o = x as Record<string, unknown>;
-  const gridColsOk =
-    o.gridCols === undefined ||
-    (typeof o.gridCols === "number" && o.gridCols >= 4 && o.gridCols <= 100);
-  const gridRowsOk =
-    o.gridRows === undefined ||
-    (typeof o.gridRows === "number" && o.gridRows >= 4 && o.gridRows <= 100);
   return (
     typeof o.kind === "string" &&
     typeof o.imageDataUrl === "string" &&
-    (o.label === undefined || typeof o.label === "string") &&
-    gridColsOk &&
-    gridRowsOk
+    (o.label === undefined || typeof o.label === "string")
   );
 }
 
@@ -202,6 +190,30 @@ export async function loadGenerationLibraryItems(): Promise<LibraryItem[]> {
   return loadItemsInternal();
 }
 
+export type LibraryImageThumb = {
+  id: string;
+  label: string;
+  dataUrl: string;
+};
+
+/** Flatten saved generation images into pickable thumbnails (data URLs only). */
+export function flattenLibraryImages(items: LibraryItem[]): LibraryImageThumb[] {
+  return items.flatMap((item) =>
+    item.images
+      .filter((img) => img.imageDataUrl.startsWith("data:image"))
+      .map((img, i) => ({
+        id: `${item.id}-${i}`,
+        label: img.label || `${item.title} (${img.kind})`,
+        dataUrl: img.imageDataUrl,
+      })),
+  );
+}
+
+/** Load generation-library images as VTT-ready thumbnails. */
+export async function loadGenerationLibraryImages(): Promise<LibraryImageThumb[]> {
+  return flattenLibraryImages(await loadGenerationLibraryItems());
+}
+
 export type NewLibraryItemInput = {
   kind: LibraryKind;
   title: string;
@@ -308,59 +320,4 @@ export async function updateGenerationLibraryItem(
     }
     return next;
   });
-}
-
-export async function deleteGenerationLibraryItem(id: string): Promise<LibraryItem[]> {
-  if (typeof window === "undefined") return [];
-  return withWriteLock(async () => {
-    const next = (await loadItemsInternal()).filter((x) => x.id !== id);
-    try {
-      await persistListAttempt(next);
-    } catch {
-      /* ignore */
-    }
-    return next;
-  });
-}
-
-export async function deleteGenerationLibraryItems(ids: string[]): Promise<LibraryItem[]> {
-  if (typeof window === "undefined" || ids.length === 0) {
-    return loadItemsInternal();
-  }
-  return withWriteLock(async () => {
-    const drop = new Set(ids);
-    const next = (await loadItemsInternal()).filter((x) => !drop.has(x.id));
-    try {
-      await persistListAttempt(next);
-    } catch {
-      /* ignore */
-    }
-    return next;
-  });
-}
-
-export async function clearGenerationLibrary(): Promise<LibraryItem[]> {
-  if (typeof window === "undefined") return [];
-  return withWriteLock(async () => {
-    try {
-      await idbSetItems([]);
-    } catch {
-      /* ignore */
-    }
-    try {
-      localStorage.removeItem(LEGACY_STORAGE_KEY);
-    } catch {
-      /* ignore */
-    }
-    return [];
-  });
-}
-
-export function firstMarkdownHeading(md: string): string | null {
-  const line = md
-    .split("\n")
-    .map((l) => l.trim())
-    .find((l) => l.startsWith("# "));
-  if (!line) return null;
-  return line.replace(/^#\s+/, "").trim() || null;
 }

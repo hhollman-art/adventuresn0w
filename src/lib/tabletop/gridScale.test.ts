@@ -5,7 +5,6 @@ import {
   DEFAULT_FEET_PER_CELL,
   formatFeetPerCell,
   formatTokenSizeOption,
-  stagePixelSize,
   tokenCellFootprint,
 } from "./gridScale";
 
@@ -22,10 +21,6 @@ describe("gridScale", () => {
 
   it("formats square labels", () => {
     expect(formatFeetPerCell(5)).toBe("5 ft squares");
-  });
-
-  it("computes stage pixel size from grid dimensions", () => {
-    expect(stagePixelSize(10, 8)).toEqual({ width: 10 * CELL_PX, height: 8 * CELL_PX });
   });
 
   it("scales token footprint to grid square size", () => {

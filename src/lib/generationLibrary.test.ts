@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { fixLibraryItem, type LibraryItem } from "@/lib/generationLibrary";
+import {
+  fixLibraryItem,
+  flattenLibraryImages,
+  type LibraryItem,
+} from "@/lib/generationLibrary";
 
 describe("fixLibraryItem", () => {
   it("accepts a valid row", () => {
@@ -19,6 +23,33 @@ describe("fixLibraryItem", () => {
 
   it("rejects bad kind", () => {
     expect(fixLibraryItem({ ...minimal(), kind: "nope" })).toBeNull();
+  });
+});
+
+describe("flattenLibraryImages", () => {
+  it("keeps data URLs and builds stable ids", () => {
+    const items: LibraryItem[] = [
+      {
+        id: "abc",
+        createdAt: "2020-01-01",
+        kind: "maps",
+        title: "Dungeon",
+        markdown: "",
+        textModel: null,
+        imageModel: null,
+        images: [
+          { kind: "battle", label: "Room A", imageDataUrl: "data:image/png;base64,aa" },
+          { kind: "locale", imageDataUrl: "https://example.com/x.png" },
+        ],
+      },
+    ];
+    expect(flattenLibraryImages(items)).toEqual([
+      {
+        id: "abc-0",
+        label: "Room A",
+        dataUrl: "data:image/png;base64,aa",
+      },
+    ]);
   });
 });
 

@@ -12,7 +12,7 @@ export const IMAGE_PROMPT_SAFETY_PREAMBLE =
   "sexual content, hate symbols, or real-world identifiable people. ";
 
 /**
- * For map image prompts: battle maps use grid-first illustrated tactical plans; locale/overland maps use illustrative atlas style
+ * For map image prompts: battle maps use grid-free illustrated tactical plans; locale/overland maps use illustrative atlas style
  * (`MAP_LOCALE_COLOR_ATLAS_LOOK`). `MAP_CARTOGRAPHER_HAND_LOOK` remains for legacy/prop contexts that need parchment tone.
  */
 export const MAP_CARTOGRAPHER_HAND_LOOK =
@@ -40,15 +40,8 @@ export const MAP_LOCALE_COLOR_ATLAS_LOOK =
   "Short map-style **labels** only (same non-redundant naming rules as other maps).";
 
 /**
- * Battle maps: grid-forward illustrated tactical plans—rich detail without losing playability.
+ * Battle maps without printed grid lines — VTT overlays the grid at play time.
  */
-export const MAP_BATTLE_GRAPH_PAPER_LOOK =
-  "Battle map **look (critical):** render as an **illustrated tactical floor diagram**—**squared or drafting-paper base** with a **measured plan** for **miniatures**, **plus** **generous illustrative detail**: **painted or inked floor materials** (flagstone, plank, packed earth, tile), **rubble and debris**, **pools or streams**, **roots and undergrowth**, **furniture and prop silhouettes**, **carved stonework**, **braziers or light sources as flat top-down glyphs**—all **read from above**, **not** an isometric scene. Think **beautifully worked VTT / battlemat art**: the **grid and wall edges remain the spine** of the image. " +
-  "**Diagram discipline:** **orthogonal top-down** 2D; **walls and pits** as **clear inked boundaries**; **no fake 3/4 perspective** that skews cell size. **Lighting:** **no** strong cast shadows that suggest cinematic staging; **subtle** ambient shade to sell **depth** under furniture or alcoves is ok **if** it **does not** hide square corners. " +
-  "**Detail budget:** make the space **visually rich** and **story-evocative**—**avoid** empty gray void rooms; **avoid** clutter that **obscures** which squares are walkable—**keep movement lanes and doorways unmistakable**. " +
-  "**Room and landmark labels** use **simple block capitals or clean sans-serif**—like **drafting or floor-plan callouts**—**dark ink**, **not** ornate script. **Keep each label clean:** **one line** where possible, **wide word spacing**, **no** tangled overlap with walls or furniture; optional **flat light backing** (not busy ornament) on cluttered floors. Keep them **large enough** to read without zooming. Short **labels** for key spots are fine (same redundancy rules as other maps). The piece should feel like a **finished illustrated battle map** players want to **zoom in on**, not a bare CAD stub.";
-
-/** Battle maps without printed grid lines — VTT overlays the grid at play time. */
 export const MAP_BATTLE_NO_GRID_LOOK =
   "Battle map **look (no printed grid):** render as a **clean illustrated tactical floor plan**—rich top-down environment art for **miniatures** with **no visible square grid**, **no graph paper**, **no cell borders**, and **no drafting-paper squares**. **Walls, doors, pits, pools, furniture, and terrain** stay **orthogonal** and **readable from above**—not isometric. Think **premium VTT map art** where the **virtual table draws the grid** over your illustration. " +
   "**Diagram discipline:** clear **walkable vs blocked** space, **unmistakable doorways and chokepoints**, **subtle** ambient shading ok **if** it does not hide walls. **No** cast shadows that break placement. Short **floor-plan style labels** for key rooms only.";

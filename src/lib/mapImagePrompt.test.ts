@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildMapImagePrompt } from "@/lib/mapImagePrompt";
-import { DEFAULT_BATTLE_GRID_NOTES_FALLBACK } from "@/lib/battleMapDirectives";
+import { defaultBattleGridNotesFallback } from "@/lib/tabletop/gridPresets";
 
 describe("buildMapImagePrompt", () => {
   it("includes full-color atlas guidance for locale variant", () => {
@@ -42,7 +42,7 @@ describe("buildMapImagePrompt", () => {
     );
     expect(p).toContain("No visible grid lines");
     expect(p).toContain("without a printed grid");
-    expect(p).toContain(DEFAULT_BATTLE_GRID_NOTES_FALLBACK);
+    expect(p).toContain(defaultBattleGridNotesFallback("imperial"));
     expect(p).toContain("5 ft");
   });
 

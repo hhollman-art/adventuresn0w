@@ -11,8 +11,6 @@ import {
   tokenCellFootprint,
 } from "@/lib/tabletop/gridScale";
 
-export { CELL_PX } from "@/lib/tabletop/gridScale";
-
 export type StageTool = "select" | "reveal" | "hide";
 
 type BattleStageProps = {
