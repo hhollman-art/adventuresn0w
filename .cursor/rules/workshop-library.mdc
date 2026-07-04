@@ -1,0 +1,54 @@
+---
+description: Workshop Library as categorized repository — SRD vs imported data, legal tiers
+alwaysApply: true
+---
+
+# Workshop Library — repository & legal categories
+
+The **Library** tab is the DM's canonical repository in the Workshop. Prep assets are stored by **category** with explicit **legal provenance**. Reference `src/lib/srd/manifest.ts`, `/legal`, and `SrdContentSource` in `src/lib/srd/types.ts`.
+
+## Legal tiers (never violate)
+
+| Tier | Where it lives | May ship in app? |
+|------|----------------|------------------|
+| **SRD (bundled)** | `src/lib/srd/` only, `source: "srd"` | Yes — CC BY 4.0, attribution required |
+| **User-owned** | Browser storage only (localStorage / IndexedDB) | No — personal import or typed book content |
+| **Original** | User/AI-authored lore, names, scenes | Yes as user data — not paywalled WotC rules text |
+
+- **Never** put paywalled book rules (spells, subclasses, stat blocks) in `src/` or a shared server DB.
+- **Never** merge user imports into the bundled SRD catalogue.
+- Custom subclasses/spells from owned books → user tier (sheet Notes, custom fields), not `SRD_SPELLS`.
+
+## Library categories (use typed unions + labels)
+
+Every stored item must belong to one category. Extend existing types — do not invent ad-hoc string kinds.
+
+| Category | Type | Storage module | Typical content |
+|----------|------|----------------|-----------------|
+| **Seeds** | `SeedKind` | `src/lib/realmSeeds.ts` | Grounding markdown: realm, adventure, characters, maps, props |
+| **Results** | `LibraryKind` | `src/lib/generationLibrary.ts` | Generated or hand-edited outputs + images |
+| **Parties** | `SavedCharacterRoster` | `src/lib/tabletop/characterRoster.ts` | PC sheets, `.md` import, VTT save-back |
+| **Rules (SRD)** | `SrdCatalogue` | `src/lib/srd/` | Classes, spells, ancestries — read-only pickers |
+
+New categories (monsters, items, house rules) need a new typed `kind`, a `*_LABEL` map, a storage module, and a legal review against `SRD_CONTENT_POLICY`.
+
+## When building Library features
+
+**Do**
+
+- Route create / import / edit / export through the Library with a visible category badge.
+- Label UI by tier where it matters: SRD picker vs "Custom (your books)" vs generated original.
+- Keep SRD references as catalogue **ids** (`knownSpellIds`); keep non-SRD spells in Notes.
+- Wire generators and VTT to **read from** Library seeds, results, and parties — not duplicate stores.
+
+**Don't**
+
+- Add a fourth parallel store for the same asset type.
+- Hide provenance or blur SRD vs user-owned content.
+- Default imports into bundled rules or expose user imports to other users.
+
+## Check before shipping
+
+1. Does this item have a **category type** and **storage module**?
+2. Is provenance **SRD**, **user-owned**, or **original**?
+3. Would `/legal` still be accurate after this change?

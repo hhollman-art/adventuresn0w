@@ -1,0 +1,51 @@
+---
+description: Workshop and VTT product principle — manual-first tools, AI optional
+alwaysApply: true
+---
+
+# DM control tower — manual-first, AI optional
+
+The **Workshop** is the DM's control tower for session prep. The **Virtual Table (VTT)** is the table at play. Both must deliver immense value **without** AI.
+
+## Core principle
+
+- AI is a **feature**, not a requirement. Every workflow must work end-to-end with no API keys.
+- AI **accelerates** prep (draft, suggest, generate images) — it must never be the only path to a usable result.
+- Prefer **curation, persistence, and reuse** (seeds, parties, sheets, maps, session state) over one-off generation.
+- The **Workshop Library** is the canonical repository — categorized assets with SRD vs user-owned provenance (see `workshop-library` rule).
+
+## When building features
+
+**Do**
+
+- Provide manual create, edit, import, and export paths alongside any AI action.
+- Design empty states for "add manually" or "import .md", not only "Generate".
+- Keep user-owned content in browser storage; bundled rules stay SRD-only (see `/legal`).
+- Label AI actions clearly; when keys are missing, the rest of the app stays fully usable.
+
+**Don't**
+
+- Gate core Workshop or VTT tools behind generation or API calls.
+- Make AI the default or only way to create parties, sheets, tokens, maps, or session data.
+- Remove manual controls when adding AI helpers — add "fast forward", don't replace the tool.
+
+## Zone focus
+
+| Zone | Without AI | AI enhances |
+|------|------------|-------------|
+| **Workshop** | Library, SRD pickers, roster import, manual editors, export | Draft realms/adventures/characters/maps from seeds |
+| **VTT** | Sheets, tokens, grid, dice, player view, local session sync | Optional blurbs or notes from prompts |
+
+## Examples
+
+```tsx
+// ✅ GOOD — manual path first, AI optional
+<button onClick={openBlankSheet}>New character sheet</button>
+<button onClick={importMarkdown}>Import .md</button>
+<button onClick={generateWithAi}>Generate with AI (optional)</button>
+
+// ❌ BAD — no way to proceed without AI
+if (!hasApiKey) return <p>Add API keys to use the Virtual Table.</p>
+```
+
+When choosing scope, ask: *Can a DM prep and run a session using only manual tools and saved assets?* If not, fix that before adding more AI.
