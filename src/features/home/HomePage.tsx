@@ -3,25 +3,36 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ADVENTURE_LENGTH_HOVER_HELP,
   type AdventureLength,
   type CombatIntensity,
 } from "@/lib/adventurePrompt";
 import { REALM_SIZE_LABEL, type RealmSize } from "@/lib/realmPrompt";
+import WorkshopLibraryPanel, {
+  type LibraryViewSelection,
+} from "@/features/workshop/WorkshopLibraryPanel";
+import WorkflowTutorialOverlay from "@/features/workshop/WorkflowTutorialOverlay";
+import { isWorkflowTutorialId } from "@/lib/workshop/workflowTutorials";
+import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
 import {
   appendGenerationLibraryItem,
+  deleteGenerationLibraryItem,
+  LIBRARY_KIND_LABEL,
+  loadGenerationLibraryItems,
   updateGenerationLibraryItem,
   type LibraryImage,
+  type LibraryItem,
   type LibraryKind,
 } from "@/lib/generationLibrary";
+import type { WorkshopLibraryCategory } from "@/lib/workshop/libraryCatalog";
 import {
   appendRealmSeed,
   deleteRealmSeed,
   ddeasySeedOptionLabel,
   loadRealmSeeds,
   seedDisplayName,
-  seedScopeLabel,
   suggestedSeedName,
   updateRealmSeed,
   SEED_KIND_LABEL,
@@ -42,8 +53,15 @@ import {
   removeCharacterSlot,
   type CharacterSlotSpec,
 } from "@/lib/srdCharacterOptions";
-import { saveCharacterRoster } from "@/lib/tabletop/characterRoster";
+import {
+  deleteSavedCharacterRoster,
+  loadSavedCharacterRosters,
+  onRostersChanged,
+  saveCharacterRoster,
+  type SavedCharacterRoster,
+} from "@/lib/tabletop/characterRoster";
 import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
+import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
 import { renderMarkdownToHtml } from "@/lib/markdownRender";
 import { postHeartbeatJson } from "@/lib/sseClient";
 import {
@@ -111,19 +129,19 @@ type PendingRealmSeed = {
   savedSeedId: string;
 };
 
-function autoSaveGeneratedSeed(params: {
+async function autoSaveGeneratedSeed(params: {
   kind: SeedKind;
   realmSize?: RealmSize;
   titleHint: string;
   briefDescription: string;
   markdown: string;
-}): { savedSeedId: string; seeds: SavedRealmSeed[]; seedName: string } {
+}): Promise<{ savedSeedId: string; seeds: SavedRealmSeed[]; seedName: string }> {
   const seedName = suggestedSeedName(
     params.markdown,
     params.titleHint,
     params.kind,
   );
-  const seeds = appendRealmSeed({
+  const seeds = await appendRealmSeed({
     kind: params.kind,
     seedName,
     realmSize: params.realmSize,
@@ -876,13 +894,32 @@ export default function Home(props: PageProps<"/">) {
   const [characterSlots, setCharacterSlots] = useState<CharacterSlotSpec[]>(() =>
     defaultCharacterSlots(),
   );
-  /** Library tab: seed id shown in the Output panel (view / print / export). */
-  const [viewingSeedId, setViewingSeedId] = useState("");
+  /** Library tab: selected asset shown in the Output panel. */
+  const [librarySelection, setLibrarySelection] = useState<LibraryViewSelection>(null);
+  const [libraryResults, setLibraryResults] = useState<LibraryItem[]>([]);
+  const [libraryParties, setLibraryParties] = useState<SavedCharacterRoster[]>([]);
+  const [libraryCategory, setLibraryCategory] = useState<WorkshopLibraryCategory>("all");
+  const [libraryStatus, setLibraryStatus] = useState<string | null>(null);
   const [partySaveMessage, setPartySaveMessage] = useState<string | null>(null);
+  const [tutorialWorkflowId, setTutorialWorkflowId] = useState<string | null>(null);
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const [showTutorialPicker, setShowTutorialPicker] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    setDdeasySeeds(loadRealmSeeds());
+    void loadRealmSeeds().then(setDdeasySeeds);
   }, []);
+
+  useEffect(() => {
+    const id = searchParams.get("workflow");
+    if (id && isWorkflowTutorialId(id)) {
+      setTutorialWorkflowId(id);
+      setTutorialStep(0);
+      setShowTutorialPicker(false);
+      router.replace("/", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   // On mobile, default the slow auto image generation off for reliability.
   useEffect(() => {
@@ -911,14 +948,14 @@ export default function Home(props: PageProps<"/">) {
     if (pendingRealmSeed) setSeedDialogError("");
   }, [pendingRealmSeed]);
 
-  function promptSavedSeed(params: {
+  async function promptSavedSeed(params: {
     kind: SeedKind;
     realmSize?: RealmSize;
     titleHint: string;
     briefDescription: string;
     markdown: string;
   }) {
-    const autoSaved = autoSaveGeneratedSeed(params);
+    const autoSaved = await autoSaveGeneratedSeed(params);
     setDdeasySeeds(autoSaved.seeds);
     setPendingRealmSeed({
       ...params,
@@ -927,16 +964,44 @@ export default function Home(props: PageProps<"/">) {
     setPendingSeedNameDraft(autoSaved.seedName);
   }
 
+  // Auto-save: mirror the library to the user's chosen folder after changes.
+  // The snapshot is rebuilt from storage at write time, so firing on mount is harmless.
   useEffect(() => {
-    if (!viewingSeedId) return;
-    if (!ddeasySeeds.some((s) => s.id === viewingSeedId)) {
-      setViewingSeedId("");
-    }
-  }, [ddeasySeeds, viewingSeedId]);
+    scheduleLibrarySnapshot();
+  }, [ddeasySeeds, libraryResults, libraryParties]);
 
-  function viewSeed(id: string) {
-    setViewingSeedId(id);
+  useEffect(() => {
+    if (!librarySelection) return;
+    if (librarySelection.kind === "seed" && !ddeasySeeds.some((s) => s.id === librarySelection.id)) {
+      setLibrarySelection(null);
+    }
+    if (
+      librarySelection.kind === "result" &&
+      !libraryResults.some((r) => r.id === librarySelection.id)
+    ) {
+      setLibrarySelection(null);
+    }
+    if (
+      librarySelection.kind === "party" &&
+      !libraryParties.some((p) => p.id === librarySelection.id)
+    ) {
+      setLibrarySelection(null);
+    }
+  }, [ddeasySeeds, libraryResults, libraryParties, librarySelection]);
+
+  function refreshLibraryData() {
+    void loadRealmSeeds().then(setDdeasySeeds);
+    void loadGenerationLibraryItems().then(setLibraryResults);
+    void loadSavedCharacterRosters().then(setLibraryParties);
   }
+
+  useEffect(() => {
+    if (mode !== "library") return;
+    refreshLibraryData();
+    return onRostersChanged(() => {
+      void loadSavedCharacterRosters().then(setLibraryParties);
+    });
+  }, [mode]);
 
   function openNewSeedEditor() {
     setSeedEditorError("");
@@ -962,6 +1027,15 @@ export default function Home(props: PageProps<"/">) {
     setResultEditor({ markdown });
   }
 
+  function openLibraryResultEditor() {
+    if (librarySelection?.kind !== "result") return;
+    const item = libraryResults.find((r) => r.id === librarySelection.id);
+    if (!item) return;
+    setResultEditorError("");
+    setResultEditor({ markdown: item.markdown });
+    setCurrentResultLibraryId(item.id);
+  }
+
   async function saveResultEditor() {
     if (!resultEditor) return;
     const md = resultEditor.markdown;
@@ -973,16 +1047,17 @@ export default function Home(props: PageProps<"/">) {
     // Keep the auto-saved library copy in sync so exports stay consistent.
     if (currentResultLibraryId) {
       const title = firstHeading(md) ?? "";
-      await updateGenerationLibraryItem(currentResultLibraryId, {
+      const next = await updateGenerationLibraryItem(currentResultLibraryId, {
         title,
         markdown: md,
       });
+      setLibraryResults(next);
     }
     setResultEditor(null);
     setResultEditorError("");
   }
 
-  function saveSeedEditor() {
+  async function saveSeedEditor() {
     if (!seedEditor) return;
     const name = seedEditor.name.trim();
     const markdown = seedEditor.markdown.trim();
@@ -999,7 +1074,7 @@ export default function Home(props: PageProps<"/">) {
       seedEditor.kind === "realm" ? seedEditor.realmSize : undefined;
     if (seedEditor.id) {
       setDdeasySeeds(
-        updateRealmSeed(seedEditor.id, {
+        await updateRealmSeed(seedEditor.id, {
           kind: seedEditor.kind,
           seedName: name,
           realmSize,
@@ -1009,7 +1084,7 @@ export default function Home(props: PageProps<"/">) {
         }),
       );
     } else {
-      const next = appendRealmSeed({
+      const next = await appendRealmSeed({
         kind: seedEditor.kind,
         seedName: name,
         realmSize,
@@ -1026,7 +1101,8 @@ export default function Home(props: PageProps<"/">) {
   function selectMode(next: GenerateMode) {
     setMode(next);
     if (next !== "library") {
-      setViewingSeedId("");
+      setLibrarySelection(null);
+      setLibraryStatus(null);
     }
     switch (next) {
       case "realm":
@@ -1043,11 +1119,12 @@ export default function Home(props: PageProps<"/">) {
         setPropForm(initialPropFormStandalone);
         break;
       case "maps":
-        setDdeasySeeds(loadRealmSeeds());
+        void loadRealmSeeds().then(setDdeasySeeds);
         setMapForm(initialMapForm);
         break;
       case "library":
-        setDdeasySeeds(loadRealmSeeds());
+        refreshLibraryData();
+        setLibraryCategory("all");
         break;
       default:
         break;
@@ -1122,7 +1199,7 @@ export default function Home(props: PageProps<"/">) {
             images: mapResult.images,
           });
           const titleSnap = mapForm.locationName.trim();
-          promptSavedSeed({
+          void promptSavedSeed({
             kind: "maps",
             titleHint: titleSnap,
             briefDescription: [mapForm.tone.trim(), mapForm.context.trim()]
@@ -1157,7 +1234,7 @@ export default function Home(props: PageProps<"/">) {
           const titleSnap =
             propForm.title.trim() ||
             propForm.description.trim().slice(0, 72);
-          promptSavedSeed({
+          void promptSavedSeed({
             kind: "props",
             titleHint: titleSnap,
             briefDescription: propForm.description.trim().slice(0, 400),
@@ -1196,7 +1273,7 @@ export default function Home(props: PageProps<"/">) {
           const titleSnap = realmForm.titleHint.trim();
           let realmLibImages: GeneratedImage[] = [];
           let realmLibImgModel: string | null = null;
-          promptSavedSeed({
+          void promptSavedSeed({
             kind: "realm",
             realmSize: realmForm.realmSize,
             titleHint: titleSnap,
@@ -1526,7 +1603,7 @@ export default function Home(props: PageProps<"/">) {
                   .filter(Boolean)
                   .join(" · ")
                   .slice(0, 400);
-          promptSavedSeed({
+          void promptSavedSeed({
             kind: mode === "characters" ? "characters" : "adventure",
             titleHint: titleSnap,
             briefDescription,
@@ -1655,16 +1732,29 @@ export default function Home(props: PageProps<"/">) {
 
   function exportModeForDownload(): GenerateMode {
     if (viewingSeed) return viewingSeed.kind;
+    if (viewingResult) return viewingResult.kind;
+    if (viewingParty) return "characters";
     if (mode === "library") return "adventure";
     return mode;
   }
 
   const viewingSeed =
-    mode === "library" && viewingSeedId
-      ? ddeasySeeds.find((s) => s.id === viewingSeedId)
+    librarySelection?.kind === "seed"
+      ? ddeasySeeds.find((s) => s.id === librarySelection.id)
+      : undefined;
+  const viewingResult =
+    librarySelection?.kind === "result"
+      ? libraryResults.find((r) => r.id === librarySelection.id)
+      : undefined;
+  const viewingParty =
+    librarySelection?.kind === "party"
+      ? libraryParties.find((p) => p.id === librarySelection.id)
       : undefined;
 
-  const previewMarkdown = viewingSeed?.markdown ?? (mode === "library" ? "" : markdown);
+  const previewMarkdown =
+    mode === "library"
+      ? (viewingSeed?.markdown ?? viewingResult?.markdown ?? viewingParty?.markdown ?? "")
+      : markdown;
 
   function copyMarkdown() {
     const md = exportMarkdownForDownload();
@@ -1743,20 +1833,78 @@ export default function Home(props: PageProps<"/">) {
   }
 
   const previewImages: GeneratedImage[] =
-    mode === "library" ? [] : mapImages;
-  const previewTextModel = mode === "library" ? null : model;
-  const previewImageModel = mode === "library" ? null : imageModel;
+    mode === "library" ? (viewingResult?.images ?? []) : mapImages;
+  const previewTextModel =
+    mode === "library" ? (viewingResult?.textModel ?? null) : model;
+  const previewImageModel =
+    mode === "library" ? (viewingResult?.imageModel ?? null) : imageModel;
   const outputLayoutKind: LibraryKind = viewingSeed
     ? viewingSeed.kind
-    : mode === "library"
-      ? "adventure"
-      : (mode as LibraryKind);
+    : viewingResult
+      ? viewingResult.kind
+      : viewingParty
+        ? "characters"
+        : mode === "library"
+          ? "adventure"
+          : (mode as LibraryKind);
   /** Cover + per-## “sheets” for print/PDF and merging into a binder or magazine-style compilation */
   const bookletPaperModuleLayout =
     outputLayoutKind === "adventure" || outputLayoutKind === "realm";
 
+  const libraryPanel = (
+    <WorkshopLibraryPanel
+      wideLayout
+      seeds={ddeasySeeds}
+      results={libraryResults}
+      parties={libraryParties}
+      category={libraryCategory}
+      selection={librarySelection}
+      statusMessage={libraryStatus}
+      onCategoryChange={setLibraryCategory}
+      onSelect={setLibrarySelection}
+      onAddSeed={openNewSeedEditor}
+      onEditSeed={openEditSeedEditor}
+      onDeleteSeed={async (id) => {
+        const next = await deleteRealmSeed(id);
+        setDdeasySeeds(next);
+        if (librarySelection?.kind === "seed" && librarySelection.id === id) {
+          setLibrarySelection(null);
+        }
+        if (selectedRealmSeedId === id) setSelectedRealmSeedId("");
+        if (selectedRealmCreationSeedId === id) setSelectedRealmCreationSeedId("");
+      }}
+      onDeleteResult={async (id) => {
+        const next = await deleteGenerationLibraryItem(id);
+        setLibraryResults(next);
+        if (librarySelection?.kind === "result" && librarySelection.id === id) {
+          setLibrarySelection(null);
+        }
+      }}
+      onDeleteParty={async (id) => {
+        const next = await deleteSavedCharacterRoster(id);
+        setLibraryParties(next);
+        if (librarySelection?.kind === "party" && librarySelection.id === id) {
+          setLibrarySelection(null);
+        }
+      }}
+      onPartiesChange={setLibraryParties}
+      onRestore={(outcome) => {
+        setDdeasySeeds(outcome.seeds);
+        setLibraryResults(outcome.results);
+        setLibraryParties(outcome.parties);
+      }}
+      onStatus={setLibraryStatus}
+    />
+  );
+
   return (
-    <main className="app-main app-main--workshop mx-auto flex w-full flex-1 flex-col gap-8 px-4 py-6 sm:px-6 lg:flex-row lg:gap-10">
+    <main
+      className={`app-main app-main--workshop mx-auto flex w-full flex-1 flex-col px-4 py-6 sm:px-6 ${
+        mode === "library"
+          ? "app-main--library gap-4 lg:gap-5"
+          : "gap-8 lg:flex-row lg:gap-10"
+      }`}
+    >
       {pendingRealmSeed ? (
         <div
           className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
@@ -1803,14 +1951,14 @@ export default function Home(props: PageProps<"/">) {
             <div className="mt-6 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   const name = pendingSeedNameDraft.trim();
                   if (!name) {
                     setSeedDialogError("Enter a name, or choose Done.");
                     return;
                   }
                   setDdeasySeeds(
-                    updateRealmSeed(pendingRealmSeed.savedSeedId, {
+                    await updateRealmSeed(pendingRealmSeed.savedSeedId, {
                       kind: pendingRealmSeed.kind,
                       seedName: name,
                       realmSize: pendingRealmSeed.realmSize,
@@ -1967,7 +2115,7 @@ export default function Home(props: PageProps<"/">) {
             <div className="mt-6 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={saveSeedEditor}
+                onClick={() => void saveSeedEditor()}
                 className="rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition enabled:hover:opacity-90"
                 style={{ background: "var(--accent)" }}
               >
@@ -2059,7 +2207,11 @@ export default function Home(props: PageProps<"/">) {
         </div>
       ) : null}
       <section
-        className="fantasy-panel no-print w-full shrink-0 rounded-xl border p-6 lg:max-w-md"
+        className={`fantasy-panel no-print rounded-xl border p-6 ${
+          mode === "library"
+            ? "library-workshop-nav w-full shrink-0"
+            : "w-full shrink-0 lg:max-w-md"
+        }`}
         style={{
           background: "var(--surface)",
           borderColor: "var(--border)",
@@ -2100,10 +2252,27 @@ export default function Home(props: PageProps<"/">) {
             </div>
           </div>
           <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
-            When your content is ready, switch to{" "}
-            <strong className="text-[var(--text)]">Virtual Table</strong> in the banner to run
-            encounters live.
+            {mode === "library" ? (
+              <>
+                Switch tabs to generate new content, or use{" "}
+                <strong className="text-[var(--text)]">Virtual Table</strong> in the banner to run
+                sessions.
+              </>
+            ) : (
+              <>
+                When your content is ready, switch to{" "}
+                <strong className="text-[var(--text)]">Virtual Table</strong> in the banner to run
+                encounters live.
+              </>
+            )}
           </p>
+          <button
+            type="button"
+            onClick={() => setShowTutorialPicker(true)}
+            className="btn btn-sm btn-accent mt-4 w-full"
+          >
+            Workflow guides
+          </button>
         </div>
 
         <h1 className="font-display mt-6 text-xl font-bold text-[var(--text)]">
@@ -2122,10 +2291,9 @@ export default function Home(props: PageProps<"/">) {
         <div className="fantasy-divider mt-2" aria-hidden="true">
           <span className="text-sm leading-none">&#10022;</span>
         </div>
+        {mode !== "library" ? (
         <p className="mt-2 text-sm text-[var(--muted)]">
-          {mode === "library"
-            ? "Manage your D&DEasy seeds—the reusable settings that ground every generator tab. Edit the text of any generation right where it appears, using the Edit button in the Output panel."
-            : mode === "realm"
+          {mode === "realm"
               ? "Choose the scale of the place (from a whole world down to a local cluster), then describe what you want. Claude returns table-ready setting Markdown—original, not WotC copy."
               : mode === "adventure"
                 ? "Pick a length: short session or one-nighter. Original and SRD-aware—not official WotC content."
@@ -2135,137 +2303,9 @@ export default function Home(props: PageProps<"/">) {
                     ? "Build handout images: paper props, potions, arms and armor, tools, and more. Pick an item type, describe it, generate—no adventure required."
                     : "Generate **full-color** locale / overland maps (atlas-style: cities, routes, clear water) and **grid-free** battle maps for the Virtual Table with OpenAI—top-down, not scenic illustrations."}
         </p>
+        ) : null}
 
-        {mode === "library" ? (
-          <div
-            className="mt-6 flex flex-col gap-3 rounded-lg border p-4"
-            style={{ borderColor: "var(--border)" }}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="font-display text-base font-bold text-[var(--text)]">
-                Seed Management
-              </h2>
-              <button
-                type="button"
-                onClick={openNewSeedEditor}
-                className="rounded-lg px-3 py-2 text-xs font-semibold text-white transition enabled:hover:opacity-90"
-                style={{ background: "var(--accent)" }}
-              >
-                Add seed manually
-              </button>
-            </div>
-            <div className="flex flex-col gap-1.5 text-xs text-[var(--muted)]">
-              <p>
-                Seeds are reusable settings that{" "}
-                <strong className="text-[var(--text)]">ground</strong> new
-                generations. Manage <strong className="text-[var(--text)]">D&DEasy seeds</strong>{" "}
-                for every tab—realm, adventure, characters, maps, and props. Pick
-                one in the Realm or Adventure tab to anchor geography, factions,
-                and lore so everything stays consistent.
-              </p>
-              <p>
-                Every generation is saved here automatically. Use{" "}
-                <strong className="text-[var(--text)]">Add seed manually</strong>{" "}
-                to write or paste your own (type, name, optional one-line
-                summary, and the details that get fed into generation),{" "}
-                <strong className="text-[var(--text)]">Edit</strong> to refine an
-                existing seed, <strong className="text-[var(--text)]">View</strong> to
-                read or print it in the Output panel, or{" "}
-                <strong className="text-[var(--text)]">Delete</strong> to remove one.
-                Markdown is supported. Everything is stored only in this browser.
-              </p>
-            </div>
-            {ddeasySeeds.length === 0 ? (
-              <p className="text-sm text-[var(--muted)]">
-                No seeds yet. Generate from any tab, or use “Add seed manually”
-                to write your own.
-              </p>
-            ) : (
-              <ul className="flex max-h-[min(40vh,320px)] flex-col gap-2 overflow-y-auto pr-1">
-                {ddeasySeeds.map((seed) => {
-                  const selected = viewingSeedId === seed.id;
-                  return (
-                  <li key={seed.id}>
-                    <div
-                      className="flex gap-3 rounded-lg border p-3 text-sm"
-                      style={{
-                        borderColor: selected ? "var(--accent)" : "var(--border)",
-                        background: selected
-                          ? "rgba(201, 162, 39, 0.1)"
-                          : undefined,
-                      }}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span
-                            className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                            style={{
-                              borderColor: "var(--accent)",
-                              color: "var(--accent)",
-                            }}
-                          >
-                            {SEED_KIND_LABEL[seed.kind]}
-                          </span>
-                          <span className="font-semibold text-[var(--text)]">
-                            {seedDisplayName(seed)}
-                          </span>
-                        </span>
-                        <span className="mt-1 block text-xs text-[var(--muted)]">
-                          {seedScopeLabel(seed)} ·{" "}
-                          {new Date(seed.createdAt).toLocaleString()}
-                        </span>
-                        {seed.briefDescription.trim() ? (
-                          <span className="mt-1 block truncate text-xs text-[var(--muted)]">
-                            {seed.briefDescription.trim()}
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="flex shrink-0 flex-col gap-1.5 self-start">
-                        <button
-                          type="button"
-                          onClick={() => viewSeed(seed.id)}
-                          className="rounded-md border px-2 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                          style={{ borderColor: "var(--border)" }}
-                        >
-                          View
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openEditSeedEditor(seed.id)}
-                          className="rounded-md border px-2 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                          style={{ borderColor: "var(--border)" }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const next = deleteRealmSeed(seed.id);
-                            setDdeasySeeds(next);
-                            if (viewingSeedId === seed.id) {
-                              setViewingSeedId("");
-                            }
-                            if (selectedRealmSeedId === seed.id) {
-                              setSelectedRealmSeedId("");
-                            }
-                            if (selectedRealmCreationSeedId === seed.id) {
-                              setSelectedRealmCreationSeedId("");
-                            }
-                          }}
-                          className="rounded-md border px-2 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
-                          style={{ borderColor: "rgba(248,113,113,0.45)" }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        ) : (
+        {mode === "library" ? null : (
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
           {mode === "maps" ? (
             <>
@@ -2680,9 +2720,9 @@ export default function Home(props: PageProps<"/">) {
                 {selectedRealmCreationSeedId ? (
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
                       const id = selectedRealmCreationSeedId;
-                      const next = deleteRealmSeed(id);
+                      const next = await deleteRealmSeed(id);
                       setDdeasySeeds(next);
                       setSelectedRealmCreationSeedId("");
                       if (selectedRealmSeedId === id) {
@@ -2874,9 +2914,9 @@ export default function Home(props: PageProps<"/">) {
               {selectedRealmSeedId ? (
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     const id = selectedRealmSeedId;
-                    const next = deleteRealmSeed(id);
+                    const next = await deleteRealmSeed(id);
                     setDdeasySeeds(next);
                     setSelectedRealmSeedId("");
                     if (selectedRealmCreationSeedId === id) {
@@ -3221,8 +3261,30 @@ export default function Home(props: PageProps<"/">) {
         )}
       </section>
 
+      {mode === "library" ? (
+        <section
+          className="library-workshop-browse fantasy-panel no-print flex min-h-[28rem] flex-col rounded-xl border p-4 sm:min-h-[32rem] lg:min-h-0"
+          style={{
+            background: "var(--surface)",
+            borderColor: "var(--border)",
+          }}
+        >
+          <h2 className="font-display mb-1 shrink-0 text-base font-bold text-[var(--text)]">
+            Browse repository
+          </h2>
+          <p className="mb-2 shrink-0 text-xs text-[var(--muted)]">
+            Click an item to preview on the right. Seeds, results, and parties stay on this device.
+          </p>
+          {libraryPanel}
+        </section>
+      ) : null}
+
       <section
-        className="fantasy-panel print-generation-root min-h-[50vh] flex-1 rounded-xl border p-6"
+        className={`fantasy-panel print-generation-root rounded-xl border p-6 ${
+          mode === "library"
+            ? "library-workshop-preview min-h-[28rem] w-full flex-1 lg:min-h-0"
+            : "min-h-[50vh] flex-1"
+        }`}
         style={{
           background: "var(--surface)",
           borderColor: "var(--border)",
@@ -3231,7 +3293,8 @@ export default function Home(props: PageProps<"/">) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-lg font-semibold text-[var(--accent)]">
-              <span aria-hidden="true">&#10022; </span>Output
+              <span aria-hidden="true">&#10022; </span>
+              {mode === "library" ? "Preview" : "Output"}
             </h2>
             {viewingSeed ? (
               <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
@@ -3240,6 +3303,18 @@ export default function Home(props: PageProps<"/">) {
                   {seedDisplayName(viewingSeed)}
                 </strong>{" "}
                 ({SEED_KIND_LABEL[viewingSeed.kind]})
+              </p>
+            ) : viewingResult ? (
+              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
+                Viewing result:{" "}
+                <strong className="text-[var(--text)]">{viewingResult.title}</strong> (
+                {LIBRARY_KIND_LABEL[viewingResult.kind]})
+              </p>
+            ) : viewingParty ? (
+              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
+                Viewing party:{" "}
+                <strong className="text-[var(--text)]">{viewingParty.name}</strong> (
+                {viewingParty.players.length} PCs)
               </p>
             ) : null}
           </div>
@@ -3264,6 +3339,15 @@ export default function Home(props: PageProps<"/">) {
                       style={{ borderColor: "var(--border)" }}
                     >
                       Edit seed
+                    </button>
+                  ) : viewingResult ? (
+                    <button
+                      type="button"
+                      onClick={openLibraryResultEditor}
+                      className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                      style={{ borderColor: "var(--border)" }}
+                    >
+                      Edit result
                     </button>
                   ) : null}
                   <button
@@ -3315,6 +3399,33 @@ export default function Home(props: PageProps<"/">) {
                       >
                         Virtual Table
                       </Link>
+                    </>
+                  ) : null}
+                  {mode === "library" && viewingParty ? (
+                    <>
+                      <Link
+                        href="/parties"
+                        className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                        style={{ borderColor: "var(--border)" }}
+                      >
+                        Manage party
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          queuePartyImport({
+                            rosterId: viewingParty.id,
+                            placeTokens: true,
+                            linkCampaign: true,
+                            replaceExisting: true,
+                          });
+                          window.location.href = "/table";
+                        }}
+                        className="rounded-md px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                        style={{ background: "var(--accent)" }}
+                      >
+                        Load to VTT
+                      </button>
                     </>
                   ) : null}
                 </>
@@ -3434,19 +3545,28 @@ export default function Home(props: PageProps<"/">) {
           </>
         )}
 
-        {mode === "library" && !previewMarkdown.trim() ? (
-          <p className="no-print mt-8 text-sm text-[var(--muted)]">
-            Select <strong className="text-[var(--text)]">View</strong> on a seed
-            to read it here, then use Copy, Download, or Print above—same as
-            generated adventures and realms.
-          </p>
+        {mode === "library" && !previewMarkdown.trim() && previewImages.length === 0 ? (
+          <div className="library-preview-empty no-print mt-6">
+            <p className="text-sm text-[var(--muted)]">
+              Select an item in <strong className="text-[var(--text)]">Browse repository</strong> to
+              preview it here — then copy, export, or print.
+            </p>
+            <p className="mt-2 text-xs text-[var(--muted)]">
+              Open the <strong className="text-[var(--text)]">SRD rules</strong> tab for bundled
+              catalogue stats.
+            </p>
+          </div>
         ) : null}
-        {mode === "library" && previewMarkdown.trim() ? (
+        {mode === "library" && (previewMarkdown.trim() || previewImages.length > 0) ? (
           <p className="no-print mt-2 max-w-xl text-xs leading-relaxed text-[var(--muted)]">
-            Tip: use <strong className="text-[var(--text)]/80">Print</strong> to
-            save this seed as PDF, or export{" "}
-            <strong className="text-[var(--text)]/80">.md</strong> /{" "}
-            <strong className="text-[var(--text)]/80">.html</strong> for your notes.
+            Tip: use <strong className="text-[var(--text)]/80">Print</strong> to save as PDF, or
+            export <strong className="text-[var(--text)]/80">.md</strong> /{" "}
+            <strong className="text-[var(--text)]/80">.html</strong>. User-owned imports stay on
+            this device only — see{" "}
+            <Link href="/legal" className="font-semibold text-[var(--accent)] underline">
+              Licenses &amp; content
+            </Link>
+            .
           </p>
         ) : null}
         {!loading &&
@@ -3484,6 +3604,20 @@ export default function Home(props: PageProps<"/">) {
           </p>
         ) : null}
       </section>
+
+      <WorkflowTutorialOverlay
+        workflowId={tutorialWorkflowId}
+        stepIndex={tutorialStep}
+        showPicker={showTutorialPicker}
+        handlers={{
+          onSelectMode: selectMode,
+          onLibraryCategory: setLibraryCategory,
+          onOpenSeedEditor: openNewSeedEditor,
+        }}
+        onWorkflowChange={setTutorialWorkflowId}
+        onStepChange={setTutorialStep}
+        onShowPickerChange={setShowTutorialPicker}
+      />
     </main>
   );
 }

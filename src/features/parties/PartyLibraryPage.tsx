@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { ChangeEvent } from "react";
 import Link from "next/link";
 import {
   characterSummary,
@@ -15,16 +14,15 @@ import {
   loadSavedCharacterRosters,
   onRostersChanged,
   PARTY_SOURCE_LABEL,
-  saveCharacterRoster,
   updateCharacterRoster,
   type SavedCharacterRoster,
 } from "@/lib/tabletop/characterRoster";
-import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
 import {
   formatPartyUpdated,
   queuePartyImport,
   type PartyImportRequest,
 } from "@/lib/tabletop/partyCampaign";
+import AddPartyDialog from "@/features/workshop/AddPartyDialog";
 
 export default function PartyLibraryPage() {
   const [rosters, setRosters] = useState<SavedCharacterRoster[]>([]);
@@ -58,27 +56,7 @@ export default function PartyLibraryPage() {
     window.location.href = "/table";
   };
 
-  const onImportFile = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setStatus(null);
-    const text = await file.text();
-    const parsed = parseCharactersMarkdown(text);
-    if (parsed.players.length === 0) {
-      setStatus("No characters found in that file.");
-      e.target.value = "";
-      return;
-    }
-    const list = await saveCharacterRoster({
-      name: parsed.rosterName,
-      markdown: text,
-      source: "import",
-      players: parsed.players,
-    });
-    setRosters(list);
-    setStatus(`Saved ${parsed.players.length} characters from ${file.name}.`);
-    e.target.value = "";
-  };
+  const [showAddParty, setShowAddParty] = useState(false);
 
   const saveNotes = async (id: string) => {
     const list = await updateCharacterRoster(id, { notes: notesDraft });
@@ -111,20 +89,25 @@ export default function PartyLibraryPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <label className="btn btn-sm cursor-pointer">
-            Import .md roster&hellip;
-            <input
-              type="file"
-              accept=".md,text/markdown,text/plain"
-              className="hidden"
-              onChange={onImportFile}
-            />
-          </label>
+          <button type="button" onClick={() => setShowAddParty(true)} className="btn btn-sm">
+            Add party
+          </button>
           <Link href="/table" className="btn btn-sm btn-accent">
             Virtual Table
           </Link>
         </div>
       </div>
+
+      {showAddParty ? (
+        <AddPartyDialog
+          onClose={() => setShowAddParty(false)}
+          onSaved={(list, message) => {
+            setRosters(list);
+            setStatus(message);
+            setShowAddParty(false);
+          }}
+        />
+      ) : null}
 
       {status ? (
         <p
@@ -149,7 +132,8 @@ export default function PartyLibraryPage() {
             Generate characters in the workshop and click{" "}
             <strong className="text-[var(--text)]">Save party for VTT</strong>, build a party on the
             Virtual Table and click <strong className="text-[var(--text)]">Save to party library</strong>
-            , or import a character markdown file above.
+            , or click <strong className="text-[var(--text)]">Add party</strong> above to type,
+            paste, or load your characters.
           </p>
         </div>
       ) : (

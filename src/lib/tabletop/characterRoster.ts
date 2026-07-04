@@ -301,6 +301,26 @@ export async function updateCharacterRoster(
   });
 }
 
+/**
+ * Merge rosters from a backup file into the party library. Rows with ids that
+ * already exist are skipped (non-destructive restore).
+ */
+export async function importCharacterRosters(
+  rows: unknown[],
+): Promise<{ added: number; rosters: SavedCharacterRoster[] }> {
+  if (typeof window === "undefined") return { added: 0, rosters: [] };
+  return withWriteLock(async () => {
+    const existing = await loadInternal();
+    const known = new Set(existing.map((r) => r.id));
+    const incoming = rows
+      .map((row) => fixSavedRoster(row))
+      .filter((r): r is SavedCharacterRoster => r !== null && !known.has(r.id));
+    const next = [...incoming, ...existing].slice(0, MAX_ROSTERS);
+    await persist(next);
+    return { added: incoming.length, rosters: next };
+  });
+}
+
 export async function deleteSavedCharacterRoster(id: string): Promise<SavedCharacterRoster[]> {
   if (typeof window === "undefined") return [];
   return withWriteLock(async () => {

@@ -49,3 +49,5 @@ if (!hasApiKey) return <p>Add API keys to use the Virtual Table.</p>
 ```
 
 When choosing scope, ask: *Can a DM prep and run a session using only manual tools and saved assets?* If not, fix that before adding more AI.
+
+Related principles: `workshop-library` (data tiers) and `scale-portability` (build small, port to larger environments without rewrites).

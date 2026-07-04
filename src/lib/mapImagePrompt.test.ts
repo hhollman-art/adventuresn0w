@@ -104,4 +104,44 @@ describe("buildMapImagePrompt", () => {
     expect(p).toContain("draw no grid lines");
     expect(p).not.toContain("12–22 cells");
   });
+
+  it("anchors battle map object scale and forbids borders", () => {
+    const p = buildMapImagePrompt(
+      {
+        mapKind: "battle",
+        locationName: "X",
+        levelRange: "3",
+        partySize: "4",
+        tone: "grey",
+        context: "fight in a room",
+        gridNotes: "",
+        extraNotes: "",
+      },
+      "battle",
+    );
+    expect(p).toContain("Object scale anchors");
+    expect(p).toContain("human occupies one square");
+    expect(p).toContain("bleed to all four edges");
+    expect(p).toContain("No title line, banner, or margin text");
+  });
+
+  it("requires proportionate feature scale on locale maps", () => {
+    const p = buildMapImagePrompt(
+      {
+        mapKind: "overland",
+        locationName: "Y",
+        levelRange: "",
+        partySize: "",
+        tone: "",
+        context: "a kingdom and its trade roads",
+        gridNotes: "",
+        extraNotes: "",
+      },
+      "locale",
+    );
+    expect(p).toContain("Proportionate feature scale");
+    expect(p).toContain("scale bar");
+    // Locale plates keep the optional title; battle plates must not.
+    expect(p).toContain("small optional **title** line");
+  });
 });

@@ -58,6 +58,7 @@ export function buildMapImagePrompt(
 - **Human geography:** mark **capital(s)** with a **star** + label; mark **major cities / trade ports** with **clear, differentiated** symbols + labels. Infer or place a **sensible network** if the brief is sparse.
 - **Routes:** **primary roads and major overland trade corridors** plus **important sea lanes or narrows** must appear as **obvious linework**; **each** primary corridor needs a **readable route name or short descriptor** (from context or plausible fantasy)—players should see **named arteries**, not only nameless red lines.
 - **Terrain richness:** fill continents and regions with **visible illustrative detail**—shaded relief, vegetation, deserts, ice, wetlands, uplands, and coastal shallows—so every major zone feels **worked and specific**; avoid **blank** monochromatic interiors when the context allows variety.
+- **Proportionate feature scale (critical):** size **everything** to one consistent map scale that matches the **scale bar** and the named scope. Settlement marks are **small symbols** (star, dot)—never building footprints or city-plan blobs; **river and road line weights stay thin** at map scale (a river is a line, not a lake-wide ribbon); mountain ranges and forests read as **terrain on the land**, never single props larger than a province. Distances implied by the layout must plausibly match the scale bar—a kingdom spans **hundreds of miles**, a region **tens**; do not draw a city one-tenth the width of its continent.
 - **Still readable geography:** detail must **support** the map—**coasts, borders, cities, and routes** stay **decodeable**; do not let texture **erase** where land ends or where a kingdom boundary runs.
 `
       : "";
@@ -80,7 +81,7 @@ export function buildMapImagePrompt(
   const hasVttGrid = variant === "battle" && vttCols !== null && vttRows !== null;
 
   const battleGridSizeLine = hasVttGrid
-    ? `- **Exact VTT framing:** compose the encounter to fill the frame as if **${vttCols} columns × ${vttRows} rows** of ${battleCellDim} squares—but **draw no grid lines**; clean illustrated floor art only.`
+    ? `- **Exact VTT framing:** compose the encounter to fill the frame as if **${vttCols} columns × ${vttRows} rows** of ${battleCellDim} squares—edge to edge, **no leftover margin**—but **draw no grid lines**; clean illustrated floor art only. Hold proportions to that ${vttCols}:${vttRows} layout: a corridor meant to be **2 squares wide** spans **2/${vttCols}** of the image width; a **6-square room** spans 6/${vttCols}.`
     : `- **Large-read squares:** compose so roughly **12–22 cells** (each ${battleCellDim}) span the **shorter** image dimension. If squares look tiny or the layout reads like a site-wide blueprint, **crop tighter**—you are too zoomed out.`;
 
   const battleFramingBlock =
@@ -90,6 +91,8 @@ export function buildMapImagePrompt(
 - ${battleCellLock}
 - **Tight zoom only:** show the **immediate encounter footprint**—usually **one to three connected play spaces** (rooms plus short halls, a modest clearing, one deck or roof section, a bridge span). **Do not** depict a whole building, dungeon level, village, forest, or battlefield unless the user’s context text explicitly demands that full extent.
 ${battleGridSizeLine}
+- **Object scale anchors (size everything to the ${battleCellDim} square):** a **human occupies one square**; a single door is **~1 square** wide (double door 2); corridors **2–3 squares** wide; a bed or long table ≈ **1×2 squares**; a chair, barrel, or crate **well under one square**; a cart **1×2**; a large tree canopy **2–3 squares**. Keep **one consistent scale across the whole map**—no giant furniture, no doll-house rooms; if a prop would break these sizes, **resize the prop, never the room**.
+- **Edge-to-edge play space:** artwork must **bleed to all four edges**—**no decorative border, frame, outer margin, vignette, or title strip**. The Virtual Table aligns its square grid to the full image rectangle, so any border or margin **breaks the scale alignment**.
 - **No distant “establishing” floorplans** where the action is a small zone; frame where PCs stand and roll initiative.`
       : "";
 
@@ -174,7 +177,11 @@ ${renderingBlock}
       ? "**seas, continents or regions, countries, capitals, major cities, straits, mountain ranges, rivers, and primary trade routes or sea lanes** from the context; **vary label treatment by category** (see hierarchy above); **each** feature **at most once**; **abbreviate** long names if needed for a **clean** line"
       : "regions, major rooms, important doors, chokes, or landmarks that appear in the context above. **Each** room, path, or landmark **at most once**"
   }—no duplicate callouts, no name repeated with leader lines from two places, and no second label that duplicates the **title** (if a title line is used). Use only a **modest** number of labels so the map stays clear; do not cover the image in paragraphs or a legend block.
-- No watermarks, no modern UI, no out-of-world meta text (no “FIGURE 1”, URLs, or app chrome). A small optional **title** line echoing the location name is fine.
+- No watermarks, no modern UI, no out-of-world meta text (no “FIGURE 1”, URLs, or app chrome). ${
+    variant === "battle"
+      ? "**No title line, banner, or margin text** on a battle map—labels sit **inside** the play area only, so the grid overlay stays true."
+      : "A small optional **title** line echoing the location name is fine."
+  }
 - PG-13; no graphic harm.
 - Output only the image.`;
 }

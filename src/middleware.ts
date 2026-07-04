@@ -20,6 +20,14 @@ function rateLimitWindowMs(): number {
 }
 
 type Bucket = { count: number; resetAt: number };
+
+/**
+ * Per-instance, best-effort rate limiting. Each replica/edge isolate keeps its
+ * own buckets, so effective limits scale with instance count — acceptable as
+ * an abuse brake, not a billing guarantee. When porting to a multi-replica
+ * environment, swap this Map for a shared store (e.g. Redis/Upstash) behind
+ * the same env-var knobs; no route code changes required (scale-portability).
+ */
 const buckets = new Map<string, Bucket>();
 
 function clientKey(req: NextRequest): string {

@@ -1,0 +1,43 @@
+---
+description: Architecture principle — build to scale and port cleanly to larger environments
+alwaysApply: true
+---
+
+# Scale & portability — small today, portable tomorrow
+
+D&D Easy runs today as a single-user Next.js app with browser storage. It must be able to **scale up and port to larger environments** (hosted multi-user, server databases, cloud storage, team/table accounts) **without rewrites**. Every feature is built so the jump is a module swap, not an architecture change.
+
+## Core principle
+
+- **All persistence goes through typed storage modules** — `src/lib/realmSeeds.ts`, `src/lib/generationLibrary.ts`, `src/lib/tabletop/characterRoster.ts`, `src/lib/workshop/librarySync.ts`. Components never call `localStorage` / `indexedDB` directly. Swapping a module's internals for a remote backend must not touch callers.
+- **Async-first interfaces.** New storage APIs return Promises even when today's implementation is synchronous — a future network backend must not force signature changes across the app.
+- **Stateless API routes.** Server routes (`src/app/api/*`) validate with zod (`src/lib/apiSchemas.ts`), hold no in-memory session state, and read config from env vars only. Rate limiting lives in `middleware.ts`. Any route must work identically behind a load balancer with N replicas.
+- **One canonical data format.** The library backup JSON (`src/lib/workshop/libraryBackup.ts`) is the portable representation of user data. New categories extend it — never invent parallel export formats. Restores merge by stable id (UUIDs), which is exactly the semantics a future sync service needs.
+- **Bounded growth.** Every store has explicit caps (`MAX_SEEDS`, `MAX_ITEMS`, `MAX_ROSTERS`) and quota-shrink fallbacks. New stores must define limits up front; unbounded lists don't survive scale.
+
+## When building features
+
+**Do**
+
+- Add new persistence as a **new typed storage module** with load / save / import functions and validation (`fix*` normalizers) at the boundary.
+- Generate **UUID ids** and **ISO timestamps** on every stored row; merge and dedupe by id.
+- Keep write paths **serialized** (write locks) and **non-destructive** (merge, skip existing) — these semantics transfer directly to server-side sync.
+- Design UI copy and flows so "this device" language lives in **one place** (`LIBRARY_PROVENANCE_*` maps), ready to change when hosting tiers appear.
+- Keep heavy assets (images) size-capped and separable from text so a future blob store can take them.
+
+**Don't**
+
+- Scatter direct `localStorage.getItem` / `indexedDB.open` calls in components or pages.
+- Add API routes that depend on module-level mutable state, file-system writes, or "the same instance handles the next request".
+- Couple features to browser-only APIs without a fallback path (see `librarySync.ts`: File System Access API with manual export fallback).
+- Bake single-user assumptions into data shapes — no global singletons where a per-user/per-table scope would be needed later.
+
+## Porting checklist for new features
+
+1. Could this storage module be reimplemented against a server DB **without changing its exported signatures**?
+2. Does every stored row have a **stable unique id** and timestamp?
+3. Is the API route **stateless and replayable** (idempotent or safely retryable)?
+4. Is new user data covered by the **backup format** and auto-save snapshot?
+5. Are limits defined so 100× the data doesn't break the UI (virtualize/paginate long lists)?
+
+Related principles: `dm-control-tower` (manual-first, AI optional) and `workshop-library` (data tiers and provenance). Scale work must not violate either — e.g., a hosted tier still keeps user content private and manual paths intact.

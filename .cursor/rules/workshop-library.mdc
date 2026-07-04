@@ -19,6 +19,16 @@ The **Library** tab is the DM's canonical repository in the Workshop. Prep asset
 - **Never** merge user imports into the bundled SRD catalogue.
 - Custom subclasses/spells from owned books → user tier (sheet Notes, custom fields), not `SRD_SPELLS`.
 
+## Canonical user-facing language (use everywhere)
+
+Use these exact terms in UI copy, help, and tutorials — source of truth is `LIBRARY_PROVENANCE_*` in `src/lib/workshop/libraryCatalog.ts`:
+
+- **Included rules (SRD)** — "ships with the app — the only data we host"; read-only, never needs backup.
+- **Your imports** — files/book content the DM brings in; "this device only — never uploaded".
+- **Your creations** — seeds + generated results; "this device only — never uploaded".
+
+Data persistence is **auto-save first and strictly one-directional**: the DM sets an **auto-save folder** once (`src/lib/workshop/librarySync.ts`, File System Access API) — a local directory or cloud-synced folder (OneDrive/Drive/Dropbox) — and every library change writes `ddeasy-library.json` there automatically (`scheduleLibrarySnapshot()` after mutations). The app **only ever writes** to that folder; it must never read data back from it automatically. Data enters the app only through the explicit **Restore backup** action (`src/lib/workshop/libraryBackup.ts`), which is also the manual fallback for unsupported browsers alongside **Export backup**. Both use the same JSON format; restores are non-destructive (merge by id, skip existing). Never invent a second export format for the same data, never make manual export the primary flow, and never auto-import from the sync folder.
+
 ## Library categories (use typed unions + labels)
 
 Every stored item must belong to one category. Extend existing types — do not invent ad-hoc string kinds.
@@ -52,3 +62,5 @@ New categories (monsters, items, house rules) need a new typed `kind`, a `*_LABE
 1. Does this item have a **category type** and **storage module**?
 2. Is provenance **SRD**, **user-owned**, or **original**?
 3. Would `/legal` still be accurate after this change?
+
+Related principles: `dm-control-tower` (manual-first) and `scale-portability` (storage modules must port to larger environments without signature changes).

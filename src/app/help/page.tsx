@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import WorkflowTutorialLauncher from "@/features/help/WorkflowTutorialLauncher";
 
 export const metadata: Metadata = {
   title: "How to use — D&D Easy",
@@ -7,9 +8,18 @@ export const metadata: Metadata = {
     "User guide for D&D Easy: generate realms, adventures, characters, props, and maps, then print or export them.",
 };
 
-function SectionHeading({ children }: { children: React.ReactNode }) {
+function SectionHeading({
+  children,
+  id,
+}: {
+  children: React.ReactNode;
+  id?: string;
+}) {
   return (
-    <h2 className="font-display mt-10 text-xl font-bold text-[var(--accent)]">
+    <h2
+      id={id}
+      className="font-display mt-10 text-xl font-bold text-[var(--accent)]"
+    >
       <span aria-hidden="true">&#10022; </span>
       {children}
     </h2>
@@ -60,6 +70,21 @@ export default function HelpPage() {
             you made.
           </li>
         </ol>
+
+        <SectionHeading id="workflows">Workflow guides</SectionHeading>
+        <p className="mt-3 leading-relaxed text-[var(--text)]/90">
+          Step-by-step pop-up tours for common DM prep paths — from a no-AI one-nighter to a
+          long-running campaign. Each guide switches Workshop tabs for you and includes manual
+          alternatives where AI is optional.
+        </p>
+        <WorkflowTutorialLauncher />
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          Or open the{" "}
+          <Link href="/" className="font-semibold text-[var(--accent)] underline">
+            workshop
+          </Link>{" "}
+          and click <strong className="text-[var(--text)]">Workflow guides</strong> in the sidebar.
+        </p>
 
         <SectionHeading>Realm</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
@@ -119,12 +144,39 @@ export default function HelpPage() {
 
         <SectionHeading>Library</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
-          Everything you generate is saved automatically in your browser and
-          listed in the Library tab — text and images. Open an entry to
-          preview it again in the Output panel, copy its Markdown, or download
-          files. Note: the library lives in <em>this browser on this device</em>.
-          It is not synced anywhere, and clearing browser data clears the
-          library. Download anything you want to keep permanently.
+          The Library tab is your repository. It holds three distinct kinds of
+          data, each managed differently:
+        </p>
+        <ul className="mt-2 list-disc space-y-2 pl-5 leading-relaxed text-[var(--text)]/90">
+          <li>
+            <strong>Included rules (SRD)</strong> — classes, spells, and
+            ancestries that ship with the app (CC BY 4.0). This is the only
+            data D&amp;D Easy hosts. It is read-only and never needs backing up.
+          </li>
+          <li>
+            <strong>Your imports</strong> — party .md files and notes from books
+            you own. Stored in <em>this browser on this device only</em>, never
+            uploaded to a server.
+          </li>
+          <li>
+            <strong>Your creations</strong> — seeds you write and results the
+            generators produce (text and images). Also stored on this device
+            only.
+          </li>
+        </ul>
+        <p className="mt-2 leading-relaxed text-[var(--text)]/90">
+          Your imports and creations should never live only in the browser.
+          Set an <strong>auto-save folder</strong> in the Library (one click):
+          point it at a local directory or a cloud-synced folder like OneDrive,
+          Google Drive, or Dropbox, and every change is written there
+          automatically — no manual exporting. Saving is strictly one-way: the
+          app writes to your folder but never reads from it on its own. To
+          bring data into the app (for example on a new device), use{" "}
+          <strong>Restore backup</strong> under &quot;Where is my data?&quot;
+          and pick the file yourself. Browsers without folder access (Firefox,
+          Safari) can use <strong>Export backup</strong> the same way. Open any
+          entry to preview it in the Output panel, copy its Markdown, or
+          download files.
         </p>
 
         <SectionHeading>Saving, printing, and making booklets</SectionHeading>
@@ -158,7 +210,16 @@ export default function HelpPage() {
           Wizards of the Coast content.
         </p>
         <p className="mt-2 leading-relaxed text-[var(--text)]/90">
-          Full attribution and policy details:{" "}
+          For a step-by-step walkthrough of bringing purchased book content in
+          legally — character options, imported parties, and published
+          adventures — take the{" "}
+          <Link
+            href="/?workflow=owned-books"
+            className="font-semibold text-[var(--accent)] underline"
+          >
+            Using books you own
+          </Link>{" "}
+          tutorial. Full attribution and policy details:{" "}
           <Link href="/legal" className="font-semibold text-[var(--accent)] underline">
             Licenses &amp; content
           </Link>

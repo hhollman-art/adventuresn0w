@@ -33,8 +33,8 @@ describe("realmSeeds", () => {
     vi.stubGlobal("crypto", { randomUUID: () => "test-adventure-id" });
   });
 
-  it("persists adventure seeds and reloads them", () => {
-    appendRealmSeed({
+  it("persists adventure seeds and reloads them", async () => {
+    await appendRealmSeed({
       kind: "adventure",
       seedName: "Saltfen one-shot",
       titleHint: "Saltfen one-shot",
@@ -42,7 +42,7 @@ describe("realmSeeds", () => {
       markdown: "# The Saltfen Affair\n\nA short adventure.",
     });
 
-    const loaded = loadRealmSeeds();
+    const loaded = await loadRealmSeeds();
     expect(loaded).toHaveLength(1);
     expect(loaded[0]).toMatchObject({
       id: "test-adventure-id",
@@ -56,8 +56,8 @@ describe("realmSeeds", () => {
     expect(raw[0]?.kind).toBe("adventure");
   });
 
-  it("persists characters seeds and reloads them", () => {
-    appendRealmSeed({
+  it("persists characters seeds and reloads them", async () => {
+    await appendRealmSeed({
       kind: "characters",
       seedName: "City watch party",
       titleHint: "City watch party",
@@ -65,7 +65,7 @@ describe("realmSeeds", () => {
       markdown: "# The Night Watch\n\nFour level-3 PCs...",
     });
 
-    const loaded = loadRealmSeeds();
+    const loaded = await loadRealmSeeds();
     expect(loaded[0]?.kind).toBe("characters");
     expect(loaded[0]?.seedName).toBe("City watch party");
   });

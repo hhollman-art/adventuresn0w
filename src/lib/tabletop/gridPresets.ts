@@ -67,13 +67,29 @@ export function buildBattleMapScenePromptLead(
 ): string {
   const cell = units === "metric" ? "1.5 m × 1.5 m" : "5 ft × 5 ft";
   const sizeLine = `**exactly ${cols} columns × ${rows} rows**`;
-  return `Generate ONE top-down **illustrated battle map without printed grid lines** for miniature play: compose at **${cell}** logical scale—${sizeLine} framing—but **do not draw** square grid lines, graph paper, or cell borders. **Clear** wall/door/pit edges, **rich** floor materials—**orthogonal plan only**, not isometric. A virtual tabletop will overlay the grid. Short labels for key areas from the scene.`;
+  return `Generate ONE top-down **illustrated battle map without printed grid lines** for miniature play: compose at **${cell}** logical scale—${sizeLine} framing—but **do not draw** square grid lines, graph paper, or cell borders. **Size everything to the ${cell} square**: a human fills one square, doors ≈ 1 square wide, corridors 2–3 squares, tables/beds ≈ 1×2 — one consistent scale, no oversized props. Artwork must **bleed to all four edges** with **no border, frame, margin, or title strip** (the virtual tabletop aligns its grid to the full image). **Clear** wall/door/pit edges, **rich** floor materials—**orthogonal plan only**, not isometric. A virtual tabletop will overlay the grid. Short labels for key areas from the scene.`;
 }
 
-/** Pick the closest OpenAI image aspect ratio for a VTT grid. */
+/**
+ * Pick the OpenAI image size whose aspect ratio is closest to the VTT grid's
+ * (log-space distance), so the cover-crop onto the grid discards as little
+ * art as possible and squares stay square.
+ */
 export function imageSizeForVttGrid(cols: number, rows: number): MapImageSize {
   const ratio = cols / Math.max(1, rows);
-  if (ratio > 1.05) return "1536x1024";
-  if (ratio < 0.95) return "1024x1536";
-  return "1024x1024";
+  const candidates: Array<{ size: MapImageSize; aspect: number }> = [
+    { size: "1536x1024", aspect: 1.5 },
+    { size: "1024x1024", aspect: 1 },
+    { size: "1024x1536", aspect: 2 / 3 },
+  ];
+  let best = candidates[0];
+  let bestDiff = Number.POSITIVE_INFINITY;
+  for (const c of candidates) {
+    const diff = Math.abs(Math.log(ratio / c.aspect));
+    if (diff < bestDiff) {
+      best = c;
+      bestDiff = diff;
+    }
+  }
+  return best.size;
 }

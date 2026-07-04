@@ -100,7 +100,13 @@ function normalizeSavedSeed(x: unknown): SavedRealmSeed | null {
   };
 }
 
-export function loadRealmSeeds(): SavedRealmSeed[] {
+/**
+ * Async-first API (see `scale-portability` rule): today's implementation is
+ * synchronous localStorage, but every exported signature returns a Promise so
+ * a server/cloud backend can replace the internals without touching callers.
+ */
+
+function loadSeedsSync(): SavedRealmSeed[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -115,14 +121,22 @@ export function loadRealmSeeds(): SavedRealmSeed[] {
   }
 }
 
-export function appendRealmSeed(params: {
+function persistSeeds(next: SavedRealmSeed[]): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+}
+
+export async function loadRealmSeeds(): Promise<SavedRealmSeed[]> {
+  return loadSeedsSync();
+}
+
+export async function appendRealmSeed(params: {
   kind: SeedKind;
   seedName: string;
   realmSize?: RealmSize;
   titleHint: string;
   briefDescription: string;
   markdown: string;
-}): SavedRealmSeed[] {
+}): Promise<SavedRealmSeed[]> {
   if (typeof window === "undefined") return [];
   const id =
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -140,9 +154,8 @@ export function appendRealmSeed(params: {
     briefDescription: params.briefDescription,
     markdown: params.markdown,
   };
-  const prev = loadRealmSeeds();
-  const next = [entry, ...prev].slice(0, MAX_SEEDS);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  const next = [entry, ...loadSeedsSync()].slice(0, MAX_SEEDS);
+  persistSeeds(next);
   return next;
 }
 
@@ -150,7 +163,7 @@ export function appendRealmSeed(params: {
  * Update an existing seed in place (used by the manual seed editor). Unknown
  * ids are a no-op. Returns the refreshed list.
  */
-export function updateRealmSeed(
+export async function updateRealmSeed(
   id: string,
   patch: {
     kind: SeedKind;
@@ -160,9 +173,9 @@ export function updateRealmSeed(
     briefDescription: string;
     markdown: string;
   },
-): SavedRealmSeed[] {
+): Promise<SavedRealmSeed[]> {
   if (typeof window === "undefined") return [];
-  const next = loadRealmSeeds().map((s) =>
+  const next = loadSeedsSync().map((s) =>
     s.id === id
       ? {
           ...s,
@@ -177,15 +190,35 @@ export function updateRealmSeed(
         }
       : s,
   );
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  persistSeeds(next);
   return next;
 }
 
-export function deleteRealmSeed(id: string): SavedRealmSeed[] {
+export async function deleteRealmSeed(id: string): Promise<SavedRealmSeed[]> {
   if (typeof window === "undefined") return [];
-  const next = loadRealmSeeds().filter((s) => s.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  const next = loadSeedsSync().filter((s) => s.id !== id);
+  persistSeeds(next);
   return next;
+}
+
+/**
+ * Merge seeds from a backup file into local storage. Rows with ids that
+ * already exist are skipped (non-destructive restore). Returns the refreshed
+ * list plus how many rows were added.
+ */
+export async function importRealmSeeds(rows: unknown[]): Promise<{
+  added: number;
+  seeds: SavedRealmSeed[];
+}> {
+  if (typeof window === "undefined") return { added: 0, seeds: [] };
+  const existing = loadSeedsSync();
+  const known = new Set(existing.map((s) => s.id));
+  const incoming = rows
+    .map(normalizeSavedSeed)
+    .filter((s): s is SavedRealmSeed => s !== null && !known.has(s.id));
+  const next = [...incoming, ...existing].slice(0, MAX_SEEDS);
+  persistSeeds(next);
+  return { added: incoming.length, seeds: next };
 }
 
 function firstMarkdownTitle(md: string): string {

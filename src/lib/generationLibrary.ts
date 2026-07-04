@@ -321,3 +321,45 @@ export async function updateGenerationLibraryItem(
     return next;
   });
 }
+
+/**
+ * Merge results from a backup file into local storage. Rows with ids that
+ * already exist are skipped (non-destructive restore).
+ */
+export async function importGenerationLibraryItems(
+  rows: unknown[],
+): Promise<{ added: number; items: LibraryItem[] }> {
+  if (typeof window === "undefined") return { added: 0, items: [] };
+  return withWriteLock(async () => {
+    const existing = await loadItemsInternal();
+    const known = new Set(existing.map((x) => x.id));
+    const incoming = rows
+      .map((x) =>
+        typeof x === "object" && x !== null
+          ? fixLibraryItem(x as Record<string, unknown>)
+          : null,
+      )
+      .filter((x): x is LibraryItem => x !== null && !known.has(x.id));
+    const next = [...incoming, ...existing].slice(0, MAX_ITEMS);
+    try {
+      await persistListAttempt(next);
+    } catch {
+      return { added: 0, items: existing };
+    }
+    return { added: incoming.length, items: next };
+  });
+}
+
+/** Remove one saved generation result. Unknown ids are a no-op. */
+export async function deleteGenerationLibraryItem(id: string): Promise<LibraryItem[]> {
+  if (typeof window === "undefined") return [];
+  return withWriteLock(async () => {
+    const next = (await loadItemsInternal()).filter((x) => x.id !== id);
+    try {
+      await persistListAttempt(next);
+    } catch {
+      /* ignore */
+    }
+    return next;
+  });
+}
