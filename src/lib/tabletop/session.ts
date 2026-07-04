@@ -157,6 +157,9 @@ export function fixPlayer(o: Record<string, unknown>): PlayerCharacter | null {
     speed: clampInt(o.speed, 0, 200, 30),
     notes: str(o.notes),
     items,
+    knownSpellIds: Array.isArray(o.knownSpellIds)
+      ? o.knownSpellIds.filter((id): id is string => typeof id === "string")
+      : [],
     currentHp:
       typeof o.currentHp === "number" && Number.isFinite(o.currentHp)
         ? clampInt(o.currentHp, 0, 999, 0)

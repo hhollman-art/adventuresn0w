@@ -71,6 +71,8 @@ export type PlayerCharacter = {
   notes: string;
   /** Equipment and other modifiers (armor, magic items, etc.). */
   items: CharacterItem[];
+  /** Bundled SRD spell catalogue ids (user-owned custom spells stay in notes). */
+  knownSpellIds: string[];
   /** Last recorded current HP when the party was saved (campaign carry-over). */
   currentHp: number | null;
   /** The token representing this character on the battle map, if placed. */

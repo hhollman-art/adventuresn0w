@@ -56,6 +56,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           aria-label={`Application version ${pkg.version}`}
         >
           {"D&D Easy"} v{pkg.version}
+          {" · "}
+          <Link href="/legal" className="underline hover:text-[var(--text)]">
+            Licenses &amp; content
+          </Link>
         </p>
       </body>
     </html>

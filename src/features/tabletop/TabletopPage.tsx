@@ -7,6 +7,11 @@ import BattleStage, { type StageTool } from "@/features/tabletop/BattleStage";
 import { useGenerationLibraryImages } from "@/features/tabletop/useGenerationLibraryImages";
 import { ToolButton, ToggleChip } from "@/features/ui/ToggleButton";
 import {
+  SrdClassSubclassFields,
+  SrdSpeciesSelect,
+  SrdSpellPicker,
+} from "@/features/ui/SrdPickers";
+import {
   ABILITY_LIST,
   ITEM_BONUS_FIELDS,
   abilityMod,
@@ -750,6 +755,7 @@ function buildSheetPlayer(
   id: string,
   tokenId: string | null,
   currentHp: number | null = null,
+  knownSpellIds: string[] = [],
 ): PlayerCharacter {
   return {
     id,
@@ -774,6 +780,7 @@ function buildSheetPlayer(
     speed: clampNum(f.speed, 0, 200, 30),
     notes: f.notes,
     items: items.filter((item) => item.name.trim()),
+    knownSpellIds,
     currentHp,
     tokenId,
   };
@@ -898,6 +905,9 @@ function PlayerSheetModal({
 }) {
   const [f, setF] = useState<SheetForm>(() => toForm(initial));
   const [items, setItems] = useState<CharacterItem[]>(() => initial?.items ?? []);
+  const [knownSpellIds, setKnownSpellIds] = useState<string[]>(
+    () => initial?.knownSpellIds ?? [],
+  );
   const [draftId] = useState(() => initial?.id ?? newId());
   const [placeToken, setPlaceToken] = useState(true);
   const set = (key: keyof SheetForm) => (value: string) => setF((v) => ({ ...v, [key]: value }));
@@ -908,6 +918,7 @@ function PlayerSheetModal({
     draftId,
     initial?.tokenId ?? null,
     initial?.currentHp ?? null,
+    knownSpellIds,
   );
   const itemBonuses = sumItemBonuses(items);
   const effectiveScores = effectiveAbilities(preview.abilities, items);
@@ -950,24 +961,13 @@ function PlayerSheetModal({
           <div className="grid grid-cols-2 gap-2">
             <SheetField label="Character name *" value={f.name} onChange={set("name")} />
             <SheetField label="Player" value={f.playerName} onChange={set("playerName")} />
-            <SheetField
-              label="Class"
-              value={f.className}
-              onChange={set("className")}
-              placeholder="Fighter"
+            <SrdClassSubclassFields
+              className={f.className}
+              subclass={f.subclass}
+              onClassChange={set("className")}
+              onSubclassChange={set("subclass")}
             />
-            <SheetField
-              label="Subclass"
-              value={f.subclass}
-              onChange={set("subclass")}
-              placeholder="Champion"
-            />
-            <SheetField
-              label="Species"
-              value={f.species}
-              onChange={set("species")}
-              placeholder="Human"
-            />
+            <SrdSpeciesSelect value={f.species} onChange={set("species")} />
             <SheetField
               label="Background"
               value={f.background}
@@ -986,6 +986,12 @@ function PlayerSheetModal({
               placeholder="Neutral Good"
             />
           </div>
+
+          <SrdSpellPicker
+            className={f.className}
+            selectedIds={knownSpellIds}
+            onChange={setKnownSpellIds}
+          />
 
           {/* Abilities */}
           <div>
@@ -1063,7 +1069,9 @@ function PlayerSheetModal({
           <ItemEditorSection items={items} onChange={setItems} />
 
           <label className="flex flex-col gap-1 text-xs">
-            <span className="font-semibold">Notes — features, languages, proficiencies</span>
+            <span className="font-semibold">
+              Notes — features, languages, proficiencies, custom spells
+            </span>
             <textarea
               value={f.notes}
               onChange={(e) => set("notes")(e.target.value)}

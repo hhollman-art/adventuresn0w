@@ -32,13 +32,13 @@ import {
 import type { MapPackKind } from "@/lib/mapImagePrompt";
 import type { MapDistanceUnits } from "@/lib/mapDistanceUnits";
 import type { PropItemCategory } from "@/lib/propImagePrompt";
+import { SrdNamedSelect, SrdSpeciesSelect } from "@/features/ui/SrdPickers";
+import { SRD_CLASS_NAMES } from "@/lib/srd";
 import {
   addCharacterSlot,
-  classSelectOptions,
   defaultCharacterSlots,
   MAX_PARTY_SIZE,
   MIN_PARTY_SIZE,
-  raceSelectOptions,
   removeCharacterSlot,
   type CharacterSlotSpec,
 } from "@/lib/srdCharacterOptions";
@@ -3130,9 +3130,11 @@ export default function Home(props: PageProps<"/">) {
                           ) : null}
                         </div>
                         <div className="grid grid-cols-1 gap-2">
-                          <SelectField
-                            label="Class"
+                          <SrdNamedSelect
+                            label="Class (SRD)"
                             value={slot.className}
+                            emptyLabel="Any — AI chooses"
+                            options={SRD_CLASS_NAMES}
                             onChange={(className) => {
                               setCharacterSlots((slots) => {
                                 const next = [...slots];
@@ -3140,11 +3142,11 @@ export default function Home(props: PageProps<"/">) {
                                 return next;
                               });
                             }}
-                            options={classSelectOptions()}
+                            placeholder="e.g. Fighter"
                           />
-                          <SelectField
-                            label="Race"
+                          <SrdSpeciesSelect
                             value={slot.race}
+                            emptyLabel="Any — AI chooses"
                             onChange={(race) => {
                               setCharacterSlots((slots) => {
                                 const next = [...slots];
@@ -3152,7 +3154,6 @@ export default function Home(props: PageProps<"/">) {
                                 return next;
                               });
                             }}
-                            options={raceSelectOptions()}
                           />
                         </div>
                       </div>

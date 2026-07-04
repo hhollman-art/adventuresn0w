@@ -17,7 +17,7 @@ const ZONES: Zone[] = [
     href: "/",
     label: "Workshop",
     icon: "\u2692\uFE0F",
-    match: (path) => path === "/" || path === "/help",
+    match: (path) => path === "/" || path === "/help" || path === "/legal",
   },
   {
     id: "table",

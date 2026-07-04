@@ -1,34 +1,12 @@
-/** SRD-open classes (CC / 5.2 lineage). */
-export const SRD_CLASSES = [
-  "Barbarian",
-  "Bard",
-  "Cleric",
-  "Druid",
-  "Fighter",
-  "Monk",
-  "Paladin",
-  "Ranger",
-  "Rogue",
-  "Sorcerer",
-  "Warlock",
-  "Wizard",
-] as const;
+/** @deprecated Import from `@/lib/srd` for new code. */
+export {
+  SRD_CLASSES,
+  SRD_RACES,
+  type SrdClass,
+  type SrdRace,
+} from "@/lib/srd";
 
-/** SRD-open ancestries / species names used in prompts and pickers. */
-export const SRD_RACES = [
-  "Dragonborn",
-  "Dwarf",
-  "Elf",
-  "Gnome",
-  "Half-Elf",
-  "Halfling",
-  "Half-Orc",
-  "Human",
-  "Tiefling",
-] as const;
-
-export type SrdClass = (typeof SRD_CLASSES)[number];
-export type SrdRace = (typeof SRD_RACES)[number];
+import { SRD_CLASSES, SRD_RACES } from "@/lib/srd";
 
 export type CharacterSlotSpec = {
   className: string;

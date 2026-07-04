@@ -33,7 +33,11 @@ export default function HelpPage() {
           D&amp;D Easy is a toolkit for Dungeon Masters. It uses Claude to write
           table-ready content (realms, adventures, characters) and OpenAI to
           draw images (maps and prop handouts). Everything it produces is
-          original and SRD-aware — not official Wizards of the Coast content.
+          original and SRD-aware — not official Wizards of the Coast content. See{" "}
+          <Link href="/legal" className="font-semibold text-[var(--accent)] underline">
+            Licenses &amp; content
+          </Link>{" "}
+          for SRD attribution and how your imported material is handled.
         </p>
 
         <SectionHeading>Quick start</SectionHeading>
@@ -144,6 +148,22 @@ export default function HelpPage() {
             your viewer to bind realm + adventure into a single booklet.
           </li>
         </ul>
+
+        <SectionHeading>Content &amp; your purchased books</SectionHeading>
+        <p className="mt-3 leading-relaxed text-[var(--text)]/90">
+          Built-in generators use <strong>SRD-open</strong> rules only. If you own other D&amp;D
+          books, you can type or import your own character notes, subclasses, and spells into party
+          sheets and the Virtual Table — that material stays on <em>this device</em> in your browser,
+          not in a shared library other users can browse. We do not sell or unlock paywalled
+          Wizards of the Coast content.
+        </p>
+        <p className="mt-2 leading-relaxed text-[var(--text)]/90">
+          Full attribution and policy details:{" "}
+          <Link href="/legal" className="font-semibold text-[var(--accent)] underline">
+            Licenses &amp; content
+          </Link>
+          .
+        </p>
 
         <SectionHeading>Tips &amp; troubleshooting</SectionHeading>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-[var(--text)]/90">

@@ -186,6 +186,7 @@ function parseCharacterBlock(
     speed: parseNumber(speedRaw, 30, 0, 200),
     notes: collectNotes(body),
     items: [],
+    knownSpellIds: [],
     currentHp: null,
   };
 }
