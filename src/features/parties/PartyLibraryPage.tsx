@@ -100,26 +100,18 @@ export default function PartyLibraryPage() {
   };
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
+    <main className="app-main app-main--workshop mx-auto max-w-4xl px-4 py-8">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link
-            href="/"
-            className="mb-2 inline-block text-xs font-semibold text-[var(--muted)] hover:text-[var(--text)]"
-          >
-            &larr; Back to workshop
-          </Link>
-          <h1 className="font-display text-2xl font-bold">Party library</h1>
+          <p className="zone-badge mb-3">Party library</p>
+          <h1 className="font-display text-2xl font-bold">Saved parties</h1>
           <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">
             Review saved parties, track campaign progress (levels, gear, HP), and load them onto the
             Virtual Table. Progress saved from the VTT updates the linked party here.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <label
-            className="cursor-pointer rounded-md border px-3 py-2 text-xs font-semibold"
-            style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-          >
+          <label className="btn btn-sm cursor-pointer">
             Import .md roster&hellip;
             <input
               type="file"
@@ -128,11 +120,7 @@ export default function PartyLibraryPage() {
               onChange={onImportFile}
             />
           </label>
-          <Link
-            href="/table"
-            className="rounded-md border px-3 py-2 text-xs font-semibold"
-            style={{ borderColor: "var(--accent-dim)", background: "rgba(201,162,39,0.15)" }}
-          >
+          <Link href="/table" className="btn btn-sm btn-accent">
             Virtual Table
           </Link>
         </div>

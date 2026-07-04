@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Cinzel } from "next/font/google";
+import SiteUtilNav from "@/features/shell/SiteUtilNav";
+import AppZoneNav from "@/features/shell/AppZoneNav";
 import "./globals.css";
 import pkg from "../../package.json";
 
@@ -27,29 +29,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={cinzel.variable}>
-      <body className="min-h-screen antialiased">
-        <header className="site-banner no-print">
+      <body className="app-shell flex min-h-dvh flex-col antialiased">
+        <header className="site-banner no-print shrink-0">
           <div className="site-banner-inner">
-            <nav className="site-banner-nav flex items-center gap-2">
-              <Link href="/help" className="site-help-link">
-                <span className="site-help-link-icon" aria-hidden="true">
-                  &#128214;
-                </span>
-                How to use
-              </Link>
-              <Link href="/parties" className="site-help-link">
-                <span className="site-help-link-icon" aria-hidden="true">
-                  &#128101;
-                </span>
-                Parties
-              </Link>
-              <Link href="/table" className="site-help-link">
-                <span className="site-help-link-icon" aria-hidden="true">
-                  &#127922;
-                </span>
-                Virtual Table
-              </Link>
-            </nav>
+            <SiteUtilNav />
             <div className="site-banner-brand">
               <Link href="/" className="inline-block">
                 <span className="font-display site-banner-title block text-2xl font-bold sm:text-3xl">
@@ -62,11 +45,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 Forge realms &middot; Weave adventures &middot; Summon heroes
               </p>
             </div>
+            <div className="site-banner-zones">
+              <AppZoneNav />
+            </div>
           </div>
         </header>
-        {children}
+        <div className="app-content">{children}</div>
         <p
-          className="site-footnote px-4 py-3 text-center text-xs text-[var(--muted)]"
+          className="site-footnote shrink-0 px-4 py-3 text-center text-xs text-[var(--muted)]"
           aria-label={`Application version ${pkg.version}`}
         >
           {"D&D Easy"} v{pkg.version}

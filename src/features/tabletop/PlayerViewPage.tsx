@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import BattleStage from "@/features/tabletop/BattleStage";
 import { playerVisibleSession } from "@/lib/tabletop/session";
 import { loadTabletopSession } from "@/lib/tabletop/store";
@@ -17,8 +18,6 @@ export default function PlayerViewPage() {
   useEffect(() => {
     let cancelled = false;
 
-    // Fallback for when the DM tab hasn't answered yet: show the last saved
-    // state (already stripped of DM-only info).
     void loadTabletopSession().then((stored) => {
       if (!cancelled && stored) {
         setSession((current) => current ?? playerVisibleSession(stored));
@@ -39,12 +38,16 @@ export default function PlayerViewPage() {
 
   if (!session) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-16 text-center">
+      <main className="app-main app-main--table mx-auto max-w-3xl px-4 py-16 text-center">
+        <p className="zone-badge mb-3">Virtual Table</p>
         <h1 className="font-display text-xl font-bold">Player view</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
           Waiting for the Dungeon Master&hellip; Keep the Virtual Table open in another tab of
           this browser.
         </p>
+        <Link href="/table" className="btn btn-accent btn-sm mt-4 inline-flex">
+          Open DM view
+        </Link>
       </main>
     );
   }
@@ -54,21 +57,18 @@ export default function PlayerViewPage() {
   return (
     <main
       ref={mainRef}
-      className="mx-auto flex w-full max-w-[110rem] flex-col gap-3 px-3 pb-4"
+      className="app-main app-main--table mx-auto flex w-full flex-1 flex-col gap-3 px-3 py-3 min-h-0"
       style={{
-        height: isFullscreen ? "100vh" : "calc(100vh - 140px)",
-        minHeight: 480,
-        paddingTop: isFullscreen ? 12 : 0,
+        height: isFullscreen ? "100dvh" : undefined,
+        paddingTop: isFullscreen ? 12 : undefined,
         background: isFullscreen ? "var(--bg)" : undefined,
       }}
     >
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="font-display text-lg font-bold">Player view</h1>
+      <div className="zone-toolbar">
+        <h1 className="zone-toolbar-title">Player view</h1>
+        <span className="zone-badge">Player screen</span>
         {activeEntry && (
-          <span
-            className="rounded-md px-2 py-1 text-xs font-semibold"
-            style={{ background: "rgba(154,116,22,0.15)" }}
-          >
+          <span className="zone-badge" style={{ textTransform: "none", letterSpacing: "0.02em" }}>
             Round {session.initiative.round}: {activeEntry.name}&rsquo;s turn
           </span>
         )}
@@ -79,8 +79,7 @@ export default function PlayerViewPage() {
         <button
           type="button"
           onClick={() => toggleFullscreen(mainRef.current)}
-          className="rounded-md border px-3 py-1.5 text-xs font-semibold"
-          style={{ borderColor: "var(--border)" }}
+          className="btn btn-sm"
           title={isFullscreen ? "Leave full screen" : "Fill the whole screen for play"}
         >
           {isFullscreen ? "Exit full screen" : "Full screen"}
@@ -111,7 +110,7 @@ export default function PlayerViewPage() {
                         i === session.initiative.activeIndex ? "var(--accent)" : "var(--border)",
                       background:
                         i === session.initiative.activeIndex
-                          ? "rgba(201,162,39,0.15)"
+                          ? "var(--accent-muted)"
                           : "transparent",
                     }}
                   >

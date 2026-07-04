@@ -1756,7 +1756,7 @@ export default function Home(props: PageProps<"/">) {
     outputLayoutKind === "adventure" || outputLayoutKind === "realm";
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:gap-10">
+    <main className="app-main app-main--workshop mx-auto flex w-full flex-1 flex-col gap-8 px-4 py-6 sm:px-6 lg:flex-row lg:gap-10">
       {pendingRealmSeed ? (
         <div
           className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
@@ -2066,21 +2066,16 @@ export default function Home(props: PageProps<"/">) {
         }}
       >
         <div>
+          <p className="zone-badge mb-3">Creation workshop</p>
           <p
             id="mode-tablist-label"
             className="mb-2 text-sm font-semibold text-[var(--text)]"
           >
             What do you want to create?
           </p>
-          <div
-            className="rounded-xl border p-2"
-            style={{
-              borderColor: "var(--border)",
-              background: "rgba(154,116,22,0.08)",
-            }}
-          >
+          <div className="workshop-mode-shell">
             <div
-              className="grid grid-cols-2 gap-2 sm:grid-cols-3"
+              className="workshop-mode-grid"
               role="tablist"
               aria-labelledby="mode-tablist-label"
             >
@@ -2093,11 +2088,9 @@ export default function Home(props: PageProps<"/">) {
                     role="tab"
                     aria-selected={selected}
                     onClick={() => selectMode(tabId)}
-                    className={`min-h-[2.75rem] rounded-lg border px-2 py-2 text-center text-sm font-medium leading-tight transition sm:min-h-[2.5rem] sm:px-3 sm:py-2.5 ${
-                      selected
-                        ? "border-[var(--accent)] bg-[var(--accent)] text-white shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
-                        : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--muted)] hover:text-[var(--text)]"
-                    } focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]`}
+                    className={`btn btn-tab w-full text-center leading-tight${
+                      selected ? " btn-tab-active" : ""
+                    }`}
                   >
                     <span aria-hidden="true">{MODE_TAB_ICON[tabId]} </span>
                     {MODE_TAB_LABEL[tabId]}
@@ -2106,28 +2099,11 @@ export default function Home(props: PageProps<"/">) {
               })}
             </div>
           </div>
-          <Link
-            href="/table"
-            className="mt-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-[var(--muted)] transition hover:border-[var(--accent-dim)] hover:text-[var(--text)]"
-            style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-          >
-            <span aria-hidden="true">&#127922;</span>
-            <span className="flex-1">
-              Ready to play? Run encounters live on the <strong>Virtual Table</strong>
-            </span>
-            <span aria-hidden="true">&rarr;</span>
-          </Link>
-          <Link
-            href="/parties"
-            className="mt-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-[var(--muted)] transition hover:border-[var(--accent-dim)] hover:text-[var(--text)]"
-            style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-          >
-            <span aria-hidden="true">&#128101;</span>
-            <span className="flex-1">
-              Manage saved <strong>parties</strong> — review, import, and track campaign progress
-            </span>
-            <span aria-hidden="true">&rarr;</span>
-          </Link>
+          <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
+            When your content is ready, switch to{" "}
+            <strong className="text-[var(--text)]">Virtual Table</strong> in the banner to run
+            encounters live.
+          </p>
         </div>
 
         <h1 className="font-display mt-6 text-xl font-bold text-[var(--text)]">
@@ -3226,8 +3202,7 @@ export default function Home(props: PageProps<"/">) {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition enabled:hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ background: "var(--accent)" }}
+            className="btn btn-primary btn-md mt-2 w-full disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading
               ? "Generating…"

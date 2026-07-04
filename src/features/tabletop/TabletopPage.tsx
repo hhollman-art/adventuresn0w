@@ -5,6 +5,7 @@ import type { ChangeEvent } from "react";
 import Link from "next/link";
 import BattleStage, { type StageTool } from "@/features/tabletop/BattleStage";
 import { useGenerationLibraryImages } from "@/features/tabletop/useGenerationLibraryImages";
+import { ToolButton, ToggleChip } from "@/features/ui/ToggleButton";
 import {
   ABILITY_LIST,
   ITEM_BONUS_FIELDS,
@@ -119,7 +120,7 @@ export default function TabletopPage() {
 
   if (!session) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-10 text-center text-sm text-[var(--muted)]">
+      <main className="app-main app-main--table mx-auto px-4 py-10 text-center text-sm text-[var(--muted)]">
         Preparing the table&hellip;
       </main>
     );
@@ -135,36 +136,20 @@ export default function TabletopPage() {
   return (
     <main
       ref={mainRef}
-      className="mx-auto flex w-full max-w-[110rem] flex-col gap-3 px-3 pb-4"
+      className="app-main app-main--table mx-auto flex w-full flex-1 flex-col gap-3 px-3 py-3 min-h-0"
       style={{
-        height: isFullscreen ? "100vh" : "calc(100vh - 140px)",
-        minHeight: 480,
-        paddingTop: isFullscreen ? 12 : 0,
-        // When <main> itself is the fullscreen element the page background
-        // behind it is not rendered, so paint the parchment color directly.
+        height: isFullscreen ? "100dvh" : undefined,
+        paddingTop: isFullscreen ? 12 : undefined,
         background: isFullscreen ? "var(--bg)" : undefined,
       }}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <Link
-          href="/"
-          className="rounded-md border px-3 py-1.5 text-xs font-semibold text-[var(--muted)] transition hover:border-[var(--accent-dim)] hover:text-[var(--text)]"
-          style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-        >
-          &larr; Back to workshop
-        </Link>
-        <h1 className="font-display text-lg font-bold">Virtual Table</h1>
-        <span
-          className="mr-2 rounded-md border px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase"
-          style={{
-            borderColor: "var(--accent-dim)",
-            background: "rgba(201,162,39,0.15)",
-            color: "var(--accent)",
-          }}
-          title="This is the Dungeon Master's screen. Players see the separate player view."
-        >
+      <div className="zone-toolbar">
+        <h1 className="zone-toolbar-title">Virtual Table</h1>
+        <span className="zone-badge" title="Dungeon Master screen — players use the separate player view">
           DM view
         </span>
+
+        <span className="zone-divider" aria-hidden="true" />
 
         <ToolButton
           label="Move"
@@ -190,8 +175,8 @@ export default function TabletopPage() {
             <select
               value={brushRadius}
               onChange={(e) => setBrushRadius(Number(e.target.value))}
-              className="rounded border px-1 py-0.5 text-xs"
-              style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+              className="btn btn-sm"
+              style={{ padding: "0.25rem 0.5rem" }}
             >
               <option value={0}>1 cell</option>
               <option value={1}>3&times;3</option>
@@ -201,7 +186,7 @@ export default function TabletopPage() {
           </label>
         )}
 
-        <span className="mx-1 h-5 w-px" style={{ background: "var(--border)" }} />
+        <span className="zone-divider" aria-hidden="true" />
 
         <ToggleChip
           label="Fog"
@@ -221,31 +206,27 @@ export default function TabletopPage() {
 
         <span className="flex-1" />
 
-        {activeEntry && (
-          <span className="rounded-md px-2 py-1 text-xs font-semibold" style={{ background: "rgba(154,116,22,0.15)" }}>
-            Round {session.initiative.round}: {activeEntry.name}
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={() => toggleFullscreen(mainRef.current)}
-          className="rounded-md border px-3 py-1.5 text-xs font-semibold"
-          style={{ borderColor: "var(--border)" }}
-          title={isFullscreen ? "Leave full screen" : "Fill the whole screen for play"}
-        >
-          {isFullscreen ? "Exit full screen" : "Full screen"}
-        </button>
-        <button
-          type="button"
-          onClick={openPlayerView}
-          className="rounded-md border px-3 py-1.5 text-xs font-semibold"
-          style={{
-            borderColor: "var(--accent-dim)",
-            background: "linear-gradient(180deg, rgba(201,162,39,0.4), rgba(154,116,22,0.25))",
-          }}
-        >
-          Open player view &#8599;
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {activeEntry && (
+            <span
+              className="zone-badge"
+              style={{ textTransform: "none", letterSpacing: "0.02em" }}
+            >
+              Round {session.initiative.round}: {activeEntry.name}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => toggleFullscreen(mainRef.current)}
+            className="btn btn-sm"
+            title={isFullscreen ? "Leave full screen" : "Fill the whole screen for play"}
+          >
+            {isFullscreen ? "Exit full screen" : "Full screen"}
+          </button>
+          <button type="button" onClick={openPlayerView} className="btn btn-sm btn-accent">
+            Open player view &#8599;
+          </button>
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1 gap-3">
@@ -279,31 +260,29 @@ export default function TabletopPage() {
         </div>
 
         <aside
-          className="fantasy-panel flex w-80 shrink-0 flex-col overflow-hidden rounded-xl border"
+          className="fantasy-panel flex w-[21rem] shrink-0 flex-col overflow-hidden rounded-xl border sm:w-[22rem]"
           style={{ borderColor: "var(--border)", background: "var(--surface)" }}
         >
-          <div className="flex border-b text-xs font-semibold" style={{ borderColor: "var(--border)" }}>
+          <div className="panel-tabs" role="tablist" aria-label="Virtual Table panels">
             {(
               [
-                ["party", "Party"],
-                ["tokens", "Tokens"],
-                ["initiative", "Initiative"],
-                ["dice", "Dice"],
-                ["map", "Map"],
-              ] as [SidePanel, string][]
-            ).map(([id, label]) => (
+                ["party", "Party", "Party"],
+                ["tokens", "Tokens", "Tokens"],
+                ["initiative", "Init.", "Initiative"],
+                ["dice", "Dice", "Dice"],
+                ["map", "Map", "Map"],
+              ] as [SidePanel, string, string][]
+            ).map(([id, label, title]) => (
               <button
                 key={id}
                 type="button"
+                role="tab"
+                title={title}
                 onClick={() => setPanel(id)}
-                className="flex-1 px-2 py-2"
-                style={
-                  panel === id
-                    ? { background: "rgba(154,116,22,0.15)", color: "var(--accent)" }
-                    : { color: "var(--muted)" }
-                }
+                className={`panel-tab${panel === id ? " panel-tab-active" : ""}`}
+                aria-selected={panel === id}
               >
-                {label}
+                <span className="panel-tab-label">{label}</span>
               </button>
             ))}
           </div>
@@ -1221,11 +1200,11 @@ function TokensPanel({
           className="rounded border px-2 py-1.5 text-sm"
           style={{ borderColor: "var(--border)", background: "var(--bg)" }}
         />
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <select
             value={kind}
             onChange={(e) => setKind(e.target.value as TokenKind)}
-            className="flex-1 rounded border px-2 py-1.5 text-xs"
+            className="min-w-0 rounded border px-2 py-1.5 text-xs"
             style={{ borderColor: "var(--border)", background: "var(--bg)" }}
           >
             {(Object.keys(TOKEN_KIND_LABEL) as TokenKind[]).map((k) => (
@@ -1237,7 +1216,7 @@ function TokensPanel({
           <select
             value={size}
             onChange={(e) => setSize(Number(e.target.value))}
-            className="rounded border px-2 py-1.5 text-xs"
+            className="min-w-0 rounded border px-2 py-1.5 text-xs"
             style={{ borderColor: "var(--border)", background: "var(--bg)" }}
             title="Creature size (scaled to grid square size)"
           >
@@ -1247,14 +1226,18 @@ function TokensPanel({
               </option>
             ))}
           </select>
+        </div>
+        <label className="flex items-center gap-2 text-xs text-[var(--muted)]">
+          <span className="shrink-0 font-medium">Max HP</span>
           <input
             value={maxHp}
             onChange={(e) => setMaxHp(e.target.value.replace(/\D/g, ""))}
-            placeholder="HP"
-            className="w-14 rounded border px-2 py-1.5 text-xs"
+            placeholder="—"
+            inputMode="numeric"
+            className="w-16 rounded border px-2 py-1.5 text-xs"
             style={{ borderColor: "var(--border)", background: "var(--bg)" }}
           />
-        </div>
+        </label>
         <ColorSwatchRow
           value={color ?? TOKEN_KIND_DEFAULT_COLOR[kind]}
           onChange={setColor}
@@ -1421,12 +1404,12 @@ function TokenEditor({
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <select
           value={token.kind}
           onChange={(e) => patch((t) => ({ ...t, kind: e.target.value as TokenKind }))}
           aria-label="Token type"
-          className="flex-1 rounded border px-2 py-1 text-xs"
+          className="min-w-0 rounded border px-2 py-1 text-xs"
           style={{ borderColor: "var(--border)", background: "var(--bg)" }}
         >
           {(Object.keys(TOKEN_KIND_LABEL) as TokenKind[]).map((k) => (
@@ -1439,7 +1422,7 @@ function TokenEditor({
           value={token.size}
           onChange={(e) => resize(Number(e.target.value))}
           aria-label="Token size"
-          className="rounded border px-2 py-1 text-xs"
+          className="min-w-0 rounded border px-2 py-1 text-xs"
           style={{ borderColor: "var(--border)", background: "var(--bg)" }}
         >
           {TOKEN_SIZE_CATEGORY.map((n) => (
@@ -1448,17 +1431,20 @@ function TokenEditor({
             </option>
           ))}
         </select>
-        <label className="flex items-center gap-1 text-xs text-[var(--muted)]">
-          Max HP
-          <input
-            value={token.hp?.max ?? ""}
-            onChange={(e) => setMaxHp(e.target.value.replace(/\D/g, ""))}
-            placeholder="—"
-            className="w-12 rounded border px-1.5 py-1 text-xs"
-            style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-          />
-        </label>
       </div>
+
+      <label className="flex items-center gap-2 text-xs text-[var(--muted)]">
+        <span className="shrink-0 font-medium">Max HP</span>
+        <input
+          value={token.hp?.max ?? ""}
+          onChange={(e) => setMaxHp(e.target.value.replace(/\D/g, ""))}
+          placeholder="—"
+          inputMode="numeric"
+          aria-label="Max HP"
+          className="w-16 rounded border px-1.5 py-1 text-xs"
+          style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+        />
+      </label>
 
       <ColorSwatchRow
         value={token.color}
@@ -2196,65 +2182,5 @@ function MapPanel({
         )}
       </div>
     </div>
-  );
-}
-
-/* --------------------------------------------------------------- widgets */
-
-function ToolButton({
-  label,
-  active,
-  onClick,
-  title,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  title?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className="rounded-md border px-3 py-1.5 text-xs font-semibold"
-      style={
-        active
-          ? {
-              borderColor: "var(--accent)",
-              background: "rgba(201,162,39,0.25)",
-              color: "var(--text)",
-            }
-          : { borderColor: "var(--border)", color: "var(--muted)" }
-      }
-    >
-      {label}
-    </button>
-  );
-}
-
-function ToggleChip({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      className="rounded-md border px-2.5 py-1.5 text-xs font-semibold"
-      style={
-        checked
-          ? { borderColor: "var(--accent)", background: "rgba(201,162,39,0.2)" }
-          : { borderColor: "var(--border)", color: "var(--muted)" }
-      }
-      aria-pressed={checked}
-    >
-      {label} {checked ? "on" : "off"}
-    </button>
   );
 }
