@@ -155,9 +155,9 @@ export default function HelpPage() {
             reference D&amp;D Easy hosts. It is read-only and never needs backing up.
           </li>
           <li>
-            <strong>Your imports</strong> — party .md files and notes from books
-            you own. Stored in <em>this browser on this device only</em>, never
-            uploaded to a server.
+            <strong>Your imports</strong> — party notes from books you own, typed by hand or
+            uploaded from a file (including a D&amp;D Beyond character JSON you saved yourself).
+            Stored in <em>this browser on this device only</em>, never uploaded to a server.
           </li>
           <li>
             <strong>Your creations</strong> — seeds you write and results the
@@ -205,10 +205,10 @@ export default function HelpPage() {
         <SectionHeading>Content &amp; your purchased books</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
           Built-in generators use <strong>SRD-open</strong> rules only. If you own other D&amp;D
-          books, you can type or import your own character notes, subclasses, and spells into party
-          sheets and the Virtual Table — that material stays on <em>this device</em> in your browser,
-          not in a shared library other users can browse. We do not sell or unlock paywalled
-          Wizards of the Coast content.
+          books, you can type character notes from your D&amp;D Beyond sheet, upload a character{" "}
+          <code>.json</code> you saved yourself, or paste a party file — that material stays on{" "}
+          <em>this device</em> in your browser, not in a shared library other users can browse. We
+          do not connect to D&amp;D Beyond or sell paywalled Wizards of the Coast content.
         </p>
         <p className="mt-2 leading-relaxed text-[var(--text)]/90">
           For a step-by-step walkthrough of bringing purchased book content in

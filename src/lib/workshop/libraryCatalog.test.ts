@@ -58,6 +58,23 @@ describe("libraryCatalog", () => {
     expect(partyToLibraryEntry(roster).provenance).toBe("user");
   });
 
+  it("maps D&D Beyond imports as user-owned", () => {
+    const roster = {
+      id: "p2",
+      name: "Beyond party",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-02T00:00:00.000Z",
+      source: "dndbeyond",
+      notes: "",
+      markdown: "",
+      players: [],
+    } satisfies SavedCharacterRoster;
+    expect(partyToLibraryEntry(roster)).toMatchObject({
+      provenance: "user",
+      kindLabel: "Your D&D Beyond import",
+    });
+  });
+
   it("filters by category", () => {
     const entries = [
       seedToLibraryEntry({

@@ -101,7 +101,8 @@ export function partyToLibraryEntry(roster: SavedCharacterRoster): LibraryListEn
   return {
     id: roster.id,
     category: "parties",
-    provenance: roster.source === "import" ? "user" : "generated",
+    provenance:
+      roster.source === "import" || roster.source === "dndbeyond" ? "user" : "generated",
     kindLabel: PARTY_SOURCE_LABEL[roster.source],
     title: roster.name,
     detail: `${count} character${count === 1 ? "" : "s"}`,

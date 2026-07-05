@@ -290,7 +290,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Import a party built with book options",
         body:
-          "If your players made characters using purchased books (for example on D&D Beyond), click Add party in the Library and type or paste them in — the example shows the format, and a file works too. The party lands in Library → Parties as your import — stored privately, never merged into the app's rules.",
+          "If your players made characters using purchased books on D&D Beyond, open Add party → From D&D Beyond. You can copy stats from each character sheet into the template, or upload a .json backup you saved on your device — conversion runs in your browser only; we never log into D&D Beyond. The party lands in Library → Parties as your import — stored privately, never merged into the app's rules.",
         action: { type: "library-category", category: "parties" },
         actionLabel: "Library → Parties",
       },

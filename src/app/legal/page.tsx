@@ -99,6 +99,13 @@ export default function LegalPage() {
 
         <SectionHeading>What we never do</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">{SRD_CONTENT_POLICY.never}</p>
+        <p className="mt-2 leading-relaxed text-[var(--text)]/90">
+          That includes D&amp;D Beyond: we do not log into your account, use your browser cookies,
+          call hidden D&amp;D Beyond APIs, or scrape character sheets. If you use characters built
+          with purchased books, you bring the data yourself — by typing from your sheet or
+          uploading a <code className="text-[11px]">.json</code> file you saved on your device.
+          Conversion runs in your browser only.
+        </p>
 
         <SectionHeading>AI generation &amp; privacy</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">{SRD_CONTENT_POLICY.aiTier}</p>
