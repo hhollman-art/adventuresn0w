@@ -56,7 +56,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Bring a party",
         body:
-          "Click Add party in the Library to type or paste your characters (start from the built-in example — no file needed), or switch to Characters and pick SRD class/species per slot without generating. For a blank start, build sheets directly on the Virtual Table.",
+          "Click Add party in the Library to type or paste your characters (start from the built-in example — no file needed). Players on D&D Beyond? Use the From D&D Beyond tab to copy from their sheets or upload a .json they saved. You can also load saved character .md files, pick SRD class/species per slot on Characters, or build sheets directly on the Virtual Table.",
         action: { type: "library-category", category: "parties" },
         actionLabel: "Open Library → Parties",
       },
@@ -77,7 +77,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Run the session",
         body:
-          "Switch to the Virtual Table zone in the banner. Place tokens, roll dice, and track HP. After the session you can save back to the party library if you linked a campaign roster.",
+          "Switch to the Virtual Table zone in the banner. Place tokens, roll dice, and track HP. A player shows up late? Use Load character file (.md) in the Party panel to drop their saved sheet straight onto the table with a token. After the session you can save back to the party library if you linked a campaign roster.",
         action: { type: "link", href: "/table" },
         actionLabel: "Open Virtual Table",
       },
@@ -113,7 +113,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Generate a ready party",
         body:
-          "Open Characters, set party size and SRD slot picks (or leave Any). Generate, then use Save party for VTT in the preview panel. The roster appears in Library → Parties.",
+          "Open Characters, set party size and SRD slot picks (or leave Any). Generate, then use Save party for VTT in the preview panel. The roster appears in Library → Parties, and each PC also becomes their own portable .md character sheet — download one from the Parties page or grab it from your auto-save folder's characters directory.",
         action: { type: "mode", mode: "characters" },
         actionLabel: "Open Characters tab",
       },
@@ -169,7 +169,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Establish the party once",
         body:
-          "Build or generate the party once, then Save party for VTT. Use the Party library page for campaign notes between sessions — plot threads, downtime, treasure.",
+          "Build or generate the party once, then Save party for VTT. Use the Party library page for campaign notes between sessions — plot threads, downtime, treasure. Each character has their own Download button there too, so a guest PC can carry their .md sheet between arcs, parties, or devices.",
         action: { type: "link", href: "/parties" },
         actionLabel: "Open Party library",
       },
@@ -190,7 +190,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Save progress from the VTT",
         body:
-          "Link a campaign roster when loading the VTT so Save to party library writes HP, gear, and sheet changes back. Your arc stays in sync on this device.",
+          "Link a campaign roster when loading the VTT so Save to party library writes HP, gear, and sheet changes back. With an auto-save folder set, every PC's individual .md sheet in the characters folder stays current too — your arc stays in sync on this device and in your backups.",
         action: { type: "link", href: "/table" },
         actionLabel: "Open Virtual Table",
       },
@@ -219,7 +219,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Import and own your book content",
         body:
-          "Use Add party to type, paste, or load characters, and put custom material straight into sheets. Your imports stay on your devices — never on a server. Set the Library's auto-save folder (local or cloud-synced like OneDrive or Drive) so everything is saved automatically as you work.",
+          "Use Add party to type, paste, or load characters — including the From D&D Beyond tab for sheets your players built there (copied by hand or uploaded as a .json they saved; converted in your browser only). Put custom material straight into sheets. Your imports stay on your devices — never on a server. Set the Library's auto-save folder (local or cloud-synced like OneDrive or Drive) so everything is saved automatically as you work.",
         action: { type: "library-category", category: "parties" },
         actionLabel: "Library → Parties",
       },
@@ -254,7 +254,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Auto-save and mind the policy",
         body:
-          "Included SRD material is CC BY 4.0 and hosted by the app; your imports and creations are yours alone. With an auto-save folder set, every change writes to your chosen local or cloud folder automatically — nothing to remember before or after sessions.",
+          "Included SRD material is CC BY 4.0 and hosted by the app; everything yours saves once, with creations carrying a Creation tag. With an auto-save folder set, every change writes to your chosen local or cloud folder automatically — the full library backup plus one portable .md sheet per PC in the characters folder. Nothing to remember before or after sessions.",
         action: { type: "link", href: "/legal" },
         actionLabel: "Licenses & content",
       },
@@ -304,14 +304,14 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Keep it private, keep it safe",
         body:
-          "Everything you typed or imported stays on your devices — the app never uploads it, and the auto-save folder only receives copies (one-way). The one thing to watch: exports and prints you share with others should not contain verbatim book text. Share your original material; keep page references for the rest.",
+          "Everything you typed or imported stays on your devices — the app never uploads it, and the auto-save folder only receives copies (one-way), including each PC's own .md sheet in the characters folder. The one thing to watch: exports and prints you share with others should not contain verbatim book text. Share your original material; keep page references for the rest.",
         action: { type: "mode", mode: "library" },
         actionLabel: "Open Library",
       },
       {
         title: "Read the content policy",
         body:
-          "The legal page spells out the tiers: included SRD rules (CC BY 4.0, hosted by the app), your imports and creations (private, yours). D&D Easy does not sell or unlock paywalled WotC content — owning the book is what licenses your personal use.",
+          "The legal page spells out the two tiers: included SRD rules (CC BY 4.0, hosted by the app) and everything yours — imports and creations, saved once together and private. D&D Easy does not sell or unlock paywalled WotC content — owning the book is what licenses your personal use.",
         action: { type: "link", href: "/legal" },
         actionLabel: "Licenses & content",
       },
@@ -332,14 +332,14 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Session 0: import the party",
         body:
-          "In Library, click Add party to type, paste, or load your characters — or save characters from an earlier generation. Confirm the roster under Library → Parties before loading to the table.",
+          "In Library, click Add party to type, paste, or load your characters — the From D&D Beyond tab handles sheets your players built there (copy from the sheet or upload a saved .json). Or save characters from an earlier generation. Confirm the roster under Library → Parties before loading to the table.",
         action: { type: "library-category", category: "parties" },
         actionLabel: "Library → Parties",
       },
       {
         title: "Run sessions on the VTT",
         body:
-          "Sheets, tokens, grid, dice, and player view live here. Save to party library after sessions to keep HP and gear current. Link campaign for automatic save-back.",
+          "Sheets, tokens, grid, dice, and player view live here. Need to add one PC mid-campaign? Load character file (.md) in the Party panel drops a saved sheet onto the table with a token — no need to rebuild the party. Save to party library after sessions to keep HP and gear current; Link campaign for automatic save-back.",
         action: { type: "link", href: "/table" },
         actionLabel: "Open Virtual Table",
       },
