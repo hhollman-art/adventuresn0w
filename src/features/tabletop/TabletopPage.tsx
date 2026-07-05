@@ -539,7 +539,7 @@ function PartyPanel({
             className="shrink-0 rounded border px-2 py-1 text-[10px] font-semibold"
             style={{ borderColor: "var(--accent-dim)" }}
           >
-            Party library
+            Characters &amp; parties
           </Link>
         </div>
         <div className="mb-2 flex flex-wrap gap-1">

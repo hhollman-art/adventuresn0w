@@ -234,6 +234,20 @@ async function writeCharacterFiles(
   const charactersDir = await root.getDirectoryHandle(CHARACTERS_DIR_NAME, {
     create: true,
   });
+  if (backup.characters.length > 0) {
+    const libraryDir = await charactersDir.getDirectoryHandle("character-library", {
+      create: true,
+    });
+    const usedNames = new Set<string>();
+    for (const { player } of backup.characters) {
+      let name = `${fileSlug(player.name)}.md`;
+      if (usedNames.has(name)) {
+        name = `${fileSlug(player.name)}-${player.id.slice(0, 6)}.md`;
+      }
+      usedNames.add(name);
+      await writeTextFile(libraryDir, name, characterToMarkdownFile(player));
+    }
+  }
   for (const roster of backup.parties) {
     if (roster.players.length === 0) continue;
     const partyDir = await charactersDir.getDirectoryHandle(fileSlug(roster.name), {

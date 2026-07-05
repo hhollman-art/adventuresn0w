@@ -38,6 +38,34 @@ function sampleBackup(): LibraryBackupFile {
         images: [],
       },
     ],
+    characters: [
+      {
+        id: "pc1",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        source: "created",
+        player: {
+          id: "pc1",
+          name: "Aria Windrunner",
+          playerName: "",
+          species: "Elf",
+          className: "Ranger",
+          subclass: "",
+          background: "",
+          alignment: "",
+          level: 3,
+          abilities: { str: 10, dex: 16, con: 12, int: 10, wis: 14, cha: 8 },
+          ac: 14,
+          maxHp: 24,
+          speed: 35,
+          notes: "",
+          items: [],
+          knownSpellIds: [],
+          currentHp: null,
+          tokenId: null,
+        },
+      },
+    ],
     parties: [],
     campaigns: [
       {
@@ -61,6 +89,7 @@ describe("libraryBackup", () => {
     if (!parsed.ok) return;
     expect(parsed.seeds).toHaveLength(1);
     expect(parsed.results).toHaveLength(1);
+    expect(parsed.characters).toHaveLength(1);
     expect(parsed.parties).toHaveLength(0);
     expect(parsed.campaigns).toHaveLength(1);
   });
@@ -81,6 +110,7 @@ describe("libraryBackup", () => {
       ok: true,
       seeds: [],
       results: [],
+      characters: [],
       parties: [],
       campaigns: [],
     });
@@ -94,10 +124,10 @@ describe("libraryBackup", () => {
 
   it("describes restore counts in plain language", () => {
     expect(
-      describeRestoreCounts({ seeds: 2, results: 1, parties: 1, campaigns: 1 }),
-    ).toBe("Restored 2 seeds, 1 result, 1 party, 1 campaign from backup.");
+      describeRestoreCounts({ seeds: 2, results: 1, characters: 3, parties: 1, campaigns: 1 }),
+    ).toBe("Restored 2 seeds, 1 result, 3 characters, 1 party, 1 campaign from backup.");
     expect(
-      describeRestoreCounts({ seeds: 0, results: 0, parties: 0, campaigns: 0 }),
+      describeRestoreCounts({ seeds: 0, results: 0, characters: 0, parties: 0, campaigns: 0 }),
     ).toBe("Backup read, but everything in it is already in your library.");
   });
 });

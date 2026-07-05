@@ -195,6 +195,21 @@ export default function HelpPage() {
           container — the party, seeds, and results stay in your library.
         </p>
 
+        <SectionHeading>Characters &amp; parties — your people in one place</SectionHeading>
+        <p className="mt-3 leading-relaxed text-[var(--text)]/90">
+          The <strong>Characters</strong> page is where player characters live. Create a
+          sheet with the built-in editor (SRD species, classes, and spells are one click;
+          options from your own books go in Notes), import a portable <code>.md</code>{" "}
+          character file, or copy members out of a saved party. Sort and search your
+          characters, edit them any time, and download any one as its own{" "}
+          <code>.md</code> file. When a group forms, select characters and click{" "}
+          <strong>Create party</strong> — or add them to an existing party. Parties are the
+          unit the rest of the app uses: link one to a campaign, keep campaign notes on it,
+          and load it onto the Virtual Table. Deleting a character never touches parties
+          it already joined (they keep their own copy), and deleting a party never deletes
+          your characters.
+        </p>
+
         <SectionHeading>Saving, printing, and making booklets</SectionHeading>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-[var(--text)]/90">
           <li>

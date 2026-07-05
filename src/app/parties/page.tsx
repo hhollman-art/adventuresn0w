@@ -1,5 +1,5 @@
-import PartyLibraryPage from "@/features/parties/PartyLibraryPage";
+import CharactersAndPartiesPage from "@/features/parties/CharactersAndPartiesPage";
 
 export default function PartiesRoutePage() {
-  return <PartyLibraryPage />;
+  return <CharactersAndPartiesPage />;
 }

@@ -1833,7 +1833,7 @@ export default function Home(props: PageProps<"/">) {
       });
       if (rosters[0]) void autoLinkToActiveCampaign({ partyId: rosters[0].id });
       setPartySaveMessage(
-        `Saved ${parsed.players.length} character${parsed.players.length === 1 ? "" : "s"} as "${parsed.rosterName}". Open the Party library or Virtual Table to load them.`,
+        `Saved ${parsed.players.length} character${parsed.players.length === 1 ? "" : "s"} as "${parsed.rosterName}". Open Characters & parties or the Virtual Table to load them.`,
       );
     } catch (err) {
       setPartySaveMessage(
@@ -3320,7 +3320,7 @@ export default function Home(props: PageProps<"/">) {
                         className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
                         style={{ borderColor: "var(--border)" }}
                       >
-                        Party library
+                        Characters &amp; parties
                       </Link>
                       <Link
                         href="/table"

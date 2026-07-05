@@ -9,9 +9,9 @@ Every data component D&D Easy stores is a **Configuration Item (CI)**, managed l
 
 ## Core principle
 
-- **One class per CI.** Class names are `category.kind` (`seed.realm`, `result.adventure`, `party.roster`, `campaign.record`, `session.tabletop`, `session.snapshot`, `rules.srd-entry`). Classes are typed (`CiClass` union) — never ad-hoc strings.
-- **One category per class.** Categories (`seeds`, `results`, `parties`, `campaigns`, `sessions`, `rules`) drive Library organization, backup scope, and lifecycle. A class belongs to exactly one category.
-- **Relationships are id references owned by the container.** A `campaign.record` links party/seed/result CIs by id (`src/lib/campaigns.ts`); linked CIs never store back-references, links are many-to-many for seeds/results, and deleting a container never deletes linked CIs. Dangling references are tolerated (content may be restored later) and hidden in UI.
+- **One class per CI.** Class names are `category.kind` (`seed.realm`, `result.adventure`, `character.sheet`, `party.roster`, `campaign.record`, `session.tabletop`, `session.snapshot`, `rules.srd-entry`). Classes are typed (`CiClass` union) — never ad-hoc strings.
+- **One category per class.** Categories (`seeds`, `results`, `characters`, `parties`, `campaigns`, `sessions`, `rules`) drive Library organization, backup scope, and lifecycle. A class belongs to exactly one category.
+- **Relationships are id references owned by the container.** A `campaign.record` links party/seed/result CIs by id (`src/lib/campaigns.ts`); linked CIs never store back-references, links are many-to-many for seeds/results, and deleting a container never deletes linked CIs. Dangling references are tolerated (content may be restored later) and hidden in UI. Exception: a `party.roster` embeds **snapshots** of `character.sheet` CIs (same character id, copied sheet) so a party stays playable if its characters are deleted — deletes never cascade in either direction.
 - **The registry describes; storage modules own.** `CI_REGISTRY` records each class's category, label, owning storage module, legal provenance, and backup inclusion. It is a catalogue, not a data store — rows still live in their storage modules (scale-portability rule).
 - **Library entries carry their class.** `LibraryListEntry.ciClass` is derived through the registry helpers (`ciClassForSeed`, `ciClassForResult`, `CI_CLASS_FOR_PARTY`) — never assembled by string concatenation at call sites.
 

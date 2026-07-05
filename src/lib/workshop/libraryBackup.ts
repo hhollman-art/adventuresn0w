@@ -10,6 +10,11 @@ import {
   importCharacterRosters,
   loadSavedCharacterRosters,
 } from "@/lib/tabletop/characterRoster";
+import type { SavedCharacter } from "@/lib/tabletop/characterLibrary";
+import {
+  importSavedCharacters,
+  loadSavedCharacters,
+} from "@/lib/tabletop/characterLibrary";
 import type { SavedCampaign } from "@/lib/campaigns";
 import { importCampaigns, loadCampaigns } from "@/lib/campaigns";
 
@@ -26,6 +31,8 @@ export type LibraryBackupFile = {
   exportedAt: string;
   seeds: SavedRealmSeed[];
   results: LibraryItem[];
+  /** Standalone character sheets from the character library. */
+  characters: SavedCharacter[];
   parties: SavedCharacterRoster[];
   /** Campaign records (id links only — table snapshots stay local). */
   campaigns: SavedCampaign[];
@@ -37,15 +44,17 @@ export const BACKUP_VERSION = 1;
 export type LibraryBackupCounts = {
   seeds: number;
   results: number;
+  characters: number;
   parties: number;
   campaigns: number;
 };
 
 /** Gather every locally stored library item into one serializable document. */
 export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
-  const [seeds, results, parties, campaigns] = await Promise.all([
+  const [seeds, results, characters, parties, campaigns] = await Promise.all([
     loadRealmSeeds(),
     loadGenerationLibraryItems(),
+    loadSavedCharacters(),
     loadSavedCharacterRosters(),
     loadCampaigns(),
   ]);
@@ -55,6 +64,7 @@ export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
     exportedAt: new Date().toISOString(),
     seeds,
     results,
+    characters,
     parties,
     campaigns,
   };
@@ -74,6 +84,7 @@ export type ParsedBackup =
       ok: true;
       seeds: unknown[];
       results: unknown[];
+      characters: unknown[];
       parties: unknown[];
       campaigns: unknown[];
     }
@@ -101,8 +112,9 @@ export function parseLibraryBackup(text: string): ParsedBackup {
     ok: true,
     seeds: Array.isArray(o.seeds) ? o.seeds : [],
     results: Array.isArray(o.results) ? o.results : [],
+    // Older backups predate standalone characters/campaigns — treat as none.
+    characters: Array.isArray(o.characters) ? o.characters : [],
     parties: Array.isArray(o.parties) ? o.parties : [],
-    // Older backups predate campaigns — treat as none.
     campaigns: Array.isArray(o.campaigns) ? o.campaigns : [],
   };
 }
@@ -111,6 +123,7 @@ export type RestoreOutcome = {
   counts: LibraryBackupCounts;
   seeds: SavedRealmSeed[];
   results: LibraryItem[];
+  characters: SavedCharacter[];
   parties: SavedCharacterRoster[];
   campaigns: SavedCampaign[];
 };
@@ -123,22 +136,26 @@ export type RestoreOutcome = {
 export async function restoreLibraryBackup(parsed: {
   seeds: unknown[];
   results: unknown[];
+  characters: unknown[];
   parties: unknown[];
   campaigns: unknown[];
 }): Promise<RestoreOutcome> {
   const seedResult = await importRealmSeeds(parsed.seeds);
   const resultResult = await importGenerationLibraryItems(parsed.results);
+  const characterResult = await importSavedCharacters(parsed.characters);
   const partyResult = await importCharacterRosters(parsed.parties);
   const campaignResult = await importCampaigns(parsed.campaigns);
   return {
     counts: {
       seeds: seedResult.added,
       results: resultResult.added,
+      characters: characterResult.added,
       parties: partyResult.added,
       campaigns: campaignResult.added,
     },
     seeds: seedResult.seeds,
     results: resultResult.items,
+    characters: characterResult.characters,
     parties: partyResult.rosters,
     campaigns: campaignResult.campaigns,
   };
@@ -149,6 +166,8 @@ export function describeRestoreCounts(counts: LibraryBackupCounts): string {
   if (counts.seeds > 0) parts.push(`${counts.seeds} seed${counts.seeds === 1 ? "" : "s"}`);
   if (counts.results > 0)
     parts.push(`${counts.results} result${counts.results === 1 ? "" : "s"}`);
+  if (counts.characters > 0)
+    parts.push(`${counts.characters} character${counts.characters === 1 ? "" : "s"}`);
   if (counts.parties > 0)
     parts.push(`${counts.parties} part${counts.parties === 1 ? "y" : "ies"}`);
   if (counts.campaigns > 0)

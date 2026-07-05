@@ -9,7 +9,7 @@ const LOCAL_STORAGE_KEY = "ddeasy-character-rosters-v1";
 
 export const ROSTERS_CHANGED_EVENT = "ddeasy-rosters-changed";
 
-export type PartySource = "workshop" | "vtt" | "import" | "dndbeyond";
+export type PartySource = "workshop" | "vtt" | "import" | "dndbeyond" | "builder";
 
 export type SavedCharacterRoster = {
   id: string;
@@ -25,13 +25,14 @@ export type SavedCharacterRoster = {
 
 const MAX_ROSTERS = 32;
 
-const PARTY_SOURCES: PartySource[] = ["workshop", "vtt", "import", "dndbeyond"];
+const PARTY_SOURCES: PartySource[] = ["workshop", "vtt", "import", "dndbeyond", "builder"];
 
 export const PARTY_SOURCE_LABEL: Record<PartySource, string> = {
   workshop: "Workshop",
   vtt: "Virtual Table",
   import: "Imported file",
   dndbeyond: "Your D&D Beyond import",
+  builder: "Built from your characters",
 };
 
 function normalizeSource(value: unknown): PartySource {

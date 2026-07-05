@@ -818,7 +818,7 @@ export default function WorkshopLibraryPanel({
           </button>{" "}
           or open{" "}
           <Link href="/parties" className="font-semibold text-[var(--accent)] underline">
-            Saved parties
+            Characters &amp; parties
           </Link>{" "}
           for campaign notes.
         </p>

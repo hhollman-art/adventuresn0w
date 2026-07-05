@@ -38,8 +38,11 @@ Every stored item must belong to one category. Extend existing types — do not 
 |----------|------|----------------|-----------------|
 | **Seeds** | `SeedKind` | `src/lib/realmSeeds.ts` | Grounding markdown: realm, adventure, characters, maps, props |
 | **Results** | `LibraryKind` | `src/lib/generationLibrary.ts` | Generated or hand-edited outputs + images |
-| **Parties** | `SavedCharacterRoster` | `src/lib/tabletop/characterRoster.ts` | PC sheets, `.md` import, VTT save-back |
+| **Characters** | `SavedCharacter` | `src/lib/tabletop/characterLibrary.ts` | Standalone PC sheets — created in the editor, imported `.md`, or copied from a party |
+| **Parties** | `SavedCharacterRoster` | `src/lib/tabletop/characterRoster.ts` | Groups of characters saved as one unit; `.md` import, VTT save-back |
 | **Campaigns** | `SavedCampaign` | `src/lib/campaigns.ts` | One per group the DM runs: links a party + seeds + results by id, owns a shelved VTT table |
+
+Characters are the primary unit on the `/parties` page; parties are assembled from them (**Create party** from selected characters) or imported whole. A party embeds a **snapshot** of each member's sheet but keeps the same character id, so deleting a character never breaks a party and deleting a party never deletes characters. Parties remain the unit campaigns and the Virtual Table consume.
 
 Campaigns are containers, not copies: they hold **id references** (many-to-many for seeds/results), the active campaign scopes the Library and auto-links new creations, and opening one swaps the Virtual Table via per-campaign snapshots (`switchCampaignTable` in `src/lib/tabletop/store.ts`). Deleting a campaign never deletes linked content.
 

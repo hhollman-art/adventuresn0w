@@ -178,9 +178,9 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Establish the party once",
         body:
-          "Build or generate the party once, then Save party for VTT. Use the Party library page for campaign notes between sessions — plot threads, downtime, treasure. Each character has their own Download button there too, so a guest PC can carry their .md sheet between arcs, parties, or devices.",
+          "Build or generate the party once, then Save party for VTT. Use the Characters & parties page for campaign notes between sessions — plot threads, downtime, treasure. Each character has their own Download button there too, so a guest PC can carry their .md sheet between arcs, parties, or devices.",
         action: { type: "link", href: "/parties" },
-        actionLabel: "Open Party library",
+        actionLabel: "Open Characters & parties",
       },
       {
         title: "Build a location kit over time",
@@ -256,9 +256,9 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Link one party to the campaign",
         body:
-          "Keep a single saved party per group with campaign notes on the Party library page. Pick it as the campaign's party on the Campaigns page, and load with Link campaign on the VTT so save-back updates the same roster.",
+          "Create characters on the Characters & parties page, group them into one saved party per group, and keep campaign notes there. Pick it as the campaign's party on the Campaigns page, and load with Link campaign on the VTT so save-back updates the same roster.",
         action: { type: "link", href: "/parties" },
-        actionLabel: "Open Party library",
+        actionLabel: "Open Characters & parties",
       },
       {
         title: "Weekly session loop",
@@ -301,7 +301,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
         body:
           "Playing a subclass or casting spells that aren't in the SRD? Open the character's sheet and type the features and spell effects you need into Notes, in your own words or as short personal reference notes with book page numbers. SRD spells still come from the built-in picker; book spells live in Notes alongside them.",
         action: { type: "link", href: "/parties" },
-        actionLabel: "Open Party library",
+        actionLabel: "Open Characters & parties",
       },
       {
         title: "Import a party built with book options",

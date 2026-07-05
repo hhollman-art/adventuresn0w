@@ -53,12 +53,21 @@ describe("ciRegistry", () => {
 
   it("filters classes by category", () => {
     expect(ciClassesForCategory("seeds")).toHaveLength(5);
+    expect(ciClassesForCategory("characters")).toEqual(["character.sheet"]);
     expect(ciClassesForCategory("parties")).toEqual(["party.roster"]);
     expect(ciClassesForCategory("campaigns")).toEqual(["campaign.record"]);
     expect(ciClassesForCategory("sessions")).toEqual([
       "session.tabletop",
       "session.snapshot",
     ]);
+  });
+
+  it("registers standalone characters as backed-up user sheets", () => {
+    const character = ciDefinition("character.sheet");
+    expect(character.category).toBe("characters");
+    expect(character.provenance).toBe("user");
+    expect(character.inBackup).toBe(true);
+    expect(character.storageModule).toBe("src/lib/tabletop/characterLibrary.ts");
   });
 
   it("registers campaigns as backed-up user containers", () => {

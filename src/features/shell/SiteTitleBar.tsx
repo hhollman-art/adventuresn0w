@@ -20,7 +20,7 @@ const KEY_LINKS = [
     icon: "\u{1F3F0}",
     match: (p: string) => p === "/campaigns" || p.startsWith("/campaigns/"),
   },
-  { href: "/parties", label: "Parties", icon: "\u{1F465}", match: (p: string) => p === "/parties" || p.startsWith("/parties/") },
+  { href: "/parties", label: "Characters", icon: "\u{1F465}", match: (p: string) => p === "/parties" || p.startsWith("/parties/") },
   {
     href: "/library",
     label: "Library",

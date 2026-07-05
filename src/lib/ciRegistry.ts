@@ -19,6 +19,7 @@ import type { SeedKind } from "@/lib/realmSeeds";
 export type CiCategory =
   | "seeds"
   | "results"
+  | "characters"
   | "parties"
   | "campaigns"
   | "sessions"
@@ -36,6 +37,7 @@ export type CiClass =
   | "result.characters"
   | "result.maps"
   | "result.props"
+  | "character.sheet"
   | "party.roster"
   | "campaign.record"
   | "session.tabletop"
@@ -58,6 +60,7 @@ export type CiDefinition = {
 export const CI_CATEGORY_LABEL: Record<CiCategory, string> = {
   seeds: "Seeds",
   results: "Results",
+  characters: "Characters",
   parties: "Parties",
   campaigns: "Campaigns",
   sessions: "Sessions",
@@ -145,6 +148,14 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
     provenance: "user",
     inBackup: true,
   },
+  "character.sheet": {
+    ciClass: "character.sheet",
+    category: "characters",
+    label: "Character sheet",
+    storageModule: "src/lib/tabletop/characterLibrary.ts",
+    provenance: "user",
+    inBackup: true,
+  },
   "party.roster": {
     ciClass: "party.roster",
     category: "parties",
@@ -207,6 +218,8 @@ export function ciClassForSeed(kind: SeedKind): CiClass {
 export function ciClassForResult(kind: LibraryKind): CiClass {
   return `result.${kind}` as CiClass;
 }
+
+export const CI_CLASS_FOR_CHARACTER: CiClass = "character.sheet";
 
 export const CI_CLASS_FOR_PARTY: CiClass = "party.roster";
 
