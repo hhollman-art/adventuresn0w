@@ -1,4 +1,5 @@
 import type { AbilityScores, PlayerCharacter } from "./types";
+import { rosterToMarkdown } from "./characterMarkdown";
 
 /** Plain-language notice — reuse in UI and /legal. */
 export const DDB_IMPORT_LEGAL_NOTICE =
@@ -153,37 +154,11 @@ function readSpeed(character: Record<string, unknown>): number {
   return 30;
 }
 
-function formatAbilityLine(abilities: AbilityScores): string {
-  return `STR ${abilities.str}, DEX ${abilities.dex}, CON ${abilities.con}, INT ${abilities.int}, WIS ${abilities.wis}, CHA ${abilities.cha}`;
-}
-
-function characterToMarkdownBlock(
-  player: Omit<PlayerCharacter, "tokenId">,
-): string {
-  const lines = [
-    `### ${player.name}${player.className ? ` — ${player.className}` : ""} (Level ${player.level})`,
-  ];
-  if (player.playerName) lines.push(`- Player: ${player.playerName}`);
-  if (player.species) lines.push(`- Race: ${player.species}`);
-  if (player.background) lines.push(`- Background: ${player.background}`);
-  if (player.subclass) lines.push(`- Subclass: ${player.subclass}`);
-  if (player.alignment) lines.push(`- Alignment: ${player.alignment}`);
-  lines.push(`- AC: ${player.ac}`);
-  lines.push(`- HP: ${player.maxHp}`);
-  if (player.speed !== 30) lines.push(`- Speed: ${player.speed}`);
-  lines.push(`- ${formatAbilityLine(player.abilities)}`);
-  if (player.notes.trim()) {
-    lines.push(`- ${player.notes.replace(/\n/g, "\n- ")}`);
-  }
-  return lines.join("\n");
-}
-
 export function ddbCharactersToMarkdown(
   rosterName: string,
   players: Omit<PlayerCharacter, "tokenId">[],
 ): string {
-  const blocks = players.map(characterToMarkdownBlock);
-  return `# ${rosterName}\n\n## Characters\n\n${blocks.join("\n\n")}\n`;
+  return rosterToMarkdown(rosterName, players);
 }
 
 function parseDdbCharacter(

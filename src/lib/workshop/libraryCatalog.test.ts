@@ -24,13 +24,15 @@ describe("libraryCatalog", () => {
       markdown: "# Realm",
     };
     expect(seedToLibraryEntry(seed)).toMatchObject({
+      ciClass: "seed.realm",
       category: "seeds",
       provenance: "user",
+      origin: "creation",
       title: "My realm",
     });
   });
 
-  it("maps generation results as generated", () => {
+  it("maps generation results as user-owned creations", () => {
     const item: LibraryItem = {
       id: "r1",
       createdAt: "2024-01-01T00:00:00.000Z",
@@ -41,7 +43,11 @@ describe("libraryCatalog", () => {
       imageModel: null,
       images: [],
     };
-    expect(resultToLibraryEntry(item).provenance).toBe("generated");
+    expect(resultToLibraryEntry(item)).toMatchObject({
+      ciClass: "result.adventure",
+      provenance: "user",
+      origin: "creation",
+    });
   });
 
   it("maps imported parties as user-owned", () => {
@@ -55,7 +61,28 @@ describe("libraryCatalog", () => {
       markdown: "",
       players: [],
     } satisfies SavedCharacterRoster;
-    expect(partyToLibraryEntry(roster).provenance).toBe("user");
+    expect(partyToLibraryEntry(roster)).toMatchObject({
+      ciClass: "party.roster",
+      provenance: "user",
+      origin: "import",
+    });
+  });
+
+  it("maps workshop-made parties as creations in the same tier", () => {
+    const roster = {
+      id: "p3",
+      name: "Generated party",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-02T00:00:00.000Z",
+      source: "workshop",
+      notes: "",
+      markdown: "",
+      players: [],
+    } satisfies SavedCharacterRoster;
+    expect(partyToLibraryEntry(roster)).toMatchObject({
+      provenance: "user",
+      origin: "creation",
+    });
   });
 
   it("maps D&D Beyond imports as user-owned", () => {
@@ -71,6 +98,7 @@ describe("libraryCatalog", () => {
     } satisfies SavedCharacterRoster;
     expect(partyToLibraryEntry(roster)).toMatchObject({
       provenance: "user",
+      origin: "import",
       kindLabel: "Your D&D Beyond import",
     });
   });

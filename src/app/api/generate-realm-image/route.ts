@@ -13,6 +13,7 @@ import {
 } from "@/lib/openaiImageClient";
 import { realmImagePostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError, logApiWarning } from "@/lib/serverLog";
+import { recordImageGenerationUsage } from "@/lib/usageMetering";
 import { parseMapDistanceUnits } from "@/lib/mapDistanceUnits";
 import { createHeartbeatJsonResponse } from "@/lib/sseStream";
 
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
       return { status: err.status, body: err.body };
     }
 
+    recordImageGenerationUsage({ feature: "realm-image", model, size, quality });
     return {
       status: 200,
       body: {

@@ -38,6 +38,7 @@ import { rollDice } from "@/lib/tabletop/dice";
 import { FEET_PER_CELL_OPTIONS, formatTokenSizeOption, TOKEN_SIZE_CATEGORY, tokenCellFootprint } from "@/lib/tabletop/gridScale";
 import { VTT_GRID_PRESETS } from "@/lib/tabletop/gridPresets";
 import { prepareMapImage, readImageSource } from "@/lib/tabletop/mapImage";
+import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
 import {
   applyPartyImport,
   consumePendingPartyImport,
@@ -357,6 +358,7 @@ function PartyPanel({
   const [sheet, setSheet] = useState<PlayerCharacter | "new" | null>(null);
   const [savedRosters, setSavedRosters] = useState<SavedCharacterRoster[]>([]);
   const [partyMsg, setPartyMsg] = useState<string | null>(null);
+  const characterFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const reload = () => {
@@ -453,6 +455,33 @@ function PartyPanel({
       };
     });
     setSheet(null);
+  };
+
+  const onPickCharacterFiles = async (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (files.length === 0) return;
+
+    const added: string[] = [];
+    for (const file of files) {
+      const { players } = parseCharactersMarkdown(await file.text());
+      for (const parsed of players) {
+        const playerId = newId();
+        const tokenId = newId();
+        const player: PlayerCharacter = { ...parsed, id: playerId, tokenId };
+        update((s) => ({
+          ...s,
+          tokens: [...s.tokens, newPlayerToken(s, player, tokenId)],
+          players: [...s.players, player],
+        }));
+        added.push(player.name);
+      }
+    }
+    setPartyMsg(
+      added.length === 0
+        ? "No characters found in that file — it needs a ### heading per character."
+        : `Added ${added.join(", ")} to the table with tokens placed.`,
+    );
   };
 
   const placeToken = (player: PlayerCharacter) => {
@@ -592,6 +621,24 @@ function PartyPanel({
       >
         Add player (character sheet)
       </button>
+
+      <button
+        type="button"
+        onClick={() => characterFileRef.current?.click()}
+        className="rounded-md border px-2 py-1.5 text-xs"
+        style={{ borderColor: "var(--border)" }}
+        title="Load one or more saved character .md files — from party downloads or your auto-save characters folder"
+      >
+        Load character file (.md)
+      </button>
+      <input
+        ref={characterFileRef}
+        type="file"
+        accept=".md,.txt,text/markdown,text/plain"
+        multiple
+        className="hidden"
+        onChange={(e) => void onPickCharacterFiles(e)}
+      />
 
       {session.players.length === 0 && (
         <p className="text-xs text-[var(--muted)]">

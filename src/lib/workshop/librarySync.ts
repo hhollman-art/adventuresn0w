@@ -18,9 +18,16 @@
 import {
   buildLibraryBackup,
   serializeLibraryBackup,
+  type LibraryBackupFile,
 } from "@/lib/workshop/libraryBackup";
+import {
+  characterToMarkdownFile,
+  fileSlug,
+} from "@/lib/tabletop/characterMarkdown";
 
 export const SYNC_FILE_NAME = "ddeasy-library.json";
+/** Folder inside the sync folder holding one portable .md file per PC. */
+export const CHARACTERS_DIR_NAME = "characters";
 
 const IDB_NAME = "ddeasy-library-sync-v1";
 const IDB_STORE = "kv";
@@ -202,6 +209,48 @@ export async function disconnectSyncFolder(): Promise<void> {
   }
 }
 
+async function writeTextFile(
+  dir: FileSystemDirectoryHandle,
+  name: string,
+  contents: string,
+): Promise<void> {
+  const fileHandle = await dir.getFileHandle(name, { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write(contents);
+  await writable.close();
+}
+
+/**
+ * Write each PC as its own portable .md file under characters/<party>/.
+ * These files round-trip through the character Markdown parser, so any one
+ * of them can be loaded into Add party, the Virtual Table, or adventure prep
+ * on another device. Write-only: renamed or deleted characters leave their
+ * old files behind (the app never deletes from the user's folder).
+ */
+async function writeCharacterFiles(
+  root: SyncDirectoryHandle,
+  backup: LibraryBackupFile,
+): Promise<void> {
+  const charactersDir = await root.getDirectoryHandle(CHARACTERS_DIR_NAME, {
+    create: true,
+  });
+  for (const roster of backup.parties) {
+    if (roster.players.length === 0) continue;
+    const partyDir = await charactersDir.getDirectoryHandle(fileSlug(roster.name), {
+      create: true,
+    });
+    const usedNames = new Set<string>();
+    for (const player of roster.players) {
+      let name = `${fileSlug(player.name)}.md`;
+      if (usedNames.has(name)) {
+        name = `${fileSlug(player.name)}-${player.id.slice(0, 6)}.md`;
+      }
+      usedNames.add(name);
+      await writeTextFile(partyDir, name, characterToMarkdownFile(player));
+    }
+  }
+}
+
 /**
  * Write the current library to the sync folder. No-op unless a folder is
  * connected with granted permission. Returns true when a file was written.
@@ -213,10 +262,12 @@ export async function writeLibrarySnapshot(): Promise<boolean> {
   if ((await queryHandlePermission(handle)) !== "granted") return false;
   try {
     const backup = await buildLibraryBackup();
-    const fileHandle = await handle.getFileHandle(SYNC_FILE_NAME, { create: true });
-    const writable = await fileHandle.createWritable();
-    await writable.write(serializeLibraryBackup(backup));
-    await writable.close();
+    await writeTextFile(handle, SYNC_FILE_NAME, serializeLibraryBackup(backup));
+    try {
+      await writeCharacterFiles(handle, backup);
+    } catch {
+      /* per-character files are best-effort; the JSON snapshot is the backup */
+    }
     return true;
   } catch {
     return false;

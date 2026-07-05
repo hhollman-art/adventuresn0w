@@ -144,8 +144,7 @@ export default function HelpPage() {
 
         <SectionHeading>Library</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
-          The Library tab is your repository. It holds three distinct kinds of
-          data, each managed differently:
+          The Library tab is your repository. It holds two kinds of data:
         </p>
         <ul className="mt-2 list-disc space-y-2 pl-5 leading-relaxed text-[var(--text)]/90">
           <li>
@@ -155,14 +154,13 @@ export default function HelpPage() {
             reference D&amp;D Easy hosts. It is read-only and never needs backing up.
           </li>
           <li>
-            <strong>Your imports</strong> — party notes from books you own, typed by hand or
-            uploaded from a file (including a D&amp;D Beyond character JSON you saved yourself).
-            Stored in <em>this browser on this device only</em>, never uploaded to a server.
-          </li>
-          <li>
-            <strong>Your creations</strong> — seeds you write and results the
-            generators produce (text and images). Also stored on this device
-            only.
+            <strong>Yours</strong> — everything you import or make, saved once and
+            managed the same way: party notes from books you own (typed or uploaded,
+            including a D&amp;D Beyond character JSON you saved yourself), seeds you
+            write, and results the generators produce. Things made in the app carry
+            a <strong>Creation</strong> tag so you can tell them apart from imported
+            files. Stored in <em>this browser on this device only</em>, never
+            uploaded to a server.
           </li>
         </ul>
         <p className="mt-2 leading-relaxed text-[var(--text)]/90">
@@ -170,7 +168,11 @@ export default function HelpPage() {
           Set an <strong>auto-save folder</strong> in the Library (one click):
           point it at a local directory or a cloud-synced folder like OneDrive,
           Google Drive, or Dropbox, and every change is written there
-          automatically — no manual exporting. Saving is strictly one-way: the
+          automatically — no manual exporting. Alongside the main backup file,
+          each party member is also written as their own portable{" "}
+          <code>.md</code> character sheet in a <code>characters</code> folder
+          — grab any one of those files to bring a single PC into an
+          adventure, another party, or a Virtual Table session on any device. Saving is strictly one-way: the
           app writes to your folder but never reads from it on its own. To
           bring data into the app (for example on a new device), use{" "}
           <strong>Restore backup</strong> under &quot;Where is my data?&quot;

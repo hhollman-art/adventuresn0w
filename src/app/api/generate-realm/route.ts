@@ -13,6 +13,7 @@ import { createMarkdownSseResponse } from "@/lib/sseStream";
 import { parseRealmSeedMarkdown } from "@/lib/requestLimits";
 import { realmPostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError } from "@/lib/serverLog";
+import { recordTextGenerationUsage } from "@/lib/usageMetering";
 
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -53,11 +54,12 @@ export async function POST(request: Request) {
   try {
     const user = buildRealmUserMessage(input);
     if (!body.stream) {
-      const { markdown, model } = await generateMarkdown({
+      const { markdown, model, usage } = await generateMarkdown({
         apiKey,
         system: REALM_SYSTEM_PROMPT,
         user,
       });
+      recordTextGenerationUsage({ feature: "realm", model, ...usage });
       return NextResponse.json({ markdown, model });
     }
 
@@ -65,6 +67,7 @@ export async function POST(request: Request) {
       apiKey,
       system: REALM_SYSTEM_PROMPT,
       user,
+      feature: "realm",
       logTag: "realm_stream_failed",
     });
   } catch (err) {

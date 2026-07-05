@@ -22,7 +22,26 @@ import {
   queuePartyImport,
   type PartyImportRequest,
 } from "@/lib/tabletop/partyCampaign";
+import {
+  characterFileName,
+  characterToMarkdownFile,
+  fileSlug,
+  rosterToMarkdown,
+} from "@/lib/tabletop/characterMarkdown";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
+
+function downloadMarkdownFile(filename: string, contents: string) {
+  const blob = new Blob([contents], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 export default function PartyLibraryPage() {
   const [rosters, setRosters] = useState<SavedCharacterRoster[]>([]);
@@ -75,6 +94,23 @@ export default function PartyLibraryPage() {
     setRosters(list);
     if (expandedId === id) setExpandedId(null);
     setStatus("Party removed from library.");
+  };
+
+  const downloadParty = (roster: SavedCharacterRoster) => {
+    downloadMarkdownFile(
+      `${fileSlug(roster.name)}.md`,
+      rosterToMarkdown(roster.name, roster.players),
+    );
+    setStatus(
+      `Downloaded “${roster.name}” as a .md file — load it back through Add party or the Virtual Table.`,
+    );
+  };
+
+  const downloadCharacter = (player: SavedCharacterRoster["players"][number]) => {
+    downloadMarkdownFile(characterFileName(player), characterToMarkdownFile(player));
+    setStatus(
+      `Downloaded ${player.name} as a .md file — a portable sheet you can load into any party, adventure, or Virtual Table session.`,
+    );
   };
 
   return (
@@ -204,6 +240,15 @@ export default function PartyLibraryPage() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => downloadParty(roster)}
+                      className="rounded-md border px-2.5 py-1.5 text-xs font-semibold"
+                      style={{ borderColor: "var(--border)" }}
+                      title="Save this party as a .md file you can load anywhere"
+                    >
+                      Download .md
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => void removeParty(roster.id)}
                       className="rounded-md border px-2.5 py-1.5 text-xs text-red-800"
                       style={{ borderColor: "var(--border)" }}
@@ -272,7 +317,18 @@ export default function PartyLibraryPage() {
                             className="rounded-lg border p-3 text-sm"
                             style={{ borderColor: "var(--border)", background: "var(--bg)" }}
                           >
-                            <p className="font-bold">{p.name}</p>
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-bold">{p.name}</p>
+                              <button
+                                type="button"
+                                onClick={() => downloadCharacter(p)}
+                                className="shrink-0 rounded border px-2 py-0.5 text-[10px]"
+                                style={{ borderColor: "var(--border)" }}
+                                title={`Save ${p.name} as their own .md file — load it into any party, adventure, or Virtual Table session`}
+                              >
+                                Download
+                              </button>
+                            </div>
                             {p.playerName ? (
                               <p className="text-[11px] text-[var(--muted)]">{p.playerName}</p>
                             ) : null}

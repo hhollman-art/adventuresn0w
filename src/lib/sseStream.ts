@@ -3,11 +3,17 @@ import {
   generateMarkdownStream,
 } from "@/lib/anthropicGenerate";
 import { logApiError } from "@/lib/serverLog";
+import {
+  recordTextGenerationUsage,
+  type GenerationFeature,
+} from "@/lib/usageMetering";
 
 type MarkdownSseOptions = {
   apiKey: string;
   system: string;
   user: string;
+  /** Feature name for usage metering (SaaS chargeback). */
+  feature: GenerationFeature;
   /** Tag passed to logApiError when the stream fails. */
   logTag: string;
   /** How often to emit a keep-alive comment, in ms. */
@@ -27,6 +33,7 @@ export function createMarkdownSseResponse({
   apiKey,
   system,
   user,
+  feature,
   logTag,
   heartbeatMs = 10_000,
 }: MarkdownSseOptions): Response {
@@ -81,6 +88,12 @@ export function createMarkdownSseResponse({
           user,
           onModel: (model) => write({ type: "meta", model }),
           onText: (chunk) => write({ type: "chunk", text: chunk }),
+        });
+        recordTextGenerationUsage({
+          feature,
+          model: result.model,
+          inputTokens: result.usage.inputTokens,
+          outputTokens: result.usage.outputTokens,
         });
         write({ type: "done", markdown: result.markdown, model: result.model });
       } catch (err) {

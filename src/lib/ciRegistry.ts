@@ -1,0 +1,186 @@
+import type { LibraryKind } from "@/lib/generationLibrary";
+import type { SeedKind } from "@/lib/realmSeeds";
+
+/**
+ * Configuration Item (CI) registry — the CMDB of D&D Easy's data components.
+ *
+ * Every data component the app stores is a Configuration Item with exactly
+ * one CLASS (the most specific type, `category.kind`) and one CATEGORY (the
+ * management grouping). The registry is the single source of truth for the
+ * taxonomy: what classes exist, which storage module owns them, and what
+ * legal provenance they carry. New data types must register a class here
+ * before they ship — ad-hoc string kinds are not allowed.
+ *
+ * This is a typed catalogue, not a data store: rows still live in their
+ * storage modules (scale-portability rule). The registry describes them.
+ */
+
+/** Management grouping — how the Library organizes and backs up CIs. */
+export type CiCategory = "seeds" | "results" | "parties" | "sessions" | "rules";
+
+/** Most specific type of a CI: `category.kind`. */
+export type CiClass =
+  | "seed.realm"
+  | "seed.adventure"
+  | "seed.characters"
+  | "seed.maps"
+  | "seed.props"
+  | "result.realm"
+  | "result.adventure"
+  | "result.characters"
+  | "result.maps"
+  | "result.props"
+  | "party.roster"
+  | "session.tabletop"
+  | "rules.srd-entry";
+
+export type CiDefinition = {
+  ciClass: CiClass;
+  category: CiCategory;
+  /** Human label for UI. */
+  label: string;
+  /** Module that owns rows of this class (see scale-portability rule). */
+  storageModule: string;
+  /** Legal tier (see workshop-library rule). */
+  provenance: "srd" | "user";
+  /** Included in the portable library backup / auto-save snapshot? */
+  inBackup: boolean;
+};
+
+export const CI_CATEGORY_LABEL: Record<CiCategory, string> = {
+  seeds: "Seeds",
+  results: "Results",
+  parties: "Parties",
+  sessions: "Sessions",
+  rules: "Rules (SRD)",
+};
+
+export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
+  "seed.realm": {
+    ciClass: "seed.realm",
+    category: "seeds",
+    label: "Realm seed",
+    storageModule: "src/lib/realmSeeds.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "seed.adventure": {
+    ciClass: "seed.adventure",
+    category: "seeds",
+    label: "Adventure seed",
+    storageModule: "src/lib/realmSeeds.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "seed.characters": {
+    ciClass: "seed.characters",
+    category: "seeds",
+    label: "Characters seed",
+    storageModule: "src/lib/realmSeeds.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "seed.maps": {
+    ciClass: "seed.maps",
+    category: "seeds",
+    label: "Maps seed",
+    storageModule: "src/lib/realmSeeds.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "seed.props": {
+    ciClass: "seed.props",
+    category: "seeds",
+    label: "Props seed",
+    storageModule: "src/lib/realmSeeds.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "result.realm": {
+    ciClass: "result.realm",
+    category: "results",
+    label: "Realm result",
+    storageModule: "src/lib/generationLibrary.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "result.adventure": {
+    ciClass: "result.adventure",
+    category: "results",
+    label: "Adventure result",
+    storageModule: "src/lib/generationLibrary.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "result.characters": {
+    ciClass: "result.characters",
+    category: "results",
+    label: "Characters result",
+    storageModule: "src/lib/generationLibrary.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "result.maps": {
+    ciClass: "result.maps",
+    category: "results",
+    label: "Maps result",
+    storageModule: "src/lib/generationLibrary.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "result.props": {
+    ciClass: "result.props",
+    category: "results",
+    label: "Props result",
+    storageModule: "src/lib/generationLibrary.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "party.roster": {
+    ciClass: "party.roster",
+    category: "parties",
+    label: "Party roster",
+    storageModule: "src/lib/tabletop/characterRoster.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "session.tabletop": {
+    ciClass: "session.tabletop",
+    category: "sessions",
+    label: "Virtual Table session",
+    storageModule: "src/lib/tabletop/store.ts",
+    provenance: "user",
+    inBackup: false,
+  },
+  "rules.srd-entry": {
+    ciClass: "rules.srd-entry",
+    category: "rules",
+    label: "SRD reference entry",
+    storageModule: "src/lib/srd/",
+    provenance: "srd",
+    inBackup: false,
+  },
+};
+
+export const CI_CLASSES = Object.keys(CI_REGISTRY) as CiClass[];
+
+export function ciDefinition(ciClass: CiClass): CiDefinition {
+  return CI_REGISTRY[ciClass];
+}
+
+/** All classes in a management category. */
+export function ciClassesForCategory(category: CiCategory): CiClass[] {
+  return CI_CLASSES.filter((c) => CI_REGISTRY[c].category === category);
+}
+
+/* ---- Class resolution for existing typed kinds ---- */
+
+export function ciClassForSeed(kind: SeedKind): CiClass {
+  return `seed.${kind}` as CiClass;
+}
+
+export function ciClassForResult(kind: LibraryKind): CiClass {
+  return `result.${kind}` as CiClass;
+}
+
+export const CI_CLASS_FOR_PARTY: CiClass = "party.roster";

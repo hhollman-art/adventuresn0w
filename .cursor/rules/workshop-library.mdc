@@ -21,11 +21,12 @@ The **Library** tab is the DM's canonical repository in the Workshop. Prep asset
 
 ## Canonical user-facing language (use everywhere)
 
-Use these exact terms in UI copy, help, and tutorials — source of truth is `LIBRARY_PROVENANCE_*` in `src/lib/workshop/libraryCatalog.ts`:
+Use these exact terms in UI copy, help, and tutorials — source of truth is `LIBRARY_PROVENANCE_*` and `LIBRARY_ORIGIN_*` in `src/lib/workshop/libraryCatalog.ts`:
 
 - **Included rules (SRD)** — "ships with the app — the only data we host"; read-only, never needs backup.
-- **Your imports** — files/book content the DM brings in; "this device only — never uploaded".
-- **Your creations** — seeds + generated results; "this device only — never uploaded".
+- **Yours (user tier)** — one tier for everything the DM owns; "this device only — never uploaded". Saved once regardless of how it arrived.
+  - Origin tag **Import** — files/book content the DM brings in.
+  - Origin tag **Creation** — seeds, generated results, and workshop/VTT-made parties. Creations save exactly like imports (same tier, same folder, one save) — the tag is the only difference.
 
 Data persistence is **auto-save first and strictly one-directional**: the DM sets an **auto-save folder** once (`src/lib/workshop/librarySync.ts`, File System Access API) — a local directory or cloud-synced folder (OneDrive/Drive/Dropbox) — and every library change writes `ddeasy-library.json` there automatically (`scheduleLibrarySnapshot()` after mutations). The app **only ever writes** to that folder; it must never read data back from it automatically. Data enters the app only through the explicit **Restore backup** action (`src/lib/workshop/libraryBackup.ts`), which is also the manual fallback for unsupported browsers alongside **Export backup**. Both use the same JSON format; restores are non-destructive (merge by id, skip existing). Never invent a second export format for the same data, never make manual export the primary flow, and never auto-import from the sync folder.
 
@@ -40,7 +41,7 @@ Every stored item must belong to one category. Extend existing types — do not 
 | **Parties** | `SavedCharacterRoster` | `src/lib/tabletop/characterRoster.ts` | PC sheets, `.md` import, VTT save-back |
 | **Rules (SRD)** | `SrdCatalogue` | `src/lib/srd/` | Classes, spells, ancestries — read-only pickers |
 
-New categories (monsters, items, house rules) need a new typed `kind`, a `*_LABEL` map, a storage module, and a legal review against `SRD_CONTENT_POLICY`.
+New categories (monsters, items, house rules) need a new typed `kind`, a `*_LABEL` map, a storage module, a registered CI class in `src/lib/ciRegistry.ts` (see `cmdb-configuration-items` rule), and a legal review against `SRD_CONTENT_POLICY`.
 
 ## When building Library features
 

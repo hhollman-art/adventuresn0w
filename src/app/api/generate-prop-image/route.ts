@@ -9,6 +9,7 @@ import {
 } from "@/lib/openaiImageClient";
 import { propImagePostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError, logApiWarning } from "@/lib/serverLog";
+import { recordImageGenerationUsage } from "@/lib/usageMetering";
 import { createHeartbeatJsonResponse } from "@/lib/sseStream";
 
 const LEGACY_PROP_TYPE: Record<string, PropItemCategory> = {
@@ -103,6 +104,7 @@ export async function POST(request: Request) {
       return { status: err.status, body: err.body };
     }
 
+    recordImageGenerationUsage({ feature: "prop-image", model, size, quality });
     return {
       status: 200,
       body: {

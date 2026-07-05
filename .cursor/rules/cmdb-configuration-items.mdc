@@ -1,0 +1,24 @@
+---
+description: Data principle — every data component is a Configuration Item with a class and category (CMDB model)
+alwaysApply: true
+---
+
+# Configuration Items — data components as a CMDB
+
+Every data component D&D Easy stores is a **Configuration Item (CI)**, managed like a CMDB. Each CI has exactly one **class** (its most specific type, `category.kind`) and one **category** (its management grouping). The registry `src/lib/ciRegistry.ts` is the single source of truth for the taxonomy.
+
+## Core principle
+
+- **One class per CI.** Class names are `category.kind` (`seed.realm`, `result.adventure`, `party.roster`, `session.tabletop`, `rules.srd-entry`). Classes are typed (`CiClass` union) — never ad-hoc strings.
+- **One category per class.** Categories (`seeds`, `results`, `parties`, `sessions`, `rules`) drive Library organization, backup scope, and lifecycle. A class belongs to exactly one category.
+- **The registry describes; storage modules own.** `CI_REGISTRY` records each class's category, label, owning storage module, legal provenance, and backup inclusion. It is a catalogue, not a data store — rows still live in their storage modules (scale-portability rule).
+- **Library entries carry their class.** `LibraryListEntry.ciClass` is derived through the registry helpers (`ciClassForSeed`, `ciClassForResult`, `CI_CLASS_FOR_PARTY`) — never assembled by string concatenation at call sites.
+
+## Adding a new data component
+
+1. Add the class to the `CiClass` union and `CI_REGISTRY` (category, label, storage module, provenance, `inBackup`) — a class must exist **before** the storage module ships.
+2. New kind of an existing shape (e.g. a new `SeedKind`) → new `seed.*` class; genuinely new shape (e.g. monsters, house rules) → new category **and** classes, plus a storage module and backup coverage per the workshop-library rule.
+3. Provenance in the registry must agree with `/legal` — `srd` classes are read-only and never in the user backup; `user` classes must be in the backup unless there's a documented reason (e.g. `session.tabletop` is live table state).
+4. UI filters, badges, and future CI features (relationships, lifecycle states, per-class quotas) key off `ciClass` / `category` — never off display labels.
+
+Related principles: `scale-portability` (storage module ownership), `workshop-library` (legal tiers and canonical language), `saas-cost-metering` (usage events are transactional records, not CIs).

@@ -206,7 +206,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Workshop as campaign HQ",
         body:
-          "The Library holds three kinds of data: included rules (SRD) that ship with the app, your imports (files and book content you bring in), and your creations (seeds and generated results). Only the SRD is hosted by the app — everything else lives on this device. AI is for bursts; manual curation is the default.",
+          "The Library holds two kinds of data: included rules (SRD) that ship with the app, and everything that's yours — imports you bring in and creations made in the app (seeds, generated results, workshop parties), which save once together and are told apart by a Creation tag. Only the SRD is hosted by the app — everything else lives on this device. AI is for bursts; manual curation is the default.",
         tip: "Non-SRD spells and subclasses from books you own go in character Notes — never the included SRD catalogue.",
       },
       {

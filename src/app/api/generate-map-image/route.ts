@@ -14,6 +14,7 @@ import {
 import { parseLibraryReferenceMarkdown } from "@/lib/requestLimits";
 import { mapImagePostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError, logApiWarning } from "@/lib/serverLog";
+import { recordImageGenerationUsage } from "@/lib/usageMetering";
 import { parseMapDistanceUnits } from "@/lib/mapDistanceUnits";
 import { createHeartbeatJsonResponse } from "@/lib/sseStream";
 
@@ -107,6 +108,7 @@ export async function POST(request: Request) {
         return { status: err.status, body: err.body };
       }
 
+      recordImageGenerationUsage({ feature: "map-image", model, size, quality });
       images.push({ kind: variant, imageDataUrl: `data:image/png;base64,${gen.b64}` });
     }
 

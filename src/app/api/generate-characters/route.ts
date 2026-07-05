@@ -7,6 +7,7 @@ import {
 import { formatAnthropicError, generateMarkdown } from "@/lib/anthropicGenerate";
 import { charactersPostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError } from "@/lib/serverLog";
+import { recordTextGenerationUsage } from "@/lib/usageMetering";
 import { parseRealmSeedMarkdown } from "@/lib/requestLimits";
 
 export async function POST(request: Request) {
@@ -48,11 +49,12 @@ export async function POST(request: Request) {
   };
 
   try {
-    const { markdown, model } = await generateMarkdown({
+    const { markdown, model, usage } = await generateMarkdown({
       apiKey,
       system: CHARACTER_SYSTEM_PROMPT,
       user: buildPremadeCharactersMessage(input),
     });
+    recordTextGenerationUsage({ feature: "characters", model, ...usage });
     return NextResponse.json({ markdown, model });
   } catch (err) {
     const { message, status } = formatAnthropicError(err);

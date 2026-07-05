@@ -14,6 +14,7 @@ import { createMarkdownSseResponse } from "@/lib/sseStream";
 import { parseRealmSeedMarkdown } from "@/lib/requestLimits";
 import { adventurePostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError } from "@/lib/serverLog";
+import { recordTextGenerationUsage } from "@/lib/usageMetering";
 
 function parseAdventureLength(value: unknown): AdventureLength {
   const raw = String(value ?? "").trim();
@@ -76,11 +77,12 @@ export async function POST(request: Request) {
   try {
     const userMessage = buildUserMessage(input);
     if (!body.stream) {
-      const { markdown, model } = await generateMarkdown({
+      const { markdown, model, usage } = await generateMarkdown({
         apiKey,
         system: SYSTEM_PROMPT,
         user: userMessage,
       });
+      recordTextGenerationUsage({ feature: "adventure", model, ...usage });
       return NextResponse.json({ markdown, model });
     }
 
@@ -88,6 +90,7 @@ export async function POST(request: Request) {
       apiKey,
       system: SYSTEM_PROMPT,
       user: userMessage,
+      feature: "adventure",
       logTag: "adventure_stream_failed",
     });
   } catch (err) {

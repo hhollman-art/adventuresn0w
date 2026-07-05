@@ -17,6 +17,18 @@ export type GenerateMarkdownParams = {
   user: string;
 };
 
+/** Raw billable units from the provider — feeds usage metering (SaaS chargeback). */
+export type TokenUsage = {
+  inputTokens: number;
+  outputTokens: number;
+};
+
+export type GenerateMarkdownResult = {
+  markdown: string;
+  model: string;
+  usage: TokenUsage;
+};
+
 type GenerateMarkdownStreamParams = GenerateMarkdownParams & {
   onText: (chunk: string) => void;
   onModel?: (model: string) => void;
@@ -36,7 +48,7 @@ export async function generateMarkdown({
   apiKey,
   system,
   user,
-}: GenerateMarkdownParams): Promise<{ markdown: string; model: string }> {
+}: GenerateMarkdownParams): Promise<GenerateMarkdownResult> {
   const client = new Anthropic({ apiKey });
   const modelsToTry = getModelsToTry();
   let selectedModel = modelsToTry[0]!;
@@ -74,7 +86,14 @@ export async function generateMarkdown({
     throw new Error("Model returned no text content.");
   }
 
-  return { markdown, model: selectedModel };
+  return {
+    markdown,
+    model: selectedModel,
+    usage: {
+      inputTokens: message.usage?.input_tokens ?? 0,
+      outputTokens: message.usage?.output_tokens ?? 0,
+    },
+  };
 }
 
 export async function generateMarkdownStream({
@@ -83,7 +102,7 @@ export async function generateMarkdownStream({
   user,
   onText,
   onModel,
-}: GenerateMarkdownStreamParams): Promise<{ markdown: string; model: string }> {
+}: GenerateMarkdownStreamParams): Promise<GenerateMarkdownResult> {
   const client = new Anthropic({ apiKey });
   const modelsToTry = getModelsToTry();
   let lastError: unknown = null;
@@ -92,6 +111,7 @@ export async function generateMarkdownStream({
     try {
       onModel?.(model);
       let markdown = "";
+      const usage: TokenUsage = { inputTokens: 0, outputTokens: 0 };
       const stream = await client.messages.create({
         model,
         max_tokens: 8192,
@@ -103,7 +123,19 @@ export async function generateMarkdownStream({
       for await (const event of stream as AsyncIterable<{
         type?: string;
         delta?: { type?: string; text?: string };
+        message?: { usage?: { input_tokens?: number; output_tokens?: number } };
+        usage?: { input_tokens?: number; output_tokens?: number };
       }>) {
+        // Billable units arrive as stream metadata: input tokens on
+        // message_start, cumulative output tokens on message_delta.
+        if (event.type === "message_start") {
+          usage.inputTokens = event.message?.usage?.input_tokens ?? usage.inputTokens;
+          continue;
+        }
+        if (event.type === "message_delta") {
+          usage.outputTokens = event.usage?.output_tokens ?? usage.outputTokens;
+          continue;
+        }
         if (event.type !== "content_block_delta") continue;
         if (event.delta?.type !== "text_delta") continue;
         const chunk = event.delta.text ?? "";
@@ -116,7 +148,7 @@ export async function generateMarkdownStream({
       if (!markdown) {
         throw new Error("Model returned no text content.");
       }
-      return { markdown, model };
+      return { markdown, model, usage };
     } catch (err) {
       if (!isModelNotFound(err)) {
         throw err;

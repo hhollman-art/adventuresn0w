@@ -5,6 +5,7 @@ import type { ChangeEvent } from "react";
 import Link from "next/link";
 import {
   filterLibraryEntries,
+  LIBRARY_ORIGIN_LABEL,
   LIBRARY_PROVENANCE_DESCRIPTION,
   LIBRARY_PROVENANCE_LABEL,
   LIBRARY_PROVENANCE_STORAGE,
@@ -88,9 +89,7 @@ function ProvenanceBadge({ provenance }: { provenance: LibraryProvenance }) {
   const tone =
     provenance === "srd"
       ? { border: "var(--accent)", color: "var(--accent)", bg: "rgba(201,162,39,0.12)" }
-      : provenance === "user"
-        ? { border: "var(--border)", color: "var(--text)", bg: "var(--bg)" }
-        : { border: "rgba(120,90,20,0.35)", color: "var(--muted)", bg: "rgba(201,162,39,0.08)" };
+      : { border: "var(--border)", color: "var(--text)", bg: "var(--bg)" };
 
   return (
     <span
@@ -102,6 +101,23 @@ function ProvenanceBadge({ provenance }: { provenance: LibraryProvenance }) {
       }}
     >
       {LIBRARY_PROVENANCE_LABEL[provenance]}
+    </span>
+  );
+}
+
+/** Marks user-tier items that were made in the app rather than brought in. */
+function CreationTag() {
+  return (
+    <span
+      className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+      style={{
+        borderColor: "rgba(120,90,20,0.35)",
+        color: "var(--muted)",
+        background: "rgba(201,162,39,0.08)",
+      }}
+      title="Made in the app — saved once with your imports, in your auto-save folder"
+    >
+      {LIBRARY_ORIGIN_LABEL.creation}
     </span>
   );
 }
@@ -126,9 +142,11 @@ function DataStorageExplainer({
       style={{ borderColor: "var(--border)", background: "var(--bg)" }}
     >
       <p className="text-[var(--muted)]">
-        Three kinds of data live in your library. Only the included SRD rules are
-        hosted by D&amp;D Easy — everything you make or import belongs to you and
-        saves to <strong className="text-[var(--text)]">your auto-save folder</strong>:
+        Two kinds of data live in your library. Only the included SRD rules are
+        hosted by D&amp;D Easy — everything else is yours, saved once whether you
+        imported it or created it in the app (creations just carry a{" "}
+        <strong className="text-[var(--text)]">{LIBRARY_ORIGIN_LABEL.creation}</strong> tag).
+        It all goes to <strong className="text-[var(--text)]">your auto-save folder</strong>:
         a local directory or a cloud-synced folder (OneDrive, Google Drive,
         Dropbox) that you point the app at once. Every change writes{" "}
         <code>{SYNC_FILE_NAME}</code> there automatically. Saving is{" "}
@@ -251,6 +269,7 @@ function LibraryEntryRow({
               {entry.kindLabel}
             </span>
             <ProvenanceBadge provenance={entry.provenance} />
+            {entry.origin === "creation" ? <CreationTag /> : null}
             <span className="font-semibold text-[var(--text)]">{entry.title}</span>
           </span>
           <span className="mt-1 block text-xs text-[var(--muted)]">
@@ -476,9 +495,9 @@ export default function WorkshopLibraryPanel({
             <h2 className="font-display text-base font-bold text-[var(--text)]">Your library</h2>
           ) : null}
           <p className={`text-xs leading-relaxed text-[var(--muted)]${wideLayout ? "" : " mt-1"}`}>
-            <strong className="text-[var(--text)]">Included rules (SRD)</strong> ship with the app.{" "}
-            <strong className="text-[var(--text)]">Your imports</strong> and{" "}
-            <strong className="text-[var(--text)]">your creations</strong> are yours —{" "}
+            <strong className="text-[var(--text)]">Included rules (SRD)</strong> ship with the app.
+            Everything else — imports and creations alike — is{" "}
+            <strong className="text-[var(--text)]">yours</strong>, saved once —{" "}
             {syncStatus.state === "on" ? (
               <>
                 auto-saving to <strong className="text-[var(--text)]">“{syncStatus.folderName}”</strong>.

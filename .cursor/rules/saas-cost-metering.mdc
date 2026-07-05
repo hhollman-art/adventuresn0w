@@ -1,0 +1,25 @@
+---
+description: SaaS principle — meter every AI generation so per-account chargeback is definable
+alwaysApply: true
+---
+
+# SaaS cost metering — every generation is billable
+
+D&D Easy is heading to a **software-as-a-service model for dungeon masters**. Every request that spends provider money (Anthropic text, OpenAI images) must produce a **metered usage event** so cost per account is definable the day billing exists — without retrofitting instrumentation.
+
+## Core principle
+
+- **One metering module**: `src/lib/usageMetering.ts`. All cost events flow through `recordTextGenerationUsage` / `recordImageGenerationUsage` — never ad-hoc `console.log` cost lines in routes.
+- **Raw units are the source of truth.** Events always carry provider, model, and raw units (input/output tokens, image count + size + quality). `estimatedCostUsd` is a convenience computed from a replaceable pricing table (`USAGE_PRICING_JSON` env override); billing recomputes from units, never trusts the estimate.
+- **Chargeback key on every event.** `billingAccountId` is present on every event now (placeholder `"unbilled-local"` / `BILLING_ACCOUNT_ID` env). When accounts arrive, populate it from the authenticated session — the schema and sinks don't change.
+- **Feature attribution.** Every event names its `feature` (`adventure`, `realm`, `characters`, `map-image`, `realm-image`, `prop-image`, …) so per-feature margins are computable. New generation endpoints must add a typed feature name.
+- **Stateless sink.** `emitUsageEvent` is the single swap point — today a structured `[usage]` log line, tomorrow a DB row or metering queue. Keep it fire-and-forget: metering must never fail or slow a generation.
+
+## When adding AI features
+
+1. New paid provider call → record usage in the route (non-stream) or stream helper, on success, with a typed `GenerationFeature`.
+2. Streaming responses must still capture provider usage (Anthropic sends `message_start` / `message_delta` usage events).
+3. Retries/fallbacks: record what was actually consumed (the successful attempt's model; failed paid attempts too if the provider bills them).
+4. Never log prompts or user content in usage events — units and metadata only.
+
+Related principles: `scale-portability` (stateless routes — metering must survive N replicas; per-request events aggregate downstream) and `dm-control-tower` (AI is optional bursts — metering makes each burst's cost visible).
