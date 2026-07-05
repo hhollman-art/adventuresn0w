@@ -21,8 +21,11 @@ import {
   type CiClass,
 } from "@/lib/ciRegistry";
 
-/** Workshop Library browse filters. */
-export type WorkshopLibraryCategory = "all" | "seeds" | "results" | "parties" | "srd";
+/**
+ * Workshop Library browse filters — your saved content only. The SRD rules
+ * browser is a Library feature (a toggleable panel), not a category.
+ */
+export type WorkshopLibraryCategory = "all" | "seeds" | "results" | "parties";
 
 export type LibraryStorageCategory = "seeds" | "results" | "parties";
 
@@ -42,7 +45,6 @@ export const WORKSHOP_LIBRARY_CATEGORY_LABEL: Record<
   seeds: "Seeds",
   results: "Results",
   parties: "Parties",
-  srd: "SRD rules",
 };
 
 export const LIBRARY_PROVENANCE_LABEL: Record<LibraryProvenance, string> = {
@@ -154,7 +156,7 @@ export function filterLibraryEntries(
   entries: LibraryListEntry[],
   category: WorkshopLibraryCategory,
 ): LibraryListEntry[] {
-  if (category === "all" || category === "srd") return entries;
+  if (category === "all") return entries;
   return entries.filter((e) => e.category === category);
 }
 

@@ -12,6 +12,7 @@ import {
   type SavedCharacterRoster,
 } from "@/lib/tabletop/characterRoster";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
+import { autoLinkToActiveCampaign } from "@/lib/campaigns";
 
 /** Starter text so nobody has to know the format (or create a file) up front. */
 const PARTY_TEMPLATE = `# My Party
@@ -146,6 +147,7 @@ export default function AddPartyDialog({ onClose, onSaved }: AddPartyDialogProps
         source: activeSource,
         players: activePlayers,
       });
+      if (list[0]) void autoLinkToActiveCampaign({ partyId: list[0].id });
       scheduleLibrarySnapshot();
       onSaved(
         list,

@@ -16,7 +16,13 @@ import type { SeedKind } from "@/lib/realmSeeds";
  */
 
 /** Management grouping — how the Library organizes and backs up CIs. */
-export type CiCategory = "seeds" | "results" | "parties" | "sessions" | "rules";
+export type CiCategory =
+  | "seeds"
+  | "results"
+  | "parties"
+  | "campaigns"
+  | "sessions"
+  | "rules";
 
 /** Most specific type of a CI: `category.kind`. */
 export type CiClass =
@@ -31,7 +37,9 @@ export type CiClass =
   | "result.maps"
   | "result.props"
   | "party.roster"
+  | "campaign.record"
   | "session.tabletop"
+  | "session.snapshot"
   | "rules.srd-entry";
 
 export type CiDefinition = {
@@ -51,6 +59,7 @@ export const CI_CATEGORY_LABEL: Record<CiCategory, string> = {
   seeds: "Seeds",
   results: "Results",
   parties: "Parties",
+  campaigns: "Campaigns",
   sessions: "Sessions",
   rules: "Rules (SRD)",
 };
@@ -144,10 +153,26 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
     provenance: "user",
     inBackup: true,
   },
+  "campaign.record": {
+    ciClass: "campaign.record",
+    category: "campaigns",
+    label: "Campaign",
+    storageModule: "src/lib/campaigns.ts",
+    provenance: "user",
+    inBackup: true,
+  },
   "session.tabletop": {
     ciClass: "session.tabletop",
     category: "sessions",
     label: "Virtual Table session",
+    storageModule: "src/lib/tabletop/store.ts",
+    provenance: "user",
+    inBackup: false,
+  },
+  "session.snapshot": {
+    ciClass: "session.snapshot",
+    category: "sessions",
+    label: "Shelved campaign table",
     storageModule: "src/lib/tabletop/store.ts",
     provenance: "user",
     inBackup: false,
@@ -184,3 +209,5 @@ export function ciClassForResult(kind: LibraryKind): CiClass {
 }
 
 export const CI_CLASS_FOR_PARTY: CiClass = "party.roster";
+
+export const CI_CLASS_FOR_CAMPAIGN: CiClass = "campaign.record";

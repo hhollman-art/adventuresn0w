@@ -8,6 +8,7 @@ import {
   type SavedCharacterRoster,
 } from "./characterRoster";
 import { newId } from "./session";
+import { autoLinkToActiveCampaign } from "@/lib/campaigns";
 
 export type PartyImportRequest = {
   rosterId: string;
@@ -99,6 +100,7 @@ export async function savePartyFromSession(
     source: "vtt",
     players,
   });
+  if (rosters[0]) void autoLinkToActiveCampaign({ partyId: rosters[0].id });
   return { rosters, roster: rosters[0] ?? null };
 }
 

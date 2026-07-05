@@ -24,6 +24,7 @@ import WorkshopLibraryPanel, {
 import WorkflowTutorialOverlay from "@/features/workshop/WorkflowTutorialOverlay";
 import { isWorkflowTutorialId } from "@/lib/workshop/workflowTutorials";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
+import { autoLinkToActiveCampaign } from "@/lib/campaigns";
 import {
   appendGenerationLibraryItem,
   deleteGenerationLibraryItem,
@@ -860,6 +861,8 @@ export default function Home(props: PageProps<"/">) {
   const [libraryResults, setLibraryResults] = useState<LibraryItem[]>([]);
   const [libraryParties, setLibraryParties] = useState<SavedCharacterRoster[]>([]);
   const [libraryCategory, setLibraryCategory] = useState<WorkshopLibraryCategory>("all");
+  /** Library feature: the read-only SRD reference browser, opened over the list. */
+  const [srdBrowserOpen, setSrdBrowserOpen] = useState(false);
   const [libraryStatus, setLibraryStatus] = useState<string | null>(null);
   const [srdPreviewMarkdown, setSrdPreviewMarkdown] = useState("");
   const [srdPreviewLoading, setSrdPreviewLoading] = useState(false);
@@ -905,6 +908,7 @@ export default function Home(props: PageProps<"/">) {
   }): Promise<string> {
     const autoSaved = await autoSaveGeneratedSeed(params);
     setDdeasySeeds(autoSaved.seeds);
+    void autoLinkToActiveCampaign({ seedId: autoSaved.savedSeedId });
     return autoSaved.savedSeedId;
   }
 
@@ -1062,6 +1066,7 @@ export default function Home(props: PageProps<"/">) {
         markdown,
       });
       setDdeasySeeds(next);
+      if (next[0]) void autoLinkToActiveCampaign({ seedId: next[0].id });
     }
     setSeedEditor(null);
     setSeedEditorError("");
@@ -1185,7 +1190,7 @@ export default function Home(props: PageProps<"/">) {
           setProgressStage("complete");
           const mapSeedMarkdown = buildMapSeedMarkdown(mapForm);
           setMarkdown(mapSeedMarkdown);
-          await appendGenerationLibraryItem({
+          const mapLib = await appendGenerationLibraryItem({
             kind: "maps",
             title: mapForm.locationName.trim() || "Maps",
             markdown: mapSeedMarkdown,
@@ -1193,6 +1198,7 @@ export default function Home(props: PageProps<"/">) {
             imageModel: mapResult.model,
             images: mapResult.images,
           });
+          if (mapLib[0]) void autoLinkToActiveCampaign({ resultId: mapLib[0].id });
           const titleSnap = mapForm.locationName.trim();
           void persistGeneratedSeed({
             kind: "maps",
@@ -1217,7 +1223,7 @@ export default function Home(props: PageProps<"/">) {
           setProgressStage("complete");
           const propSeedMarkdown = buildPropSeedMarkdown(propForm);
           setMarkdown(propSeedMarkdown);
-          await appendGenerationLibraryItem({
+          const propLib = await appendGenerationLibraryItem({
             kind: "props",
             title:
               propForm.title.trim() ||
@@ -1228,6 +1234,7 @@ export default function Home(props: PageProps<"/">) {
             imageModel: propResult.model,
             images: propResult.images,
           });
+          if (propLib[0]) void autoLinkToActiveCampaign({ resultId: propLib[0].id });
           const titleSnap =
             propForm.title.trim() ||
             propForm.description.trim().slice(0, 72);
@@ -1545,6 +1552,7 @@ export default function Home(props: PageProps<"/">) {
           images: recordImages,
         });
         setCurrentResultLibraryId(textLib[0]?.id ?? null);
+        if (textLib[0]) void autoLinkToActiveCampaign({ resultId: textLib[0].id });
         if (mode === "adventure" || mode === "characters") {
           const titleSnap = form.titleHint.trim();
           const briefDescription =
@@ -1716,12 +1724,7 @@ export default function Home(props: PageProps<"/">) {
       : undefined;
 
   useEffect(() => {
-    if (!isLibraryView || libraryCategory !== "srd") {
-      setSrdPreviewMarkdown("");
-      setSrdPreviewLoading(false);
-      return;
-    }
-    if (librarySelection?.kind !== "srd") {
+    if (!isLibraryView || librarySelection?.kind !== "srd") {
       setSrdPreviewMarkdown("");
       setSrdPreviewLoading(false);
       return;
@@ -1750,14 +1753,12 @@ export default function Home(props: PageProps<"/">) {
     return () => {
       cancelled = true;
     };
-  }, [isLibraryView, libraryCategory, librarySelection]);
+  }, [isLibraryView, librarySelection]);
 
   const previewMarkdown =
     isLibraryView
-      ? libraryCategory === "srd"
-        ? librarySelection?.kind === "srd"
-          ? srdPreviewMarkdown
-          : ""
+      ? librarySelection?.kind === "srd"
+        ? srdPreviewMarkdown
         : (viewingSeed?.markdown ??
           viewingResult?.markdown ??
           viewingParty?.markdown ??
@@ -1824,12 +1825,13 @@ export default function Home(props: PageProps<"/">) {
       return;
     }
     try {
-      await saveCharacterRoster({
+      const rosters = await saveCharacterRoster({
         name: parsed.rosterName,
         markdown: md,
         source: "workshop",
         players: parsed.players,
       });
+      if (rosters[0]) void autoLinkToActiveCampaign({ partyId: rosters[0].id });
       setPartySaveMessage(
         `Saved ${parsed.players.length} character${parsed.players.length === 1 ? "" : "s"} as "${parsed.rosterName}". Open the Party library or Virtual Table to load them.`,
       );
@@ -1866,6 +1868,13 @@ export default function Home(props: PageProps<"/">) {
       category={libraryCategory}
       selection={librarySelection}
       statusMessage={libraryStatus}
+      srdOpen={srdBrowserOpen}
+      onSrdOpenChange={(open) => {
+        setSrdBrowserOpen(open);
+        if (!open && librarySelection?.kind === "srd") {
+          setLibrarySelection(null);
+        }
+      }}
       onCategoryChange={setLibraryCategory}
       onSelect={setLibrarySelection}
       onAddSeed={openNewSeedEditor}
@@ -3231,7 +3240,7 @@ export default function Home(props: PageProps<"/">) {
                 <strong className="text-[var(--text)]">{viewingParty.name}</strong> (
                 {viewingParty.players.length} PCs)
               </p>
-            ) : libraryCategory === "srd" && librarySelection?.kind === "srd" ? (
+            ) : librarySelection?.kind === "srd" ? (
               <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
                 Viewing SRD:{" "}
                 <strong className="text-[var(--text)]">{librarySelection.name}</strong>{" "}
@@ -3430,13 +3439,13 @@ export default function Home(props: PageProps<"/">) {
         {previewMarkdown.trim() ? (
           <OutputMarkdownCarousel
             html={
-              isLibraryView && libraryCategory === "srd"
+              isLibraryView && librarySelection?.kind === "srd"
                 ? renderMarkdownToHtml(previewMarkdown, "preview", false)
                 : simpleMarkdownToHtml(previewMarkdown)
             }
           />
         ) : null}
-        {isLibraryView && libraryCategory === "srd" && srdPreviewLoading ? (
+        {isLibraryView && srdPreviewLoading ? (
           <p className="no-print mt-4 text-sm text-[var(--muted)]">Loading SRD entry…</p>
         ) : null}
         <MapImageOutputBlock
@@ -3447,7 +3456,7 @@ export default function Home(props: PageProps<"/">) {
         {isLibraryView && !previewMarkdown.trim() && previewImages.length === 0 ? (
           <div className="library-preview-empty no-print mt-6">
             <p className="text-sm text-[var(--muted)]">
-              {libraryCategory === "srd" ? (
+              {srdBrowserOpen ? (
                 <>
                   Pick a category and entry in{" "}
                   <strong className="text-[var(--text)]">Browse repository</strong> to preview
@@ -3517,7 +3526,11 @@ export default function Home(props: PageProps<"/">) {
         showPicker={showTutorialPicker}
         handlers={{
           onSelectMode: navigateTutorialMode,
-          onLibraryCategory: setLibraryCategory,
+          onLibraryCategory: (cat) => {
+            setSrdBrowserOpen(false);
+            setLibraryCategory(cat);
+          },
+          onOpenSrdBrowser: () => setSrdBrowserOpen(true),
           onOpenSeedEditor: openNewSeedEditor,
         }}
         onWorkflowChange={setTutorialWorkflowId}

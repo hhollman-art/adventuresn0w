@@ -14,8 +14,9 @@ export type TutorialNavigateHandlers = {
     mode: "realm" | "adventure" | "characters" | "maps" | "props" | "library",
   ) => void;
   onLibraryCategory: (
-    category: "all" | "seeds" | "results" | "parties" | "srd",
+    category: "all" | "seeds" | "results" | "parties",
   ) => void;
+  onOpenSrdBrowser: () => void;
   onOpenSeedEditor: () => void;
 };
 
@@ -95,6 +96,10 @@ function runStepAction(action: WorkflowStepAction, handlers: TutorialNavigateHan
     case "library-category":
       handlers.onSelectMode("library");
       handlers.onLibraryCategory(action.category);
+      break;
+    case "library-srd":
+      handlers.onSelectMode("library");
+      handlers.onOpenSrdBrowser();
       break;
     case "open-seed-editor":
       handlers.onSelectMode("library");

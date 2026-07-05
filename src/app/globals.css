@@ -716,6 +716,51 @@ body {
   align-self: center;
 }
 
+/* Active-campaign picker (title bar) — which group's table is open */
+.campaign-switcher {
+  grid-column: 1;
+  justify-self: start;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.campaign-switcher-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.campaign-switcher-select {
+  max-width: 12rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--accent-dim);
+  background: rgba(255, 252, 245, 0.65);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.campaign-switcher-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 639px) {
+  .campaign-switcher {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
+  }
+
+  .campaign-switcher-select {
+    flex: 1 1 auto;
+    max-width: none;
+  }
+}
+
 .title-bar-btn {
   display: inline-flex;
   align-items: center;

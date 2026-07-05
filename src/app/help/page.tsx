@@ -182,6 +182,19 @@ export default function HelpPage() {
           download files.
         </p>
 
+        <SectionHeading>Campaigns — running more than one group</SectionHeading>
+        <p className="mt-3 leading-relaxed text-[var(--text)]/90">
+          If you run several groups, create one <strong>campaign</strong> per group on the
+          Campaigns page. A campaign links that group&apos;s party plus the seeds and results
+          that belong to its story (links are references — the same realm seed can serve two
+          campaigns), and it keeps <strong>its own Virtual Table</strong>. Open a campaign
+          from the title-bar switcher and the map, tokens, fog, and initiative come back
+          exactly as that group left them; the other group&apos;s table is shelved safely.
+          While a campaign is open, the Library can show just its content, and anything new
+          you create links to it automatically. Deleting a campaign only removes the
+          container — the party, seeds, and results stay in your library.
+        </p>
+
         <SectionHeading>Saving, printing, and making booklets</SectionHeading>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-[var(--text)]/90">
           <li>

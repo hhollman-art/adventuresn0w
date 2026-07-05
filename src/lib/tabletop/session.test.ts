@@ -3,6 +3,7 @@ import {
   advanceInitiative,
   clearTabletopSession,
   createDefaultSession,
+  fixPlayer,
   fixSession,
   playerVisibleSession,
   sortInitiative,
@@ -33,7 +34,7 @@ describe("clearTabletopSession", () => {
           imageDataUrl: null,
         },
       ],
-      players: [{ id: "p1", name: "Thera", tokenId: null }],
+      players: [fixPlayer({ id: "p1", name: "Thera" })!],
       fog: { enabled: true, revealed: ["0,0", "1,0"] },
       initiative: {
         entries: [{ id: "e1", name: "Thera", roll: 15, tokenId: null }],

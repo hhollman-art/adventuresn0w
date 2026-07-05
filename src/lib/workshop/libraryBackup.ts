@@ -10,6 +10,8 @@ import {
   importCharacterRosters,
   loadSavedCharacterRosters,
 } from "@/lib/tabletop/characterRoster";
+import type { SavedCampaign } from "@/lib/campaigns";
+import { importCampaigns, loadCampaigns } from "@/lib/campaigns";
 
 /**
  * Library backup file — everything the DM owns, in one JSON document they can
@@ -25,6 +27,8 @@ export type LibraryBackupFile = {
   seeds: SavedRealmSeed[];
   results: LibraryItem[];
   parties: SavedCharacterRoster[];
+  /** Campaign records (id links only — table snapshots stay local). */
+  campaigns: SavedCampaign[];
 };
 
 export const BACKUP_FORMAT = "ddeasy-library-backup";
@@ -34,14 +38,16 @@ export type LibraryBackupCounts = {
   seeds: number;
   results: number;
   parties: number;
+  campaigns: number;
 };
 
 /** Gather every locally stored library item into one serializable document. */
 export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
-  const [seeds, results, parties] = await Promise.all([
+  const [seeds, results, parties, campaigns] = await Promise.all([
     loadRealmSeeds(),
     loadGenerationLibraryItems(),
     loadSavedCharacterRosters(),
+    loadCampaigns(),
   ]);
   return {
     format: BACKUP_FORMAT,
@@ -50,6 +56,7 @@ export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
     seeds,
     results,
     parties,
+    campaigns,
   };
 }
 
@@ -63,7 +70,13 @@ export function suggestedBackupFilename(date: Date = new Date()): string {
 }
 
 export type ParsedBackup =
-  | { ok: true; seeds: unknown[]; results: unknown[]; parties: unknown[] }
+  | {
+      ok: true;
+      seeds: unknown[];
+      results: unknown[];
+      parties: unknown[];
+      campaigns: unknown[];
+    }
   | { ok: false; error: string };
 
 /**
@@ -89,6 +102,8 @@ export function parseLibraryBackup(text: string): ParsedBackup {
     seeds: Array.isArray(o.seeds) ? o.seeds : [],
     results: Array.isArray(o.results) ? o.results : [],
     parties: Array.isArray(o.parties) ? o.parties : [],
+    // Older backups predate campaigns — treat as none.
+    campaigns: Array.isArray(o.campaigns) ? o.campaigns : [],
   };
 }
 
@@ -97,6 +112,7 @@ export type RestoreOutcome = {
   seeds: SavedRealmSeed[];
   results: LibraryItem[];
   parties: SavedCharacterRoster[];
+  campaigns: SavedCampaign[];
 };
 
 /**
@@ -108,19 +124,23 @@ export async function restoreLibraryBackup(parsed: {
   seeds: unknown[];
   results: unknown[];
   parties: unknown[];
+  campaigns: unknown[];
 }): Promise<RestoreOutcome> {
   const seedResult = await importRealmSeeds(parsed.seeds);
   const resultResult = await importGenerationLibraryItems(parsed.results);
   const partyResult = await importCharacterRosters(parsed.parties);
+  const campaignResult = await importCampaigns(parsed.campaigns);
   return {
     counts: {
       seeds: seedResult.added,
       results: resultResult.added,
       parties: partyResult.added,
+      campaigns: campaignResult.added,
     },
     seeds: seedResult.seeds,
     results: resultResult.items,
     parties: partyResult.rosters,
+    campaigns: campaignResult.campaigns,
   };
 }
 
@@ -131,6 +151,8 @@ export function describeRestoreCounts(counts: LibraryBackupCounts): string {
     parts.push(`${counts.results} result${counts.results === 1 ? "" : "s"}`);
   if (counts.parties > 0)
     parts.push(`${counts.parties} part${counts.parties === 1 ? "y" : "ies"}`);
+  if (counts.campaigns > 0)
+    parts.push(`${counts.campaigns} campaign${counts.campaigns === 1 ? "" : "s"}`);
   if (parts.length === 0) {
     return "Backup read, but everything in it is already in your library.";
   }

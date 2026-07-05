@@ -47,6 +47,13 @@ import SeedFilterBar from "@/features/workshop/SeedFilterBar";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
 import SrdLibraryBrowser from "@/features/workshop/SrdLibraryBrowser";
 import type { SrdApiResource } from "@/lib/srd/dnd5eApi";
+import {
+  getActiveCampaignId,
+  getCampaign,
+  onActiveCampaignChanged,
+  onCampaignsChanged,
+  type SavedCampaign,
+} from "@/lib/campaigns";
 
 export type LibraryViewSelection =
   | { kind: "seed"; id: string }
@@ -60,7 +67,6 @@ const CATEGORY_TABS: WorkshopLibraryCategory[] = [
   "seeds",
   "results",
   "parties",
-  "srd",
 ];
 
 type WorkshopLibraryPanelProps = {
@@ -70,6 +76,9 @@ type WorkshopLibraryPanelProps = {
   category: WorkshopLibraryCategory;
   selection: LibraryViewSelection;
   statusMessage: string | null;
+  /** The SRD reference browser is a Library feature, toggled open over the list. */
+  srdOpen: boolean;
+  onSrdOpenChange: (open: boolean) => void;
   onCategoryChange: (category: WorkshopLibraryCategory) => void;
   onSelect: (selection: LibraryViewSelection) => void;
   onAddSeed: () => void;
@@ -329,6 +338,8 @@ export default function WorkshopLibraryPanel({
   category,
   selection,
   statusMessage,
+  srdOpen,
+  onSrdOpenChange,
   onCategoryChange,
   onSelect,
   onAddSeed,
@@ -359,38 +370,86 @@ export default function WorkshopLibraryPanel({
   const [seedTagFilter, setSeedTagFilter] = useState<string | "all">("all");
   const [seedScopeFilter, setSeedScopeFilter] = useState<RealmScopeTag | "all">("all");
 
+  /** Open campaign: when set (and scoping is on) the list shows only its content. */
+  const [activeCampaign, setActiveCampaign] = useState<SavedCampaign | null>(null);
+  const [campaignScope, setCampaignScope] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const refreshCampaign = async () => {
+      const id = getActiveCampaignId();
+      const campaign = id ? await getCampaign(id) : null;
+      if (!cancelled) setActiveCampaign(campaign);
+    };
+    void refreshCampaign();
+    const offActive = onActiveCampaignChanged(() => void refreshCampaign());
+    const offCampaigns = onCampaignsChanged(() => void refreshCampaign());
+    return () => {
+      cancelled = true;
+      offActive();
+      offCampaigns();
+    };
+  }, []);
+
+  const scopedToCampaign = activeCampaign !== null && campaignScope;
+  const campaignSeeds = useMemo(
+    () =>
+      scopedToCampaign
+        ? seeds.filter((s) => activeCampaign.seedIds.includes(s.id))
+        : seeds,
+    [scopedToCampaign, seeds, activeCampaign],
+  );
+  const campaignResults = useMemo(
+    () =>
+      scopedToCampaign
+        ? results.filter((r) => activeCampaign.resultIds.includes(r.id))
+        : results,
+    [scopedToCampaign, results, activeCampaign],
+  );
+  const campaignParties = useMemo(
+    () =>
+      scopedToCampaign
+        ? parties.filter((p) => p.id === activeCampaign.partyId)
+        : parties,
+    [scopedToCampaign, parties, activeCampaign],
+  );
+
   const filteredSeeds = useMemo(
     () =>
-      filterSeeds(seeds, {
+      filterSeeds(campaignSeeds, {
         kindFilter: seedKindFilter,
         tagFilter: seedTagFilter,
         scopeFilter: seedScopeFilter,
       }),
-    [seeds, seedKindFilter, seedTagFilter, seedScopeFilter],
+    [campaignSeeds, seedKindFilter, seedTagFilter, seedScopeFilter],
   );
 
   const entries = useMemo(() => {
     const all = sortLibraryEntries([
       ...filteredSeeds.map(seedToLibraryEntry),
-      ...results.map(resultToLibraryEntry),
-      ...parties.map(partyToLibraryEntry),
+      ...campaignResults.map(resultToLibraryEntry),
+      ...campaignParties.map(partyToLibraryEntry),
     ]);
     return filterLibraryEntries(all, category);
-  }, [filteredSeeds, results, parties, category]);
+  }, [filteredSeeds, campaignResults, campaignParties, category]);
 
   const counts = useMemo(
     () => ({
-      seeds: seeds.length,
-      results: results.length,
-      parties: parties.length,
+      seeds: campaignSeeds.length,
+      results: campaignResults.length,
+      parties: campaignParties.length,
     }),
-    [seeds, results, parties],
+    [campaignSeeds, campaignResults, campaignParties],
   );
 
   const onExportBackup = async () => {
     onStatus(null);
     const backup = await buildLibraryBackup();
-    const total = backup.seeds.length + backup.results.length + backup.parties.length;
+    const total =
+      backup.seeds.length +
+      backup.results.length +
+      backup.parties.length +
+      backup.campaigns.length;
     if (total === 0) {
       onStatus("Nothing to back up yet — your library is empty.");
       return;
@@ -405,7 +464,7 @@ export default function WorkshopLibraryPanel({
     a.click();
     URL.revokeObjectURL(url);
     onStatus(
-      `Backup exported (${backup.seeds.length} seeds, ${backup.results.length} results, ${backup.parties.length} parties). Save it anywhere you like — folder, cloud drive, or repository.`,
+      `Backup exported (${backup.seeds.length} seeds, ${backup.results.length} results, ${backup.parties.length} parties, ${backup.campaigns.length} campaigns). Save it anywhere you like — folder, cloud drive, or repository.`,
     );
   };
 
@@ -520,6 +579,15 @@ export default function WorkshopLibraryPanel({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
+            onClick={() => onSrdOpenChange(!srdOpen)}
+            className={`btn btn-sm${srdOpen ? " btn-accent" : ""}`}
+            aria-pressed={srdOpen}
+            title="Browse the read-only SRD reference that ships with the app"
+          >
+            {srdOpen ? "Close SRD rules" : "Browse SRD rules"}
+          </button>
+          <button
+            type="button"
             onClick={() => setShowAddParty(true)}
             className="btn btn-sm"
           >
@@ -558,6 +626,46 @@ export default function WorkshopLibraryPanel({
         />
       ) : null}
 
+      {activeCampaign ? (
+        <p
+          className="flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-xs"
+          style={{
+            borderColor: "var(--accent-dim)",
+            background: "rgba(201,162,39,0.08)",
+          }}
+        >
+          <span aria-hidden="true">{"\u{1F3F0}"}</span>
+          <span className="text-[var(--muted)]">
+            {campaignScope ? (
+              <>
+                Showing only content in{" "}
+                <strong className="text-[var(--text)]">{activeCampaign.name}</strong> — new
+                creations link to it automatically.
+              </>
+            ) : (
+              <>
+                Showing everything.{" "}
+                <strong className="text-[var(--text)]">{activeCampaign.name}</strong> is still
+                open — new creations link to it.
+              </>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => setCampaignScope((v) => !v)}
+            className="font-semibold text-[var(--accent)] underline"
+          >
+            {campaignScope ? "Show everything" : "Show campaign only"}
+          </button>
+          <Link
+            href="/campaigns"
+            className="font-semibold text-[var(--accent)] underline"
+          >
+            Manage campaigns
+          </Link>
+        </p>
+      ) : null}
+
       <div
         className={wideLayout ? "library-category-tabs" : "panel-tabs"}
         role="tablist"
@@ -567,21 +675,23 @@ export default function WorkshopLibraryPanel({
           const count =
             tab === "all"
               ? counts.seeds + counts.results + counts.parties
-              : tab === "srd"
-                ? null
-                : counts[tab];
+              : counts[tab];
+          const active = !srdOpen && category === tab;
           return (
             <button
               key={tab}
               type="button"
               role="tab"
-              aria-selected={category === tab}
-              onClick={() => onCategoryChange(tab)}
-              className={`panel-tab${category === tab ? " panel-tab-active" : ""}`}
+              aria-selected={active}
+              onClick={() => {
+                onSrdOpenChange(false);
+                onCategoryChange(tab);
+              }}
+              className={`panel-tab${active ? " panel-tab-active" : ""}`}
             >
               <span className="panel-tab-label">
                 {tab === "all" ? "All" : WORKSHOP_LIBRARY_CATEGORY_LABEL[tab]}
-                {count != null ? ` (${count})` : ""}
+                {` (${count})`}
               </span>
             </button>
           );
@@ -601,9 +711,9 @@ export default function WorkshopLibraryPanel({
         </p>
       ) : null}
 
-      {category === "seeds" || category === "all" ? (
+      {!srdOpen && (category === "seeds" || category === "all") ? (
         <SeedFilterBar
-          seeds={seeds}
+          seeds={campaignSeeds}
           kindFilter={seedKindFilter}
           tagFilter={seedTagFilter}
           scopeFilter={seedScopeFilter}
@@ -616,7 +726,7 @@ export default function WorkshopLibraryPanel({
         />
       ) : null}
 
-      {category === "srd" ? (
+      {srdOpen ? (
         <SrdLibraryBrowser
           wideLayout={wideLayout}
           selection={selection}
@@ -624,9 +734,15 @@ export default function WorkshopLibraryPanel({
         />
       ) : entries.length === 0 ? (
         <p className="text-sm text-[var(--muted)]">
-          {category === "all"
-            ? "Nothing saved yet. Generate from any tab, add a party, or add a seed manually."
-            : `No ${WORKSHOP_LIBRARY_CATEGORY_LABEL[category].toLowerCase()} yet.`}
+          {scopedToCampaign
+            ? `Nothing in “${activeCampaign.name}” ${
+                category === "all"
+                  ? "yet"
+                  : `under ${WORKSHOP_LIBRARY_CATEGORY_LABEL[category].toLowerCase()} yet`
+              }. Link items on the Campaigns page, or click “Show everything”.`
+            : category === "all"
+              ? "Nothing saved yet. Generate from any tab, add a party, or add a seed manually."
+              : `No ${WORKSHOP_LIBRARY_CATEGORY_LABEL[category].toLowerCase()} yet.`}
         </p>
       ) : (
         <ul
@@ -687,7 +803,7 @@ export default function WorkshopLibraryPanel({
         </ul>
       )}
 
-      {category !== "srd" && parties.length > 0 ? (
+      {!srdOpen && parties.length > 0 ? (
         <p className="text-[11px] leading-relaxed text-[var(--muted)]">
           Load a party to the{" "}
           <button

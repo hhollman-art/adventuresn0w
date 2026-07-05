@@ -38,11 +38,12 @@ describe("ciRegistry", () => {
     expect(srd.inBackup).toBe(false);
   });
 
-  it("puts every user class except live sessions in the backup", () => {
+  it("puts every user class except table sessions in the backup", () => {
     for (const ciClass of CI_CLASSES) {
       const def = CI_REGISTRY[ciClass];
       if (def.provenance !== "user") continue;
-      if (ciClass === "session.tabletop") {
+      if (def.category === "sessions") {
+        // Live table + shelved campaign tables carry large map images — local only.
         expect(def.inBackup).toBe(false);
       } else {
         expect(def.inBackup).toBe(true);
@@ -53,5 +54,18 @@ describe("ciRegistry", () => {
   it("filters classes by category", () => {
     expect(ciClassesForCategory("seeds")).toHaveLength(5);
     expect(ciClassesForCategory("parties")).toEqual(["party.roster"]);
+    expect(ciClassesForCategory("campaigns")).toEqual(["campaign.record"]);
+    expect(ciClassesForCategory("sessions")).toEqual([
+      "session.tabletop",
+      "session.snapshot",
+    ]);
+  });
+
+  it("registers campaigns as backed-up user containers", () => {
+    const campaign = ciDefinition("campaign.record");
+    expect(campaign.category).toBe("campaigns");
+    expect(campaign.provenance).toBe("user");
+    expect(campaign.inBackup).toBe(true);
+    expect(campaign.storageModule).toBe("src/lib/campaigns.ts");
   });
 });

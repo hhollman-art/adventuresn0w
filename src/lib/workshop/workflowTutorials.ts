@@ -11,6 +11,8 @@ export type TutorialWorkshopMode =
 export type WorkflowStepAction =
   | { type: "mode"; mode: TutorialWorkshopMode }
   | { type: "library-category"; category: WorkshopLibraryCategory }
+  /** Opens the Library's SRD reference browser (a feature, not a category). */
+  | { type: "library-srd" }
   | { type: "open-seed-editor" }
   | { type: "link"; href: string };
 
@@ -153,6 +155,13 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
           "Use one realm seed as your constant bible, then add a new adventure result per session. Maps and props accumulate in the Library; your party saves back from the VTT with HP and gear.",
       },
       {
+        title: "Make it a campaign",
+        body:
+          "On the Campaigns page, click New campaign and name it after this group or arc. While it's open, everything you create links to it automatically, the Library can show just its content, and the campaign keeps its own Virtual Table — so running a second group never disturbs this one's table.",
+        action: { type: "link", href: "/campaigns" },
+        actionLabel: "Open Campaigns",
+      },
+      {
         title: "Create the realm bible seed",
         body:
           "Generate or manually write a region-scale realm. Save it as a named seed in Library → Seeds. Every future session should reference this for consistent geography and factions.",
@@ -212,9 +221,9 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Know what's included (SRD)",
         body:
-          "Open Library → SRD rules to browse the full English SRD 5.2.1 (SRD_CC_v5.2.1): playing the game, classes, spells, monsters, magic items, and more. These are read-only, ship with the app, and never need backing up. Character pickers use the structured index; custom content stays in Notes or your imports.",
-        action: { type: "library-category", category: "srd" },
-        actionLabel: "Library → SRD rules",
+          "In the Library, click Browse SRD rules to open the full English SRD 5.2.1 (SRD_CC_v5.2.1): playing the game, classes, spells, monsters, magic items, and more. These are read-only, ship with the app, and never need backing up. Character pickers use the structured index; custom content stays in Notes or your imports.",
+        action: { type: "library-srd" },
+        actionLabel: "Library → Browse SRD rules",
       },
       {
         title: "Import and own your book content",
@@ -238,9 +247,16 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
         actionLabel: "Library → Results",
       },
       {
+        title: "One campaign per group",
+        body:
+          "Create a campaign on the Campaigns page for each group you run and link its party, seeds, and results. Open a campaign from the title bar and its Virtual Table comes back exactly as that group left it — switching groups shelves one table and restores the other. New creations link to whichever campaign is open.",
+        action: { type: "link", href: "/campaigns" },
+        actionLabel: "Open Campaigns",
+      },
+      {
         title: "Link one party to the campaign",
         body:
-          "Keep a single saved party per group with campaign notes on the Party library page. Load with Link campaign on the VTT so save-back updates the same roster.",
+          "Keep a single saved party per group with campaign notes on the Party library page. Pick it as the campaign's party on the Campaigns page, and load with Link campaign on the VTT so save-back updates the same roster.",
         action: { type: "link", href: "/parties" },
         actionLabel: "Open Party library",
       },
@@ -276,9 +292,9 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Know where the line is",
         body:
-          "Open Library → SRD rules to see the full included SRD 5.2.1 reference under CC BY 4.0. Anything not in that document — subclasses, spells, monsters, and adventures from purchased books — is licensed WotC IP. The app will never add it to the built-in catalogue, and generators won't reproduce it; you enter it yourself as private data.",
-        action: { type: "library-category", category: "srd" },
-        actionLabel: "Library → SRD rules",
+          "In the Library, click Browse SRD rules to see the full included SRD 5.2.1 reference under CC BY 4.0. Anything not in that document — subclasses, spells, monsters, and adventures from purchased books — is licensed WotC IP. The app will never add it to the built-in catalogue, and generators won't reproduce it; you enter it yourself as private data.",
+        action: { type: "library-srd" },
+        actionLabel: "Library → Browse SRD rules",
       },
       {
         title: "Character options: use sheet Notes",
@@ -342,6 +358,13 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
           "Sheets, tokens, grid, dice, and player view live here. Need to add one PC mid-campaign? Load character file (.md) in the Party panel drops a saved sheet onto the table with a token — no need to rebuild the party. Save to party library after sessions to keep HP and gear current; Link campaign for automatic save-back.",
         action: { type: "link", href: "/table" },
         actionLabel: "Open Virtual Table",
+      },
+      {
+        title: "Running more than one group?",
+        body:
+          "Create a campaign per group on the Campaigns page. Each campaign keeps its own Virtual Table — open one from the title-bar switcher and the map, tokens, fog, and initiative come back exactly as that group left them, mid-fight included.",
+        action: { type: "link", href: "/campaigns" },
+        actionLabel: "Open Campaigns",
       },
       {
         title: "Browse before you rebuild",

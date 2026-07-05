@@ -39,6 +39,18 @@ function sampleBackup(): LibraryBackupFile {
       },
     ],
     parties: [],
+    campaigns: [
+      {
+        id: "c1",
+        name: "Thursday group",
+        description: "",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        partyId: null,
+        seedIds: ["s1"],
+        resultIds: ["r1"],
+      },
+    ],
   };
 }
 
@@ -50,6 +62,7 @@ describe("libraryBackup", () => {
     expect(parsed.seeds).toHaveLength(1);
     expect(parsed.results).toHaveLength(1);
     expect(parsed.parties).toHaveLength(0);
+    expect(parsed.campaigns).toHaveLength(1);
   });
 
   it("rejects non-JSON files", () => {
@@ -64,7 +77,13 @@ describe("libraryBackup", () => {
 
   it("tolerates missing category arrays in old/partial backups", () => {
     const parsed = parseLibraryBackup(JSON.stringify({ format: BACKUP_FORMAT }));
-    expect(parsed).toEqual({ ok: true, seeds: [], results: [], parties: [] });
+    expect(parsed).toEqual({
+      ok: true,
+      seeds: [],
+      results: [],
+      parties: [],
+      campaigns: [],
+    });
   });
 
   it("suggests a dated filename", () => {
@@ -74,11 +93,11 @@ describe("libraryBackup", () => {
   });
 
   it("describes restore counts in plain language", () => {
-    expect(describeRestoreCounts({ seeds: 2, results: 1, parties: 1 })).toBe(
-      "Restored 2 seeds, 1 result, 1 party from backup.",
-    );
-    expect(describeRestoreCounts({ seeds: 0, results: 0, parties: 0 })).toBe(
-      "Backup read, but everything in it is already in your library.",
-    );
+    expect(
+      describeRestoreCounts({ seeds: 2, results: 1, parties: 1, campaigns: 1 }),
+    ).toBe("Restored 2 seeds, 1 result, 1 party, 1 campaign from backup.");
+    expect(
+      describeRestoreCounts({ seeds: 0, results: 0, parties: 0, campaigns: 0 }),
+    ).toBe("Backup read, but everything in it is already in your library.");
   });
 });

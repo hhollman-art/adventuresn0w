@@ -50,8 +50,8 @@ export default function LegalPage() {
           >
             {SRD_MANIFEST.srdUrl}
           </a>
-          . The Library <strong>SRD rules</strong> tab browses spells, monsters, classes, equipment,
-          and rules via the{" "}
+          . The Library&rsquo;s <strong>Browse SRD rules</strong> feature covers spells, monsters,
+          classes, equipment, and rules via the{" "}
           <a
             href={SRD_MANIFEST.srdApiSource}
             className="font-semibold text-[var(--accent)] underline"

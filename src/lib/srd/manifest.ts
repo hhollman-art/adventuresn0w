@@ -31,7 +31,7 @@ ${SRD_MANIFEST.appName} is not affiliated with, endorsed, sponsored, or approved
 /** Plain-language content boundaries for the legal page. */
 export const SRD_CONTENT_POLICY = {
   srdTier:
-    "Bundled SRD pickers and the Library SRD tab use CC BY 4.0 reference material only. The SRD rules tab browses spells, monsters, classes, equipment, and rules via the D&D 5e SRD API (2014 SRD). Character pickers use a structured spell/class index from the same SRD lineage. Paywalled book content never ships in the app.",
+    "Bundled SRD pickers and the Library's SRD rules browser use CC BY 4.0 reference material only. The SRD browser (a Library feature) covers spells, monsters, classes, equipment, and rules via the D&D 5e SRD API (2014 SRD). Character pickers use a structured spell/class index from the same SRD lineage. Paywalled book content never ships in the app.",
   userTier:
     "Content from books you purchased (subclasses, spells, or lore not in the SRD) may be typed or imported by you for personal play — including character data you copy from D&D Beyond or upload as a JSON file you saved yourself. That material stays in your browser on this device — not in a shared server library other users can browse. D&D Easy never logs into D&D Beyond or uses your account cookies.",
   aiTier:
