@@ -13,7 +13,6 @@ import {
   resultToLibraryEntry,
   seedToLibraryEntry,
   sortLibraryEntries,
-  srdCatalogueSummary,
   WORKSHOP_LIBRARY_CATEGORY_LABEL,
   type LibraryListEntry,
   type LibraryProvenance,
@@ -39,18 +38,20 @@ import {
   type LibrarySyncStatus,
 } from "@/lib/workshop/librarySync";
 import type { LibraryItem } from "@/lib/generationLibrary";
-import type { SavedRealmSeed } from "@/lib/realmSeeds";
+import type { RealmScopeTag, SavedRealmSeed, SeedKind } from "@/lib/realmSeeds";
 import type { SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
 import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
 import { filterSeeds, seedTagLabel } from "@/lib/seedTags";
-import type { SeedKind } from "@/lib/realmSeeds";
 import SeedFilterBar from "@/features/workshop/SeedFilterBar";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
+import SrdLibraryBrowser from "@/features/workshop/SrdLibraryBrowser";
+import type { SrdApiResource } from "@/lib/srd/dnd5eApi";
 
 export type LibraryViewSelection =
   | { kind: "seed"; id: string }
   | { kind: "result"; id: string }
   | { kind: "party"; id: string }
+  | { kind: "srd"; resource: SrdApiResource; index: string; name: string }
   | null;
 
 const CATEGORY_TABS: WorkshopLibraryCategory[] = [
@@ -321,7 +322,6 @@ export default function WorkshopLibraryPanel({
   onStatus,
   wideLayout = false,
 }: WorkshopLibraryPanelProps) {
-  const srd = srdCatalogueSummary();
   const [showStorageInfo, setShowStorageInfo] = useState(false);
   const [syncStatus, setSyncStatus] = useState<LibrarySyncStatus>({ state: "off" });
 
@@ -338,14 +338,16 @@ export default function WorkshopLibraryPanel({
   const [showAddParty, setShowAddParty] = useState(false);
   const [seedKindFilter, setSeedKindFilter] = useState<SeedKind | "all">("all");
   const [seedTagFilter, setSeedTagFilter] = useState<string | "all">("all");
+  const [seedScopeFilter, setSeedScopeFilter] = useState<RealmScopeTag | "all">("all");
 
   const filteredSeeds = useMemo(
     () =>
       filterSeeds(seeds, {
         kindFilter: seedKindFilter,
         tagFilter: seedTagFilter,
+        scopeFilter: seedScopeFilter,
       }),
-    [seeds, seedKindFilter, seedTagFilter],
+    [seeds, seedKindFilter, seedTagFilter, seedScopeFilter],
   );
 
   const entries = useMemo(() => {
@@ -585,56 +587,22 @@ export default function WorkshopLibraryPanel({
           seeds={seeds}
           kindFilter={seedKindFilter}
           tagFilter={seedTagFilter}
+          scopeFilter={seedScopeFilter}
           onKindFilterChange={setSeedKindFilter}
           onTagFilterChange={setSeedTagFilter}
+          onScopeFilterChange={setSeedScopeFilter}
+          showScopeFilter
           className="rounded-lg border p-2"
           style={{ borderColor: "var(--border)" }}
         />
       ) : null}
 
       {category === "srd" ? (
-        <div
-          className="rounded-lg border p-4 text-sm"
-          style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <ProvenanceBadge provenance="srd" />
-            <span className="font-display font-bold text-[var(--text)]">
-              SRD {srd.version} catalogue
-            </span>
-          </div>
-          <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">
-            Included rules that ship with the app — classes, spells, and ancestries under CC BY
-            4.0. This is the only data D&amp;D Easy hosts; it is read-only and never needs backing
-            up. Material from books you own belongs in party sheets (Notes) or your imports — it is
-            never added here.
-          </p>
-          <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">
-            The full reference opens in the <strong className="text-[var(--text)]">Preview</strong>{" "}
-            panel as a book with a table of contents — use Previous / Next or Contents links to browse
-            sections.
-          </p>
-          <dl className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="rounded-md border p-2" style={{ borderColor: "var(--border)" }}>
-              <dt className="text-[var(--muted)]">Classes</dt>
-              <dd className="font-display text-lg font-bold text-[var(--accent)]">
-                {srd.classCount}
-              </dd>
-            </div>
-            <div className="rounded-md border p-2" style={{ borderColor: "var(--border)" }}>
-              <dt className="text-[var(--muted)]">Spells</dt>
-              <dd className="font-display text-lg font-bold text-[var(--accent)]">
-                {srd.spellCount}
-              </dd>
-            </div>
-            <div className="rounded-md border p-2" style={{ borderColor: "var(--border)" }}>
-              <dt className="text-[var(--muted)]">Ancestries</dt>
-              <dd className="font-display text-lg font-bold text-[var(--accent)]">
-                {srd.ancestryCount}
-              </dd>
-            </div>
-          </dl>
-        </div>
+        <SrdLibraryBrowser
+          wideLayout={wideLayout}
+          selection={selection}
+          onSelect={onSelect}
+        />
       ) : entries.length === 0 ? (
         <p className="text-sm text-[var(--muted)]">
           {category === "all"

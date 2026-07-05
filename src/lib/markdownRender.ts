@@ -112,6 +112,54 @@ function tryParseMarkdownPipeTable(
   };
 }
 
+/** SRD source uses raw HTML tables and `<hr>` — passthrough when safe. */
+function tryParseHtmlBlock(
+  lines: string[],
+  start: number,
+  c: MdClassSet,
+): { html: string; endExclusive: number } | null {
+  const trimmed = lines[start]?.trim() ?? "";
+  if (/^<hr\s*\/?>\s*$/i.test(trimmed)) {
+    return {
+      html: `<hr class="module-md-hr" />`,
+      endExclusive: start + 1,
+    };
+  }
+  if (!/^<table[\s>]/i.test(trimmed)) return null;
+
+  const buf: string[] = [];
+  let depth = 0;
+  for (let j = start; j < lines.length; j++) {
+    const line = lines[j] ?? "";
+    buf.push(line);
+    depth += (line.match(/<table[\s>]/gi) ?? []).length;
+    depth -= (line.match(/<\/table>/gi) ?? []).length;
+    if (depth <= 0 && j > start) {
+      const raw = buf.join("\n").trim();
+      if (/<script\b/i.test(raw)) return null;
+      const withClass = raw.replace(/^<table(\s|>)/i, `<table class="${c.table}"$1`);
+      return {
+        html: `<div class="${c.tableWrap}">${withClass}</div>`,
+        endExclusive: j + 1,
+      };
+    }
+  }
+  return null;
+}
+
+function formatInlineMarkdown(s: string): string {
+  const brTags: string[] = [];
+  let out = s.replace(/<br\s*\/?>/gi, () => {
+    brTags.push("<br />");
+    return `\u0000BR${brTags.length - 1}\u0000`;
+  });
+  out = out
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  return out.replace(/\u0000BR(\d+)\u0000/g, (_, index) => brTags[Number(index)] ?? "");
+}
+
 function elClass(classes: string): string {
   return classes.trim() ? ` class="${classes}"` : "";
 }
@@ -157,7 +205,7 @@ function buildTocNav(
 }
 
 /**
- * Minimal Markdown → HTML: headings (#–####), lists, bold, fenced code, blockquotes, GFM pipe tables.
+ * Minimal Markdown → HTML: headings (#–####), lists, bold, fenced code, blockquotes, GFM pipe tables, and SRD HTML tables.
  * When `paperModuleSheets` is true, `#` through first `##` becomes a cover &lt;header&gt;, then each `##` is a section “sheet” (print page breaks in CSS).
  */
 export function renderMarkdownToHtml(
@@ -215,11 +263,7 @@ export function renderMarkdownToHtml(
     emit(`<pre${elClass(c.pre)}><code>${escaped}</code></pre>`);
   }
 
-  const inlineFmt = (s: string) =>
-    s
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  const inlineFmt = formatInlineMarkdown;
 
   function flushQuote() {
     if (quoteBuf.length === 0) return;
@@ -299,6 +343,13 @@ export function renderMarkdownToHtml(
     const line = lines[i];
     const trimmed = line.trim();
     if (!inFence && quoteBuf.length === 0 && !trimmed.startsWith("```")) {
+      const htmlBlock = tryParseHtmlBlock(lines, i, c);
+      if (htmlBlock) {
+        beginNonQuoteLine();
+        emit(htmlBlock.html);
+        i = htmlBlock.endExclusive - 1;
+        continue;
+      }
       const tbl = tryParseMarkdownPipeTable(lines, i, inlineFmt, c);
       if (tbl) {
         beginNonQuoteLine();

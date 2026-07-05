@@ -149,9 +149,10 @@ export default function HelpPage() {
         </p>
         <ul className="mt-2 list-disc space-y-2 pl-5 leading-relaxed text-[var(--text)]/90">
           <li>
-            <strong>Included rules (SRD)</strong> — classes, spells, and
-            ancestries that ship with the app (CC BY 4.0). This is the only
-            data D&amp;D Easy hosts. It is read-only and never needs backing up.
+            <strong>Included rules (SRD)</strong> — browse spells, monsters, classes,
+            equipment, and rules via the D&amp;D 5e SRD API (2014 SRD, CC BY 4.0).
+            Character pickers use a bundled spell/class index. This is the only rules
+            reference D&amp;D Easy hosts. It is read-only and never needs backing up.
           </li>
           <li>
             <strong>Your imports</strong> — party .md files and notes from books

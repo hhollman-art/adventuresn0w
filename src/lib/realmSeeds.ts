@@ -36,12 +36,83 @@ export function formatSeedTagsInput(tags: readonly string[]): string {
   return tags.join(", ");
 }
 
+/** Fixed scope sub-tags for realm seeds (world → village). */
+export type RealmScopeTag =
+  | "world"
+  | "continent"
+  | "country"
+  | "region"
+  | "city"
+  | "village";
+
+export const REALM_SCOPE_TAGS: readonly RealmScopeTag[] = [
+  "world",
+  "continent",
+  "country",
+  "region",
+  "city",
+  "village",
+];
+
+const REALM_SCOPE_SLUGS = new Set<string>([
+  ...REALM_SCOPE_TAGS,
+  ...REALM_SIZES,
+]);
+
+export function realmScopeTagFromSize(realmSize: RealmSize): RealmScopeTag {
+  return realmSize === "local" ? "village" : realmSize;
+}
+
+export function realmScopeTagLabel(tag: RealmScopeTag): string {
+  const labels: Record<RealmScopeTag, string> = {
+    world: "World",
+    continent: "Continent",
+    country: "Country",
+    region: "Region",
+    city: "City",
+    village: "Village / local",
+  };
+  return labels[tag];
+}
+
+export function isRealmScopeSlug(tag: string): boolean {
+  return REALM_SCOPE_SLUGS.has(tag);
+}
+
+/** Prepend the canonical scope tag and strip legacy size/scope slugs. */
+export function mergeRealmSeedTags(
+  tags: readonly string[] | undefined,
+  kind: SeedKind,
+  realmSize?: RealmSize,
+): string[] {
+  const withoutScope = normalizeSeedTags(tags).filter((t) => !REALM_SCOPE_SLUGS.has(t));
+  if (kind !== "realm" || !realmSize) {
+    return withoutScope;
+  }
+  return normalizeSeedTags([realmScopeTagFromSize(realmSize), ...withoutScope]);
+}
+
+export function seedMatchesRealmScope(
+  seed: SavedRealmSeed,
+  scope: RealmScopeTag,
+): boolean {
+  if (seed.kind !== "realm") return false;
+  const size = seed.realmSize ?? "region";
+  if (realmScopeTagFromSize(size) === scope) return true;
+  const tags = seed.tags ?? [];
+  if (tags.includes(scope)) return true;
+  if (scope === "village" && (tags.includes("local") || size === "local")) {
+    return true;
+  }
+  return false;
+}
+
 export function defaultTagsForGeneratedSeed(params: {
   kind: SeedKind;
   realmSize?: RealmSize;
 }): string[] {
   if (params.kind === "realm" && params.realmSize) {
-    return [params.realmSize];
+    return mergeRealmSeedTags([], params.kind, params.realmSize);
   }
   return [];
 }
@@ -112,7 +183,13 @@ function normalizeSavedSeed(x: unknown): SavedRealmSeed | null {
   // Backward compatibility: seeds saved before kinds existed are realm seeds.
   const kind: SeedKind = isSeedKind(o.kind) ? o.kind : "realm";
   const realmSize = isRealmSize(o.realmSize) ? o.realmSize : undefined;
-  const tags = normalizeSeedTags(o.tags);
+  const realmSizeResolved =
+    kind === "realm" ? (realmSize ?? "region") : undefined;
+  const tags = mergeRealmSeedTags(
+    normalizeSeedTags(o.tags),
+    kind,
+    realmSizeResolved,
+  );
   const base = {
     id: o.id,
     createdAt: o.createdAt,
@@ -123,17 +200,13 @@ function normalizeSavedSeed(x: unknown): SavedRealmSeed | null {
     ...(tags.length > 0 ? { tags } : {}),
     markdown: o.markdown,
   };
-  // Realm seeds must carry a scale; fall back to "region" for legacy rows.
-  if (kind === "realm" && realmSize === undefined) {
+  if (kind === "realm") {
     return {
       ...base,
-      realmSize: "region",
+      realmSize: realmSizeResolved,
     };
   }
-  return {
-    ...base,
-    ...(kind === "realm" ? { realmSize } : {}),
-  };
+  return base;
 }
 
 /**
@@ -179,16 +252,18 @@ export async function appendRealmSeed(params: {
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-  const tags = normalizeSeedTags(
+  const realmSize =
+    params.kind === "realm" ? (params.realmSize ?? "region") : undefined;
+  const tags = mergeRealmSeedTags(
     params.tags ?? defaultTagsForGeneratedSeed(params),
+    params.kind,
+    realmSize,
   );
   const entry: SavedRealmSeed = {
     id,
     createdAt: new Date().toISOString(),
     kind: params.kind,
-    ...(params.kind === "realm"
-      ? { realmSize: params.realmSize ?? "region" }
-      : {}),
+    ...(realmSize ? { realmSize } : {}),
     seedName: params.seedName.trim(),
     titleHint: params.titleHint,
     briefDescription: params.briefDescription,
@@ -217,23 +292,24 @@ export async function updateRealmSeed(
   },
 ): Promise<SavedRealmSeed[]> {
   if (typeof window === "undefined") return [];
-  const tags = normalizeSeedTags(patch.tags);
-  const next = loadSeedsSync().map((s) =>
-    s.id === id
-      ? {
-          ...s,
-          kind: patch.kind,
-          ...(patch.kind === "realm"
-            ? { realmSize: patch.realmSize ?? s.realmSize ?? "region" }
-            : { realmSize: undefined }),
-          seedName: patch.seedName.trim(),
-          titleHint: patch.titleHint,
-          briefDescription: patch.briefDescription,
-          ...(tags.length > 0 ? { tags } : { tags: undefined }),
-          markdown: patch.markdown,
-        }
-      : s,
-  );
+  const next = loadSeedsSync().map((s) => {
+    if (s.id !== id) return s;
+    const realmSize =
+      patch.kind === "realm"
+        ? (patch.realmSize ?? s.realmSize ?? "region")
+        : undefined;
+    const tags = mergeRealmSeedTags(patch.tags, patch.kind, realmSize);
+    return {
+      ...s,
+      kind: patch.kind,
+      ...(realmSize ? { realmSize } : { realmSize: undefined }),
+      seedName: patch.seedName.trim(),
+      titleHint: patch.titleHint,
+      briefDescription: patch.briefDescription,
+      ...(tags.length > 0 ? { tags } : { tags: undefined }),
+      markdown: patch.markdown,
+    };
+  });
   persistSeeds(next);
   return next;
 }

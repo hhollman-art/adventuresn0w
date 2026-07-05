@@ -185,6 +185,65 @@ body {
   }
 }
 
+.srd-button-grid {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.srd-category-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 640px) {
+  .srd-category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.srd-entry-grid {
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  overflow-y: auto;
+  align-content: start;
+  padding-right: 0.15rem;
+}
+
+.srd-grid-btn {
+  display: flex;
+  min-height: 2.75rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  padding: 0.45rem 0.35rem;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.srd-grid-btn:hover {
+  border-color: var(--accent-dim);
+}
+
+.srd-grid-btn-active {
+  border-color: var(--accent);
+  background: rgba(201, 162, 39, 0.1);
+}
+
+.srd-grid-btn-label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.srd-grid-btn-detail {
+  margin-top: 0.15rem;
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
 .library-preview-empty {
   display: flex;
   min-height: 12rem;
@@ -487,6 +546,32 @@ body {
   border: 1px solid var(--border);
   background: rgba(154, 116, 22, 0.07);
   padding: 0.5rem;
+}
+
+/* Mode buttons: themed title + plain-language "what will this make?" hint */
+.workshop-mode-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  min-height: 3.4rem;
+  padding: 0.45rem 0.4rem;
+}
+
+.workshop-mode-btn-title {
+  font-weight: 700;
+}
+
+.workshop-mode-btn-hint {
+  font-size: 0.65rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.workshop-mode-btn.btn-tab-active .workshop-mode-btn-hint {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .panel-tabs {
@@ -797,6 +882,35 @@ textarea:focus::placeholder {
 article.adventure-md .module-glance-table {
   width: 100%;
   border-collapse: collapse;
+}
+
+/* SRD bundled HTML tables (equipment, classes, monsters, spells) */
+article.adventure-md table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+article.adventure-md th,
+article.adventure-md td {
+  border: 1px solid var(--border);
+  padding: 0.38rem 0.55rem;
+  vertical-align: top;
+}
+
+article.adventure-md th {
+  background: rgba(154, 116, 22, 0.1);
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+article.adventure-md td {
+  font-size: 0.8125rem;
+}
+
+article.adventure-md hr.module-md-hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1rem 0;
 }
 
 article.adventure-md .module-glance-th,

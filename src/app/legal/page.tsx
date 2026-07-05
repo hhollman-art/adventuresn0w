@@ -40,7 +40,8 @@ export default function LegalPage() {
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
           {SRD_MANIFEST.appName} uses material from the{" "}
           <strong>System Reference Document {SRD_MANIFEST.version}</strong> (&ldquo;SRD{" "}
-          {SRD_MANIFEST.version}&rdquo;), &copy; {SRD_MANIFEST.copyrightHolder}, available at{" "}
+          {SRD_MANIFEST.version}&rdquo; / {SRD_MANIFEST.documentPdfId}), &copy;{" "}
+          {SRD_MANIFEST.copyrightHolder}, available at{" "}
           <a
             href={SRD_MANIFEST.srdUrl}
             className="font-semibold text-[var(--accent)] underline"
@@ -49,7 +50,17 @@ export default function LegalPage() {
           >
             {SRD_MANIFEST.srdUrl}
           </a>
-          . The bundled spell catalogue is structured from the Open5e API (
+          . The Library <strong>SRD rules</strong> tab browses spells, monsters, classes, equipment,
+          and rules via the{" "}
+          <a
+            href={SRD_MANIFEST.srdApiSource}
+            className="font-semibold text-[var(--accent)] underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            D&amp;D 5e SRD API
+          </a>{" "}
+          (2014 SRD, CC BY 4.0). The spell picker index is structured from the Open5e API (
           <a
             href={SRD_MANIFEST.spellDataSource}
             className="font-semibold text-[var(--accent)] underline"

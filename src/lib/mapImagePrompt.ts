@@ -34,6 +34,44 @@ export type MapImageSize = "1024x1024" | "1536x1024" | "1024x1536";
 
 type MapVariant = "locale" | "battle";
 
+function mapSeedReferenceGridLine(variant: MapVariant, units: MapDistanceUnits): string {
+  return variant === "battle"
+    ? units === "metric"
+      ? "**1.5 m × 1.5 m** tactical scale **without** printed grid lines"
+      : "**5 ft × 5 ft** tactical scale **without** printed grid lines"
+    : "the **locale / world** cartographic rules in this prompt";
+}
+
+/** Canonical seed-source block for map image prompts (exported for tests). */
+export function buildMapSeedReferenceBlock(
+  markdown: string,
+  variant: MapVariant,
+  units: MapDistanceUnits,
+): string {
+  const body = clampImagePromptText(
+    stripRealmMarkdownForImage(markdown.trim()) || markdown.trim(),
+    4000,
+  );
+  if (!body) return "";
+
+  const refGrid = mapSeedReferenceGridLine(variant, units);
+
+  return `
+**PRIMARY CANON — saved seed sources (highest priority):**
+The user attached one or more **saved seeds** from their D&DEasy Library (realm, adventure, characters, maps, or props). Treat these as **authoritative reference** for this map:
+- **Geography, settlements, borders, routes, architecture, faction territories, and scale** come from the seeds **first**.
+- **On-map labels** must prefer names and spatial relationships from the seeds when present.
+- Use ${refGrid} for this map type.
+- Extract only what belongs on **this** plate (locale vs battle zoom)—but **do not** rename, relocate, or replace seed canon to match a vague supplemental brief.
+
+The **Context** fields later in this prompt are **supplemental** (encounter framing, battle layout, tone). If they **conflict** with the seeds, **follow the seeds** unless **Extra notes** explicitly overrides.
+
+---
+${body}
+---
+`.trim();
+}
+
 export function buildMapImagePrompt(
   input: MapImageInput,
   variant: MapVariant,
@@ -118,15 +156,16 @@ ${battleGridSizeLine}
   const extraNotes = clampImagePromptText(input.extraNotes || "(none)", 500);
 
   const refRaw = input.libraryReferenceMarkdown?.trim();
-  const refGrid =
-    variant === "battle"
-      ? units === "metric"
-        ? "**1.5 m × 1.5 m** tactical scale **without** printed grid lines"
-        : "**5 ft × 5 ft** tactical scale **without** printed grid lines"
-      : "the **locale / world** cartographic rules above";
-  const referenceBlock = refRaw
-    ? `\n**Saved library reference (geography and names — align the map when compatible):**\nThe user attached text from this app’s **Library** (a saved realm, adventure, character sheet, or other run). Treat **named places, terrain, routes, architecture, and scale cues** as **authoritative** when they fit this map type. For a **locale / overland** image, favor regional layout and exterior geography; for a **battle** map, zoom to encounter-sensible rooms, chokepoints, or site interiors **without** contradicting names or relationships in the reference, and use ${refGrid}. If the reference implies a broader scope than this single map, **extract** only what belongs on this plate.\n\n---\n${clampImagePromptText(stripRealmMarkdownForImage(refRaw) || refRaw.slice(0, 4000), 4000)}\n---\n`
+  const hasSeedReference = Boolean(refRaw);
+  const referenceBlock = hasSeedReference
+    ? `\n${buildMapSeedReferenceBlock(refRaw!, variant, units)}\n`
     : "";
+  const seedPriorityPreamble = hasSeedReference
+    ? `\n**Seed-first rule:** Saved Library seed sources below outrank the location/context form fields for geography, names, and canon.\n`
+    : "";
+  const contextLabel = hasSeedReference
+    ? "Supplemental brief (encounter framing — defer to seed sources above for place names, layout, and geography):"
+    : "Adventure scene context:";
 
   const battleLook = variant === "battle" ? MAP_BATTLE_NO_GRID_LOOK : MAP_LOCALE_COLOR_ATLAS_LOOK;
 
@@ -147,10 +186,14 @@ ${battleGridSizeLine}
 - Square grid: clearly visible and regular where a grid belongs (helper lines, not a decorative afterthought).`;
 
   return `${IMAGE_PROMPT_SAFETY_PREAMBLE}
-
+${seedPriorityPreamble}${referenceBlock}
 Create ONE fantasy map graphic for tabletop play.${introLine} Balance **usable cartography** (symbols, routes, political lines) with **generous illustrative depth**—avoid **empty** undifferentiated color fields except intentional open ocean or plains.
 
-Prioritize **both** table utility **and** visual richness: coasts, borders, and label text must stay clear; **plain flat emptiness** is **not** the goal.
+Prioritize **both** table utility **and** visual richness: coasts, borders, and label text must stay clear; **plain flat emptiness** is **not** the goal.${
+    hasSeedReference
+      ? " When seed sources are attached, **seed canon wins** over conflicting supplemental brief text."
+      : ""
+  }
 
 ${battleLook}
 
@@ -158,13 +201,12 @@ ${mapTypeLine}
 ${localeWorldBlock}
 ${battleFramingBlock}
 ${mapDistanceUnitsPromptBlock(variant, units)}
-${referenceBlock}
 Context:
 - Location name: ${locationName}
 - Party level band: ${levelRange}
 - Party size: ${partySize}
 - Tone / biome: ${tone}
-- Adventure scene context: ${context}
+- ${contextLabel} ${context}
 - Grid/scale notes: ${gridNotes}
 - Extra notes: ${extraNotes}
 

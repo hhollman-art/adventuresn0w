@@ -1,0 +1,41 @@
+---
+description: Interface principle — design for general-population technical aptitude; fantasy theme must aid usability, not just decorate
+alwaysApply: true
+---
+
+# Approachable interface — anyone can DM
+
+D&D Easy serves imaginative people, **not** technical people. Assume the user has never heard of Markdown, APIs, JSON, or localStorage. Every screen must be usable by someone whose only qualification is wanting to run a game.
+
+## Core principle
+
+- **Design for general-population technical aptitude.** If a control needs prior software knowledge to understand, rewrite it.
+- **Fantasy theme is a usability tool, not wallpaper.** Use familiar tabletop metaphors to *explain* function: the Library is a bookshelf, seeds are story notes, the Virtual Table is the game table. A themed label must make the feature *easier* to guess, never harder.
+
+## Language rules
+
+| Avoid (jargon) | Prefer (plain + themed) |
+|----------------|-------------------------|
+| "Markdown output" | "table-ready pages you can print or copy" |
+| "Seed" (unexplained) | "story notes the generators build from" |
+| "Sync folder / localStorage" | "your auto-save folder — a folder on your computer" |
+| "SRD 5.2.1 catalogue" | "the free official rules included with the app" |
+| "API key missing" | "AI features are off — everything else still works" |
+
+- First mention of a term of art on any screen gets a plain-language gloss.
+- Error messages say what happened and what to do next, in one sentence each. Never surface raw error codes alone.
+
+## Layout & affordance rules
+
+- Every primary action answers "what will happen when I click this?" from its label alone — add a one-line subtitle if the label can't.
+- Empty states teach: say what belongs here and give the first-step button (see `dm-control-tower` — manual path first).
+- Icons are always paired with text; never icon-only for primary navigation.
+- One obvious next step per screen. Progressive disclosure ("Where is my data?"-style expanders) over walls of settings.
+
+## When theming, check
+
+1. Does the metaphor match a real tabletop object or ritual DMs know? (bookshelf, character sheet, battle map, handout)
+2. Would a first-time user guess the function from the themed label alone? If not, keep the theme but add the plain word.
+3. Does decoration (dividers, badges, icons) mark *structure* — sections, tiers, states — or is it noise?
+
+Related principles: `dm-control-tower` (manual-first), `workshop-library` (provenance labels use canonical plain terms).

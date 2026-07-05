@@ -212,7 +212,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Know what's included (SRD)",
         body:
-          "Open Library → SRD rules to see the included classes, spells, and ancestries. These are read-only, ship with the app, and never need backing up. Character sheets and generators use these pickers; custom content stays in Notes or your imports.",
+          "Open Library → SRD rules to browse the full English SRD 5.2.1 (SRD_CC_v5.2.1): playing the game, classes, spells, monsters, magic items, and more. These are read-only, ship with the app, and never need backing up. Character pickers use the structured index; custom content stays in Notes or your imports.",
         action: { type: "library-category", category: "srd" },
         actionLabel: "Library → SRD rules",
       },
@@ -276,7 +276,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Know where the line is",
         body:
-          "Open Library → SRD rules to see what's included with the app: SRD classes, spells, and ancestries under CC BY 4.0. Anything not in that catalogue — subclasses, spells, monsters, and adventures from purchased books — is licensed WotC IP. The app will never add it to the built-in catalogue, and generators won't reproduce it; you enter it yourself as private data.",
+          "Open Library → SRD rules to see the full included SRD 5.2.1 reference under CC BY 4.0. Anything not in that document — subclasses, spells, monsters, and adventures from purchased books — is licensed WotC IP. The app will never add it to the built-in catalogue, and generators won't reproduce it; you enter it yourself as private data.",
         action: { type: "library-category", category: "srd" },
         actionLabel: "Library → SRD rules",
       },

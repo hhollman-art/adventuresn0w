@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   appendRealmSeed,
   loadRealmSeeds,
+  mergeRealmSeedTags,
   type SavedRealmSeed,
 } from "@/lib/realmSeeds";
 
@@ -82,10 +83,10 @@ describe("realmSeeds", () => {
     });
 
     const loaded = await loadRealmSeeds();
-    expect(loaded[0]?.tags).toEqual(["campaign"]);
+    expect(loaded[0]?.tags).toEqual(["city", "campaign"]);
   });
 
-  it("auto-tags realm size when tags are omitted", async () => {
+  it("auto-tags realm scope when tags are omitted", async () => {
     await appendRealmSeed({
       kind: "realm",
       seedName: "Border march",
@@ -97,5 +98,47 @@ describe("realmSeeds", () => {
 
     const loaded = await loadRealmSeeds();
     expect(loaded[0]?.tags).toEqual(["region"]);
+  });
+
+  it("maps local realm size to village scope tag", async () => {
+    await appendRealmSeed({
+      kind: "realm",
+      seedName: "Hollowbrook",
+      realmSize: "local",
+      titleHint: "Hollowbrook",
+      briefDescription: "Hamlet",
+      markdown: "# Hollowbrook",
+    });
+
+    const loaded = await loadRealmSeeds();
+    expect(loaded[0]?.tags).toEqual(["village"]);
+  });
+
+  it("backfills scope tags when loading legacy seeds", async () => {
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: "legacy-1",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          kind: "realm",
+          realmSize: "local",
+          seedName: "Old hamlet",
+          titleHint: "Old hamlet",
+          briefDescription: "Legacy",
+          markdown: "# Old hamlet",
+          tags: ["local", "campaign"],
+        },
+      ]),
+    );
+
+    const loaded = await loadRealmSeeds();
+    expect(loaded[0]?.tags).toEqual(["village", "campaign"]);
+  });
+
+  it("mergeRealmSeedTags strips scope when kind is not realm", () => {
+    expect(mergeRealmSeedTags(["city", "campaign"], "adventure")).toEqual([
+      "campaign",
+    ]);
   });
 });

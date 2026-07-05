@@ -8,8 +8,9 @@ import {
 } from "@/lib/srd";
 
 describe("SRD manifest", () => {
-  it("declares CC BY 4.0 SRD 5.2 lineage", () => {
-    expect(SRD_MANIFEST.version).toBe("5.2");
+  it("declares CC BY 4.0 SRD 5.2.1 lineage", () => {
+    expect(SRD_MANIFEST.version).toBe("5.2.1");
+    expect(SRD_MANIFEST.documentPdfId).toBe("SRD_CC_v5.2.1");
     expect(SRD_MANIFEST.license).toBe("CC-BY-4.0");
     expect(SRD_ATTRIBUTION_SHORT).toContain("Wizards of the Coast");
   });

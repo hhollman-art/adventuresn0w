@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import SeedFilterBar from "@/features/workshop/SeedFilterBar";
 import {
   ddeasySeedOptionLabel,
+  type RealmScopeTag,
   type SavedRealmSeed,
   type SeedKind,
 } from "@/lib/realmSeeds";
@@ -31,7 +32,11 @@ export default function SeedMultiSelect({
 }: SeedMultiSelectProps) {
   const [kindFilter, setKindFilter] = useState<SeedKind | "all">("all");
   const [tagFilter, setTagFilter] = useState<string | "all">("all");
+  const [scopeFilter, setScopeFilter] = useState<RealmScopeTag | "all">("all");
   const relevantKinds = workshopTab ? WORKSHOP_TAB_SEED_KINDS[workshopTab] : undefined;
+  const showScopeFilter =
+    workshopTab === "realm" ||
+    relevantKinds?.includes("realm") === true;
 
   const scopedSeeds = useMemo(
     () =>
@@ -39,8 +44,9 @@ export default function SeedMultiSelect({
         limitToKinds: relevantKinds,
         kindFilter,
         tagFilter,
+        scopeFilter,
       }),
-    [seeds, relevantKinds, kindFilter, tagFilter],
+    [seeds, relevantKinds, kindFilter, tagFilter, scopeFilter],
   );
 
   function toggle(id: string) {
@@ -67,13 +73,16 @@ export default function SeedMultiSelect({
             }
             kindFilter={kindFilter}
             tagFilter={tagFilter}
+            scopeFilter={scopeFilter}
             onKindFilterChange={setKindFilter}
             onTagFilterChange={setTagFilter}
+            onScopeFilterChange={setScopeFilter}
+            showScopeFilter={showScopeFilter}
             kindOptions={relevantKinds}
           />
           {scopedSeeds.length === 0 ? (
             <p className="text-xs text-[var(--muted)]">
-              No seeds match these filters. Try another type or tag.
+              No seeds match these filters. Try another type, scope, or tag.
             </p>
           ) : (
             <ul

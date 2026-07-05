@@ -109,6 +109,75 @@ export const REALM_POLITICS_AT_SCOPE: Record<
     "Local **politics**: the **sheriff, reeve, elder, temple, or manor**; who really decides; **grudges, debts, and alliances** between sites; **overlords, bandits, tax collectors, or outsiders** who can upset the order—tight, table-ready **hooks and leverage points**.",
 };
 
+/** SRD-familiar and common fantasy ancestry tokens for detecting DM-provided race briefs. */
+const REALM_RACE_NAME_TOKENS = [
+  "dragonborn",
+  "dwarf",
+  "dwarves",
+  "dwarven",
+  "elf",
+  "elves",
+  "elven",
+  "gnome",
+  "gnomes",
+  "half-elf",
+  "half-elves",
+  "halfling",
+  "halflings",
+  "half-orc",
+  "half-orcs",
+  "human",
+  "humans",
+  "tiefling",
+  "tieflings",
+  "orc",
+  "orcs",
+  "goblin",
+  "goblins",
+] as const;
+
+const REALM_RACE_TOPIC_RE =
+  /\b(races?|ancestr(y|ies)|species|demographics?|heritage|ethnic(?:ity|ities))\b/i;
+
+const REALM_RACE_CONSTRAINT_RE =
+  /\b(no|without|exclude|excluding|only|mostly|mainly|primarily|majority|dominated\s+by)\b.{0,40}\b(human|humans|elf|elves|dwarf|dwarves|dwarven|tiefling|tieflings|orc|orcs|dragonborn|gnome|gnomes|halfling|halflings|half-elf|half-orc|goblin|goblins)\b/i;
+
+/**
+ * True when the DM's description or extra notes already specify race, ancestry, or
+ * peoples mix — skip default "invent a mix" guidance and honor their brief instead.
+ */
+export function realmDmProvidedRaceSpecifics(
+  description: string,
+  extraNotes: string,
+): boolean {
+  const text = `${description}\n${extraNotes}`.toLowerCase();
+  if (REALM_RACE_TOPIC_RE.test(text)) return true;
+  if (REALM_RACE_CONSTRAINT_RE.test(text)) return true;
+  return REALM_RACE_NAME_TOKENS.some((token) => {
+    const re = new RegExp(`\\b${token.replace(/-/g, "\\-")}\\b`, "i");
+    return re.test(text);
+  });
+}
+
+/** Default: always weave ancestries/peoples into the realm unless the DM briefed otherwise. */
+export const REALM_RACE_MIX_DEFAULT_GUIDE = `
+**Peoples & ancestry (required unless the Brief or Notes above already specify race mix):**
+- **Always** address **who lives here**—ancestral peoples, species mix, and how cultures tie to heritage. Do **not** assume a human-default setting unless the user's Brief or Notes say so.
+- Match **scale**: at **World/Continent**, sketch which ancestries dominate which regions and migration or contact patterns; at **Country/Region**, name major cultural lines and minority enclaves; at **City/Local**, say who actually lives in wards, farms, and ruling circles.
+- Use **original** cultures and traditions (SRD-familiar ancestries are fine as inspiration—Dragonborn, Dwarf, Elf, Gnome, Halfling, Human, Tiefling, and similar—without copying Wizards of the Coast settings).
+- Tie ancestry to **politics, trade, religion, and hooks**—who is favored, excluded, or in conflict—not a dry census.
+- If a **prior realm document** is attached, **carry forward** its peoples mix unless the Brief or Notes override it.
+`.trim();
+
+/** When the DM already named races in Brief or Notes — expand, don't replace. */
+export const REALM_RACE_DM_PROVIDED_GUIDE = `
+**Peoples & ancestry (DM-provided):**
+The user's **Brief** and/or **Notes** already specify race, ancestry, species, or peoples mix. Treat that as **authoritative**—**do not** contradict it or silently substitute a different demographic default.
+- **Expand and detail** what they named: settlements, customs, tensions, and power tied to those peoples.
+- Where the brief is **silent** on a topic (e.g. they named one ancestry but not neighbors), fill gaps **consistently** with what they wrote—do not introduce a conflicting majority mix.
+- If a **prior realm document** is attached, **merge** with the Brief/Notes; on conflict, **follow the Brief/Notes** (same rule as other seed tensions).
+`.trim();
+
 export type RealmInput = {
   realmSize: RealmSize;
   titleHint: string;
@@ -127,6 +196,7 @@ Rules:
 - For **World** and **Continent** especially: stay **broad** on purpose—treat the whole output as a **regional or planetary sketch**, never a catalog of small places. **Cities** are few and principal; **terrain and climate** do most of the work (landforms, belts, how weather and seasons “read” at a glance), without micro-detail.
 - **Always include a dedicated Trade section** (e.g. \`## Trade\` or \`## Trade & economy\`). Its **depth and zoom level must match the chosen size**—world-scale networks for a world, local markets for a local area—never a generic one-size blurb.
 - For **Country, Region, City, or Local** only: **always include a dedicated Politics section** (e.g. \`## Politics\` or \`## Politics & power\`). **Depth must match the chosen size** (kingdom scale vs province vs urban vs local). For **World** or **Continent**, do **not** add a separate Politics heading—sketch power and polities inside **Peoples, cultures, and power structures** and **History** instead.
+- **Peoples & ancestry:** Unless the user's Brief or Notes already specify race mix, **always** weave ancestries and who lives where into **Peoples, cultures, and power structures** (and settlements where relevant)—never a human-default world by omission. When they **do** specify races, treat that as canon and expand it.
 - Include **concrete, usable** elements: place names, tensions, a few entry hooks, travel times only when helpful (relative bands are fine for large scales).
 - Prefer **clarity and usability** over encyclopedic length.
 - **Markdown only** for the main document. No preamble or out-of-universe “As an AI…” text.
@@ -154,6 +224,18 @@ ${body}
 export function buildRealmUserMessage(input: RealmInput): string {
   const { label, detail } = REALM_SIZE_LABEL[input.realmSize];
   const seedRef = realmCreationSeedReferenceBlock(input.realmSeedMarkdown ?? "");
+  const raceMixBlock = realmDmProvidedRaceSpecifics(
+    input.description,
+    input.extraNotes,
+  )
+    ? `
+## Peoples & ancestry
+${REALM_RACE_DM_PROVIDED_GUIDE}
+`
+    : `
+## Peoples & ancestry
+${REALM_RACE_MIX_DEFAULT_GUIDE}
+`;
   const worldContinentBlock =
     input.realmSize === "world" || input.realmSize === "continent"
       ? `
@@ -177,7 +259,7 @@ ${REALM_POLITICS_AT_SCOPE[input.realmSize]}
 
 ## Realm size
 **${label}** — ${detail}
-${worldContinentBlock}${seedRef}## Brief
+${worldContinentBlock}${seedRef}${raceMixBlock}## Brief
 ${input.description.trim() || "No additional brief; use realm size and notes only."}
 
 ## Title or theme (optional)
@@ -195,7 +277,7 @@ Use a logical heading structure, for example (adapt to scale; include Trade; for
 # Title (realm / region name)
 ## Prologue
 ## Geography & climate (as much as fits the chosen size; at World/Continent, emphasize terrain and broad climate before settlement lists)
-## Peoples, cultures, and power structures
+## Peoples, cultures, and power structures (include ancestries and who lives where—see Peoples & ancestry guidance above)
 ${
   input.realmSize === "world" || input.realmSize === "continent"
     ? ""

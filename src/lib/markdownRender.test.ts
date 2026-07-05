@@ -52,4 +52,40 @@ Fight here.
     expect(html).not.toContain("output-document-carousel");
     expect(html).toContain("<h1");
   });
+
+  it("renders SRD-style HTML tables and hr blocks", () => {
+    const md = `## Equipment
+
+<table>
+  <thead>
+    <tr><th>Item</th><th>Cost</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Rope</td><td>1 GP</td></tr>
+  </tbody>
+</table>
+
+#### Traits
+
+<hr>
+
+**_Amphibious._** Can breathe air and water.
+`;
+    const html = renderMarkdownToHtml(md, "preview", true);
+    expect(html).toContain("module-glance-table");
+    expect(html).toContain("<td>Rope</td>");
+    expect(html).not.toContain("&lt;table");
+    expect(html).toContain('class="module-md-hr"');
+  });
+
+  it("preserves line breaks in stat block lines", () => {
+    const html = renderMarkdownToHtml(
+      "## Goblin\n\n**AC** 15 **HP** 7 <br>\n**Speed** 30 ft. <br>\n",
+      "preview",
+      true,
+    );
+    expect(html).toContain("AC</strong> 15");
+    expect(html).toContain("<br />");
+    expect(html).not.toContain("&lt;br");
+  });
 });

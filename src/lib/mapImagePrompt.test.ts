@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMapImagePrompt } from "@/lib/mapImagePrompt";
+import { buildMapImagePrompt, buildMapSeedReferenceBlock } from "@/lib/mapImagePrompt";
 import { defaultBattleGridNotesFallback } from "@/lib/tabletop/gridPresets";
 
 describe("buildMapImagePrompt", () => {
@@ -123,6 +123,32 @@ describe("buildMapImagePrompt", () => {
     expect(p).toContain("human occupies one square");
     expect(p).toContain("bleed to all four edges");
     expect(p).toContain("No title line, banner, or margin text");
+  });
+
+  it("prioritizes attached seed sources over supplemental form context", () => {
+    const p = buildMapImagePrompt(
+      {
+        mapKind: "overland",
+        locationName: "Elsewhere",
+        levelRange: "",
+        partySize: "",
+        tone: "arid",
+        context: "a featureless desert with no settlements",
+        gridNotes: "",
+        extraNotes: "",
+        libraryReferenceMarkdown:
+          "# Ash Coast\n\n## Settlements\n\nCapital **Port Veil** on the eastern bay.",
+      },
+      "locale",
+    );
+    expect(p).toContain("PRIMARY CANON");
+    expect(p).toContain("Seed-first rule");
+    expect(p).toContain("Supplemental brief");
+    expect(p).toContain("Port Veil");
+    expect(p.indexOf("Port Veil")).toBeLessThan(p.indexOf("featureless desert"));
+    expect(buildMapSeedReferenceBlock("# Test realm", "battle", "imperial")).toContain(
+      "PRIMARY CANON",
+    );
   });
 
   it("requires proportionate feature scale on locale maps", () => {

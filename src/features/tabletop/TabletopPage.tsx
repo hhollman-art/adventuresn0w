@@ -211,16 +211,19 @@ export default function TabletopPage() {
           label="Fog"
           checked={session.fog.enabled}
           onChange={(v) => update((s) => ({ ...s, fog: { ...s.fog, enabled: v } }))}
+          title="Fog of war — covers the map so players only see what you reveal"
         />
         <ToggleChip
           label="Grid"
           checked={session.grid.visible}
           onChange={(v) => update((s) => ({ ...s, grid: { ...s.grid, visible: v } }))}
+          title="Show or hide the battle grid squares"
         />
         <ToggleChip
           label="Snap"
           checked={session.grid.snap}
           onChange={(v) => update((s) => ({ ...s, grid: { ...s.grid, snap: v } }))}
+          title="Tokens click into grid squares when you drop them"
         />
 
         <span className="zone-divider" aria-hidden="true" />

@@ -90,7 +90,7 @@ export function SrdClassSubclassFields({
   return (
     <>
       <SrdNamedSelect
-        label="Class (SRD)"
+        label="Class (included rules)"
         value={className}
         options={SRD_CLASS_NAMES}
         onChange={(next) => {
@@ -142,7 +142,8 @@ export function SrdSpellPicker({ className, selectedIds, onChange }: SrdSpellPic
   if (!srdSpellsForClass(className).length) {
     return (
       <p className="text-xs text-[var(--muted)]">
-        This class has no SRD spell list in the bundled catalogue. Add custom spells in Notes.
+        This class has no spell list in the included rules. Add spells from your own books in
+        Notes — they stay on this device.
       </p>
     );
   }
@@ -150,7 +151,7 @@ export function SrdSpellPicker({ className, selectedIds, onChange }: SrdSpellPic
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-bold tracking-wide uppercase">SRD spells</p>
+        <p className="text-xs font-bold tracking-wide uppercase">Spells (included rules)</p>
         <span className="text-[10px] text-[var(--muted)]">{selectedIds.length} selected</span>
       </div>
       <input
@@ -207,7 +208,7 @@ export function SrdSpeciesSelect({
 }) {
   return (
     <SrdNamedSelect
-      label="Species (SRD)"
+      label="Species (included rules)"
       value={value}
       options={SRD_ANCESTRY_NAMES}
       onChange={onChange}

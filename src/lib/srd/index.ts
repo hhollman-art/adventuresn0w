@@ -56,4 +56,18 @@ export const SRD_CATALOGUE: SrdCatalogue = {
   ancestries: SRD_ANCESTRY_ENTRIES,
 };
 
+export { SRD_DOCUMENT_CHAPTERS, SRD_DOCUMENT_PDF_ID } from "./srdDocument.data";
 export { buildSrdRulesMarkdown } from "./srdRulesMarkdown";
+export {
+  DND5E_API_ORIGIN,
+  DND5E_API_VERSION,
+  fetchDnd5eList,
+  fetchDnd5eResource,
+  SRD_API_CATEGORIES,
+  type Dnd5eListItem,
+  type SrdApiResource,
+} from "./dnd5eApi";
+export {
+  dnd5eResourceToMarkdown,
+  SRD_LIBRARY_INTRO_MARKDOWN,
+} from "./dnd5eApiMarkdown";

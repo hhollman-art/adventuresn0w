@@ -9,6 +9,7 @@ import {
   type SavedRealmSeed,
 } from "@/lib/realmSeeds";
 import { SRD_CATALOGUE } from "@/lib/srd";
+import { SRD_API_CATEGORIES } from "@/lib/srd/dnd5eApi";
 import {
   PARTY_SOURCE_LABEL,
   type SavedCharacterRoster,
@@ -110,6 +111,8 @@ export function partyToLibraryEntry(roster: SavedCharacterRoster): LibraryListEn
 
 export type SrdCatalogueSummary = {
   version: string;
+  documentPdfId: string;
+  apiCategoryCount: number;
   classCount: number;
   spellCount: number;
   ancestryCount: number;
@@ -118,6 +121,8 @@ export type SrdCatalogueSummary = {
 export function srdCatalogueSummary(): SrdCatalogueSummary {
   return {
     version: SRD_CATALOGUE.version,
+    documentPdfId: "SRD_CC_v5.2.1",
+    apiCategoryCount: SRD_API_CATEGORIES.length,
     classCount: SRD_CATALOGUE.classes.length,
     spellCount: SRD_CATALOGUE.spells.length,
     ancestryCount: SRD_CATALOGUE.ancestries.length,

@@ -85,6 +85,9 @@ describe("libraryCatalog", () => {
 
   it("reports bundled SRD counts", () => {
     const summary = srdCatalogueSummary();
+    expect(summary.version).toBe("5.2.1");
+    expect(summary.documentPdfId).toBe("SRD_CC_v5.2.1");
+    expect(summary.apiCategoryCount).toBeGreaterThan(0);
     expect(summary.classCount).toBeGreaterThan(0);
     expect(summary.spellCount).toBeGreaterThan(100);
   });

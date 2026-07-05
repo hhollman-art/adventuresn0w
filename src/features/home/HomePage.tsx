@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
@@ -41,6 +41,7 @@ import {
   ddeasySeedOptionLabel,
   formatSeedTagsInput,
   loadRealmSeeds,
+  mergeRealmSeedTags,
   parseSeedTagsInput,
   seedDisplayName,
   suggestedSeedName,
@@ -54,7 +55,9 @@ import type { MapPackKind } from "@/lib/mapImagePrompt";
 import type { MapDistanceUnits } from "@/lib/mapDistanceUnits";
 import type { PropItemCategory } from "@/lib/propImagePrompt";
 import { SrdNamedSelect, SrdSpeciesSelect } from "@/features/ui/SrdPickers";
-import { SRD_CLASS_NAMES, SRD_MANIFEST, buildSrdRulesMarkdown } from "@/lib/srd";
+import { SRD_CLASS_NAMES } from "@/lib/srd";
+import { fetchDnd5eResource } from "@/lib/srd/dnd5eApi";
+import { dnd5eResourceToMarkdown } from "@/lib/srd/dnd5eApiMarkdown";
 import {
   addCharacterSlot,
   defaultCharacterSlots,
@@ -121,6 +124,15 @@ const MODE_TAB_LABEL: Record<GenerateMode, string> = {
   library: "Library",
 };
 
+/** One-line plain-language answer to "what will this make?" under each tab label. */
+const MODE_TAB_HINT: Record<CreationMode, string> = {
+  realm: "Build a world or town",
+  adventure: "Write a night's quest",
+  characters: "Make a ready party",
+  props: "Craft handout images",
+  maps: "Draw travel & battle maps",
+};
+
 /** Decorative tab icons (fantasy theme); hidden from screen readers. */
 const MODE_TAB_ICON: Record<GenerateMode, string> = {
   realm: "\u{1F3F0}", // castle
@@ -131,37 +143,28 @@ const MODE_TAB_ICON: Record<GenerateMode, string> = {
   library: "\u{1F4DC}", // scroll
 };
 
-type PendingRealmSeed = {
-  kind: SeedKind;
-  realmSize?: RealmSize;
-  titleHint: string;
-  briefDescription: string;
-  markdown: string;
-  /** Auto-saved on generation; dialog Save renames this row in place. */
-  savedSeedId: string;
-};
-
 async function autoSaveGeneratedSeed(params: {
   kind: SeedKind;
   realmSize?: RealmSize;
   titleHint: string;
   briefDescription: string;
   markdown: string;
-}): Promise<{ savedSeedId: string; seeds: SavedRealmSeed[]; seedName: string }> {
+}): Promise<{ savedSeedId: string; seeds: SavedRealmSeed[] }> {
   const seedName = suggestedSeedName(
     params.markdown,
     params.titleHint,
     params.kind,
   );
+  const titleHint = params.titleHint.trim() || seedName;
   const seeds = await appendRealmSeed({
     kind: params.kind,
     seedName,
     realmSize: params.realmSize,
-    titleHint: params.titleHint,
+    titleHint,
     briefDescription: params.briefDescription,
     markdown: params.markdown,
   });
-  return { savedSeedId: seeds[0]!.id, seeds, seedName };
+  return { savedSeedId: seeds[0]!.id, seeds };
 }
 
 const MAP_PACK_LABEL: Record<MapFormState["mapKind"], string> = {
@@ -841,11 +844,10 @@ export default function Home(props: PageProps<"/">) {
   const [selectedRealmCreationSeedIds, setSelectedRealmCreationSeedIds] = useState<
     string[]
   >([]);
-  const [pendingRealmSeed, setPendingRealmSeed] = useState<PendingRealmSeed | null>(
-    null,
-  );
-  const [pendingSeedNameDraft, setPendingSeedNameDraft] = useState("");
-  const [seedDialogError, setSeedDialogError] = useState("");
+  /** Id of the seed auto-saved from the latest generation (realm uses seed only, not a duplicate result row). */
+  const [currentGeneratedSeedId, setCurrentGeneratedSeedId] = useState<
+    string | null
+  >(null);
   /** Manual create/edit editor for D&DEasy seeds; null when closed. */
   const [seedEditor, setSeedEditor] = useState<SeedEditorDraft | null>(null);
   const [seedEditorError, setSeedEditorError] = useState("");
@@ -859,6 +861,8 @@ export default function Home(props: PageProps<"/">) {
   const [libraryParties, setLibraryParties] = useState<SavedCharacterRoster[]>([]);
   const [libraryCategory, setLibraryCategory] = useState<WorkshopLibraryCategory>("all");
   const [libraryStatus, setLibraryStatus] = useState<string | null>(null);
+  const [srdPreviewMarkdown, setSrdPreviewMarkdown] = useState("");
+  const [srdPreviewLoading, setSrdPreviewLoading] = useState(false);
   const [partySaveMessage, setPartySaveMessage] = useState<string | null>(null);
   const [tutorialWorkflowId, setTutorialWorkflowId] = useState<string | null>(null);
   const [tutorialStep, setTutorialStep] = useState(0);
@@ -892,24 +896,16 @@ export default function Home(props: PageProps<"/">) {
   }, []);
 
 
-  useEffect(() => {
-    if (pendingRealmSeed) setSeedDialogError("");
-  }, [pendingRealmSeed]);
-
-  async function promptSavedSeed(params: {
+  async function persistGeneratedSeed(params: {
     kind: SeedKind;
     realmSize?: RealmSize;
     titleHint: string;
     briefDescription: string;
     markdown: string;
-  }) {
+  }): Promise<string> {
     const autoSaved = await autoSaveGeneratedSeed(params);
     setDdeasySeeds(autoSaved.seeds);
-    setPendingRealmSeed({
-      ...params,
-      savedSeedId: autoSaved.savedSeedId,
-    });
-    setPendingSeedNameDraft(autoSaved.seedName);
+    return autoSaved.savedSeedId;
   }
 
   // Auto-save: mirror the library to the user's chosen folder after changes.
@@ -1001,6 +997,23 @@ export default function Home(props: PageProps<"/">) {
         markdown: md,
       });
       setLibraryResults(next);
+    } else if (currentGeneratedSeedId) {
+      const seed = ddeasySeeds.find((s) => s.id === currentGeneratedSeedId);
+      if (seed) {
+        const heading = firstHeading(md);
+        const nextName = heading || seed.seedName?.trim() || seed.titleHint.trim();
+        setDdeasySeeds(
+          await updateRealmSeed(currentGeneratedSeedId, {
+            kind: seed.kind,
+            seedName: nextName,
+            realmSize: seed.realmSize,
+            titleHint: seed.titleHint.trim() || nextName,
+            briefDescription: seed.briefDescription,
+            tags: seed.tags,
+            markdown: md,
+          }),
+        );
+      }
     }
     setResultEditor(null);
     setResultEditorError("");
@@ -1019,9 +1032,13 @@ export default function Home(props: PageProps<"/">) {
       return;
     }
     const brief = seedEditor.briefDescription.trim().slice(0, 280);
-    const tags = parseSeedTagsInput(seedEditor.tagsInput);
     const realmSize =
       seedEditor.kind === "realm" ? seedEditor.realmSize : undefined;
+    const tags = mergeRealmSeedTags(
+      parseSeedTagsInput(seedEditor.tagsInput),
+      seedEditor.kind,
+      realmSize,
+    );
     if (seedEditor.id) {
       setDdeasySeeds(
         await updateRealmSeed(seedEditor.id, {
@@ -1140,7 +1157,7 @@ export default function Home(props: PageProps<"/">) {
     if (isLibraryView) return;
     setLoading(true);
     setError(null);
-    setPendingRealmSeed(null);
+    setCurrentGeneratedSeedId(null);
     setCurrentResultLibraryId(null);
     setMarkdown("");
     setModel(null);
@@ -1177,7 +1194,7 @@ export default function Home(props: PageProps<"/">) {
             images: mapResult.images,
           });
           const titleSnap = mapForm.locationName.trim();
-          void promptSavedSeed({
+          void persistGeneratedSeed({
             kind: "maps",
             titleHint: titleSnap,
             briefDescription: [mapForm.tone.trim(), mapForm.context.trim()]
@@ -1214,7 +1231,7 @@ export default function Home(props: PageProps<"/">) {
           const titleSnap =
             propForm.title.trim() ||
             propForm.description.trim().slice(0, 72);
-          void promptSavedSeed({
+          void persistGeneratedSeed({
             kind: "props",
             titleHint: titleSnap,
             briefDescription: propForm.description.trim().slice(0, 400),
@@ -1251,25 +1268,16 @@ export default function Home(props: PageProps<"/">) {
           setModel(streamed.model ?? null);
           const briefDescription = realmForm.description.trim().slice(0, 400);
           const titleSnap = realmForm.titleHint.trim();
-          void promptSavedSeed({
+          const savedSeedId = await persistGeneratedSeed({
             kind: "realm",
             realmSize: realmForm.realmSize,
             titleHint: titleSnap,
             briefDescription,
             markdown: streamed.markdown,
           });
+          setCurrentGeneratedSeedId(savedSeedId);
+          setCurrentResultLibraryId(null);
           setProgressStage("complete");
-          const realmLibTitle =
-            firstHeading(streamed.markdown) ?? (titleSnap || "Realm");
-          const realmLib = await appendGenerationLibraryItem({
-            kind: "realm",
-            title: realmLibTitle,
-            markdown: streamed.markdown,
-            textModel: streamed.model ?? null,
-            imageModel: null,
-            images: [],
-          });
-          setCurrentResultLibraryId(realmLib[0]?.id ?? null);
           setRealmForm(emptyRealmForm);
         } else {
           setError("No generated text returned.");
@@ -1392,12 +1400,20 @@ export default function Home(props: PageProps<"/">) {
           let workflowError: string | null = null;
 
           const mapPayload = mapPayloadForGeneration(mapBase, mapDistanceUnits);
+          const adventureMapSeedRef = combineSavedSeedMarkdown(
+            ddeasySeeds,
+            selectedSourceSeedIds,
+          );
 
           try {
             if (autoGenerateAdventureMap) {
               setProgressStage("map_locale_generating");
               if (scenes.length === 0) {
-                const r = await fetchMapImageResult(mapPayload, undefined, mapDistanceUnits);
+                const r = await fetchMapImageResult(
+                  mapPayload,
+                  adventureMapSeedRef,
+                  mapDistanceUnits,
+                );
                 if (r.error) workflowError = r.error;
                 else {
                   collected.push(...r.images.map((img) => ({ ...img })));
@@ -1409,7 +1425,7 @@ export default function Home(props: PageProps<"/">) {
                     { ...mapBase, mapKind: "overland", context: mapContext },
                     mapDistanceUnits,
                   ),
-                  undefined,
+                  adventureMapSeedRef,
                   mapDistanceUnits,
                 );
                 if (rLocale.error) {
@@ -1447,7 +1463,7 @@ export default function Home(props: PageProps<"/">) {
                             },
                             mapDistanceUnits,
                           ),
-                          undefined,
+                          adventureMapSeedRef,
                           mapDistanceUnits,
                         );
                         if (r.error) {
@@ -1551,7 +1567,7 @@ export default function Home(props: PageProps<"/">) {
                   .filter(Boolean)
                   .join(" · ")
                   .slice(0, 400);
-          void promptSavedSeed({
+          void persistGeneratedSeed({
             kind: mode === "characters" ? "characters" : "adventure",
             titleHint: titleSnap,
             briefDescription,
@@ -1699,17 +1715,53 @@ export default function Home(props: PageProps<"/">) {
       ? libraryParties.find((p) => p.id === librarySelection.id)
       : undefined;
 
-  const viewingSrdRules = isLibraryView && libraryCategory === "srd";
-  const srdRulesMarkdown = useMemo(() => buildSrdRulesMarkdown(), []);
+  useEffect(() => {
+    if (!isLibraryView || libraryCategory !== "srd") {
+      setSrdPreviewMarkdown("");
+      setSrdPreviewLoading(false);
+      return;
+    }
+    if (librarySelection?.kind !== "srd") {
+      setSrdPreviewMarkdown("");
+      setSrdPreviewLoading(false);
+      return;
+    }
+
+    const { resource, index, name } = librarySelection;
+    let cancelled = false;
+    setSrdPreviewLoading(true);
+    setSrdPreviewMarkdown("");
+
+    void fetchDnd5eResource(resource, index)
+      .then((data) => {
+        if (cancelled) return;
+        setSrdPreviewMarkdown(dnd5eResourceToMarkdown(resource, data));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setSrdPreviewMarkdown(
+          `# ${name}\n\nCould not load this SRD entry: ${err instanceof Error ? err.message : "Unknown error"}.`,
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setSrdPreviewLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLibraryView, libraryCategory, librarySelection]);
 
   const previewMarkdown =
     isLibraryView
-      ? (viewingSrdRules
-          ? srdRulesMarkdown
-          : (viewingSeed?.markdown ??
-            viewingResult?.markdown ??
-            viewingParty?.markdown ??
-            ""))
+      ? libraryCategory === "srd"
+        ? librarySelection?.kind === "srd"
+          ? srdPreviewMarkdown
+          : ""
+        : (viewingSeed?.markdown ??
+          viewingResult?.markdown ??
+          viewingParty?.markdown ??
+          "")
       : markdown;
 
   function copyMarkdown() {
@@ -1825,6 +1877,9 @@ export default function Home(props: PageProps<"/">) {
           setLibrarySelection(null);
         }
         removeSeedFromAllSelections(id);
+        if (currentGeneratedSeedId === id) {
+          setCurrentGeneratedSeedId(null);
+        }
       }}
       onDeleteResult={async (id) => {
         const next = await deleteGenerationLibraryItem(id);
@@ -1858,90 +1913,6 @@ export default function Home(props: PageProps<"/">) {
           : "gap-8 lg:flex-row lg:gap-10"
       }`}
     >
-      {pendingRealmSeed ? (
-        <div
-          className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="realm-seed-name-title"
-        >
-          <div
-            className="w-full max-w-md rounded-xl border p-6 shadow-lg"
-            style={{
-              background: "var(--surface)",
-              borderColor: "var(--border)",
-            }}
-          >
-            <h2
-              id="realm-seed-name-title"
-              className="text-lg font-semibold text-[var(--text)]"
-            >
-              Name your D&DEasy seed
-            </h2>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              This{" "}
-              {SEED_KIND_LABEL[pendingRealmSeed.kind].toLowerCase()} is already
-              saved in the Library tab. Confirm or edit the name below, or choose
-              Done to keep the suggested name.
-            </p>
-            <label className="mt-4 flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-[var(--muted)]">Seed name</span>
-              <input
-                value={pendingSeedNameDraft}
-                onChange={(e) => {
-                  setSeedDialogError("");
-                  setPendingSeedNameDraft(e.target.value);
-                }}
-                className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
-                style={{ borderColor: "var(--border)" }}
-                placeholder="e.g. Ash Covenant coast — player-facing name"
-                autoFocus
-              />
-            </label>
-            {seedDialogError ? (
-              <p className="mt-2 text-sm text-red-500">{seedDialogError}</p>
-            ) : null}
-            <div className="mt-6 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={async () => {
-                  const name = pendingSeedNameDraft.trim();
-                  if (!name) {
-                    setSeedDialogError("Enter a name, or choose Done.");
-                    return;
-                  }
-                  setDdeasySeeds(
-                    await updateRealmSeed(pendingRealmSeed.savedSeedId, {
-                      kind: pendingRealmSeed.kind,
-                      seedName: name,
-                      realmSize: pendingRealmSeed.realmSize,
-                      titleHint: pendingRealmSeed.titleHint,
-                      briefDescription: pendingRealmSeed.briefDescription,
-                      markdown: pendingRealmSeed.markdown,
-                    }),
-                  );
-                  setPendingRealmSeed(null);
-                }}
-                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition enabled:hover:opacity-90"
-                style={{ background: "var(--accent)" }}
-              >
-                Save name
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSeedDialogError("");
-                  setPendingRealmSeed(null);
-                }}
-                className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--bg)]"
-                style={{ borderColor: "var(--border)" }}
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
       {seedEditor ? (
         <div
           className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8"
@@ -1965,9 +1936,10 @@ export default function Home(props: PageProps<"/">) {
                 : "Add seed manually"}
             </h2>
             <p className="mt-2 text-sm text-[var(--muted)]">
-              Type or paste content for any generator tab. Seeds ground future
-              realms, adventures, characters, maps, and props. Markdown is
-              supported.
+              Seeds are story notes the generators build from. Type or paste
+              anything — places, people, plots — and future realms, adventures,
+              characters, maps, and props will stay true to them. Plain text or
+              Markdown formatting both work.
             </p>
             <label className="mt-4 flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-[var(--muted)]">Seed type</span>
@@ -2010,7 +1982,17 @@ export default function Home(props: PageProps<"/">) {
                   value={seedEditor.realmSize}
                   onChange={(e) => {
                     const realmSize = e.target.value as RealmSize;
-                    setSeedEditor((d) => (d ? { ...d, realmSize } : d));
+                    setSeedEditor((d) => {
+                      if (!d) return d;
+                      const tagsInput = formatSeedTagsInput(
+                        mergeRealmSeedTags(
+                          parseSeedTagsInput(d.tagsInput),
+                          "realm",
+                          realmSize,
+                        ),
+                      );
+                      return { ...d, realmSize, tagsInput };
+                    });
                   }}
                   className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
                   style={{ borderColor: "var(--border)" }}
@@ -2046,7 +2028,8 @@ export default function Home(props: PageProps<"/">) {
               <span className="font-medium text-[var(--muted)]">Tags (optional)</span>
               <span className="text-xs text-[var(--muted)]">
                 Comma-separated labels to filter seeds in the Library and on workshop
-                tabs — e.g. campaign, one-shot, city.
+                tabs — e.g. campaign, one-shot, faction. Realm scope (world, city,
+                village, …) is set automatically from realm size above.
               </span>
               <input
                 value={seedEditor.tagsInput}
@@ -2149,13 +2132,13 @@ export default function Home(props: PageProps<"/">) {
               Edit generated text
             </h2>
             <p className="mt-2 text-sm text-[var(--muted)]">
-              Revise the Markdown of this result. Edits update the preview and
-              your copy / download / print exports, and are saved with the
-              auto-saved copy in this browser.
+              Rewrite any part of this result in your own words. Edits update
+              the preview and everything you copy, download, or print, and are
+              kept with the saved copy in your library.
             </p>
             <label className="mt-4 flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-[var(--muted)]">
-                Content (Markdown)
+                Content (plain text or Markdown)
               </span>
               <textarea
                 value={resultEditor.markdown}
@@ -2243,12 +2226,17 @@ export default function Home(props: PageProps<"/">) {
                         role="tab"
                         aria-selected={selected}
                         onClick={() => selectMode(tabId)}
-                        className={`btn btn-tab w-full text-center leading-tight${
+                        className={`btn btn-tab workshop-mode-btn w-full text-center leading-tight${
                           selected ? " btn-tab-active" : ""
                         }`}
                       >
-                        <span aria-hidden="true">{MODE_TAB_ICON[tabId]} </span>
-                        {MODE_TAB_LABEL[tabId]}
+                        <span className="workshop-mode-btn-title">
+                          <span aria-hidden="true">{MODE_TAB_ICON[tabId]} </span>
+                          {MODE_TAB_LABEL[tabId]}
+                        </span>
+                        <span className="workshop-mode-btn-hint">
+                          {MODE_TAB_HINT[tabId]}
+                        </span>
                       </button>
                     );
                   })}
@@ -2289,14 +2277,14 @@ export default function Home(props: PageProps<"/">) {
         {!isLibraryView ? (
         <p className="mt-2 text-sm text-[var(--muted)]">
           {mode === "realm"
-              ? "Choose the scale of the place (from a whole world down to a local cluster), then describe what you want. Claude returns table-ready setting Markdown—original, not WotC copy."
+              ? "Pick how big the place is — a whole world down to a single village — then describe it in your own words. You get table-ready pages you can read, print, or edit. Everything is original to your game."
               : mode === "adventure"
-                ? "Pick a length: short session or one-nighter. Original and SRD-aware—not official WotC content."
+                ? "Pick a length — a short session or a full one-nighter — and describe the story you want. You get a ready-to-run quest, original to your game."
                 : mode === "characters"
-                  ? "Claude builds a ready-to-play party: stats, gear, and hooks. SRD-open options only."
+                  ? "Get a ready-to-play party: stats, gear, and story hooks for each hero, built from the free rules included with the app."
                   : mode === "props"
-                    ? "Build handout images: paper props, potions, arms and armor, tools, and more. Pick an item type, describe it, generate—no adventure required."
-                    : "Generate **full-color** locale / overland maps (atlas-style: cities, routes, clear water) and **grid-free** battle maps for the Virtual Table with OpenAI—top-down, not scenic illustrations."}
+                    ? "Make handout images to show your players: letters, potions, weapons, tools, and more. Pick an item type, describe it, and craft it — no adventure required."
+                    : "Draw full-color travel maps (cities, roads, coastlines) and battle maps ready for the Virtual Table — top-down views made for play, not scenic art."}
         </p>
         ) : null}
 
@@ -2306,7 +2294,7 @@ export default function Home(props: PageProps<"/">) {
             <>
               <fieldset className="flex flex-col gap-2">
                 <legend className="text-sm font-medium text-[var(--muted)]">
-                  Map pack type
+                  What kind of maps?
                 </legend>
                 <div
                   className="flex flex-col gap-2 rounded-lg border p-2 text-xs"
@@ -2317,17 +2305,17 @@ export default function Home(props: PageProps<"/">) {
                       {
                         id: "overland" as const,
                         label: "Locale / overland",
-                        hint: "Travel, regions, sites",
+                        hint: "Bird's-eye travel views: regions, roads, sites",
                       },
                       {
                         id: "battle" as const,
                         label: "Battle maps",
-                        hint: "Tactical image arenas",
+                        hint: "Top-down fight scenes for the table",
                       },
                       {
                         id: "both" as const,
                         label: "Both",
-                        hint: "Overview + fights",
+                        hint: "One overview plus fight maps",
                       },
                     ] as const
                   ).map((opt) => (
@@ -2367,6 +2355,15 @@ export default function Home(props: PageProps<"/">) {
                   ))}
                 </div>
               </fieldset>
+              <SeedMultiSelect
+                label="Your saved seeds (recommended)"
+                seeds={ddeasySeeds}
+                selectedIds={mapLibraryReferenceIds}
+                onChange={setMapLibraryReferenceIds}
+                workshopTab="maps"
+                emptyHint="Save a realm or adventure first — it will appear here as a source to draw from."
+                description="Seeds are your saved story notes. Pick one or more and the map follows their places and names first; the scene notes below just add detail."
+              />
               <fieldset
                 className="flex flex-col gap-2 rounded-lg border p-3 text-sm"
                 style={{ borderColor: "var(--border)" }}
@@ -2408,15 +2405,6 @@ export default function Home(props: PageProps<"/">) {
                   onCustomSize={(cols, rows) => applyBattleGridSize(cols, rows)}
                 />
               )}
-              <SeedMultiSelect
-                label="Library references"
-                seeds={ddeasySeeds}
-                selectedIds={mapLibraryReferenceIds}
-                onChange={setMapLibraryReferenceIds}
-                workshopTab="maps"
-                emptyHint="Add seeds in the Library tab first."
-                description="Optional: pick one or more saved seeds so geography and names from those documents guide the map. Your scene context still applies."
-              />
               <Field
                 label="Location or region name (optional)"
                 value={mapForm.locationName}
@@ -2438,7 +2426,7 @@ export default function Home(props: PageProps<"/">) {
                 />
               </div>
               <Field
-                label="Tone / biome (optional)"
+                label="Mood / terrain (optional)"
                 value={mapForm.tone}
                 onChange={(v) => setMapForm((f) => ({ ...f, tone: v }))}
                 placeholder={MAP_SAMPLE_TONE_PLACEHOLDER}
@@ -2448,7 +2436,9 @@ export default function Home(props: PageProps<"/">) {
                   Scene or adventure context
                 </span>
                 <span className="text-xs text-[var(--muted)]">
-                  Locations, encounter spaces, and names you want on the map. Stronger briefs yield clearer maps.
+                  {mapLibraryReferenceIds.length > 0
+                    ? "Encounter layout and extra labels not already in your seed sources. Geography and place names defer to the seeds above."
+                    : "Locations, encounter spaces, and names you want on the map. Attach seed sources above when you have a saved realm or adventure."}
                 </span>
                 <textarea
                   value={mapForm.context}
@@ -2472,9 +2462,9 @@ export default function Home(props: PageProps<"/">) {
                     }))
                   }
                   options={[
-                    { value: "1536x1024", label: "Landscape (1536x1024)" },
-                    { value: "1024x1024", label: "Square (1024x1024)" },
-                    { value: "1024x1536", label: "Portrait (1024x1536)" },
+                    { value: "1536x1024", label: "Wide — landscape" },
+                    { value: "1024x1024", label: "Square" },
+                    { value: "1024x1536", label: "Tall — portrait" },
                   ]}
                 />
                 <SelectField
@@ -2544,7 +2534,8 @@ export default function Home(props: PageProps<"/">) {
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="font-medium text-[var(--text)]">Description</span>
                 <span className="text-xs text-[var(--muted)]">
-                  What it looks like, materials, color, and any in-world text or marks. Be specific—the image model follows this.
+                  What it looks like, materials, color, and any in-world text or marks. Be
+                  specific — the picture follows your words closely.
                 </span>
                 <textarea
                   value={propForm.description}
@@ -2589,7 +2580,7 @@ export default function Home(props: PageProps<"/">) {
                   rows={2}
                   className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
                   style={{ borderColor: "var(--border)" }}
-                  placeholder="Anything else for the image model (e.g. no gore, keep text legible)"
+                  placeholder="Anything else the picture should respect (e.g. no gore, keep text readable)"
                 />
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -2603,9 +2594,9 @@ export default function Home(props: PageProps<"/">) {
                     }))
                   }
                   options={[
-                    { value: "1024x1536", label: "Portrait (1024×1536)" },
-                    { value: "1536x1024", label: "Landscape (1536×1024)" },
-                    { value: "1024x1024", label: "Square (1024×1024)" },
+                    { value: "1024x1536", label: "Tall — portrait" },
+                    { value: "1536x1024", label: "Wide — landscape" },
+                    { value: "1024x1024", label: "Square" },
                   ]}
                 />
                 <SelectField
@@ -2677,13 +2668,13 @@ export default function Home(props: PageProps<"/">) {
                 style={{ borderColor: "var(--border)" }}
               >
                 <SeedMultiSelect
-                  label="D&DEasy seeds (optional)"
+                  label="Your saved seeds (optional)"
                   seeds={ddeasySeeds}
                   selectedIds={selectedRealmCreationSeedIds}
                   onChange={setSelectedRealmCreationSeedIds}
                   workshopTab="realm"
-                  emptyHint="Generate a realm or adventure first; it is saved automatically."
-                  description="Pick one or more saved seeds to stay consistent with their geography and lore, or to zoom or expand—the realm size you chose above and your description still drive this run."
+                  emptyHint="Generate a realm or adventure first; it saves itself here automatically."
+                  description="Seeds are your saved story notes. Pick one or more to stay consistent with their places and lore, or to zoom in or expand — the size and description you set here still lead."
                 />
                 <p className="text-xs text-[var(--muted)]">
                   Add or edit seeds by hand in the{" "}
@@ -2705,7 +2696,9 @@ export default function Home(props: PageProps<"/">) {
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="font-medium text-[var(--text)]">Describe what you want</span>
                 <span className="text-xs text-[var(--muted)]">
-                  Tone, geography, who holds power, conflicts, and what you need to run at the table. Required.
+                  Tone, geography, who holds power, conflicts, and what you need to run at the
+                  table. Ancestry and peoples mix are woven in automatically unless you specify
+                  races in this box or extra notes. Required.
                 </span>
                 <textarea
                   value={realmForm.description}
@@ -2728,7 +2721,7 @@ export default function Home(props: PageProps<"/">) {
                   rows={3}
                   className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
                   style={{ borderColor: "var(--border)" }}
-                  placeholder="Constraints, inspirations to avoid, safety tools, level band…"
+                  placeholder="Constraints, inspirations to avoid, safety tools, level band, or specific races/ancestries…"
                 />
               </label>
               <div
@@ -2736,8 +2729,10 @@ export default function Home(props: PageProps<"/">) {
                 style={{ borderColor: "var(--border)", background: "var(--bg)" }}
               >
                 <p className="text-xs leading-relaxed text-[var(--muted)]">
-                  Realm generation produces table-ready Markdown only. For overland or
-                  locale map images, open the{" "}
+                  Your realm arrives as table-ready pages and{" "}
+                  <strong className="text-[var(--text)]">saves itself as a seed</strong>{" "}
+                  in the Library — named from your working title, and you can rename
+                  it there anytime. For travel or locale map images, open the{" "}
                   <button
                     type="button"
                     onClick={() => selectMode("maps")}
@@ -2815,13 +2810,13 @@ export default function Home(props: PageProps<"/">) {
               style={{ borderColor: "var(--border)" }}
             >
               <SeedMultiSelect
-                label="D&DEasy seeds"
+                label="Your saved seeds (optional)"
                 seeds={ddeasySeeds}
                 selectedIds={selectedSourceSeedIds}
                 onChange={setSelectedSourceSeedIds}
                 workshopTab="adventure"
-                emptyHint="Generate a realm or adventure first; it is saved automatically."
-                description="Saved seeds can anchor adventure geography, factions, and lore. Your adventure brief below still controls plot, level band, and tone."
+                emptyHint="Generate a realm or adventure first; it saves itself here automatically."
+                description="Seeds are your saved story notes. Pick one or more to anchor the adventure's places, factions, and lore — the details you fill in below still control plot, levels, and tone."
               />
               <p className="text-xs text-[var(--muted)]">
                 Add or edit seeds by hand in the{" "}
@@ -2841,13 +2836,13 @@ export default function Home(props: PageProps<"/">) {
               style={{ borderColor: "var(--border)" }}
             >
               <SeedMultiSelect
-                label="D&DEasy seeds (source material)"
+                label="Your saved seeds (optional)"
                 seeds={ddeasySeeds}
                 selectedIds={selectedSourceSeedIds}
                 onChange={setSelectedSourceSeedIds}
                 workshopTab="characters"
                 emptyHint="Save a realm or adventure seed in the Library first."
-                description="Optional saved seeds (realm, adventure, or other prep) ground party backstories, faction ties, and world flavor. Class, race, level, and party concept fields below still apply."
+                description="Seeds are your saved story notes. Pick one or more to ground the party's backstories, faction ties, and world flavor — the class, race, and concept fields below still apply."
               />
               <p className="text-xs text-[var(--muted)]">
                 Manage seeds in the{" "}
@@ -3057,9 +3052,10 @@ export default function Home(props: PageProps<"/">) {
                     Party members ({characterSlots.length})
                   </legend>
                   <p className="text-xs text-[var(--muted)]">
-                    SRD-open options only. Leave <strong className="text-[var(--text)]">Any</strong>{" "}
-                    on a slot to let the AI pick a complementary build. Add or remove members below
-                    (up to {MAX_PARTY_SIZE}).
+                    Built from the free rules included with the app. Leave{" "}
+                    <strong className="text-[var(--text)]">Any</strong> on a slot to let the AI
+                    pick a hero that rounds out the party. Add or remove members below (up to{" "}
+                    {MAX_PARTY_SIZE}).
                   </p>
                   <div className="flex flex-col gap-2">
                     {characterSlots.map((slot, index) => (
@@ -3090,7 +3086,7 @@ export default function Home(props: PageProps<"/">) {
                         </div>
                         <div className="grid grid-cols-1 gap-2">
                           <SrdNamedSelect
-                            label="Class (SRD)"
+                            label="Class (included rules)"
                             value={slot.className}
                             emptyLabel="Any — AI chooses"
                             options={SRD_CLASS_NAMES}
@@ -3235,9 +3231,10 @@ export default function Home(props: PageProps<"/">) {
                 <strong className="text-[var(--text)]">{viewingParty.name}</strong> (
                 {viewingParty.players.length} PCs)
               </p>
-            ) : viewingSrdRules ? (
+            ) : libraryCategory === "srd" && librarySelection?.kind === "srd" ? (
               <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
-                Viewing SRD {SRD_MANIFEST.version} reference{" "}
+                Viewing SRD:{" "}
+                <strong className="text-[var(--text)]">{librarySelection.name}</strong>{" "}
                 <strong className="text-[var(--text)]">(read-only)</strong>
               </p>
             ) : null}
@@ -3399,17 +3396,17 @@ export default function Home(props: PageProps<"/">) {
         ) : null}
         {previewMarkdown.trim() ? (
           <p className="no-print mt-2 max-w-xl text-xs leading-relaxed text-[var(--muted)]">
-            Tip: use <strong className="text-[var(--text)]/80">Print</strong> above for markdown and
-            map images together. For long docs, export <strong className="text-[var(--text)]/80">.md</strong>{" "}
-            (Obsidian / VS Code) or <strong className="text-[var(--text)]/80">.html</strong> and use{" "}
-            <strong className="text-[var(--text)]/80">Print → Save as PDF</strong>.{" "}
+            Tip: use <strong className="text-[var(--text)]/80">Print</strong> above to get text and
+            map images together (choose &ldquo;Save as PDF&rdquo; in the print window). You can also
+            export as <strong className="text-[var(--text)]/80">.md</strong> or{" "}
+            <strong className="text-[var(--text)]/80">.html</strong> files for notes apps.{" "}
             {outputLayoutKind === "maps" && previewSectionLayout
-              ? "Use Previous / Next to move through Contents and each section; scroll vertically inside a section. Download locale and battle images as PNG for VTTs or handouts."
+              ? "Use Previous / Next to page through the document. Map images download as PNG for virtual tabletops or handouts."
               : outputLayoutKind === "maps"
-                ? "You can download locale and battle images as PNG for VTTs or handouts."
+                ? "Map images download as PNG for virtual tabletops or handouts."
                 : previewSectionLayout
-                  ? "Use Previous / Next to move through Contents and each section; scroll vertically inside a section to read. Use Print or export .html / .md for a full vertical document."
-                  : "You can also paste Markdown into Google Docs / Word."}
+                  ? "Use Previous / Next to page through the document, and scroll inside a page to read."
+                  : "You can also copy the text straight into Google Docs or Word."}
           </p>
         ) : null}
 
@@ -3431,7 +3428,16 @@ export default function Home(props: PageProps<"/">) {
         ) : null}
 
         {previewMarkdown.trim() ? (
-          <OutputMarkdownCarousel html={simpleMarkdownToHtml(previewMarkdown)} />
+          <OutputMarkdownCarousel
+            html={
+              isLibraryView && libraryCategory === "srd"
+                ? renderMarkdownToHtml(previewMarkdown, "preview", false)
+                : simpleMarkdownToHtml(previewMarkdown)
+            }
+          />
+        ) : null}
+        {isLibraryView && libraryCategory === "srd" && srdPreviewLoading ? (
+          <p className="no-print mt-4 text-sm text-[var(--muted)]">Loading SRD entry…</p>
         ) : null}
         <MapImageOutputBlock
           mapImages={previewImages}
@@ -3441,8 +3447,19 @@ export default function Home(props: PageProps<"/">) {
         {isLibraryView && !previewMarkdown.trim() && previewImages.length === 0 ? (
           <div className="library-preview-empty no-print mt-6">
             <p className="text-sm text-[var(--muted)]">
-              Select an item in <strong className="text-[var(--text)]">Browse repository</strong> to
-              preview it here — then copy, export, or print.
+              {libraryCategory === "srd" ? (
+                <>
+                  Pick a category and entry in{" "}
+                  <strong className="text-[var(--text)]">Browse repository</strong> to preview
+                  SRD rules here.
+                </>
+              ) : (
+                <>
+                  Select an item in{" "}
+                  <strong className="text-[var(--text)]">Browse repository</strong> to preview it
+                  here — then copy, export, or print.
+                </>
+              )}
             </p>
           </div>
         ) : null}
@@ -3465,13 +3482,13 @@ export default function Home(props: PageProps<"/">) {
         !isLibraryView ? (
           <p className="no-print mt-8 text-sm text-[var(--muted)]">
             {mode === "realm"
-              ? "Pick a realm size, describe what you want, and generate table-ready setting Markdown. Use the Maps tab for map images."
+              ? "Pick a realm size, describe what you want, and your setting pages will appear here — ready to read, print, or edit. Use the Maps tab for map images."
               : mode === "adventure"
-                ? "Submit to generate a 5.2-style adventure in Markdown (length matches your selection)."
+                ? "Fill in the form and your quest will appear here, sized to the length you picked."
                 : mode === "characters"
-                  ? "Submit the form to generate pre-made PCs (Markdown). Copy to your notes or VTT."
+                  ? "Fill in the form and your ready-to-play heroes will appear here — copy them to your notes or load them at the Virtual Table."
                   : mode === "props"
-                    ? "Choose an item type, write a description, and generate a handout image."
+                    ? "Choose an item type, write a description, and your handout image will appear here."
                     : "Submit to generate **full-color** locale / overland maps (atlas clarity, cities & routes) and **grid-free** battle maps for the VTT."}
           </p>
         ) : null}
