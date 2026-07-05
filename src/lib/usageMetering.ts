@@ -18,6 +18,7 @@ export type GenerationFeature =
   | "adventure"
   | "realm"
   | "characters"
+  | "character-sheet"
   | "map-image"
   | "realm-image"
   | "prop-image";

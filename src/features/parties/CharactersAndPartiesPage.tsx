@@ -26,7 +26,6 @@ import {
   loadSavedCharacterRosters,
   onRostersChanged,
   PARTY_SOURCE_LABEL,
-  saveCharacterRoster,
   updateCharacterRoster,
   type SavedCharacterRoster,
 } from "@/lib/tabletop/characterRoster";
@@ -42,10 +41,10 @@ import {
   rosterToMarkdown,
 } from "@/lib/tabletop/characterMarkdown";
 import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
-import { autoLinkToActiveCampaign } from "@/lib/campaigns";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
 import CharacterEditorDialog from "./CharacterEditorDialog";
+import PartyBuilderDialog from "./PartyBuilderDialog";
 
 function downloadMarkdownFile(filename: string, contents: string) {
   const blob = new Blob([contents], { type: "text/markdown;charset=utf-8" });
@@ -78,6 +77,7 @@ export default function CharactersAndPartiesPage() {
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
   const [notesDraft, setNotesDraft] = useState("");
   const [showAddParty, setShowAddParty] = useState(false);
+  const [showPartyBuilder, setShowPartyBuilder] = useState(false);
 
   const refresh = useCallback(async () => {
     const [chars, parties] = await Promise.all([
@@ -168,30 +168,6 @@ export default function CharactersAndPartiesPage() {
   };
 
   /* ---- Party building from characters ---- */
-
-  const createPartyFromSelection = async () => {
-    if (selectedCharacters.length === 0) return;
-    const suggested =
-      selectedCharacters.length === 1
-        ? `${selectedCharacters[0].player.name}'s party`
-        : "New party";
-    const name = window.prompt("Name this party:", suggested);
-    if (name === null) return;
-    const players = selectedCharacters.map((c) => c.player);
-    const list = await saveCharacterRoster({
-      name: name.trim() || "New party",
-      source: "builder",
-      markdown: rosterToMarkdown(name.trim() || "New party", players),
-      players,
-    });
-    setRosters(list);
-    if (list[0]) void autoLinkToActiveCampaign({ partyId: list[0].id });
-    scheduleLibrarySnapshot();
-    setSelectedIds([]);
-    setStatus(
-      `Party “${name.trim() || "New party"}” created with ${players.length} character${players.length === 1 ? "" : "s"} — ready for campaigns and the Virtual Table.`,
-    );
-  };
 
   const addSelectionToParty = async (rosterId: string) => {
     const roster = rosters.find((r) => r.id === rosterId);
@@ -344,6 +320,21 @@ export default function CharactersAndPartiesPage() {
         />
       ) : null}
 
+      {showPartyBuilder ? (
+        <PartyBuilderDialog
+          characters={characters}
+          rosters={rosters}
+          initialCharacterIds={selectedIds}
+          onClose={() => setShowPartyBuilder(false)}
+          onSaved={(list, message) => {
+            setRosters(list);
+            setStatus(message);
+            setSelectedIds([]);
+            setShowPartyBuilder(false);
+          }}
+        />
+      ) : null}
+
       {status ? (
         <p
           className="mb-4 rounded-lg border px-3 py-2 text-sm"
@@ -397,7 +388,7 @@ export default function CharactersAndPartiesPage() {
           </span>
           <button
             type="button"
-            onClick={() => void createPartyFromSelection()}
+            onClick={() => setShowPartyBuilder(true)}
             className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-white"
             style={{ background: "var(--accent)" }}
           >
@@ -538,9 +529,19 @@ export default function CharactersAndPartiesPage() {
             its progress, and load it onto the Virtual Table.
           </p>
         </div>
-        <button type="button" onClick={() => setShowAddParty(true)} className="btn btn-sm">
-          Add party
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setShowPartyBuilder(true)}
+            className="btn btn-sm btn-accent"
+            title="Combine your characters and existing parties into a new party"
+          >
+            Build party
+          </button>
+          <button type="button" onClick={() => setShowAddParty(true)} className="btn btn-sm">
+            Add party
+          </button>
+        </div>
       </div>
 
       {rosters.length === 0 ? (

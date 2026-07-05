@@ -52,6 +52,36 @@ export const charactersPostSchema = z.object({
   sourceSeedMarkdown: z.string().optional(),
 });
 
+export const characterSheetPostSchema = z.object({
+  flavor: z.string().optional(),
+  locks: z
+    .object({
+      name: z.string().optional(),
+      species: z.string().optional(),
+      className: z.string().optional(),
+      subclass: z.string().optional(),
+      background: z.string().optional(),
+      alignment: z.string().optional(),
+      level: z.number().optional(),
+      ac: z.number().optional(),
+      maxHp: z.number().optional(),
+      speed: z.number().optional(),
+      abilities: z
+        .object({
+          str: z.number(),
+          dex: z.number(),
+          con: z.number(),
+          int: z.number(),
+          wis: z.number(),
+          cha: z.number(),
+        })
+        .optional(),
+      gear: z.array(z.string()).optional(),
+      notes: z.string().optional(),
+    })
+    .optional(),
+});
+
 export const mapImagePostSchema = z.object({
   mapKind: z.string().optional(),
   locationName: z.string().optional(),

@@ -78,6 +78,97 @@ Use exactly these top-level headings in order:
 ## DM note (hooks, lines, or secrets to weave into a one-shot)`;
 }
 
+/* ---- Single character (character library AI assist) ---- */
+
+/**
+ * Fields the user set by hand in the character editor. Anything present is a
+ * hard lock the model must reproduce; anything absent is the model's to fill.
+ */
+export type SingleCharacterLocks = {
+  name?: string;
+  species?: string;
+  className?: string;
+  subclass?: string;
+  background?: string;
+  alignment?: string;
+  level?: number;
+  ac?: number;
+  maxHp?: number;
+  speed?: number;
+  abilities?: { str: number; dex: number; con: number; int: number; wis: number; cha: number };
+  /** Gear the user already listed (kept; the model may add more). */
+  gear?: string[];
+  /** User-written notes (kept; the model may add more note bullets). */
+  notes?: string;
+};
+
+export type SingleCharacterInput = {
+  /** Freeform concept / flavor text from the DM or player. */
+  flavor: string;
+  locks: SingleCharacterLocks;
+};
+
+function lockLine(label: string, value: string | number | undefined): string | null {
+  if (value === undefined || value === "") return null;
+  return `- ${label}: **${value}** (locked — reproduce exactly)`;
+}
+
+export function buildSingleCharacterMessage(input: SingleCharacterInput): string {
+  const l = input.locks;
+  const lockLines = [
+    lockLine("Name", l.name),
+    lockLine("Species/Race", l.species),
+    lockLine("Class", l.className),
+    lockLine("Subclass", l.subclass),
+    lockLine("Background", l.background),
+    lockLine("Alignment", l.alignment),
+    lockLine("Level", l.level),
+    lockLine("AC", l.ac),
+    lockLine("Max HP", l.maxHp),
+    lockLine("Speed (ft)", l.speed),
+    l.abilities
+      ? `- Ability scores: **STR ${l.abilities.str}, DEX ${l.abilities.dex}, CON ${l.abilities.con}, INT ${l.abilities.int}, WIS ${l.abilities.wis}, CHA ${l.abilities.cha}** (locked — reproduce exactly)`
+      : null,
+    l.gear?.length
+      ? `- Existing gear (keep every item; you may add more): ${l.gear.join("; ")}`
+      : null,
+    l.notes?.trim()
+      ? `- Existing notes (context only — do NOT repeat them; output only NEW note bullets): ${l.notes.trim()}`
+      : null,
+  ].filter((line): line is string => line !== null);
+
+  return `Create **one** pre-made player character.
+
+## Concept / flavor from the user
+${input.flavor.trim() || "(none — invent a compelling, playable character)"}
+
+## Locked fields (set by hand — never change these)
+${lockLines.length ? lockLines.join("\n") : "- (nothing locked — every field is yours to fill)"}
+
+## Your job
+Fill in **every field that is not locked** so the sheet is play-ready and internally consistent (level-appropriate AC/HP, sensible ability spread for the class, level-appropriate gear). Give them a short, evocative backstory and Roleplay notes.
+
+## Output format (Markdown — exactly this structure, nothing else)
+# <character name>
+
+## Characters
+
+### <character name> — <class> (Level <n>)
+- Player:
+- Race: <species>
+- Subclass: <subclass>
+- Background: <background>
+- Alignment: <alignment>
+- AC: <number>
+- HP: <number>
+- Speed: <number>
+- STR <n>, DEX <n>, CON <n>, INT <n>, WIS <n>, CHA <n>
+- Gear: <item> — <short note> (one "Gear:" bullet per item)
+- <one bullet per line of backstory, features, proficiencies, languages, and Roleplay notes>
+
+Leave the "Player:" bullet value empty. Do not add headings, preamble, or commentary beyond this structure.`;
+}
+
 export const CHARACTER_SYSTEM_PROMPT = `You are an experienced Dungeons & Dragons player and character builder.
 
 You write concise, table-ready **pre-made PCs** compatible with **D&D 5.2** (Creative Commons SRD-style assumptions).

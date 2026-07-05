@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildPremadeCharactersMessage } from "@/lib/characterPrompt";
+import {
+  buildPremadeCharactersMessage,
+  buildSingleCharacterMessage,
+} from "@/lib/characterPrompt";
 
 describe("buildPremadeCharactersMessage", () => {
   it("includes per-PC class and race locks in the prompt", () => {
@@ -46,5 +49,41 @@ describe("buildPremadeCharactersMessage", () => {
     });
     expect(msg).toContain("one or more saved seeds");
     expect(msg).toContain("Attached sources (2 documents)");
+  });
+});
+
+describe("buildSingleCharacterMessage", () => {
+  it("marks hand-set fields as locked and lists them", () => {
+    const msg = buildSingleCharacterMessage({
+      flavor: "A gruff ex-guard turned treasure hunter.",
+      locks: {
+        name: "Borin",
+        className: "Fighter",
+        level: 4,
+        abilities: { str: 16, dex: 12, con: 15, int: 10, wis: 11, cha: 9 },
+        gear: ["Longsword", "Company banner"],
+        notes: "Owes a debt to a smuggler.",
+      },
+    });
+    expect(msg).toContain("A gruff ex-guard turned treasure hunter.");
+    expect(msg).toContain("- Name: **Borin** (locked — reproduce exactly)");
+    expect(msg).toContain("- Class: **Fighter** (locked — reproduce exactly)");
+    expect(msg).toContain("- Level: **4** (locked — reproduce exactly)");
+    expect(msg).toContain("STR 16, DEX 12, CON 15, INT 10, WIS 11, CHA 9");
+    expect(msg).toContain("Longsword; Company banner");
+    expect(msg).toContain("do NOT repeat them");
+  });
+
+  it("says everything is open when nothing is locked and no flavor given", () => {
+    const msg = buildSingleCharacterMessage({ flavor: "", locks: {} });
+    expect(msg).toContain("(none — invent a compelling, playable character)");
+    expect(msg).toContain("(nothing locked — every field is yours to fill)");
+  });
+
+  it("keeps the portable character markdown output format", () => {
+    const msg = buildSingleCharacterMessage({ flavor: "x", locks: {} });
+    expect(msg).toContain("## Characters");
+    expect(msg).toContain("### <character name> — <class> (Level <n>)");
+    expect(msg).toContain("- STR <n>, DEX <n>, CON <n>, INT <n>, WIS <n>, CHA <n>");
   });
 });

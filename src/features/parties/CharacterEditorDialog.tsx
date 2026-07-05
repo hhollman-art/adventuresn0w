@@ -16,6 +16,8 @@ import {
   type SavedCharacter,
 } from "@/lib/tabletop/characterLibrary";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
+import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
+import type { SingleCharacterLocks } from "@/lib/characterPrompt";
 import {
   SrdClassSubclassFields,
   SrdSpellPicker,
@@ -63,6 +65,57 @@ function draftFrom(character: SavedCharacter): Draft {
   return { ...rest, items: rest.items.map((i) => ({ ...i, bonuses: { ...i.bonuses } })) };
 }
 
+const DEFAULTS = emptyDraft();
+
+/**
+ * Everything the user filled in by hand becomes a lock the AI must keep.
+ * Numeric fields count as "filled in" when changed from the blank-sheet
+ * defaults (level 1, AC 10, HP 10, speed 30, all abilities 10).
+ */
+function locksFromDraft(draft: Draft): SingleCharacterLocks {
+  const locks: SingleCharacterLocks = {};
+  if (draft.name.trim()) locks.name = draft.name.trim();
+  if (draft.species.trim()) locks.species = draft.species.trim();
+  if (draft.className.trim()) locks.className = draft.className.trim();
+  if (draft.subclass.trim()) locks.subclass = draft.subclass.trim();
+  if (draft.background.trim()) locks.background = draft.background.trim();
+  if (draft.alignment.trim()) locks.alignment = draft.alignment.trim();
+  if (draft.level !== DEFAULTS.level) locks.level = draft.level;
+  if (draft.ac !== DEFAULTS.ac) locks.ac = draft.ac;
+  if (draft.maxHp !== DEFAULTS.maxHp) locks.maxHp = draft.maxHp;
+  if (draft.speed !== DEFAULTS.speed) locks.speed = draft.speed;
+  if (
+    (Object.keys(draft.abilities) as (keyof AbilityScores)[]).some(
+      (k) => draft.abilities[k] !== 10,
+    )
+  ) {
+    locks.abilities = { ...draft.abilities };
+  }
+  const gear = draft.items.map((i) => i.name.trim()).filter(Boolean);
+  if (gear.length) locks.gear = gear;
+  if (draft.notes.trim()) locks.notes = draft.notes.trim();
+  return locks;
+}
+
+/** Pull "Gear: item — note" lines out of parsed notes into item rows. */
+function splitGearFromNotes(notes: string): {
+  items: { name: string; notes: string }[];
+  rest: string;
+} {
+  const items: { name: string; notes: string }[] = [];
+  const rest: string[] = [];
+  for (const line of notes.split("\n")) {
+    const m = /^Gear\s*[:\-–—]\s*(.+)$/i.exec(line.trim());
+    if (m) {
+      const [name, ...noteParts] = m[1].split(/\s*[—–]\s*/);
+      if (name?.trim()) items.push({ name: name.trim(), notes: noteParts.join(" — ").trim() });
+    } else if (line.trim()) {
+      rest.push(line.trim());
+    }
+  }
+  return { items, rest: rest.join("\n") };
+}
+
 type CharacterEditorDialogProps = {
   /** When set, the dialog edits this character; otherwise it creates a new one. */
   character?: SavedCharacter | null;
@@ -81,6 +134,61 @@ export default function CharacterEditorDialog({
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [aiFlavor, setAiFlavor] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const generateWithAi = async () => {
+    setAiBusy(true);
+    setAiError(null);
+    const locks = locksFromDraft(draft);
+    try {
+      const res = await fetch("/api/generate-character", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ flavor: aiFlavor, locks }),
+      });
+      const data = (await res.json()) as { markdown?: string; error?: string };
+      if (!res.ok || !data.markdown) {
+        setAiError(data.error ?? "Generation failed. Please try again.");
+        return;
+      }
+      const generated = parseCharactersMarkdown(data.markdown).players[0];
+      if (!generated) {
+        setAiError("The AI response could not be read as a character. Please try again.");
+        return;
+      }
+      const { items: gearItems, rest: newNotes } = splitGearFromNotes(generated.notes);
+      setDraft((d) => {
+        const keptGear = new Set(d.items.map((i) => i.name.trim().toLowerCase()));
+        const addedItems = gearItems
+          .filter((g) => !keptGear.has(g.name.toLowerCase()))
+          .map((g) => ({ id: newId(), name: g.name, notes: g.notes, bonuses: emptyBonuses() }));
+        return {
+          ...d,
+          name: locks.name ?? generated.name,
+          species: locks.species ?? generated.species,
+          className: locks.className ?? generated.className,
+          subclass: locks.subclass ?? generated.subclass,
+          background: locks.background ?? generated.background,
+          alignment: locks.alignment ?? generated.alignment,
+          level: locks.level ?? generated.level,
+          ac: locks.ac ?? generated.ac,
+          maxHp: locks.maxHp ?? generated.maxHp,
+          speed: locks.speed ?? generated.speed,
+          abilities: locks.abilities ?? generated.abilities,
+          items: [...d.items, ...addedItems],
+          notes: [d.notes.trim(), newNotes].filter(Boolean).join("\n"),
+        };
+      });
+    } catch {
+      setAiError("Could not reach the generator. Check your connection and try again.");
+    } finally {
+      setAiBusy(false);
+    }
+  };
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -160,6 +268,58 @@ export default function CharacterEditorDialog({
           Characters live in your library on this device. Add one to a party any time — the
           party is what campaigns and the Virtual Table use.
         </p>
+
+        <div
+          className="mt-4 rounded-lg border p-3"
+          style={{ borderColor: "var(--accent-dim)", background: "rgba(201,162,39,0.06)" }}
+        >
+          <label className="flex cursor-pointer items-start gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={aiEnabled}
+              onChange={(e) => setAiEnabled(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="font-semibold">Create with AI</span>{" "}
+              <span className="text-[var(--muted)]">
+                — describe the character below, fill in any fields you want to control, and AI
+                creates everything you left blank.
+              </span>
+            </span>
+          </label>
+          {aiEnabled ? (
+            <div className="mt-3 flex flex-col gap-2">
+              <textarea
+                value={aiFlavor}
+                onChange={(e) => setAiFlavor(e.target.value)}
+                rows={3}
+                placeholder="Flavor — e.g. “A retired city guard turned reluctant treasure hunter, gruff but loyal, haunted by a debt to a smuggler.”"
+                className="rounded border px-2 py-1.5 text-sm"
+                style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+                aria-label="Character flavor for AI"
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void generateWithAi()}
+                  disabled={aiBusy}
+                  className="btn btn-sm btn-accent"
+                >
+                  {aiBusy ? "Creating…" : "Create the rest with AI"}
+                </button>
+                <span className="text-[10px] text-[var(--muted)]">
+                  Fields you set by hand are kept exactly. Review and edit before saving.
+                </span>
+              </div>
+              {aiError ? (
+                <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">
+                  {aiError}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-xs">
