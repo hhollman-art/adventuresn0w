@@ -6,7 +6,25 @@ export type RealmSize =
   | "continent"
   | "country"
   | "region"
+  | "city"
   | "local";
+
+export const REALM_SIZES: readonly RealmSize[] = [
+  "world",
+  "continent",
+  "country",
+  "region",
+  "city",
+  "local",
+];
+
+export function parseRealmSize(value: unknown): RealmSize {
+  const raw = String(value ?? "").trim();
+  if ((REALM_SIZES as readonly string[]).includes(raw)) {
+    return raw as RealmSize;
+  }
+  return "country";
+}
 
 /**
  * Human-readable scope labels (UI and prompt). Factual; no instructions.
@@ -31,6 +49,11 @@ export const REALM_SIZE_LABEL: Record<RealmSize, { label: string; detail: string
     label: "Region (part of a country)",
     detail:
       "A subnational area such as a province, duchy, or border march: its towns, internal tensions, and neighboring territories.",
+  },
+  city: {
+    label: "City (urban setting)",
+    detail:
+      "A single city or metropolis: districts, walls, harbor or gates, power centers, and nearby outskirts at a walkable or carriage scale—not the whole kingdom.",
   },
   local: {
     label: "Local area (county, valley, cluster of sites)",
@@ -62,6 +85,8 @@ export const REALM_TRADE_AT_SCOPE: Record<RealmSize, string> = {
     "Kingdom- or country-scale trade: internal flows, border markets, taxes and tolls, principal exports and imports, merchant houses and guilds that shape the economy.",
   region:
     "Regional trade: this province or march—fairs, local routes, who sells what, smuggling, trade disputes, and neighbors’ goods that show up here.",
+  city:
+    "City trade: markets and guild halls, harbor or gate tolls, warehouse monopolies, street vendors and black markets, import/export specialties—enough to run urban sessions, not a full economic treatise.",
   local:
     "Local trade: inn and market cadence, peddlers, a nearby fair or wharf, one or two economic hooks (debt, scarcity, smuggling) at a walkable scale—enough to play, not a full atlas.",
 };
@@ -70,11 +95,16 @@ export const REALM_TRADE_AT_SCOPE: Record<RealmSize, string> = {
  * **Country, region, and local** get a dedicated Politics section. World/continent use broad
  * "power structures" in other sections; no separate Politics heading required at those scales.
  */
-export const REALM_POLITICS_AT_SCOPE: Record<"country" | "region" | "local", string> = {
+export const REALM_POLITICS_AT_SCOPE: Record<
+  "country" | "region" | "city" | "local",
+  string
+> = {
   country:
     "State- or kingdom-level **politics**: who rules (crown, council, theocrat) and the shape of **government and court**; **succession and legitimacy**; **major factions, noble lines, or orders** (a few **named**); **foreign relations and borders**; internal **regions that resist or push autonomy**; and **laws, taxes, conscription, or edicts** that change play. Enough to run intrigue, not a legal codex.",
   region:
     "Provincial or march **politics**: the **local ruler or appointed governor** and who they answer to; **tensions with the capital or adjacent provinces**; **councils, garrisons, churches, or guilds** with real clout; **families, factions, or officials** jockeying for power—playable, not exhaustive.",
+  city:
+    "Urban **politics**: the **ruling council, lord, or guild compact**; **ward rivalries**, **temple and watch influence**, **crime and patronage**; **foreign enclaves or embassies**; **laws, curfews, and guild charters** that shape play—street-level hooks, not a census.",
   local:
     "Local **politics**: the **sheriff, reeve, elder, temple, or manor**; who really decides; **grudges, debts, and alliances** between sites; **overlords, bandits, tax collectors, or outsiders** who can upset the order—tight, table-ready **hooks and leverage points**.",
 };
@@ -96,7 +126,7 @@ Rules:
 - Match the **stated size** of the realm: do not map every stone on a *world* scale, and do not hand-wave entire continents for a *local* scale.
 - For **World** and **Continent** especially: stay **broad** on purpose—treat the whole output as a **regional or planetary sketch**, never a catalog of small places. **Cities** are few and principal; **terrain and climate** do most of the work (landforms, belts, how weather and seasons “read” at a glance), without micro-detail.
 - **Always include a dedicated Trade section** (e.g. \`## Trade\` or \`## Trade & economy\`). Its **depth and zoom level must match the chosen size**—world-scale networks for a world, local markets for a local area—never a generic one-size blurb.
-- For **Country, Region, or Local** only: **always include a dedicated Politics section** (e.g. \`## Politics\` or \`## Politics & power\`). **Depth must match the chosen size** (kingdom scale vs province vs local). For **World** or **Continent**, do **not** add a separate Politics heading—sketch power and polities inside **Peoples, cultures, and power structures** and **History** instead.
+- For **Country, Region, City, or Local** only: **always include a dedicated Politics section** (e.g. \`## Politics\` or \`## Politics & power\`). **Depth must match the chosen size** (kingdom scale vs province vs urban vs local). For **World** or **Continent**, do **not** add a separate Politics heading—sketch power and polities inside **Peoples, cultures, and power structures** and **History** instead.
 - Include **concrete, usable** elements: place names, tensions, a few entry hooks, travel times only when helpful (relative bands are fine for large scales).
 - Prefer **clarity and usability** over encyclopedic length.
 - **Markdown only** for the main document. No preamble or out-of-universe “As an AI…” text.
@@ -108,7 +138,7 @@ function realmCreationSeedReferenceBlock(markdown: string): string {
   if (!body) return "";
   return `
 ## Prior realm document (canonical reference)
-The user attached a **realm / setting document** they saved earlier in this app. Treat **named geography, factions, settlements, history beats, and tone** there as **authoritative canon** for this run.
+The user attached **realm / setting document(s)** they saved earlier in this app. Treat **named geography, factions, settlements, history beats, and tone** there as **authoritative canon** for this run.
 
 - **Respect the requested realm size** in this message: you may **zoom in** (add finer local detail), **reframe** to a neighboring scope, or **sketch a wider lens** if the brief asks—while staying **consistent** with the seed.
 - **Do not** silently rename core places or rewrite major facts unless the user's brief (below) explicitly asks for a reboot, alternate branch, reinterpretation, or “what if.”
@@ -134,6 +164,7 @@ ${REALM_WORLD_CONTINENT_OUTPUT_GUIDE}
   const politicsBlock =
     input.realmSize === "country" ||
     input.realmSize === "region" ||
+    input.realmSize === "city" ||
     input.realmSize === "local"
       ? `
 
@@ -160,7 +191,7 @@ ${input.extraNotes.trim() || "(none)"}
 ${REALM_TRADE_AT_SCOPE[input.realmSize]}
 ${politicsBlock}
 ## Output
-Use a logical heading structure, for example (adapt to scale; include Trade; for Country/Region/Local, include **Politics** as its own \`##\` section after Geography or after Peoples—keep it scannable):
+Use a logical heading structure, for example (adapt to scale; include Trade; for Country/Region/City/Local, include **Politics** as its own \`##\` section after Geography or after Peoples—keep it scannable):
 # Title (realm / region name)
 ## Prologue
 ## Geography & climate (as much as fits the chosen size; at World/Continent, emphasize terrain and broad climate before settlement lists)

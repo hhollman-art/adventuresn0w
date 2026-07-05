@@ -7,6 +7,7 @@ import {
 import { formatAnthropicError, generateMarkdown } from "@/lib/anthropicGenerate";
 import { charactersPostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError } from "@/lib/serverLog";
+import { parseRealmSeedMarkdown } from "@/lib/requestLimits";
 
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
   }
 
   const body = parsed.data;
+  const sourceSeedMarkdown = parseRealmSeedMarkdown(body.sourceSeedMarkdown);
 
   const input: PremadeCharacterInput = {
     partyConcept: String(body.partyConcept ?? "").trim(),
@@ -42,6 +44,7 @@ export async function POST(request: Request) {
       className: s.className?.trim() || undefined,
       race: s.race?.trim() || undefined,
     })),
+    ...(sourceSeedMarkdown ? { sourceSeedMarkdown } : {}),
   };
 
   try {

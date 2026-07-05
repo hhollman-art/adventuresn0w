@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   advanceInitiative,
+  clearTabletopSession,
   createDefaultSession,
   fixSession,
   playerVisibleSession,
@@ -11,6 +12,59 @@ import type { TabletopSession } from "./types";
 function sessionWith(overrides: Partial<TabletopSession>): TabletopSession {
   return { ...createDefaultSession(), ...overrides };
 }
+
+describe("clearTabletopSession", () => {
+  it("returns an empty default session", () => {
+    const busy = sessionWith({
+      mapName: "Crypt",
+      mapImageDataUrl: "data:image/png;base64,abc",
+      activePartyId: "party-1",
+      tokens: [
+        {
+          id: "t1",
+          label: "Goblin",
+          color: "#f00",
+          kind: "monster",
+          x: 2,
+          y: 3,
+          size: 1,
+          hp: { current: 5, max: 7 },
+          hidden: false,
+          imageDataUrl: null,
+        },
+      ],
+      players: [{ id: "p1", name: "Thera", tokenId: null }],
+      fog: { enabled: true, revealed: ["0,0", "1,0"] },
+      initiative: {
+        entries: [{ id: "e1", name: "Thera", roll: 15, tokenId: null }],
+        activeIndex: 0,
+        round: 2,
+      },
+      log: [
+        {
+          id: "l1",
+          at: "2026-01-01T00:00:00.000Z",
+          expression: "1d20",
+          detail: "1d20 [12]",
+          total: 12,
+          secret: false,
+        },
+      ],
+    });
+    const cleared = clearTabletopSession();
+    expect(cleared.tokens).toEqual([]);
+    expect(cleared.players).toEqual([]);
+    expect(cleared.activePartyId).toBeNull();
+    expect(cleared.mapName).toBe("Blank battlefield");
+    expect(cleared.mapImageDataUrl).toBeNull();
+    expect(cleared.mapSourceDataUrl).toBeNull();
+    expect(cleared.fog).toEqual({ enabled: false, revealed: [] });
+    expect(cleared.initiative).toEqual({ entries: [], activeIndex: 0, round: 1 });
+    expect(cleared.log).toEqual([]);
+    expect(cleared.grid.cols).toBe(createDefaultSession().grid.cols);
+    expect(busy.tokens.length).toBeGreaterThan(0);
+  });
+});
 
 describe("fixSession", () => {
   it("accepts its own default output", () => {

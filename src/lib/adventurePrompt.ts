@@ -172,7 +172,7 @@ function realmSeedReferenceBlock(markdown: string): string {
   if (!body) return "";
   return `
 ## Canonical realm reference (saved document)
-The following Markdown is a **realm / setting document** the user saved from this app. Treat named geography, factions, settlements, tone, and established lore as **authoritative world context** for this adventure. Invent new local story, encounters, and NPCs as needed at a scale that fits the adventure; **avoid** contradicting this reference unless the adventure parameters above explicitly call for a twist, alternate branch, or deliberate reinterpretation.
+The following Markdown is a **realm / setting document** (or documents) the user saved from this app. Treat named geography, factions, settlements, tone, and established lore as **authoritative world context** for this adventure. Invent new local story, encounters, and NPCs as needed at a scale that fits the adventure; **avoid** contradicting this reference unless the adventure parameters above explicitly call for a twist, alternate branch, or deliberate reinterpretation.
 
 ---
 ${body}

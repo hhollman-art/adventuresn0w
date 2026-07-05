@@ -69,4 +69,33 @@ describe("realmSeeds", () => {
     expect(loaded[0]?.kind).toBe("characters");
     expect(loaded[0]?.seedName).toBe("City watch party");
   });
+
+  it("stores tags and auto-tags realm size on generated realm seeds", async () => {
+    await appendRealmSeed({
+      kind: "realm",
+      seedName: "Port Ash",
+      realmSize: "city",
+      titleHint: "Port Ash",
+      briefDescription: "Harbor metropolis",
+      markdown: "# Port Ash",
+      tags: ["campaign"],
+    });
+
+    const loaded = await loadRealmSeeds();
+    expect(loaded[0]?.tags).toEqual(["campaign"]);
+  });
+
+  it("auto-tags realm size when tags are omitted", async () => {
+    await appendRealmSeed({
+      kind: "realm",
+      seedName: "Border march",
+      realmSize: "region",
+      titleHint: "Border march",
+      briefDescription: "Frontier",
+      markdown: "# March",
+    });
+
+    const loaded = await loadRealmSeeds();
+    expect(loaded[0]?.tags).toEqual(["region"]);
+  });
 });

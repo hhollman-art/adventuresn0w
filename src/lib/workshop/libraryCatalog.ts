@@ -65,6 +65,7 @@ export type LibraryListEntry = {
   title: string;
   detail: string;
   createdAt: string;
+  tags?: string[];
 };
 
 export function seedToLibraryEntry(seed: SavedRealmSeed): LibraryListEntry {
@@ -76,6 +77,7 @@ export function seedToLibraryEntry(seed: SavedRealmSeed): LibraryListEntry {
     title: seedDisplayName(seed),
     detail: seed.briefDescription.trim() || seedScopeLabel(seed),
     createdAt: seed.createdAt,
+    ...(seed.tags?.length ? { tags: seed.tags } : {}),
   };
 }
 

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import {
   buildRealmUserMessage,
+  parseRealmSize,
   REALM_SYSTEM_PROMPT,
   type RealmInput,
-  type RealmSize,
 } from "@/lib/realmPrompt";
 import {
   formatAnthropicError,
@@ -13,20 +13,6 @@ import { createMarkdownSseResponse } from "@/lib/sseStream";
 import { parseRealmSeedMarkdown } from "@/lib/requestLimits";
 import { realmPostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError } from "@/lib/serverLog";
-
-function parseRealmSize(value: unknown): RealmSize {
-  const raw = String(value ?? "").trim();
-  if (
-    raw === "world" ||
-    raw === "continent" ||
-    raw === "country" ||
-    raw === "region" ||
-    raw === "local"
-  ) {
-    return raw;
-  }
-  return "country";
-}
 
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;

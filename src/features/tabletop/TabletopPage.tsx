@@ -47,6 +47,7 @@ import { prepareTokenImage } from "@/lib/tabletop/tokenImage";
 import {
   advanceInitiative,
   appendLog,
+  clearTabletopSession,
   createDefaultSession,
   newId,
   sortInitiative,
@@ -138,6 +139,19 @@ export default function TabletopPage() {
     window.open("/table/player", "ddeasy-player-view", "noopener");
   };
 
+  const clearTable = () => {
+    if (
+      !window.confirm(
+        "Clear the entire table? This removes all tokens, party, map art, fog, initiative, and the dice log. Saved party rosters in the Library are not deleted.",
+      )
+    ) {
+      return;
+    }
+    setSelectedTokenId(null);
+    update(() => clearTabletopSession());
+    setPanel("tokens");
+  };
+
   return (
     <main
       ref={mainRef}
@@ -208,6 +222,18 @@ export default function TabletopPage() {
           checked={session.grid.snap}
           onChange={(v) => update((s) => ({ ...s, grid: { ...s.grid, snap: v } }))}
         />
+
+        <span className="zone-divider" aria-hidden="true" />
+
+        <button
+          type="button"
+          onClick={clearTable}
+          className="btn btn-sm"
+          style={{ color: "#b91c1c", borderColor: "rgba(248,113,113,0.45)" }}
+          title="Start with a blank table — removes tokens, party, map, fog, initiative, and dice log"
+        >
+          Clear table
+        </button>
 
         <span className="flex-1" />
 

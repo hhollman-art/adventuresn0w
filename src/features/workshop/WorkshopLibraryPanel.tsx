@@ -42,6 +42,9 @@ import type { LibraryItem } from "@/lib/generationLibrary";
 import type { SavedRealmSeed } from "@/lib/realmSeeds";
 import type { SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
 import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
+import { filterSeeds, seedTagLabel } from "@/lib/seedTags";
+import type { SeedKind } from "@/lib/realmSeeds";
+import SeedFilterBar from "@/features/workshop/SeedFilterBar";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
 
 export type LibraryViewSelection =
@@ -256,6 +259,19 @@ function LibraryEntryRow({
           {entry.detail ? (
             <span className="mt-1 block text-xs text-[var(--muted)] line-clamp-2">{entry.detail}</span>
           ) : null}
+          {entry.tags?.length ? (
+            <span className="mt-1.5 flex flex-wrap gap-1">
+              {entry.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
+                  style={{ borderColor: "var(--border)", color: "var(--muted)" }}
+                >
+                  {seedTagLabel(tag)}
+                </span>
+              ))}
+            </span>
+          ) : null}
         </div>
         <div
           className="library-entry-actions shrink-0"
@@ -319,14 +335,27 @@ export default function WorkshopLibraryPanel({
     };
   }, []);
 
+  const [showAddParty, setShowAddParty] = useState(false);
+  const [seedKindFilter, setSeedKindFilter] = useState<SeedKind | "all">("all");
+  const [seedTagFilter, setSeedTagFilter] = useState<string | "all">("all");
+
+  const filteredSeeds = useMemo(
+    () =>
+      filterSeeds(seeds, {
+        kindFilter: seedKindFilter,
+        tagFilter: seedTagFilter,
+      }),
+    [seeds, seedKindFilter, seedTagFilter],
+  );
+
   const entries = useMemo(() => {
     const all = sortLibraryEntries([
-      ...seeds.map(seedToLibraryEntry),
+      ...filteredSeeds.map(seedToLibraryEntry),
       ...results.map(resultToLibraryEntry),
       ...parties.map(partyToLibraryEntry),
     ]);
     return filterLibraryEntries(all, category);
-  }, [seeds, results, parties, category]);
+  }, [filteredSeeds, results, parties, category]);
 
   const counts = useMemo(
     () => ({
@@ -336,8 +365,6 @@ export default function WorkshopLibraryPanel({
     }),
     [seeds, results, parties],
   );
-
-  const [showAddParty, setShowAddParty] = useState(false);
 
   const onExportBackup = async () => {
     onStatus(null);
@@ -553,6 +580,18 @@ export default function WorkshopLibraryPanel({
         </p>
       ) : null}
 
+      {category === "seeds" || category === "all" ? (
+        <SeedFilterBar
+          seeds={seeds}
+          kindFilter={seedKindFilter}
+          tagFilter={seedTagFilter}
+          onKindFilterChange={setSeedKindFilter}
+          onTagFilterChange={setSeedTagFilter}
+          className="rounded-lg border p-2"
+          style={{ borderColor: "var(--border)" }}
+        />
+      ) : null}
+
       {category === "srd" ? (
         <div
           className="rounded-lg border p-4 text-sm"
@@ -569,6 +608,11 @@ export default function WorkshopLibraryPanel({
             4.0. This is the only data D&amp;D Easy hosts; it is read-only and never needs backing
             up. Material from books you own belongs in party sheets (Notes) or your imports — it is
             never added here.
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">
+            The full reference opens in the <strong className="text-[var(--text)]">Preview</strong>{" "}
+            panel as a book with a table of contents — use Previous / Next or Contents links to browse
+            sections.
           </p>
           <dl className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
             <div className="rounded-md border p-2" style={{ borderColor: "var(--border)" }}>

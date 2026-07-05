@@ -116,6 +116,46 @@ function elClass(classes: string): string {
   return classes.trim() ? ` class="${classes}"` : "";
 }
 
+export function slugifySectionId(title: string, used: Set<string>): string {
+  const base =
+    title
+      .toLowerCase()
+      .replace(/&[^;]+;/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 48) || "section";
+  let id = base;
+  let n = 2;
+  while (used.has(id)) {
+    id = `${base}-${n}`;
+    n += 1;
+  }
+  used.add(id);
+  return id;
+}
+
+function stripInlineMarkdown(text: string): string {
+  return text.replace(/\*\*(.+?)\*\*/g, "$1").trim();
+}
+
+function buildTocNav(
+  sections: { id: string; title: string }[],
+  c: MdClassSet,
+  inlineFmt: (s: string) => string,
+): string {
+  const heading = `<h2${elClass("module-toc-heading text-lg font-semibold text-[var(--accent)]")}>Contents</h2>`;
+  if (sections.length === 0) {
+    return `<nav class="output-document-panel module-toc-panel" aria-label="Table of contents">\n${heading}\n<p${elClass(c.p)}>This document has no sections yet.</p>\n</nav>`;
+  }
+  const items = sections
+    .map(
+      (s) =>
+        `<li><a href="#${s.id}" class="module-toc-link">${inlineFmt(s.title)}</a></li>`,
+    )
+    .join("\n");
+  return `<nav class="output-document-panel module-toc-panel" aria-label="Table of contents">\n${heading}\n<ol class="module-toc-list">${items}</ol>\n</nav>`;
+}
+
 /**
  * Minimal Markdown → HTML: headings (#–####), lists, bold, fenced code, blockquotes, GFM pipe tables.
  * When `paperModuleSheets` is true, `#` through first `##` becomes a cover &lt;header&gt;, then each `##` is a section “sheet” (print page breaks in CSS).
@@ -133,6 +173,13 @@ export function renderMarkdownToHtml(
   let sheetBuf: string[] | null = null;
   let coverSealed = false;
   let emittedCoverHeader = false;
+  const sectionIds = new Set<string>();
+  const tocSections: { id: string; title: string }[] = [];
+  let coverId: string | null = null;
+  let coverTitle = "";
+  let currentSheetId: string | null = null;
+  /** Preview carousel: title block merged into first ## section instead of its own page. */
+  let previewCoverHtml: string | null = null;
 
   let inUl = false;
   let inFence = false;
@@ -210,22 +257,41 @@ export function renderMarkdownToHtml(
     coverSealed = true;
     if (coverBuf.length > 0) {
       emittedCoverHeader = true;
-      top.push(
-        `<header class="module-cover">\n${coverBuf.join("\n")}\n</header>`,
-      );
+      if (variant === "preview") {
+        previewCoverHtml = coverBuf.join("\n");
+      } else {
+        const title = coverTitle || "Cover";
+        coverId = slugifySectionId(title, sectionIds);
+        tocSections.unshift({ id: coverId, title });
+        top.push(
+          `<header class="module-cover">\n${coverBuf.join("\n")}\n</header>`,
+        );
+      }
       coverBuf.length = 0;
     }
   }
 
   function closeSheet() {
     if (!paperModuleSheets || !sheetBuf || sheetBuf.length === 0) return;
-    top.push(`<section class="module-sheet">\n${sheetBuf.join("\n")}\n</section>`);
+    const id = currentSheetId ?? slugifySectionId("section", sectionIds);
+    let inner = sheetBuf.join("\n");
+    if (variant === "preview" && previewCoverHtml) {
+      inner = `${previewCoverHtml}\n${inner}`;
+      previewCoverHtml = null;
+    }
+    const panelClass =
+      variant === "preview" ? "module-sheet output-document-panel" : "module-sheet";
+    top.push(`<section class="${panelClass}" id="${id}">\n${inner}\n</section>`);
     sheetBuf = null;
+    currentSheetId = null;
   }
 
-  function openSheet(h2Html: string) {
+  function openSheet(h2Html: string, plainTitle: string) {
     closeSheet();
     sealCover();
+    const id = slugifySectionId(stripInlineMarkdown(plainTitle), sectionIds);
+    tocSections.push({ id, title: stripInlineMarkdown(plainTitle) });
+    currentSheetId = id;
     sheetBuf = [h2Html];
   }
 
@@ -267,15 +333,20 @@ export function renderMarkdownToHtml(
     const t = line.trim();
     if (t.startsWith("# ")) {
       beginNonQuoteLine();
+      const title = stripInlineMarkdown(t.slice(2));
+      if (paperModuleSheets && !coverSealed && !coverTitle) {
+        coverTitle = title;
+      }
       emit(`<h1${elClass(c.h1)}>${inlineFmt(t.slice(2))}</h1>`);
       continue;
     }
     if (t.startsWith("## ")) {
       beginNonQuoteLine();
-      const h2Inner = inlineFmt(t.slice(3));
+      const plain = t.slice(3);
+      const h2Inner = inlineFmt(plain);
       const h2Html = `<h2${elClass(c.h2)}>${h2Inner}</h2>`;
       if (paperModuleSheets) {
-        openSheet(h2Html);
+        openSheet(h2Html, plain);
       } else {
         emit(h2Html);
       }
@@ -320,9 +391,20 @@ export function renderMarkdownToHtml(
     coverSealed = true;
     if (coverBuf.length > 0) {
       emittedCoverHeader = true;
-      top.push(
-        `<header class="module-cover">\n${coverBuf.join("\n")}\n</header>`,
-      );
+      const title = coverTitle || "Document";
+      if (variant === "preview") {
+        const id = slugifySectionId(title, sectionIds);
+        tocSections.push({ id, title });
+        top.push(
+          `<section class="module-sheet output-document-panel" id="${id}">\n${coverBuf.join("\n")}\n</section>`,
+        );
+      } else {
+        coverId = slugifySectionId(title, sectionIds);
+        tocSections.unshift({ id: coverId, title });
+        top.push(
+          `<header class="module-cover" id="${coverId}">\n${coverBuf.join("\n")}\n</header>`,
+        );
+      }
       coverBuf.length = 0;
     }
   }
@@ -333,6 +415,11 @@ export function renderMarkdownToHtml(
     "paper-module-layout",
     emittedCoverHeader ? "module-adventure-has-cover" : "module-adventure-no-cover",
   ].join(" ");
+
+  if (variant === "preview") {
+    const toc = buildTocNav(tocSections, c, inlineFmt);
+    return `<div class="${wrapperClass}">\n<div class="output-document-carousel">\n${toc}\n${top.join("\n")}\n</div>\n</div>`;
+  }
 
   return `<div class="${wrapperClass}">\n${top.join("\n")}\n</div>`;
 }

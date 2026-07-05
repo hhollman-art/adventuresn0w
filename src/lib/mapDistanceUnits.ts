@@ -43,6 +43,8 @@ export function realmScaleLegendForSize(
         return "Include a **scale bar** in a corner margin labeled in **kilometers** for a kingdom- or country-scale map—**bold** bar/ticks, **readable** unit text.";
       case "region":
         return "Include a **scale bar** in a margin labeled in **kilometers** for a province, duchy, or march—**clear sans** labeling, margin-only.";
+      case "city":
+        return "Include a **scale bar** in a margin labeled in **kilometers** (or **hundreds of meters** for a dense core map) for a city or metropolis—**clean** footer-style legend.";
       case "local":
       default:
         return "Include a **scale bar** in a margin labeled in **kilometers** for a district or cluster of sites—**clean** footer-style legend.";
@@ -57,6 +59,8 @@ export function realmScaleLegendForSize(
       return "Include a **scale bar** in a corner margin labeled in **miles** or **leagues** for a kingdom- or country-scale map—**simple** graphic, **no** micro-print.";
     case "region":
       return "Include a **scale bar** in a margin labeled in **miles** (or a plausible regional unit) for a province or march—**plain sans** numbers.";
+    case "city":
+      return "Include a **scale bar** in a margin labeled in **miles** (or **city blocks** for a dense core map) for an urban setting—**clear** bar and text.";
     case "local":
     default:
       return "Include a **scale bar** in a margin labeled in **miles** (or a short local unit) for a valley, district, or cluster of sites—**clear** bar and text.";

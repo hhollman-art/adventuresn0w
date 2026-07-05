@@ -55,3 +55,5 @@ export const SRD_CATALOGUE: SrdCatalogue = {
   spells: SRD_SPELLS,
   ancestries: SRD_ANCESTRY_ENTRIES,
 };
+
+export { buildSrdRulesMarkdown } from "./srdRulesMarkdown";

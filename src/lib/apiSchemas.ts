@@ -49,6 +49,7 @@ export const charactersPostSchema = z.object({
       }),
     )
     .optional(),
+  sourceSeedMarkdown: z.string().optional(),
 });
 
 export const mapImagePostSchema = z.object({

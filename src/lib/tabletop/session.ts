@@ -47,6 +47,11 @@ export function createDefaultSession(): TabletopSession {
   };
 }
 
+/** Wipe the virtual table for a fresh session (map, tokens, party, fog, initiative, log). */
+export function clearTabletopSession(): TabletopSession {
+  return createDefaultSession();
+}
+
 const TOKEN_KINDS: TokenKind[] = ["pc", "ally", "monster", "object"];
 
 function fixToken(o: Record<string, unknown>): TabletopToken | null {

@@ -1,7 +1,50 @@
-import { REALM_SIZE_LABEL, type RealmSize } from "@/lib/realmPrompt";
+import { REALM_SIZE_LABEL, REALM_SIZES, type RealmSize } from "@/lib/realmPrompt";
 
 const STORAGE_KEY = "ddeasy-realm-seeds-v1";
 const MAX_SEEDS = 25;
+const MAX_SEED_TAGS = 8;
+const MAX_TAG_LEN = 32;
+
+/** Normalize user or stored tag strings (lowercase slug, deduped, capped). */
+export function normalizeSeedTags(input: unknown): string[] {
+  const rawTags = Array.isArray(input)
+    ? input
+    : typeof input === "string"
+      ? input.split(/[,;]+/)
+      : [];
+  const out: string[] = [];
+  for (const item of rawTags) {
+    if (typeof item !== "string") continue;
+    const tag = item
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "")
+      .slice(0, MAX_TAG_LEN);
+    if (!tag || out.includes(tag)) continue;
+    out.push(tag);
+    if (out.length >= MAX_SEED_TAGS) break;
+  }
+  return out;
+}
+
+export function parseSeedTagsInput(text: string): string[] {
+  return normalizeSeedTags(text.split(/[,;]+/));
+}
+
+export function formatSeedTagsInput(tags: readonly string[]): string {
+  return tags.join(", ");
+}
+
+export function defaultTagsForGeneratedSeed(params: {
+  kind: SeedKind;
+  realmSize?: RealmSize;
+}): string[] {
+  if (params.kind === "realm" && params.realmSize) {
+    return [params.realmSize];
+  }
+  return [];
+}
 
 /** Seeds can ground any generator tab (realm, adventure, characters, maps, props). */
 export type SeedKind =
@@ -39,16 +82,10 @@ export type SavedRealmSeed = {
   titleHint: string;
   /** Truncated “describe what you want” text for recognition in the list */
   briefDescription: string;
+  /** Optional subcategory tags for library and workshop filtering. */
+  tags?: string[];
   markdown: string;
 };
-
-const REALM_SIZES: RealmSize[] = [
-  "world",
-  "continent",
-  "country",
-  "region",
-  "local",
-];
 
 function isRealmSize(v: unknown): v is RealmSize {
   return typeof v === "string" && (REALM_SIZES as string[]).includes(v);
@@ -75,28 +112,27 @@ function normalizeSavedSeed(x: unknown): SavedRealmSeed | null {
   // Backward compatibility: seeds saved before kinds existed are realm seeds.
   const kind: SeedKind = isSeedKind(o.kind) ? o.kind : "realm";
   const realmSize = isRealmSize(o.realmSize) ? o.realmSize : undefined;
-  // Realm seeds must carry a scale; fall back to "region" for legacy rows.
-  if (kind === "realm" && realmSize === undefined) {
-    return {
-      id: o.id,
-      createdAt: o.createdAt,
-      kind,
-      realmSize: "region",
-      seedName: o.seedName as string | undefined,
-      titleHint: o.titleHint,
-      briefDescription: o.briefDescription,
-      markdown: o.markdown,
-    };
-  }
-  return {
+  const tags = normalizeSeedTags(o.tags);
+  const base = {
     id: o.id,
     createdAt: o.createdAt,
     kind,
-    ...(kind === "realm" ? { realmSize } : {}),
     seedName: o.seedName as string | undefined,
     titleHint: o.titleHint,
     briefDescription: o.briefDescription,
+    ...(tags.length > 0 ? { tags } : {}),
     markdown: o.markdown,
+  };
+  // Realm seeds must carry a scale; fall back to "region" for legacy rows.
+  if (kind === "realm" && realmSize === undefined) {
+    return {
+      ...base,
+      realmSize: "region",
+    };
+  }
+  return {
+    ...base,
+    ...(kind === "realm" ? { realmSize } : {}),
   };
 }
 
@@ -136,12 +172,16 @@ export async function appendRealmSeed(params: {
   titleHint: string;
   briefDescription: string;
   markdown: string;
+  tags?: string[];
 }): Promise<SavedRealmSeed[]> {
   if (typeof window === "undefined") return [];
   const id =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+  const tags = normalizeSeedTags(
+    params.tags ?? defaultTagsForGeneratedSeed(params),
+  );
   const entry: SavedRealmSeed = {
     id,
     createdAt: new Date().toISOString(),
@@ -152,6 +192,7 @@ export async function appendRealmSeed(params: {
     seedName: params.seedName.trim(),
     titleHint: params.titleHint,
     briefDescription: params.briefDescription,
+    ...(tags.length > 0 ? { tags } : {}),
     markdown: params.markdown,
   };
   const next = [entry, ...loadSeedsSync()].slice(0, MAX_SEEDS);
@@ -172,9 +213,11 @@ export async function updateRealmSeed(
     titleHint: string;
     briefDescription: string;
     markdown: string;
+    tags?: string[];
   },
 ): Promise<SavedRealmSeed[]> {
   if (typeof window === "undefined") return [];
+  const tags = normalizeSeedTags(patch.tags);
   const next = loadSeedsSync().map((s) =>
     s.id === id
       ? {
@@ -186,6 +229,7 @@ export async function updateRealmSeed(
           seedName: patch.seedName.trim(),
           titleHint: patch.titleHint,
           briefDescription: patch.briefDescription,
+          ...(tags.length > 0 ? { tags } : { tags: undefined }),
           markdown: patch.markdown,
         }
       : s,

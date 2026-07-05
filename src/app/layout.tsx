@@ -2,8 +2,7 @@ import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Cinzel } from "next/font/google";
-import SiteUtilNav from "@/features/shell/SiteUtilNav";
-import AppZoneNav from "@/features/shell/AppZoneNav";
+import SiteTitleBar from "@/features/shell/SiteTitleBar";
 import "./globals.css";
 import pkg from "../../package.json";
 
@@ -30,26 +29,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={cinzel.variable}>
       <body className="app-shell flex min-h-dvh flex-col antialiased">
-        <header className="site-banner no-print shrink-0">
-          <div className="site-banner-inner">
-            <SiteUtilNav />
-            <div className="site-banner-brand">
-              <Link href="/" className="inline-block">
-                <span className="font-display site-banner-title block text-2xl font-bold sm:text-3xl">
-                  <span aria-hidden="true">&#9876;&#65039; </span>
-                  D&amp;D Easy
-                  <span aria-hidden="true"> &#9876;&#65039;</span>
-                </span>
-              </Link>
-              <p className="mt-1 text-xs tracking-[0.2em] text-[var(--muted)] uppercase">
-                Forge realms &middot; Weave adventures &middot; Summon heroes
-              </p>
-            </div>
-            <div className="site-banner-zones">
-              <AppZoneNav />
-            </div>
-          </div>
-        </header>
+        <SiteTitleBar />
         <div className="app-content">{children}</div>
         <p
           className="site-footnote shrink-0 px-4 py-3 text-center text-xs text-[var(--muted)]"

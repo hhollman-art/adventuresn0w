@@ -11,7 +11,23 @@ export type PremadeCharacterInput = {
   characterCount: string;
   extraNotes: string;
   characterSpecs?: CharacterSlotSpec[];
+  /** Optional saved seed markdown (realm, adventure, etc.) for world context. */
+  sourceSeedMarkdown?: string;
 };
+
+function sourceSeedReferenceBlock(markdown: string): string {
+  const body = markdown.trim();
+  if (!body) return "";
+  return `
+## Source material (saved D&DEasy seed)
+The following Markdown is **reference context** from the user's library (one or more saved seeds: realm, adventure, or other prep). Use its geography, factions, tone, hooks, and established facts to inform **party identity, backstories, ties, and Roleplay notes**. **Avoid** contradicting this material unless the party parameters below explicitly call for a twist or alternate interpretation. The fields below still control party concept, levels, class/race locks, and tone.
+
+---
+${body}
+---
+
+`;
+}
 
 function formatCharacterSpecsBlock(specs: CharacterSlotSpec[] | undefined): string {
   if (!specs?.length) {
@@ -27,8 +43,9 @@ function formatCharacterSpecsBlock(specs: CharacterSlotSpec[] | undefined): stri
 }
 
 export function buildPremadeCharactersMessage(input: PremadeCharacterInput): string {
+  const seedRef = sourceSeedReferenceBlock(input.sourceSeedMarkdown ?? "");
   return `Create a roster of **pre-made player characters** ready to pick up and play in one session.
-
+${seedRef}
 ## Parameters
 - Party concept or theme: ${input.partyConcept || "(you choose a cohesive party identity)"}
 - Character levels: ${input.levelRange}

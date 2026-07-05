@@ -3,7 +3,7 @@ import {
   buildRealmCartographyImagePrompt,
   type RealmImageInput,
 } from "@/lib/realmImagePrompt";
-import type { RealmSize } from "@/lib/realmPrompt";
+import { parseRealmSize } from "@/lib/realmPrompt";
 import {
   defaultOpenAIImageModel,
   openAIImageErrorNextResponse,
@@ -15,20 +15,6 @@ import { realmImagePostSchema, badRequest } from "@/lib/apiSchemas";
 import { logApiError, logApiWarning } from "@/lib/serverLog";
 import { parseMapDistanceUnits } from "@/lib/mapDistanceUnits";
 import { createHeartbeatJsonResponse } from "@/lib/sseStream";
-
-function parseRealmSize(value: unknown): RealmSize {
-  const raw = String(value ?? "").trim();
-  if (
-    raw === "world" ||
-    raw === "continent" ||
-    raw === "country" ||
-    raw === "region" ||
-    raw === "local"
-  ) {
-    return raw;
-  }
-  return "country";
-}
 
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
