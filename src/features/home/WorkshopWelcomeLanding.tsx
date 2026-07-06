@@ -27,7 +27,7 @@ export default function WorkshopWelcomeLanding({ onStartWorkflow }: WorkshopWelc
         </p>
         <p className="workshop-welcome-muted mt-3 max-w-2xl text-sm leading-relaxed">
           This hearth is your home base in the {FANTASY_FORGE} — application announcements and
-          status updates will appear here. Pick a workspace from the menu at left when you know
+          status updates will appear here. Pick a workspace from the tabs above when you know
           what you need. Not sure where to begin? Choose a workflow path below — each guide walks
           you step by step, with or without AI.
         </p>

@@ -87,7 +87,7 @@ body {
 }
 
 .panel-scroll,
-.workshop-workspace-nav,
+.workshop-workspace-nav-scroll,
 .workshop-welcome-main,
 .workshop-workspace-main,
 .workshop-page-main,
@@ -108,7 +108,7 @@ article.adventure-md.output-document-view .output-document-panel {
 }
 
 .panel-scroll::-webkit-scrollbar,
-.workshop-workspace-nav::-webkit-scrollbar,
+.workshop-workspace-nav-scroll::-webkit-scrollbar,
 .workshop-welcome-main::-webkit-scrollbar,
 .workshop-workspace-main::-webkit-scrollbar,
 .workshop-page-main::-webkit-scrollbar,
@@ -124,7 +124,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 }
 
 .panel-scroll::-webkit-scrollbar-track,
-.workshop-workspace-nav::-webkit-scrollbar-track,
+.workshop-workspace-nav-scroll::-webkit-scrollbar-track,
 .workshop-welcome-main::-webkit-scrollbar-track,
 .workshop-workspace-main::-webkit-scrollbar-track,
 .workshop-page-main::-webkit-scrollbar-track,
@@ -141,7 +141,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 }
 
 .panel-scroll::-webkit-scrollbar-thumb,
-.workshop-workspace-nav::-webkit-scrollbar-thumb,
+.workshop-workspace-nav-scroll::-webkit-scrollbar-thumb,
 .workshop-welcome-main::-webkit-scrollbar-thumb,
 .workshop-workspace-main::-webkit-scrollbar-thumb,
 .workshop-page-main::-webkit-scrollbar-thumb,
@@ -163,7 +163,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 }
 
 .panel-scroll::-webkit-scrollbar-thumb:hover,
-.workshop-workspace-nav::-webkit-scrollbar-thumb:hover,
+.workshop-workspace-nav-scroll::-webkit-scrollbar-thumb:hover,
 .workshop-welcome-main::-webkit-scrollbar-thumb:hover,
 .workshop-workspace-main::-webkit-scrollbar-thumb:hover,
 .workshop-page-main::-webkit-scrollbar-thumb:hover,
@@ -225,7 +225,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   width: 100%;
 }
 
-/* Fantasy Forge: left workspace pane | right column (workspace top, preview bottom) */
+/* Fantasy Forge: workspace tabs on top, full-width content stack below */
 .app-main--workshop.app-main--welcome,
 .app-main--workshop.app-main--creating,
 .app-main--workshop.app-main--library,
@@ -234,6 +234,8 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   flex-direction: column;
   gap: clamp(0.65rem, 2vw, 1rem);
   min-height: calc(100dvh - var(--app-chrome-height));
+  max-height: calc(100dvh - var(--app-chrome-height));
+  overflow: hidden;
 }
 
 .app-main--table.app-main--vtt {
@@ -259,52 +261,149 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   .app-main--workshop.app-main--creating,
   .app-main--workshop.app-main--library,
   .app-main--workplace-page {
-    display: grid;
-    grid-template-columns: minmax(11.5rem, 14.25rem) minmax(0, 1fr);
-    align-items: stretch;
-    gap: 1rem 1.25rem;
     height: calc(100dvh - var(--app-chrome-height));
     max-height: calc(100dvh - var(--app-chrome-height));
   }
-
-  .workshop-workspace-nav-panel {
-    grid-column: 1;
-    align-self: stretch;
-    max-height: none;
-    height: 100%;
-  }
-
-  .forge-content-shell {
-    grid-column: 2;
-    min-height: 0;
-    max-height: none;
-    height: 100%;
-  }
 }
 
-.workshop-workspace-nav-panel {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  max-height: clamp(14rem, 48dvh, 100%);
-  border-radius: 0.875rem;
-  overflow: hidden;
-  width: 100%;
-}
-
-@media (min-width: 1024px) {
-  .workshop-workspace-nav-panel {
-    max-height: none;
-  }
-}
-
-.workshop-workspace-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
+.app-main--workshop .forge-content-shell,
+.app-main--workplace-page .forge-content-shell {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 0.65rem 0.75rem 0.85rem;
+  overflow: hidden;
+}
+
+.app-main--workshop .forge-content-body,
+.app-main--workplace-page .forge-content-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Workspace tabs — one horizontal shelf under the banner */
+.workshop-workspace-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.35rem 0.5rem;
+  overflow: hidden;
+}
+
+.workshop-workspace-tabs-scroll {
+  display: flex;
+  align-items: stretch;
+  gap: 0.3rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.15rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-dim) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.workshop-workspace-tabs-scroll::-webkit-scrollbar {
+  height: 7px;
+}
+
+.workshop-workspace-tabs-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.workshop-workspace-tabs-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--accent-dim) 65%, transparent);
+  border-radius: 4px;
+}
+
+.workshop-workspace-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--accent-dim) 30%, transparent);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--surface) 82%, var(--accent)) 0%, color-mix(in srgb, var(--surface) 90%, black) 100%);
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, var(--shadow-btn);
+}
+
+.workshop-workspace-tab:hover {
+  border-color: color-mix(in srgb, var(--accent-dim) 65%, transparent);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--surface) 70%, var(--accent)) 0%, color-mix(in srgb, var(--surface) 84%, black) 100%);
+}
+
+.workshop-workspace-tab-active {
+  border-color: var(--accent-dim);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--accent) 55%, var(--surface)) 0%, color-mix(in srgb, var(--accent) 30%, var(--bg)) 100%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent-dim) 40%, transparent),
+    0 0 10px color-mix(in srgb, var(--accent-dim) 24%, transparent);
+}
+
+.workshop-workspace-tab--library .workshop-workspace-tab-label {
+  color: var(--accent-dim);
+}
+
+.workshop-workspace-tab-active .workshop-workspace-tab-label,
+.workshop-workspace-tab--library.workshop-workspace-tab-active .workshop-workspace-tab-label {
+  color: var(--text);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.workshop-workspace-tab-icon {
+  font-size: 1rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
+.workshop-workspace-tab-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.workshop-workspace-tabs-trailing {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Small screens: icons only — the active tab keeps its label as a "you are here" cue */
+@media (max-width: 639px) {
+  .workshop-workspace-tab {
+    padding: 0.45rem 0.55rem;
+  }
+
+  .workshop-workspace-tab-icon {
+    font-size: 1.15rem;
+  }
+
+  .workshop-workspace-tab:not(.workshop-workspace-tab-active) .workshop-workspace-tab-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .workshop-workspace-tab-active .workshop-workspace-tab-label {
+    font-size: 0.6875rem;
+  }
 }
 
 .forge-forest-panel {
@@ -645,6 +744,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   flex-direction: column;
   min-height: 0;
   flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .forge-content-body--creating,
@@ -977,7 +1077,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  min-height: clamp(14rem, 52dvh, 100%);
+  min-height: 0;
 }
 
 .workshop-welcome-main {
@@ -993,7 +1093,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   flex: 1 1 auto;
   gap: 1.25rem;
   padding: 0 1rem 1.5rem;
-  min-height: 100%;
+  min-height: 0;
   color: var(--text);
 }
 

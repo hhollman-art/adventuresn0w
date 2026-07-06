@@ -454,7 +454,7 @@
   border-bottom-color: color-mix(in srgb, var(--accent-dim) 38%, transparent);
 }
 
-[data-theme] .workshop-workspace-nav,
+[data-theme] .workshop-workspace-nav-scroll,
 [data-theme] .workshop-welcome-main,
 [data-theme] .workshop-workspace-main,
 [data-theme] .preview-window-panel {

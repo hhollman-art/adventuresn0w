@@ -21,7 +21,7 @@ import SeedMultiSelect from "@/features/workshop/SeedMultiSelect";
 import WorkshopLibraryPanel, {
   type LibraryViewSelection,
 } from "@/features/workshop/WorkshopLibraryPanel";
-import WorkshopSidebarWithRouting from "@/features/workshop/WorkshopSidebarWithRouting";
+import WorkshopWorkspaceTabs from "@/features/workshop/WorkshopWorkspaceTabs";
 import ForgeContentShell from "@/features/workshop/ForgeContentShell";
 import WorkshopWelcomeLanding from "@/features/home/WorkshopWelcomeLanding";
 import WorkflowTutorialOverlay from "@/features/workshop/WorkflowTutorialOverlay";
@@ -2389,18 +2389,18 @@ export default function Home(props: PageProps<"/">) {
           </div>
         </div>
       ) : null}
-      <WorkshopSidebarWithRouting
+      <WorkshopWorkspaceTabs
         workspace={workspace === "welcome" ? "welcome" : workspace}
         onSelectWelcome={() => selectWorkspace("welcome")}
         onSelectCreation={(creation) => {
           if (isLibraryView) router.push(`/?mode=${creation}`);
           else selectWorkspace(creation);
         }}
-        footer={
+        trailing={
           <button
             type="button"
             onClick={() => setShowTutorialPicker(true)}
-            className="btn btn-sm btn-forest mt-4 w-full font-display"
+            className="btn btn-sm btn-forest font-display whitespace-nowrap"
           >
             Workflow guides
           </button>
@@ -2428,7 +2428,7 @@ export default function Home(props: PageProps<"/">) {
       ) : null}
 
       {isWelcomeView ? (
-        <section className="workshop-welcome-main workshop-welcome-panel forge-forest-panel no-print rounded-xl border">
+        <section className="workshop-welcome-main workshop-welcome-panel panel-scroll forge-forest-panel no-print rounded-xl border">
           <WorkshopWelcomeLanding
             onStartWorkflow={(id) => {
               setTutorialWorkflowId(id);
