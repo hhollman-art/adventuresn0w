@@ -673,7 +673,7 @@ export default function WorkshopLibraryPanel({
       }
       style={wideLayout ? undefined : { borderColor: "var(--border)" }}
     >
-      <div className="flex flex-wrap items-start justify-between gap-2 shrink-0">
+      <div className="flex shrink-0 flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           {!wideLayout ? (
             <h2 className="font-display text-base font-bold text-[var(--text)]">
@@ -744,18 +744,20 @@ export default function WorkshopLibraryPanel({
       </div>
 
       {showStorageInfo ? (
-        <DataStorageExplainer
-          syncStatus={syncStatus}
-          onChooseFolder={() => void onChooseSyncFolder()}
-          onDisconnect={() => void onDisconnectSync()}
-          onExport={() => void onExportBackup()}
-          onRestoreFile={(e) => void onRestoreBackup(e)}
-        />
+        <div className="shrink-0">
+          <DataStorageExplainer
+            syncStatus={syncStatus}
+            onChooseFolder={() => void onChooseSyncFolder()}
+            onDisconnect={() => void onDisconnectSync()}
+            onExport={() => void onExportBackup()}
+            onRestoreFile={(e) => void onRestoreBackup(e)}
+          />
+        </div>
       ) : null}
 
       {activeCampaign ? (
         <p
-          className="flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-xs"
+          className="flex shrink-0 flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-xs"
           style={{
             borderColor: "var(--accent-dim)",
             background: "rgba(201,162,39,0.08)",
@@ -794,7 +796,8 @@ export default function WorkshopLibraryPanel({
       ) : null}
 
       {!srdOpen ? (
-        <LibraryBrowseToolbar
+        <div className="shrink-0">
+          <LibraryBrowseToolbar
           search={searchQuery}
           onSearchChange={setSearchQuery}
           shelf={category}
@@ -818,11 +821,12 @@ export default function WorkshopLibraryPanel({
           onSeedScopeFilterChange={setSeedScopeFilter}
           seedTagOptions={seedTagOptions}
         />
+        </div>
       ) : null}
 
       {statusMessage ? (
         <p
-          className="rounded-lg border px-3 py-2 text-xs"
+          className="shrink-0 rounded-lg border px-3 py-2 text-xs"
           style={{
             borderColor: "var(--accent-dim)",
             background: "rgba(201,162,39,0.1)",
@@ -840,7 +844,7 @@ export default function WorkshopLibraryPanel({
           onSelect={onSelect}
         />
       ) : entries.length === 0 ? (
-        <p className="text-sm leading-relaxed text-[var(--muted)]">
+        <p className="shrink-0 text-sm leading-relaxed text-[var(--muted)]">
           {searchQuery.trim() || ciClassFilter !== "all" || provenanceFilter !== "all"
             ? "No entries match your search or filters — try clearing a filter or widening your query."
             : browseEmptyMessage(
@@ -849,13 +853,8 @@ export default function WorkshopLibraryPanel({
               )}
         </p>
       ) : (
-        <ul
-          className={
-            wideLayout
-              ? "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1"
-              : "flex max-h-[min(44vh,360px)] flex-col gap-2 overflow-y-auto pr-1"
-          }
-        >
+        <div className="library-browse-scroll-host min-h-0 flex-1">
+          <ul className="library-browse-list flex flex-col gap-2 pr-1">
           {entries.map((entry) => {
             const selected = isSelected(selection, entry);
             const select = () => {
@@ -977,10 +976,11 @@ export default function WorkshopLibraryPanel({
             );
           })}
         </ul>
+        </div>
       )}
 
       {!srdOpen && parties.length > 0 ? (
-        <p className="text-[11px] leading-relaxed text-[var(--muted)]">
+        <p className="shrink-0 text-[11px] leading-relaxed text-[var(--muted)]">
           March a fellowship to the{" "}
           <button
             type="button"

@@ -38,7 +38,7 @@ export const WORKSHOP_NAV_ITEMS: WorkshopNavItem[] = [
     id: "library",
     label: THE_LIBRARY,
     hint: "AI outputs & homebrew creations — search and manage every saved CI",
-    icon: "\u{1F4DA}\u{1F4DC}",
+    icon: "\u{1F4DA}",
     group: "library",
     href: "/library",
   },

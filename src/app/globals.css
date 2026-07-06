@@ -92,7 +92,8 @@ body {
 .workshop-welcome-main,
 .workshop-workspace-main,
 .workshop-page-main,
-.library-workshop-browse .library-browse-panel > ul,
+.library-browse-list,
+.srd-entry-grid,
 .forge-content-body--creating .print-generation-root,
 .forge-content-body--library .library-workshop-preview,
 .workshop-page-preview,
@@ -113,7 +114,8 @@ article.adventure-md.output-document-view .output-document-panel {
 .workshop-welcome-main::-webkit-scrollbar,
 .workshop-workspace-main::-webkit-scrollbar,
 .workshop-page-main::-webkit-scrollbar,
-.library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar,
+.library-browse-list::-webkit-scrollbar,
+.srd-entry-grid::-webkit-scrollbar,
 .forge-content-body--creating .print-generation-root::-webkit-scrollbar,
 .forge-content-body--library .library-workshop-preview::-webkit-scrollbar,
 .workshop-page-preview::-webkit-scrollbar,
@@ -129,7 +131,8 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 .workshop-welcome-main::-webkit-scrollbar-track,
 .workshop-workspace-main::-webkit-scrollbar-track,
 .workshop-page-main::-webkit-scrollbar-track,
-.library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar-track,
+.library-browse-list::-webkit-scrollbar-track,
+.srd-entry-grid::-webkit-scrollbar-track,
 .forge-content-body--creating .print-generation-root::-webkit-scrollbar-track,
 .forge-content-body--library .library-workshop-preview::-webkit-scrollbar-track,
 .workshop-page-preview::-webkit-scrollbar-track,
@@ -146,7 +149,8 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 .workshop-welcome-main::-webkit-scrollbar-thumb,
 .workshop-workspace-main::-webkit-scrollbar-thumb,
 .workshop-page-main::-webkit-scrollbar-thumb,
-.library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar-thumb,
+.library-browse-list::-webkit-scrollbar-thumb,
+.srd-entry-grid::-webkit-scrollbar-thumb,
 .forge-content-body--creating .print-generation-root::-webkit-scrollbar-thumb,
 .forge-content-body--library .library-workshop-preview::-webkit-scrollbar-thumb,
 .workshop-page-preview::-webkit-scrollbar-thumb,
@@ -168,7 +172,8 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 .workshop-welcome-main::-webkit-scrollbar-thumb:hover,
 .workshop-workspace-main::-webkit-scrollbar-thumb:hover,
 .workshop-page-main::-webkit-scrollbar-thumb:hover,
-.library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar-thumb:hover,
+.library-browse-list::-webkit-scrollbar-thumb:hover,
+.srd-entry-grid::-webkit-scrollbar-thumb:hover,
 .forge-content-body--creating .print-generation-root::-webkit-scrollbar-thumb:hover,
 .forge-content-body--library .library-workshop-preview::-webkit-scrollbar-thumb:hover,
 .workshop-page-preview::-webkit-scrollbar-thumb:hover,
@@ -1121,6 +1126,32 @@ html[data-preview-window="standalone"] .app-content {
   overflow: hidden;
 }
 
+.library-workshop-browse-body {
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.library-workshop-browse-body > .library-browse-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.library-browse-scroll-host {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.library-browse-list {
+  flex: 1 1 auto;
+}
+
 @media (min-width: 1024px) {
   .workshop-workspace-main,
   .library-workshop-browse,
@@ -1554,6 +1585,8 @@ html[data-preview-window="standalone"] .app-content {
 
 .srd-entry-grid {
   grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
   align-content: start;
   padding-right: 0.15rem;
