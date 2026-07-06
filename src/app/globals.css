@@ -57,6 +57,134 @@ body {
   }
 }
 
+/* ---- Panel scroll regions — working overflow + visible scrollbars ------------ */
+.panel-scroll {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: var(--accent-dim) var(--scrollbar-track, rgba(0, 0, 0, 0.38));
+}
+
+.panel-scroll,
+.workshop-workspace-nav,
+.workshop-welcome-main,
+.workshop-workspace-main,
+.workshop-page-main,
+.library-workshop-browse .library-browse-panel > ul,
+.forge-content-body--creating .print-generation-root,
+.forge-content-body--library .library-workshop-preview,
+.workshop-page-preview,
+.preview-window-panel,
+article.adventure-md.output-document-view .output-document-panel {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: var(--accent-dim) var(--scrollbar-track, rgba(0, 0, 0, 0.38));
+}
+
+.panel-scroll::-webkit-scrollbar,
+.workshop-workspace-nav::-webkit-scrollbar,
+.workshop-welcome-main::-webkit-scrollbar,
+.workshop-workspace-main::-webkit-scrollbar,
+.workshop-page-main::-webkit-scrollbar,
+.library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar,
+.forge-content-body--creating .print-generation-root::-webkit-scrollbar,
+.forge-content-body--library .library-workshop-preview::-webkit-scrollbar,
+.workshop-page-preview::-webkit-scrollbar,
+.preview-window-panel::-webkit-scrollbar,
+article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+.panel-scroll::-webkit-scrollbar-track,
+.workshop-workspace-nav::-webkit-scrollbar-track,
+.workshop-welcome-main::-webkit-scrollbar-track,
+.workshop-workspace-main::-webkit-scrollbar-track,
+.workshop-page-main::-webkit-scrollbar-track,
+.library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar-track,
+.forge-content-body--creating .print-generation-root::-webkit-scrollbar-track,
+.forge-content-body--library .library-workshop-preview::-webkit-scrollbar-track,
+.workshop-page-preview::-webkit-scrollbar-track,
+.preview-window-panel::-webkit-scrollbar-track,
+article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-track {
+  background: var(--scrollbar-track, rgba(0, 0, 0, 0.38));
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.panel-scroll::-webkit-scrollbar-thumb,
+.workshop-workspace-nav::-webkit-scrollbar-thumb,
+.workshop-welcome-main::-webkit-scrollbar-thumb,
+.workshop-workspace-main::-webkit-scrollbar-thumb,
+.workshop-page-main::-webkit-scrollbar-thumb,
+.library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar-thumb,
+.forge-content-body--creating .print-generation-root::-webkit-scrollbar-thumb,
+.forge-content-body--library .library-workshop-preview::-webkit-scrollbar-thumb,
+.workshop-page-preview::-webkit-scrollbar-thumb,
+.preview-window-panel::-webkit-scrollbar-thumb,
+article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent-dim) 92%, white),
+    var(--accent-dim)
+  );
+  border: 2px solid var(--scrollbar-track, rgba(0, 0, 0, 0.38));
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.panel-scroll::-webkit-scrollbar-thumb:hover,
+.workshop-workspace-nav::-webkit-scrollbar-thumb:hover,
+.workshop-welcome-main::-webkit-scrollbar-thumb:hover,
+.workshop-workspace-main::-webkit-scrollbar-thumb:hover,
+.workshop-page-main::-webkit-scrollbar-thumb:hover,
+.library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar-thumb:hover,
+.forge-content-body--creating .print-generation-root::-webkit-scrollbar-thumb:hover,
+.forge-content-body--library .library-workshop-preview::-webkit-scrollbar-thumb:hover,
+.workshop-page-preview::-webkit-scrollbar-thumb:hover,
+.preview-window-panel::-webkit-scrollbar-thumb:hover,
+article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-dim);
+}
+
+.panel-scroll--parchment,
+.preview-window-panel,
+.workshop-page-preview,
+article.adventure-md.output-document-view .output-document-panel {
+  scrollbar-color: #8a5a18 #e8dcc4;
+}
+
+.panel-scroll--parchment::-webkit-scrollbar-track,
+.preview-window-panel::-webkit-scrollbar-track,
+.workshop-page-preview::-webkit-scrollbar-track,
+article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-track {
+  background: #e8dcc4;
+  border-color: rgba(122, 92, 40, 0.35);
+}
+
+.panel-scroll--parchment::-webkit-scrollbar-thumb,
+.preview-window-panel::-webkit-scrollbar-thumb,
+.workshop-page-preview::-webkit-scrollbar-thumb,
+article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #a06a20, #7a4c10);
+  border-color: #e8dcc4;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.panel-scroll--parchment::-webkit-scrollbar-thumb:hover,
+.preview-window-panel::-webkit-scrollbar-thumb:hover,
+.workshop-page-preview::-webkit-scrollbar-thumb:hover,
+article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-thumb:hover {
+  background: #8a5a18;
+}
+
 .app-main {
   flex: 1 1 auto;
   min-height: 0;
@@ -126,26 +254,7 @@ body {
   gap: 0.65rem;
   flex: 1 1 auto;
   min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
   padding: 0.65rem 0.75rem 0.85rem;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(201, 162, 39, 0.45) rgba(0, 0, 0, 0.2);
-}
-
-.workshop-workspace-nav::-webkit-scrollbar {
-  width: 6px;
-}
-
-.workshop-workspace-nav::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 3px;
-}
-
-.workshop-workspace-nav::-webkit-scrollbar-thumb {
-  background: rgba(201, 162, 39, 0.45);
-  border-radius: 3px;
 }
 
 .forge-forest-panel {
@@ -482,7 +591,10 @@ body {
 }
 
 .forge-content-body--welcome {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
 }
 
 .forge-content-body--creating,
@@ -508,7 +620,6 @@ body {
   min-width: 0;
   flex: 0 1 auto;
   max-height: min(44vh, 22rem);
-  overflow-y: auto;
 }
 
 .forge-content-body--creating .print-generation-root,
@@ -517,7 +628,6 @@ body {
   min-width: 0;
   flex: 1 1 auto;
   min-height: min(36vh, 18rem);
-  overflow-y: auto;
   position: static;
   border-top: 1px dashed rgba(154, 116, 22, 0.28);
   padding-top: 0.75rem;
@@ -537,14 +647,14 @@ body {
   .workshop-page-main {
     flex: 0 1 42%;
     max-height: none;
-    min-height: 10rem;
+    min-height: 0;
   }
 
   .forge-content-body--creating .print-generation-root,
   .forge-content-body--library .library-workshop-preview,
   .workshop-page-preview {
     flex: 1 1 58%;
-    min-height: 14rem;
+    min-height: 0;
   }
 }
 
@@ -695,7 +805,14 @@ body {
 .workshop-welcome-panel {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   min-height: min(70vh, 36rem);
+}
+
+.workshop-welcome-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
 }
 
 .workshop-welcome {
@@ -873,20 +990,10 @@ body {
   background: rgba(0, 0, 0, 0.2);
 }
 
-.workshop-welcome-main {
-  flex: 1 1 auto;
-  min-height: min(50vh, 28rem);
-  max-height: none;
-  overflow-y: auto;
-}
-
 @media (min-width: 1024px) {
-  .workshop-welcome-panel {
-    min-height: min(65vh, 40rem);
-  }
-
+  .workshop-welcome-panel,
   .forge-content-body--welcome .workshop-welcome-main {
-    flex: 1 1 auto;
+    min-height: 0;
     max-height: calc(100dvh - 10rem);
   }
 }
@@ -916,6 +1023,7 @@ body {
   flex: 1 1 auto;
   flex-direction: column;
   gap: 0.75rem;
+  overflow: hidden;
 }
 
 .library-browse-panel .library-category-tabs {

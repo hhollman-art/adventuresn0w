@@ -70,7 +70,7 @@ export default function WorkshopWorkspaceNav({
 
   return (
 
-    <nav className="workshop-workspace-nav" aria-label="Fantasy Forge workspaces">
+    <nav className="workshop-workspace-nav panel-scroll" aria-label="Fantasy Forge workspaces">
 
       <WorkshopForestCanopy />
 

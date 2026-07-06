@@ -2423,7 +2423,7 @@ export default function Home(props: PageProps<"/">) {
       ) : null}
 
       {isWelcomeView ? (
-        <section className="workshop-welcome-main workshop-welcome-panel forge-forest-panel no-print overflow-hidden rounded-xl border">
+        <section className="workshop-welcome-main workshop-welcome-panel forge-forest-panel no-print rounded-xl border">
           <WorkshopWelcomeLanding
             onStartWorkflow={(id) => {
               setTutorialWorkflowId(id);

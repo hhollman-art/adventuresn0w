@@ -455,12 +455,11 @@
   border-bottom-color: color-mix(in srgb, var(--accent-dim) 38%, transparent);
 }
 
-[data-theme] .workshop-workspace-nav::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--accent-dim) 55%, transparent);
-}
-
-[data-theme] .workshop-workspace-nav {
-  scrollbar-color: color-mix(in srgb, var(--accent-dim) 55%, transparent) rgba(0, 0, 0, 0.15);
+[data-theme] .workshop-workspace-nav,
+[data-theme] .workshop-welcome-main,
+[data-theme] .workshop-workspace-main,
+[data-theme] .preview-window-panel {
+  scrollbar-color: var(--accent-dim) var(--scrollbar-track, rgba(0, 0, 0, 0.38));
 }
 
 /* ---- Readability floor — text pops on every scene ------------------------- */
