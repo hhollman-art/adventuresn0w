@@ -37,8 +37,8 @@ export const WORKSHOP_NAV_ITEMS: WorkshopNavItem[] = [
   {
     id: "library",
     label: THE_LIBRARY,
-    hint: "AI outputs & homebrew creations — search and manage every saved CI",
-    icon: "\u{1F4DA}\u{1F4DC}",
+    hint: "AI outputs & homebrew creations — search and manage every saved Creation File (CF)",
+    icon: "\u{1F4DA}",
     group: "library",
     href: "/library",
   },
@@ -69,7 +69,7 @@ export const WORKSHOP_NAV_ITEMS: WorkshopNavItem[] = [
   {
     id: "maps",
     label: "Maps",
-    hint: "AI travel & battle charts or maps from your lore seeds",
+    hint: "AI travel & battle charts or maps from your Creation Files (CFs)",
     icon: "\u{1F5FA}\uFE0F",
     group: "forge",
     creation: "maps",
@@ -78,7 +78,7 @@ export const WORKSHOP_NAV_ITEMS: WorkshopNavItem[] = [
     id: "tavern",
     label: THE_TAVERN,
     hint: "AI hero parties or homebrew characters & fellowships",
-    icon: "\u{1F3EE}",
+    icon: "\u{1F37A}",
     group: "tend",
     href: "/tavern",
   },

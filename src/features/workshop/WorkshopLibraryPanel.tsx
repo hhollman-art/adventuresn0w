@@ -589,7 +589,7 @@ export default function WorkshopLibraryPanel({
     a.click();
     URL.revokeObjectURL(url);
     onStatus(
-      `Backup exported (${backup.seeds.length} seeds, ${backup.results.length} results, ${backup.characters.length} heroes, ${backup.items.length} items, ${backup.parties.length} parties, ${backup.campaigns.length} campaigns). Save it anywhere you like — folder, cloud drive, or repository.`,
+      `Backup exported (${backup.seeds.length} Creation Files (CFs), ${backup.results.length} results, ${backup.characters.length} heroes, ${backup.items.length} items, ${backup.parties.length} parties, ${backup.campaigns.length} campaigns). Save it anywhere you like — folder, cloud drive, or repository.`,
     );
   };
 
@@ -738,7 +738,7 @@ export default function WorkshopLibraryPanel({
             </button>
           ) : null}
           <button type="button" onClick={onAddSeed} className="btn btn-sm btn-accent">
-            Plant a lore seed
+            Plant a Creation File (CF)
           </button>
         </div>
       </div>
@@ -887,7 +887,7 @@ export default function WorkshopLibraryPanel({
                   onView={select}
                   onEdit={() => onEditSeed(entry.id)}
                   onDelete={() => onDeleteSeed(entry.id)}
-                  editLabel="Revise seed"
+                  editLabel="Revise Creation File (CF)"
                 />
               );
             }

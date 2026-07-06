@@ -3,8 +3,8 @@ import type { LibraryStorageCategory } from "@/lib/workshop/libraryCatalog";
 
 /**
  * A workplace is the UI surface for one slice of the CMDB — it owns browse,
- * create, and edit interfaces for its CI classes. The Library aggregates all
- * workplaces; dedicated routes (e.g. /items, /tavern) are the same CI types
+ * create, and edit interfaces for its Creation File (CF) classes. The Library aggregates all
+ * workplaces; dedicated routes (e.g. /items, /tavern) are the same Creation File (CF) types
  * with workplace-specific tooling.
  */
 export type WorkplaceId =
@@ -24,7 +24,7 @@ export type WorkplaceDefinition = {
   route: string;
   /** Human description for help and empty states. */
   description: string;
-  /** CI classes this workplace exposes in its UI. */
+  /** Creation File (CF) classes this workplace exposes in its UI. */
   ciClasses: CiClass[];
   /** Matching Library tab, when this workplace maps to one category. */
   libraryCategory: LibraryStorageCategory | null;

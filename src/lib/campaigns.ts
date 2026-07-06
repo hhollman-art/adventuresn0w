@@ -7,7 +7,7 @@
  * references so the same realm seed can serve several campaigns; deleting a
  * campaign never deletes the linked content.
  *
- * CI class: campaign.record (see src/lib/ciRegistry.ts).
+ * Creation File (CF) class: campaign.record (see src/lib/ciRegistry.ts).
  */
 
 const IDB_NAME = "ddeasy-campaigns-v1";
@@ -325,7 +325,7 @@ export async function linkToCampaign(
 }
 
 /**
- * Remove one id link from a campaign without deleting the linked CI.
+ * Remove one id link from a campaign without deleting the linked Creation File (CF).
  */
 export async function unlinkFromCampaign(
   campaignId: string,

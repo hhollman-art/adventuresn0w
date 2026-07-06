@@ -3,7 +3,7 @@ import type { CiClass } from "@/lib/ciRegistry";
 
 /**
  * Reference to one SRD equipment or magic item from the bundled catalogue.
- * These are read-only CIs (`item.srd-equipment` / `item.srd-magic`) — not
+ * These are read-only Creation Files (CFs) (`item.srd-equipment` / `item.srd-magic`) — not
  * copied into user storage; the ref is enough to fetch rules text and reuse
  * the item across characters, the Library SRD browser, and future features.
  */

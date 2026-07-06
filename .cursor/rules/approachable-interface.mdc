@@ -10,14 +10,14 @@ D&D Easy serves imaginative people, **not** technical people. Assume the user ha
 ## Core principle
 
 - **Design for general-population technical aptitude.** If a control needs prior software knowledge to understand, rewrite it.
-- **Fantasy theme is a usability tool, not wallpaper.** Use familiar tabletop metaphors to *explain* function: the Library is a bookshelf, seeds are story notes, the Virtual Table is the game table. A themed label must make the feature *easier* to guess, never harder.
+- **Fantasy theme is a usability tool, not wallpaper.** Use familiar tabletop metaphors to *explain* function: the Library is a bookshelf, Creation Files (CFs) are your saved prep notes, the Virtual Table is the game table. A themed label must make the feature *easier* to guess, never harder.
 
 ## Language rules
 
 | Avoid (jargon) | Prefer (plain + themed) |
 |----------------|-------------------------|
 | "Markdown output" | "table-ready pages you can print or copy" |
-| "Seed" (unexplained) | "story notes the generators build from" |
+| "Seed" (unexplained) | "Creation File (CF) — story notes the generators build from" |
 | "Sync folder / localStorage" | "your auto-save folder — a folder on your computer" |
 | "SRD 5.2.1 catalogue" | "the free official rules included with the app" |
 | "API key missing" | "AI features are off — everything else still works" |

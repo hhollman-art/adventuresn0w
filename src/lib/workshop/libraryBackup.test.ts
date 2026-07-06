@@ -163,7 +163,7 @@ describe("libraryBackup", () => {
         parties: 1,
         campaigns: 1,
       }),
-    ).toBe("Restored 2 seeds, 1 result, 3 characters, 2 items, 1 party, 1 campaign from backup.");
+    ).toBe("Restored 2 Creation Files (CFs), 1 result, 3 characters, 2 items, 1 party, 1 campaign from backup.");
     expect(
       describeRestoreCounts({
         seeds: 0,

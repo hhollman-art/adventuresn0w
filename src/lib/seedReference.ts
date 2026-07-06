@@ -37,7 +37,7 @@ export function combineLabeledSeedMarkdown(
   let out = header;
   for (let i = 0; i < usable.length; i++) {
     const part = usable[i]!;
-    const block = `---\n\n### Source ${i + 1}: ${part.label || "Saved seed"}\n\n${part.markdown}\n\n`;
+    const block = `---\n\n### Source ${i + 1}: ${part.label || "Saved Creation File (CF)"}\n\n${part.markdown}\n\n`;
     if (out.length + block.length > maxChars) {
       const remaining = maxChars - out.length - 24;
       if (remaining > 120) {

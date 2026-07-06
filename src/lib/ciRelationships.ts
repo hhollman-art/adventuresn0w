@@ -9,10 +9,10 @@ import type { SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
 import type { SrdItemRef } from "@/lib/srd/srdItemRef";
 
 /**
- * CI relationship model — campaigns are the structural root.
+ * Creation File (CF) relationship model — campaigns are the structural root.
  *
- * Every stored row is a Configuration Item (one class, one category). Links are
- * **id references owned by the container** — never copies. Creating a CI saves
+ * Every stored row is a Creation File (CF) (one class, one category). Links are
+ * **id references owned by the container** — never copies. Creating a Creation File (CF) saves
  * exactly one row in its storage module; linking it to a campaign only appends
  * its id to the campaign record.
  *
@@ -27,11 +27,11 @@ import type { SrdItemRef } from "@/lib/srd/srdItemRef";
  *   party.roster → embeds character.sheet snapshots (same id, copied stats)
  *   character.sheet → embeds item copies on the gear list
  *
- * SRD equipment/magic (`item.srd-*`) are read-only catalogue CIs — referenced by
+ * SRD equipment/magic (`item.srd-*`) are read-only catalogue Creation Files (CFs) — referenced by
  * `{ resource, index }`, not stored as user rows.
  */
 
-/** Fields on SavedCampaign that hold id links to other CIs. */
+/** Fields on SavedCampaign that hold id links to other Creation Files (CFs). */
 export type CampaignLinkField =
   | "partyId"
   | "seedIds"
@@ -64,7 +64,7 @@ export function campaignAdventureResults(
   return results.filter((r) => known.has(r.id) && r.kind === "adventure");
 }
 
-/** Campaigns that reference a given CI id (reverse lookup for two-way navigation). */
+/** Campaigns that reference a given Creation File (CF) id (reverse lookup for two-way navigation). */
 export function campaignsLinkingCi(
   campaigns: SavedCampaign[],
   ciId: string,
@@ -119,7 +119,7 @@ export function buildCampaignTree(
       .map((s) => ({
         ciClass: `seed.${s.kind}` as CiClass,
         id: s.id,
-        label: s.seedName || s.titleHint || "Adventure seed",
+        label: s.seedName || s.titleHint || "Adventure Creation File (CF)",
       })),
     ...campaign.resultIds
       .map((id) => resultById.get(id))
@@ -186,7 +186,7 @@ export function buildCampaignTree(
       ? [{ ciClass: "item.equipment" as CiClass, id: `${campaign.id}-items`, label: "Items", children: itemNodes }]
       : []),
     ...(otherSeedNodes.length
-      ? [{ ciClass: "seed.realm" as CiClass, id: `${campaign.id}-seeds`, label: "Other seeds", children: otherSeedNodes }]
+      ? [{ ciClass: "seed.realm" as CiClass, id: `${campaign.id}-seeds`, label: "Other Creation Files (CFs)", children: otherSeedNodes }]
       : []),
     ...(otherResultNodes.length
       ? [{ ciClass: "result.realm" as CiClass, id: `${campaign.id}-results`, label: "Other results", children: otherResultNodes }]

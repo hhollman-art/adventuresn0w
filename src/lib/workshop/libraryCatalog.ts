@@ -36,7 +36,7 @@ import {
 import type { SrdItemRef } from "@/lib/srd/srdItemRef";
 
 /**
- * Workshop Library — the CMDB browse UI for every Configuration Item you own.
+ * Workshop Library — the CMDB browse UI for every Creation File (CF) you own.
  * The SRD rules browser is a separate Library feature (toggle), not a category tab.
  */
 export type WorkshopLibraryCategory =
@@ -60,7 +60,7 @@ export type LibraryProvenance = "srd" | "user";
 export type LibraryOrigin = "import" | "creation";
 
 export const WORKSHOP_LIBRARY_CATEGORY_LABEL: Record<LibraryStorageCategory, string> = {
-  seeds: "Seeds",
+  seeds: "Creation Files (CFs)",
   results: "Results",
   characters: "Heroes",
   items: "Items",
@@ -86,14 +86,14 @@ export const LIBRARY_PROVENANCE_STORAGE: Record<LibraryProvenance, string> = {
 
 export const LIBRARY_PROVENANCE_DESCRIPTION: Record<LibraryProvenance, string> = {
   srd: "Free rules bundled with D&D Easy (classes, spells, ancestries, equipment, CC BY 4.0). Read-only — you can't edit or delete these, and they never need saving.",
-  user: "Everything you bring in or make — party files and notes from books you own, seeds you write, and results the generators produce. Things made in the app carry a Creation tag. All of it saves once, automatically, to your chosen folder (local or cloud-synced); never uploaded to a server.",
+  user: "Everything you bring in or make — party files and notes from books you own, Creation Files (CFs) you write, and results the generators produce. Things made in the app carry a Creation tag. All of it saves once, automatically, to your chosen folder (local or cloud-synced); never uploaded to a server.",
 };
 
 export const LIBRARY_PROVENANCE_TIERS: LibraryProvenance[] = ["srd", "user"];
 
 export type LibraryListEntry = {
   id: string;
-  /** CMDB class — the most specific CI type (see src/lib/ciRegistry.ts). */
+  /** CMDB class — the most specific Creation File (CF) type (see src/lib/ciRegistry.ts). */
   ciClass: CiClass;
   category: LibraryStorageCategory;
   provenance: LibraryProvenance;
@@ -104,7 +104,7 @@ export type LibraryListEntry = {
   detail: string;
   createdAt: string;
   tags?: string[];
-  /** Set for bundled SRD equipment / magic item rows (read-only catalogue CIs). */
+  /** Set for bundled SRD equipment / magic item rows (read-only catalogue Creation Files (CFs)). */
   srdItemRef?: SrdItemRef;
 };
 

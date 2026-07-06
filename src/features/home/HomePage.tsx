@@ -174,7 +174,7 @@ const MODE_TAB_ICON: Record<GenerateMode, string> = {
   characters: "\u{1F9D9}", // mage
   props: "\u{1F3FA}", // amphora
   maps: "\u{1F5FA}\uFE0F", // world map
-  library: "\u{1F4DC}", // scroll
+  library: "\u{1F4DA}", // stack of books
 };
 
 async function autoSaveGeneratedSeed(params: {
@@ -1170,11 +1170,11 @@ export default function Home(props: PageProps<"/">) {
     const name = seedEditor.name.trim();
     const markdown = seedEditor.markdown.trim();
     if (!name) {
-      setSeedEditorError("Enter a name for this seed.");
+      setSeedEditorError("Enter a name for this Creation File (CF).");
       return;
     }
     if (!markdown) {
-      setSeedEditorError("Add seed details—the content cannot be empty.");
+      setSeedEditorError("Add Creation File (CF) details—the content cannot be empty.");
       return;
     }
     const brief = seedEditor.briefDescription.trim().slice(0, 280);
@@ -1320,7 +1320,7 @@ export default function Home(props: PageProps<"/">) {
           label: ddeasySeedOptionLabel(seed),
           markdown:
             md ||
-            `# ${seedDisplayName(seed)}\n\n*(${SEED_KIND_LABEL[seed.kind]} — this seed has no saved text; use the map form fields as the primary brief.)*`,
+            `# ${seedDisplayName(seed)}\n\n*(${SEED_KIND_LABEL[seed.kind]} — this Creation File (CF) has no saved text; use the map form fields as the primary brief.)*`,
         };
       });
     return combineLabeledSeedMarkdown(parts, MAX_LIBRARY_REF_CHARS);
@@ -1922,7 +1922,7 @@ export default function Home(props: PageProps<"/">) {
           : viewingItem
             ? `# ${viewingItem.name}\n\n${viewingItem.description.trim() || `${GAME_ITEM_KIND_LABEL[viewingItem.kind]} · ${viewingItem.itemType}`.trim()}`
             : viewingCampaign
-              ? `# ${viewingCampaign.name}\n\n${viewingCampaign.description.trim() || "Campaign container — links party, adventures, characters, and items by reference."}\n\n## Linked CIs\n\n- Party: ${viewingCampaign.partyId ? "linked" : "none"}\n- Seeds: ${viewingCampaign.seedIds.length}\n- Results: ${viewingCampaign.resultIds.length}\n- Characters: ${viewingCampaign.characterIds.length}\n- Items: ${viewingCampaign.itemIds.length}\n\nManage links on the Campaigns page.`
+              ? `# ${viewingCampaign.name}\n\n${viewingCampaign.description.trim() || "Campaign container — links party, adventures, characters, and items by reference."}\n\n## Linked Creation Files (CFs)\n\n- Party: ${viewingCampaign.partyId ? "linked" : "none"}\n- Creation Files (CFs): ${viewingCampaign.seedIds.length}\n- Results: ${viewingCampaign.resultIds.length}\n- Characters: ${viewingCampaign.characterIds.length}\n- Items: ${viewingCampaign.itemIds.length}\n\nManage links on the Campaigns page.`
               : (viewingSeed?.markdown ??
                 viewingResult?.markdown ??
                 viewingParty?.markdown ??
@@ -1989,7 +1989,7 @@ export default function Home(props: PageProps<"/">) {
     let viewingLabel: string | null = null;
     let viewingSubline: string | null = null;
     if (viewingSeed) {
-      viewingLabel = `Viewing seed: ${seedDisplayName(viewingSeed)}`;
+      viewingLabel = `Viewing Creation File (CF): ${seedDisplayName(viewingSeed)}`;
       viewingSubline = SEED_KIND_LABEL[viewingSeed.kind];
     } else if (viewingResult) {
       viewingLabel = `Viewing result: ${viewingResult.title}`;
@@ -2223,17 +2223,17 @@ export default function Home(props: PageProps<"/">) {
               className="text-lg font-semibold text-[var(--text)]"
             >
               {seedEditor.id
-                ? `Edit ${SEED_KIND_LABEL[seedEditor.kind].toLowerCase()} seed`
-                : "Add seed manually"}
+                ? `Edit ${SEED_KIND_LABEL[seedEditor.kind].toLowerCase()} Creation File (CF)`
+                : "Add Creation File (CF) manually"}
             </h2>
             <p className="mt-2 text-sm text-[var(--muted)]">
-              Seeds are story notes the generators build from. Type or paste
+              Creation Files (CFs) are story notes the generators build from. Type or paste
               anything — places, people, plots — and future realms, adventures,
               characters, maps, and items will stay true to them. Plain text or
               Markdown formatting both work.
             </p>
             <label className="mt-4 flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-[var(--muted)]">Seed type</span>
+              <span className="font-medium text-[var(--muted)]">Creation File (CF) type</span>
               <select
                 value={seedEditor.kind}
                 onChange={(e) => {
@@ -2251,7 +2251,7 @@ export default function Home(props: PageProps<"/">) {
               </select>
             </label>
             <label className="mt-3 flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-[var(--muted)]">Seed name</span>
+              <span className="font-medium text-[var(--muted)]">Creation File (CF) name</span>
               <input
                 value={seedEditor.name}
                 onChange={(e) => {
@@ -2301,7 +2301,7 @@ export default function Home(props: PageProps<"/">) {
                 Short description (optional)
               </span>
               <span className="text-xs text-[var(--muted)]">
-                A one-line summary shown in the seed picker for recognition.
+                A one-line summary shown in the Creation File (CF) picker for recognition.
               </span>
               <input
                 value={seedEditor.briefDescription}
@@ -2318,7 +2318,7 @@ export default function Home(props: PageProps<"/">) {
             <label className="mt-3 flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-[var(--muted)]">Tags (optional)</span>
               <span className="text-xs text-[var(--muted)]">
-                Comma-separated labels to filter seeds in the Library and on workshop
+                Comma-separated labels to filter Creation Files (CFs) in the Library and on workshop
                 tabs — e.g. campaign, one-shot, faction. Realm scope (world, city,
                 village, …) is set automatically from realm size above.
               </span>
@@ -2356,7 +2356,7 @@ export default function Home(props: PageProps<"/">) {
               </div>
             </label>
             <label className="mt-3 flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-[var(--muted)]">Seed details</span>
+              <span className="font-medium text-[var(--muted)]">Creation File (CF) details</span>
               <span className="text-xs text-[var(--muted)]">
                 The brief, notes, or generated text that should carry into future
                 runs on this tab (and related tabs). Required.
@@ -2645,13 +2645,13 @@ export default function Home(props: PageProps<"/">) {
                 </div>
               </fieldset>
               <SeedMultiSelect
-                label="Your saved seeds (recommended)"
+                label="Your saved Creation Files (CFs) (recommended)"
                 seeds={ddeasySeeds}
                 selectedIds={mapLibraryReferenceIds}
                 onChange={setMapLibraryReferenceIds}
                 workshopTab="maps"
                 emptyHint="Save a realm or adventure first — it will appear here as a source to draw from."
-                description="Seeds are your saved story notes. Pick one or more and the map follows their places and names first; the scene notes below just add detail."
+                description="Creation Files (CFs) are your saved story notes. Pick one or more and the map follows their places and names first; the scene notes below just add detail."
               />
               <fieldset
                 className="flex flex-col gap-2 rounded-lg border p-3 text-sm"
@@ -2726,8 +2726,8 @@ export default function Home(props: PageProps<"/">) {
                 </span>
                 <span className="text-xs text-[var(--muted)]">
                   {mapLibraryReferenceIds.length > 0
-                    ? "Encounter layout and extra labels not already in your seed sources. Geography and place names defer to the seeds above."
-                    : "Locations, encounter spaces, and names you want on the map. Attach seed sources above when you have a saved realm or adventure."}
+                    ? "Encounter layout and extra labels not already in your Creation File (CF) sources. Geography and place names defer to the Creation Files (CFs) above."
+                    : "Locations, encounter spaces, and names you want on the map. Attach Creation File (CF) sources above when you have a saved realm or adventure."}
                 </span>
                 <textarea
                   value={mapForm.context}
@@ -2957,16 +2957,16 @@ export default function Home(props: PageProps<"/">) {
                 style={{ borderColor: "var(--border)" }}
               >
                 <SeedMultiSelect
-                  label="Your saved seeds (optional)"
+                  label="Your saved Creation Files (CFs) (optional)"
                   seeds={ddeasySeeds}
                   selectedIds={selectedRealmCreationSeedIds}
                   onChange={setSelectedRealmCreationSeedIds}
                   workshopTab="realm"
                   emptyHint="Generate a realm or adventure first; it saves itself here automatically."
-                  description="Seeds are your saved story notes. Pick one or more to stay consistent with their places and lore, or to zoom in or expand — the size and description you set here still lead."
+                  description="Creation Files (CFs) are your saved story notes. Pick one or more to stay consistent with their places and lore, or to zoom in or expand — the size and description you set here still lead."
                 />
                 <p className="text-xs text-[var(--muted)]">
-                  Add or edit seeds by hand in the{" "}
+                  Add or edit Creation Files (CFs) by hand in the{" "}
                   <Link
                     href="/library"
                     className="font-medium text-[var(--accent)] underline underline-offset-2"
@@ -3019,7 +3019,7 @@ export default function Home(props: PageProps<"/">) {
               >
                 <p className="text-xs leading-relaxed text-[var(--muted)]">
                   Your realm arrives as table-ready pages and{" "}
-                  <strong className="text-[var(--text)]">saves itself as a seed</strong>{" "}
+                  <strong className="text-[var(--text)]">saves itself as a Creation File (CF)</strong>{" "}
                   in the Library — named from your working title, and you can rename
                   it there anytime.                   For travel or locale map images, open the{" "}
                   <button
@@ -3029,7 +3029,7 @@ export default function Home(props: PageProps<"/">) {
                   >
                     {MODE_TAB_LABEL.maps}
                   </button>{" "}
-                  workspace and attach your saved realm seed under Library references.
+                  workspace and attach your saved realm Creation File (CF) under Library references.
                 </p>
               </div>
             </>
@@ -3099,16 +3099,16 @@ export default function Home(props: PageProps<"/">) {
               style={{ borderColor: "var(--border)" }}
             >
               <SeedMultiSelect
-                label="Your saved seeds (optional)"
+                label="Your saved Creation Files (CFs) (optional)"
                 seeds={ddeasySeeds}
                 selectedIds={selectedSourceSeedIds}
                 onChange={setSelectedSourceSeedIds}
                 workshopTab="adventure"
                 emptyHint="Generate a realm or adventure first; it saves itself here automatically."
-                description="Seeds are your saved story notes. Pick one or more to anchor the adventure's places, factions, and lore — the details you fill in below still control plot, levels, and tone."
+                description="Creation Files (CFs) are your saved story notes. Pick one or more to anchor the adventure's places, factions, and lore — the details you fill in below still control plot, levels, and tone."
               />
               <p className="text-xs text-[var(--muted)]">
-                Add or edit seeds by hand in the{" "}
+                Add or edit Creation Files (CFs) by hand in the{" "}
                 <Link
                   href="/library"
                   className="font-medium text-[var(--accent)] underline underline-offset-2"
@@ -3125,16 +3125,16 @@ export default function Home(props: PageProps<"/">) {
               style={{ borderColor: "var(--border)" }}
             >
               <SeedMultiSelect
-                label="Your saved seeds (optional)"
+                label="Your saved Creation Files (CFs) (optional)"
                 seeds={ddeasySeeds}
                 selectedIds={selectedSourceSeedIds}
                 onChange={setSelectedSourceSeedIds}
                 workshopTab="characters"
-                emptyHint="Save a realm or adventure seed in the Library first."
-                description="Seeds are your saved story notes. Pick one or more to ground the party's backstories, faction ties, and world flavor — the class, race, and concept fields below still apply."
+                emptyHint="Save a realm or adventure Creation File (CF) in the Library first."
+                description="Creation Files (CFs) are your saved story notes. Pick one or more to ground the party's backstories, faction ties, and world flavor — the class, race, and concept fields below still apply."
               />
               <p className="text-xs text-[var(--muted)]">
-                Manage seeds in the{" "}
+                Manage Creation Files (CFs) in the{" "}
                 <Link
                   href="/library"
                   className="font-medium text-[var(--accent)] underline underline-offset-2"

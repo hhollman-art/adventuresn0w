@@ -98,8 +98,8 @@ export default function HelpPage() {
         </p>
         <p className="mt-2 leading-relaxed text-[var(--text)]/90">
           After generating, the realm is saved automatically as a{" "}
-          <strong>D&DEasy seed</strong> — a named summary kept in your browser.
-          Seeds appear as a dropdown on the Realm and Adventure tabs, so new
+          <strong>Creation File (CF)</strong> — a named summary kept in your browser.
+          Creation Files (CFs) appear as a dropdown on the Realm and Adventure tabs, so new
           generations can stay consistent with settings you made earlier.
         </p>
 
@@ -109,9 +109,9 @@ export default function HelpPage() {
           <strong>Short</strong> for part of a session or{" "}
           <strong>One-nighter</strong> for a full evening — then optionally set
           tone, level range, party size, a villain, and how combat-heavy it
-          should be (the 1–5 slider). Choose a D&DEasy seed to anchor the
+          should be (the 1–5 slider). Choose a Creation File (CF) to anchor the
           adventure in one of your saved settings. Adventures you generate are
-          also saved as D&DEasy seeds automatically. The app can also
+          also saved as Creation Files (CFs) automatically. The app can also
           automatically generate battle maps and item handouts for key scenes
           it finds in the finished adventure.
         </p>
@@ -158,10 +158,10 @@ export default function HelpPage() {
         <SectionHeading>Library — your configuration database</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
           The Library is the UI for your configuration management database (CMDB). Every
-          seed, result, character, item, party, and campaign is a{" "}
-          <strong>Configuration Item</strong> with exactly one class (for example{" "}
+          Creation File (CF), result, character, item, party, and campaign is a{" "}
+          <strong>Creation File (CF)</strong> with exactly one class (for example{" "}
           <code>character.sheet</code>, <code>item.magic</code>, <code>campaign.record</code>).
-          Campaigns are the structural root: they link other CIs by id only — never copies.
+          Campaigns are the structural root: they link other Creation Files (CFs) by id only — never copies.
           Generated content still saves once to your library; linking just records the id on
           the open campaign.
         </p>
@@ -172,7 +172,7 @@ export default function HelpPage() {
           <li>
             <strong>Included rules (SRD)</strong> — browse spells, monsters, classes,
             equipment, and rules via the D&amp;D 5e SRD API (2014 SRD, CC BY 4.0).
-            SRD equipment and magic items are read-only CIs (
+            SRD equipment and magic items are read-only Creation Files (CFs) (
             <code>item.srd-equipment</code>, <code>item.srd-magic</code>) you can reference
             on hero sheets and in the SRD browser. Hero pickers use a bundled
             spell/class index. This is the only rules reference D&amp;D Easy hosts. It is
@@ -181,7 +181,7 @@ export default function HelpPage() {
           <li>
             <strong>Yours</strong> — everything you import or make, saved once and
             managed the same way: heroes, items, fellowship notes from books you own (typed
-            or uploaded, including a D&amp;D Beyond character JSON you saved yourself), seeds
+            or uploaded, including a D&amp;D Beyond character JSON you saved yourself), Creation Files (CFs)
             you write, and results the generators produce. Things made in the app carry
             a <strong>Creation</strong> tag so you can tell them apart from imported
             files. Stored in <em>this browser on this device only</em>, never
@@ -211,13 +211,13 @@ export default function HelpPage() {
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
           If you run several groups, create one <strong>campaign</strong> per group on the
           Campaigns page. A campaign links that group&apos;s fellowship, heroes, items, and
-          the seeds and results that belong to its story (links are id references — the same
-          realm seed can serve two campaigns), and it keeps <strong>its own Virtual Table</strong>. Open a campaign
+          the Creation Files (CFs) and results that belong to its story (links are id references — the same
+          realm Creation File (CF) can serve two campaigns), and it keeps <strong>its own Virtual Table</strong>. Open a campaign
           from the title-bar switcher and the map, tokens, fog, and initiative come back
           exactly as that group left them; the other group&apos;s table is shelved safely.
           While a campaign is open, the Library can show just its content, and anything new
           you create links to it automatically. Deleting a campaign only removes the
-          container — the party, seeds, and results stay in your library.
+          container — the party, Creation Files (CFs), and results stay in your library.
         </p>
 
         <SectionHeading>The Tavern — heroes &amp; fellowships in one place</SectionHeading>

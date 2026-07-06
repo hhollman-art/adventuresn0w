@@ -10,7 +10,7 @@ import { SRD_CATALOGUE } from "@/lib/srd";
 import type { LibraryListEntry } from "@/lib/workshop/libraryCatalog";
 import { ciClassLabel } from "@/lib/ciRegistry";
 
-/** SRD item resources exposed as item CIs in the Items workplace and Library. */
+/** SRD item resources exposed as item Creation Files (CFs) in the Items workplace and Library. */
 export const SRD_ITEM_RESOURCES: SrdItemResource[] = ["equipment", "magic-items"];
 
 export type SrdItemCatalog = {

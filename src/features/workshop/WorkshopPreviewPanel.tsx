@@ -188,7 +188,7 @@ export default function WorkshopPreviewPanel({
                 style={{ borderColor: "var(--border)" }}
               >
                 {editKind === "seed"
-                  ? "Edit seed"
+                  ? "Edit Creation File (CF)"
                   : editKind === "library-result"
                     ? "Edit result"
                     : "Edit"}

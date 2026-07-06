@@ -64,7 +64,7 @@ describe("ciRelationships", () => {
     expect(campaignAdventureResults(campaign, results)).toHaveLength(1);
   });
 
-  it("reverse-looks up campaigns linking a CI id", () => {
+  it("reverse-looks up campaigns linking a Creation File (CF) id", () => {
     const campaigns = [campaign];
     expect(campaignsLinkingCi(campaigns, "char-2")).toHaveLength(1);
     expect(campaignsLinkingCi(campaigns, "missing")).toHaveLength(0);

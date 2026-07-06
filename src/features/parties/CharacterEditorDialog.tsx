@@ -249,7 +249,7 @@ export default function CharacterEditorDialog({
     }));
   };
 
-  /** Reference an SRD equipment or magic item (read-only CI — not copied to item storage). */
+  /** Reference an SRD equipment or magic item (read-only Creation File (CF) — not copied to item storage). */
   const addSrdItem = (ref: SrdItemRef) => {
     setDraft((d) => ({
       ...d,

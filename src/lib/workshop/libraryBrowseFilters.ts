@@ -9,7 +9,7 @@ import type {
 /** Fantasy shelf names for the archive browser (approachable-interface rule). */
 export const LIBRARY_SHELF_LABEL: Record<WorkshopLibraryCategory, string> = {
   all: "All shelves",
-  seeds: "Lore seeds",
+  seeds: "Creation Files (CFs)",
   results: "Prepared scrolls",
   characters: "Heroes",
   items: "Items",
@@ -17,13 +17,13 @@ export const LIBRARY_SHELF_LABEL: Record<WorkshopLibraryCategory, string> = {
   campaigns: "Chronicles",
 };
 
-/** User-facing kind labels mapped from CI class — the “subclass” the filters use. */
+/** User-facing kind labels mapped from Creation File (CF) class — the “subclass” the filters use. */
 export const LIBRARY_CI_FANTASY_LABEL: Record<CiClass, string> = {
-  "seed.realm": "World seed",
-  "seed.adventure": "Adventure hook",
-  "seed.characters": "Hero party ideas",
-  "seed.maps": "Map seed",
-  "seed.props": "Item handout note",
+  "seed.realm": "World Creation File (CF)",
+  "seed.adventure": "Adventure hook CF",
+  "seed.characters": "Hero party ideas CF",
+  "seed.maps": "Map Creation File (CF)",
+  "seed.props": "Item handout CF",
   "result.realm": "Realm write-up",
   "result.adventure": "Adventure scroll",
   "result.characters": "Hero roster scroll",
@@ -203,9 +203,9 @@ export function browseEmptyMessage(
   }
   switch (shelf) {
     case "all":
-      return "The shelves are empty. Craft something in the Fantasy Forge, or plant a lore seed to begin.";
+      return "The shelves are empty. Craft something in the Fantasy Forge, or add a Creation File (CF) to begin.";
     case "seeds":
-      return "No lore seeds yet — add story notes for the generators to build from.";
+      return "No Creation Files (CFs) yet — add story notes for the generators to build from.";
     case "results":
       return "No prepared scrolls yet — generate a realm, adventure, or map in the Fantasy Forge.";
     case "characters":

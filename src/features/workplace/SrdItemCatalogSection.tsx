@@ -72,7 +72,7 @@ export default function SrdItemCatalogSection({
             Included SRD items
           </h2>
           <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-            Every entry is a read-only CI (<code>item.srd-equipment</code> or{" "}
+            Every entry is a read-only Creation File (CF) (<code>item.srd-equipment</code> or{" "}
             <code>item.srd-magic</code>) from the bundled catalogue — add them to character
             gear or preview rules text here and in the Library.
           </p>

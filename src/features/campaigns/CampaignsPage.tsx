@@ -154,7 +154,7 @@ export default function CampaignsPage() {
     scheduleLibrarySnapshot();
     if (expandedId === campaign.id) setExpandedId(null);
     setStatus(
-      `Deleted campaign “${campaign.name}”. Its party, seeds, and results are still in your library.`,
+      `Deleted campaign “${campaign.name}”. Its party, Creation Files (CFs), and results are still in your library.`,
     );
   };
 
@@ -205,8 +205,8 @@ export default function CampaignsPage() {
             {workplace("campaigns").label}
           </h1>
           <p className="mt-1 max-w-xl text-sm leading-relaxed text-[var(--text-soft)]">
-            One campaign per group you run. Each campaign is the structural root of a CI tree:
-            link adventures (seeds/results), party, characters, and items by id — never copies.
+            One campaign per group you run. Each campaign is the structural root of a Creation File (CF) tree:
+            link adventures (Creation Files (CFs)/results), party, characters, and items by id — never copies.
             Campaigns also keep their own Virtual Table — open one and the table comes back
             exactly as that group left it.
           </p>
@@ -290,7 +290,10 @@ export default function CampaignsPage() {
                     </span>
                     <p className="text-xs text-[var(--text-soft)]">
                       {party ? `Party: ${party.name}` : "No party linked"} ·{" "}
-                      {campaign.seedIds.length} seed{campaign.seedIds.length === 1 ? "" : "s"} ·{" "}
+                      {campaign.seedIds.length === 1
+                        ? "1 Creation File (CF)"
+                        : `${campaign.seedIds.length} Creation Files (CFs)`}{" "}
+                      ·{" "}
                       {campaign.resultIds.length} result
                       {campaign.resultIds.length === 1 ? "" : "s"} ·{" "}
                       {campaign.characterIds.length} character
@@ -396,11 +399,11 @@ export default function CampaignsPage() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
                         <p className="mb-1 text-xs font-bold tracking-wide uppercase text-[var(--text)]">
-                          Linked seeds
+                          Linked Creation Files (CFs)
                         </p>
                         {seeds.length === 0 ? (
                           <p className="text-xs text-[var(--text-soft)]">
-                            No seeds in your library yet.
+                            No Creation Files (CFs) in your library yet.
                           </p>
                         ) : (
                           <div className="flex max-h-56 flex-col gap-1.5 overflow-y-auto pr-1">
@@ -505,10 +508,10 @@ export default function CampaignsPage() {
                     </div>
 
                     <p className="mt-3 text-[11px] leading-relaxed text-[var(--text-soft)]">
-                      Links are id references only — each CI is saved once in the library.
-                      The same seed, character, or item can belong to several campaigns.
+                      Links are id references only — each Creation File (CF) is saved once in the library.
+                      The same Creation File (CF), character, or item can belong to several campaigns.
                       Deleting a campaign never deletes linked content. While this campaign
-                      is open, the Library highlights its CIs and new creations link to it
+                      is open, the Library highlights its Creation Files (CFs) and new creations link to it
                       automatically.
                     </p>
                   </div>

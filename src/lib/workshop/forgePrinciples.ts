@@ -19,7 +19,7 @@ export const FORGE_PRINCIPLES: readonly ForgePrinciple[] = [
   },
   {
     id: "library-heart",
-    icon: "\u{1F4DA}\u{1F4DC}",
+    icon: "\u{1F4DA}",
     title: "The Library is your prep shelf",
     body:
       "Everything you save lives in one place — lore, heroes, fellowships, items, and chronicles — linked and searchable like a DM's own archive.",
@@ -43,7 +43,7 @@ export const FORGE_PRINCIPLES: readonly ForgePrinciple[] = [
     icon: "\u{1F501}",
     title: "Curate once, run many nights",
     body:
-      "Seeds, scrolls, hero sheets, and campaign links are meant to be reused and edited — not one-off outputs you throw away after session zero.",
+      "Creation Files (CFs), scrolls, hero sheets, and campaign links are meant to be reused and edited — not one-off outputs you throw away after session zero.",
   },
   {
     id: "scale",

@@ -2,9 +2,9 @@ import type { LibraryKind } from "@/lib/generationLibrary";
 import type { SeedKind } from "@/lib/realmSeeds";
 
 /**
- * Configuration Item (CI) registry — the CMDB of D&D Easy's data components.
+ * Creation File (CF) registry — the CMDB of D&D Easy's data components.
  *
- * Every data component the app stores is a Configuration Item with exactly
+ * Every data component the app stores is a Creation File (CF) with exactly
  * one CLASS (the most specific type, `category.kind`) and one CATEGORY (the
  * management grouping). The registry is the single source of truth for the
  * taxonomy: what classes exist, which storage module owns them, and what
@@ -15,7 +15,7 @@ import type { SeedKind } from "@/lib/realmSeeds";
  * storage modules (scale-portability rule). The registry describes them.
  */
 
-/** Management grouping — how the Library organizes and backs up CIs. */
+/** Management grouping — how the Library organizes and backs up Creation Files (CFs). */
 export type CiCategory =
   | "seeds"
   | "results"
@@ -26,7 +26,7 @@ export type CiCategory =
   | "sessions"
   | "rules";
 
-/** Most specific type of a CI: `category.kind`. */
+/** Most specific type of a Creation File (CF): `category.kind`. */
 export type CiClass =
   | "seed.realm"
   | "seed.adventure"
@@ -63,7 +63,7 @@ export type CiDefinition = {
 };
 
 export const CI_CATEGORY_LABEL: Record<CiCategory, string> = {
-  seeds: "Seeds",
+  seeds: "Creation Files (CFs)",
   results: "Results",
   characters: "Heroes",
   items: "Items",
@@ -77,7 +77,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "seed.realm": {
     ciClass: "seed.realm",
     category: "seeds",
-    label: "Realm seed",
+    label: "Realm Creation File (CF)",
     storageModule: "src/lib/realmSeeds.ts",
     provenance: "user",
     inBackup: true,
@@ -85,7 +85,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "seed.adventure": {
     ciClass: "seed.adventure",
     category: "seeds",
-    label: "Adventure seed",
+    label: "Adventure Creation File (CF)",
     storageModule: "src/lib/realmSeeds.ts",
     provenance: "user",
     inBackup: true,
@@ -93,7 +93,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "seed.characters": {
     ciClass: "seed.characters",
     category: "seeds",
-    label: "Heroes seed",
+    label: "Heroes Creation File (CF)",
     storageModule: "src/lib/realmSeeds.ts",
     provenance: "user",
     inBackup: true,
@@ -101,7 +101,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "seed.maps": {
     ciClass: "seed.maps",
     category: "seeds",
-    label: "Maps seed",
+    label: "Maps Creation File (CF)",
     storageModule: "src/lib/realmSeeds.ts",
     provenance: "user",
     inBackup: true,
@@ -109,7 +109,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "seed.props": {
     ciClass: "seed.props",
     category: "seeds",
-    label: "Item handout seed",
+    label: "Item handout Creation File (CF)",
     storageModule: "src/lib/realmSeeds.ts",
     provenance: "user",
     inBackup: true,
@@ -259,7 +259,7 @@ export function ciClassForResult(kind: LibraryKind): CiClass {
 
 export const CI_CLASS_FOR_CHARACTER: CiClass = "character.sheet";
 
-/** Resolve an item library row to its CI class. */
+/** Resolve an item library row to its Creation File (CF) class. */
 export function ciClassForGameItem(kind: "equipment" | "magic"): CiClass {
   return kind === "magic" ? "item.magic" : "item.equipment";
 }
@@ -268,7 +268,7 @@ export const CI_CLASS_FOR_PARTY: CiClass = "party.roster";
 
 export const CI_CLASS_FOR_CAMPAIGN: CiClass = "campaign.record";
 
-/** Short label for a CI class (CMDB badge in the Library). */
+/** Short label for a Creation File (CF) class (CMDB badge in the Library). */
 export function ciClassLabel(ciClass: CiClass): string {
   return CI_REGISTRY[ciClass].label;
 }

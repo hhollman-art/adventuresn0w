@@ -1,17 +1,17 @@
 ---
-description: Data principle — every data component is a Configuration Item with a class and category (CMDB model)
+description: Data principle — every data component is a Creation File (CF) with a class and category (CMDB model)
 alwaysApply: true
 ---
 
-# Configuration Items — data components as a CMDB
+# Creation Files (CFs) — data components as a CMDB
 
-Every data component D&D Easy stores is a **Configuration Item (CI)**, managed like a CMDB. Each CI has exactly one **class** (its most specific type, `category.kind`) and one **category** (its management grouping). The registry `src/lib/ciRegistry.ts` is the single source of truth for the taxonomy.
+Every data component D&D Easy stores is a **Creation File (CF)**, managed like a CMDB. Each Creation File (CF) has exactly one **class** (its most specific type, `category.kind`) and one **category** (its management grouping). The registry `src/lib/ciRegistry.ts` is the single source of truth for the taxonomy.
 
 ## Core principle
 
-- **One class per CI.** Class names are `category.kind` (`seed.realm`, `result.adventure`, `character.sheet`, `item.equipment`, `item.magic`, `party.roster`, `campaign.record`, `session.tabletop`, `session.snapshot`, `rules.srd-entry`). Classes are typed (`CiClass` union) — never ad-hoc strings.
+- **One class per Creation File (CF).** Class names are `category.kind` (`seed.realm`, `result.adventure`, `character.sheet`, `item.equipment`, `item.magic`, `party.roster`, `campaign.record`, `session.tabletop`, `session.snapshot`, `rules.srd-entry`). Classes are typed (`CiClass` union) — never ad-hoc strings.
 - **One category per class.** Categories (`seeds`, `results`, `characters`, `items`, `parties`, `campaigns`, `sessions`, `rules`) drive Library organization, backup scope, and lifecycle. A class belongs to exactly one category.
-- **Relationships are id references owned by the container.** A `campaign.record` links party, seed, result, character, and item CIs by id (`src/lib/campaigns.ts`, `src/lib/ciRelationships.ts`); linked CIs never store back-references, but reverse lookup is supported for navigation. Links are many-to-many for seeds/results/characters/items; deleting a container never deletes linked CIs. Dangling references are tolerated (content may be restored later) and hidden in UI. Exception: a `party.roster` embeds **snapshots** of `character.sheet` CIs (same character id, copied stats) so a party stays playable if its characters are deleted — deletes never cascade in either direction. Character gear likewise embeds copies of `item.equipment` / `item.magic` CIs (or `srd-ref:` notes for read-only SRD items).
+- **Relationships are id references owned by the container.** A `campaign.record` links party, seed, result, character, and item Creation Files (CFs) by id (`src/lib/campaigns.ts`, `src/lib/ciRelationships.ts`); linked Creation Files (CFs) never store back-references, but reverse lookup is supported for navigation. Links are many-to-many for seeds/results/characters/items; deleting a container never deletes linked Creation Files (CFs). Dangling references are tolerated (content may be restored later) and hidden in UI. Exception: a `party.roster` embeds **snapshots** of `character.sheet` Creation Files (CFs) (same character id, copied stats) so a party stays playable if its characters are deleted — deletes never cascade in either direction. Character gear likewise embeds copies of `item.equipment` / `item.magic` Creation Files (CFs) (or `srd-ref:` notes for read-only SRD items).
 - **Campaign is the structural root.** Logical tree: campaign → adventures (adventure seeds/results) → party → characters; campaigns can also link characters and items directly. The Library is the CMDB browse UI (`WorkshopLibraryPanel`).
 - **The registry describes; storage modules own.** `CI_REGISTRY` records each class's category, label, owning storage module, legal provenance, and backup inclusion. It is a catalogue, not a data store — rows still live in their storage modules (scale-portability rule).
 - **Library entries carry their class.** `LibraryListEntry.ciClass` is derived through the registry helpers (`ciClassForSeed`, `ciClassForResult`, `CI_CLASS_FOR_PARTY`) — never assembled by string concatenation at call sites.
@@ -21,6 +21,6 @@ Every data component D&D Easy stores is a **Configuration Item (CI)**, managed l
 1. Add the class to the `CiClass` union and `CI_REGISTRY` (category, label, storage module, provenance, `inBackup`) — a class must exist **before** the storage module ships.
 2. New kind of an existing shape (e.g. a new `SeedKind`) → new `seed.*` class; genuinely new shape (e.g. monsters, house rules) → new category **and** classes, plus a storage module and backup coverage per the workshop-library rule.
 3. Provenance in the registry must agree with `/legal` — `srd` classes are read-only and never in the user backup; `user` classes must be in the backup unless there's a documented reason (e.g. `session.tabletop` is live table state; `session.snapshot` shelved campaign tables carry large map images and stay local).
-4. UI filters, badges, and future CI features (relationships, lifecycle states, per-class quotas) key off `ciClass` / `category` — never off display labels.
+4. UI filters, badges, and future Creation File (CF) features (relationships, lifecycle states, per-class quotas) key off `ciClass` / `category` — never off display labels.
 
-Related principles: `scale-portability` (storage module ownership), `workshop-library` (legal tiers and canonical language), `saas-cost-metering` (usage events are transactional records, not CIs).
+Related principles: `scale-portability` (storage module ownership), `workshop-library` (legal tiers and canonical language), `saas-cost-metering` (usage events are transactional records, not Creation Files (CFs)).

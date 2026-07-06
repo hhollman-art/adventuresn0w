@@ -1,4 +1,7 @@
-/** User-facing names for the Fantasy Forge — avoid CMDB/CI jargon in the UI. */
+/** User-facing names for the Fantasy Forge — prefer “Creation File (CF)” over internal class ids in UI. */
+
+export const CREATION_FILE = "Creation File (CF)";
+export const CREATION_FILES = "Creation Files (CFs)";
 
 export const FANTASY_FORGE = "Fantasy Forge";
 export const THE_LIBRARY = "The Library";

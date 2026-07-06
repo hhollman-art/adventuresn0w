@@ -4,7 +4,7 @@ import { createDefaultSession, fixSession } from "./session";
 const IDB_NAME = "ddeasy-tabletop-v1";
 const IDB_STORE = "kv";
 const IDB_SESSION_KEY = "session";
-/** Shelved per-campaign tables: `session:<campaignId>` (CI class session.snapshot). */
+/** Shelved per-campaign tables: `session:<campaignId>` (Creation File (CF) class session.snapshot). */
 const CAMPAIGN_SESSION_PREFIX = "session:";
 /** Slot for the table as it was before any campaign was opened. */
 const NO_CAMPAIGN_SLOT = "__no-campaign__";

@@ -4,7 +4,7 @@ import { newId } from "@/lib/tabletop/session";
 
 /**
  * Item library — normal equipment and magic items as first-class
- * Configuration Items (`item.equipment` / `item.magic`). The Items page
+ * Creation Files (CFs) (`item.equipment` / `item.magic`). The Items page
  * creates and manages these; character sheets pull gear from here (a sheet
  * embeds a copy of the item's stats, so editing a library item never
  * silently changes a character).

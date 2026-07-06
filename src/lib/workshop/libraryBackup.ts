@@ -177,7 +177,13 @@ export async function restoreLibraryBackup(parsed: {
 
 export function describeRestoreCounts(counts: LibraryBackupCounts): string {
   const parts: string[] = [];
-  if (counts.seeds > 0) parts.push(`${counts.seeds} seed${counts.seeds === 1 ? "" : "s"}`);
+  if (counts.seeds > 0) {
+    parts.push(
+      counts.seeds === 1
+        ? "1 Creation File (CF)"
+        : `${counts.seeds} Creation Files (CFs)`,
+    );
+  }
   if (counts.results > 0)
     parts.push(`${counts.results} result${counts.results === 1 ? "" : "s"}`);
   if (counts.characters > 0)

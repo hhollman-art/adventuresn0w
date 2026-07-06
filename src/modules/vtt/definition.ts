@@ -10,7 +10,7 @@ export const VTT_MODULE_ID = "vtt" as const;
 
 export type VttModuleId = typeof VTT_MODULE_ID;
 
-/** CI classes the VTT reads from the Library when loading prep. */
+/** Creation File (CF) classes the VTT reads from the Library when loading prep. */
 export const VTT_LIBRARY_READ_CI_CLASSES = [
   "party.roster",
   "character.sheet",
@@ -20,7 +20,7 @@ export const VTT_LIBRARY_READ_CI_CLASSES = [
   "seed.maps",
 ] as const satisfies readonly CiClass[];
 
-/** CI classes owned by live / shelved table state. */
+/** Creation File (CF) classes owned by live / shelved table state. */
 export const VTT_SESSION_CI_CLASSES = [
   "session.tabletop",
   "session.snapshot",
