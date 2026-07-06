@@ -3,6 +3,7 @@ import Link from "next/link";
 import WorkflowTutorialLauncher from "@/features/help/WorkflowTutorialLauncher";
 import HelpPageClient from "@/features/help/HelpPageClient";
 import { PREVIEW_WINDOW } from "@/lib/ui/labels";
+import { FANTASY_FORGE, THE_LIBRARY, THE_TAVERN } from "@/lib/workplace/forgeLexicon";
 
 export const metadata: Metadata = {
   title: "How to use — D&D Easy",
@@ -55,17 +56,19 @@ export default function HelpPage() {
         <SectionHeading>Quick start</SectionHeading>
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-[var(--text)]/90">
           <li>
-            On the <Link href="/" className="font-semibold text-[var(--accent)] underline">home page</Link>,
-            pick what you want to create from the six tabs: Realm, Adventure,
-            Characters, Items, Maps, or Library.
+            On the <Link href="/" className="font-semibold text-[var(--accent)] underline">welcome hearth</Link>,
+            pick a workspace from the icons — Realm, Adventure, Maps, {THE_TAVERN},{" "}
+            {THE_LIBRARY}, Campaign, or Items — or use the workspace bar along the top on any
+            Fantasy Forge page.
           </li>
           <li>
             Fill in the options. Almost everything is optional — a one-line
             description is enough to get going.
           </li>
           <li>
-            Press the Generate button at the bottom of the form and watch the
-            result stream into the {PREVIEW_WINDOW} on the right.
+            Press the Generate button at the bottom of the form. Output streams into the{" "}
+            {PREVIEW_WINDOW} — a separate tab that opens automatically when you generate or
+            select something to review.
           </li>
           <li>
             Use the buttons above the output to copy, download, or print what
@@ -76,16 +79,16 @@ export default function HelpPage() {
         <SectionHeading id="workflows">Workflow guides</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
           Step-by-step pop-up tours for common DM prep paths — from a no-AI one-nighter to a
-          long-running campaign. Each guide switches Workshop tabs for you and includes manual
+          long-running campaign. Each guide switches Fantasy Forge workspaces for you and includes manual
           alternatives where AI is optional.
         </p>
         <WorkflowTutorialLauncher />
         <p className="mt-3 text-sm text-[var(--muted)]">
           Or open the{" "}
           <Link href="/" className="font-semibold text-[var(--accent)] underline">
-            workshop
+            {FANTASY_FORGE}
           </Link>{" "}
-          and click <strong className="text-[var(--text)]">Workflow guides</strong> in the sidebar.
+          welcome hearth and choose a workflow under <strong className="text-[var(--text)]">Choose a workflow</strong>.
         </p>
 
         <SectionHeading>Realm</SectionHeading>
@@ -119,9 +122,13 @@ export default function HelpPage() {
         <SectionHeading>Heroes</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
           Creates a ready-to-play party of pre-made heroes with stats,
-          gear, and hooks, using SRD-open options only. Tell it how many
-          heroes you need and any preferences, and hand the results to
-          your players.
+          gear, and hooks, using SRD-open options only. From the Fantasy Forge home route, open{" "}
+          <strong>Generate heroes</strong>, tell it how many heroes you need and any preferences,
+          and hand the results to your players. Manage individual sheets and fellowships in{" "}
+          <Link href="/tavern" className="font-semibold text-[var(--accent)] underline">
+            {THE_TAVERN}
+          </Link>
+          .
         </p>
 
         <SectionHeading>Items — management and handouts</SectionHeading>
@@ -212,11 +219,11 @@ export default function HelpPage() {
           If you run several groups, create one <strong>campaign</strong> per group on the
           Campaigns page. A campaign links that group&apos;s fellowship, heroes, items, and
           the seeds and results that belong to its story (links are id references — the same
-          realm seed can serve two campaigns), and it keeps <strong>its own Virtual Table</strong>. Open a campaign
-          from the title-bar switcher and the map, tokens, fog, and initiative come back
-          exactly as that group left them; the other group&apos;s table is shelved safely.
-          While a campaign is open, the Library can show just its content, and anything new
-          you create links to it automatically. Deleting a campaign only removes the
+          realm seed can serve two campaigns), and it keeps <strong>its own Virtual Table</strong>.
+          Click <strong>Open campaign</strong> on the Campaigns page and the map, tokens, fog, and
+          initiative come back exactly as that group left them; the other group&apos;s table is
+          shelved safely. While a campaign is open, the Library can show just its content, and
+          anything new you create links to it automatically. Deleting a campaign only removes the
           container — the party, seeds, and results stay in your library.
         </p>
 

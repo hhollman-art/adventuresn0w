@@ -58,7 +58,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Bring a party",
         body:
-          "Click Add party in the Library to type or paste your heroes (start from the built-in example — no file needed). Players on D&D Beyond? Use the From D&D Beyond tab to copy from their sheets or upload a .json they saved. You can also load saved hero .md files, pick SRD class/species per slot on Heroes, or build sheets directly on the Virtual Table.",
+          "Click Add party in the Library to type or paste your heroes (start from the built-in example — no file needed). Players on D&D Beyond? Use the From D&D Beyond tab to copy from their sheets or upload a .json they saved. You can also load saved hero .md files, pick SRD class/species per slot when generating heroes, or build sheets in The Tavern or directly on the Virtual Table.",
         action: { type: "library-category", category: "parties" },
         actionLabel: "Open Library → Parties",
       },
@@ -72,7 +72,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Preview and load to the table",
         body:
-          "Back in Library, select your seed or party and preview on the right. When ready, load the party to the Virtual Table. Tokens and sheets carry over from your saved roster.",
+          "Back in Library, select your seed or party — the Preview Window opens in its own tab automatically. When ready, load the party to the Virtual Table. Tokens and sheets carry over from your saved roster.",
         action: { type: "mode", mode: "library" },
         actionLabel: "Open Library",
       },
@@ -115,9 +115,9 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Generate a ready party",
         body:
-          "Open Heroes, set party size and SRD slot picks (or leave Any). Generate, then use Save party for VTT in the Preview Window. The roster appears in Library → Fellowships, and each hero also becomes their own portable .md sheet — download one from the Heroes & fellowships page or grab it from your auto-save folder's heroes directory.",
+          "From the Fantasy Forge home route, open Generate heroes, set party size and SRD slot picks (or leave Any), and generate. Use Save party for VTT in the Preview Window. The roster appears in Library → Fellowships, and each hero also becomes their own portable .md sheet — download one from The Tavern or grab it from your auto-save folder's heroes directory.",
         action: { type: "mode", mode: "characters" },
-        actionLabel: "Open Heroes tab",
+        actionLabel: "Generate heroes",
       },
       {
         title: "Add locale and battle maps",
@@ -129,7 +129,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Review in the Library",
         body:
-          "Open Library, browse All or filter by Results/Parties/Seeds. Click items to preview on the right — copy, export .md, print, or edit seeds and results before the table.",
+          "Open Library, browse All or filter by Results/Parties/Seeds. Click items to open the Preview Window — copy, export .md, print, or edit seeds and results before the table.",
         action: { type: "mode", mode: "library" },
         actionLabel: "Open Library",
       },
@@ -178,7 +178,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Establish the party once",
         body:
-          "Build or generate the fellowship once, then Save party for VTT. Use the Heroes & fellowships page for campaign notes between sessions — plot threads, downtime, treasure. Each hero has their own Download button there too, so a guest hero can carry their .md sheet between arcs, fellowships, or devices.",
+          "Build or generate the fellowship once, then Save party for VTT. Use The Tavern for campaign notes between sessions — plot threads, downtime, treasure. Each hero has their own Download button there too, so a guest hero can carry their .md sheet between arcs, fellowships, or devices.",
         action: { type: "link", href: "/tavern" },
         actionLabel: "Open The Tavern",
       },
@@ -249,14 +249,14 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "One campaign per group",
         body:
-          "Create a campaign on the Campaigns page for each group you run and link its party, seeds, and results. Open a campaign from the title bar and its Virtual Table comes back exactly as that group left it — switching groups shelves one table and restores the other. New creations link to whichever campaign is open.",
+          "Create a campaign on the Campaigns page for each group you run and link its party, seeds, and results. Click Open campaign on the Campaigns page and its Virtual Table comes back exactly as that group left it — switching groups shelves one table and restores the other. New creations link to whichever campaign is open.",
         action: { type: "link", href: "/campaigns" },
         actionLabel: "Open Campaigns",
       },
       {
         title: "Link one party to the campaign",
         body:
-          "Create heroes on the Heroes & fellowships page, group them into one saved fellowship per group, and keep campaign notes there. Pick it as the campaign's fellowship on the Campaigns page, and load with Link campaign on the VTT so save-back updates the same roster.",
+          "Create heroes in The Tavern, group them into one saved fellowship per group, and keep campaign notes there. Pick it as the campaign's fellowship on the Campaigns page, and load with Link campaign on the VTT so save-back updates the same roster.",
         action: { type: "link", href: "/tavern" },
         actionLabel: "Open The Tavern",
       },
@@ -362,7 +362,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Running more than one group?",
         body:
-          "Create a campaign per group on the Campaigns page. Each campaign keeps its own Virtual Table — open one from the title-bar switcher and the map, tokens, fog, and initiative come back exactly as that group left them, mid-fight included.",
+          "Create a campaign per group on the Campaigns page. Each campaign keeps its own Virtual Table — click Open campaign and the map, tokens, fog, and initiative come back exactly as that group left them, mid-fight included.",
         action: { type: "link", href: "/campaigns" },
         actionLabel: "Open Campaigns",
       },
