@@ -220,19 +220,18 @@ export default function HelpPage() {
           container — the party, seeds, and results stay in your library.
         </p>
 
-        <SectionHeading>Heroes &amp; fellowships — your people in one place</SectionHeading>
+        <SectionHeading>The Tavern — heroes &amp; fellowships in one place</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
-          The <strong>Heroes &amp; fellowships</strong> page is where your heroes live. Create a
-          sheet with the built-in editor (SRD species, classes, and spells are one click;
-          options from your own books go in Notes), import a portable <code>.md</code>{" "}
-          hero file, or copy members out of a saved fellowship. Sort and search your
-          heroes, edit them any time, and download any one as its own{" "}
-          <code>.md</code> file. When a group forms, select heroes and click{" "}
-          <strong>Create party</strong> — or add them to an existing fellowship. Fellowships are the
-          unit the rest of the app uses: link one to a campaign, keep campaign notes on it,
-          and load it onto the Virtual Table. Deleting a hero never touches fellowships
-          it already joined (they keep their own copy), and deleting a fellowship never deletes
-          your heroes.
+          <strong>The Tavern</strong> is where your heroes live. Generate a ready-made party with
+          AI, create a sheet with the built-in editor (SRD species, classes, and spells are one
+          click; options from your own books go in Notes), import a portable <code>.md</code>{" "}
+          hero file, or copy members out of a saved fellowship. Sort and search your heroes, edit
+          them any time, and download any one as its own <code>.md</code> file. When a group
+          forms, select heroes and click <strong>Create party</strong> — or add them to an
+          existing fellowship. Fellowships are the unit the rest of the app uses: link one to a
+          campaign, keep campaign notes on it, and load it onto the Virtual Table. Deleting a hero
+          never touches fellowships it already joined (they keep their own copy), and deleting a
+          fellowship never deletes your heroes.
         </p>
 
         <SectionHeading>Saving, printing, and making booklets</SectionHeading>

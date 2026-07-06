@@ -1,5 +1,5 @@
 import type { WorkplaceId } from "./types";
-import { THE_LIBRARY } from "./forgeLexicon";
+import { THE_LIBRARY, THE_TAVERN } from "./forgeLexicon";
 
 /** Creation generators on the Fantasy Forge home route (`/`). */
 export type WorkshopCreationId = "realm" | "adventure" | "maps" | "characters" | "props";
@@ -37,23 +37,23 @@ export const WORKSHOP_NAV_ITEMS: WorkshopNavItem[] = [
   {
     id: "library",
     label: THE_LIBRARY,
-    hint: "Heart of your prep — search & manage every saved creation",
-    icon: "\u{1F4DA}",
+    hint: "AI outputs & homebrew creations — search and manage every saved CI",
+    icon: "\u{1F4DA}\u{1F4DC}",
     group: "library",
     href: "/library",
   },
   {
     id: "campaigns",
     label: "Campaign",
-    hint: "Chronicles — link party, adventures, and loot",
-    icon: "\u{1F3F0}",
+    hint: "Bundle homebrew party, adventures, maps, heroes, and loot",
+    icon: "\u{1F3C7}",
     group: "campaign",
     href: "/campaigns",
   },
   {
     id: "realm",
     label: "Realm",
-    hint: "Worlds & towns — AI, write, or import",
+    hint: "AI worlds or hand-write homebrew realms & towns",
     icon: "\u{1F3F0}",
     group: "forge",
     creation: "realm",
@@ -61,7 +61,7 @@ export const WORKSHOP_NAV_ITEMS: WorkshopNavItem[] = [
   {
     id: "adventure",
     label: "Adventure",
-    hint: "Quests — AI, write, or import",
+    hint: "AI quests or craft homebrew adventures",
     icon: "\u2694\uFE0F",
     group: "forge",
     creation: "adventure",
@@ -69,31 +69,23 @@ export const WORKSHOP_NAV_ITEMS: WorkshopNavItem[] = [
   {
     id: "maps",
     label: "Maps",
-    hint: "Travel & battle charts — AI or lore seeds",
+    hint: "AI travel & battle charts or maps from your lore seeds",
     icon: "\u{1F5FA}\uFE0F",
     group: "forge",
     creation: "maps",
   },
   {
-    id: "characters",
-    label: "Heroes",
-    hint: "Ready-made heroes — AI or import .md",
-    icon: "\u{1F9D9}",
-    group: "forge",
-    creation: "characters",
-  },
-  {
-    id: "parties",
-    label: "Fellowships",
-    hint: "Hero sheets & party rosters",
-    icon: "\u{1F465}",
+    id: "tavern",
+    label: THE_TAVERN,
+    hint: "AI hero parties or homebrew characters & fellowships",
+    icon: "\u{1F3EE}",
     group: "tend",
-    href: "/parties",
+    href: "/tavern",
   },
   {
     id: "items",
     label: "Items",
-    hint: "Equipment & magic — craft or import",
+    hint: "AI handouts or craft homebrew equipment & magic items",
     icon: "\u{1F48E}",
     group: "tend",
     href: "/items",
@@ -125,13 +117,19 @@ export function activeWorkshopNavId(options: {
   if (options.pathname === "/campaigns" || options.pathname.startsWith("/campaigns/")) {
     return "campaigns";
   }
-  if (options.pathname === "/parties" || options.pathname.startsWith("/parties/")) {
-    return "parties";
+  if (
+    options.pathname === "/tavern" ||
+    options.pathname.startsWith("/tavern/") ||
+    options.pathname === "/parties" ||
+    options.pathname.startsWith("/parties/")
+  ) {
+    return "tavern";
   }
   if (options.pathname === "/items" || options.pathname.startsWith("/items/")) {
     return "items";
   }
   if (options.pathname === "/" || options.pathname.startsWith("/?")) {
+    if (options.workspace === "characters") return "tavern";
     return options.workspace;
   }
   return null;

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
@@ -100,10 +99,15 @@ import {
 } from "@/lib/itemLibrary";
 import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
 import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
-import { renderMarkdownToHtml } from "@/lib/markdownRender";
-import OutputMarkdownCarousel from "@/features/workshop/OutputMarkdownCarousel";
 import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 import { APP_ICONS } from "@/lib/ui/appIcons";
+import {
+  openOrFocusPreviewWindow,
+  publishPreviewSnapshot,
+  type WorkshopPreviewSnapshot,
+} from "@/lib/workshop/previewSnapshot";
+import { workshopNavItem } from "@/lib/workplace/workshopNav";
+import { THE_TAVERN } from "@/lib/workplace/forgeLexicon";
 import { postHeartbeatJson } from "@/lib/sseClient";
 import {
   extractAdventureScenes,
@@ -1193,6 +1197,12 @@ export default function Home(props: PageProps<"/">) {
           markdown,
         }),
       );
+      if (isLibraryView) {
+        setLibrarySelection({ kind: "seed", id: seedEditor.id });
+      } else {
+        setMarkdown(markdown);
+      }
+      openOrFocusPreviewWindow();
     } else {
       const next = await appendRealmSeed({
         kind: seedEditor.kind,
@@ -1204,7 +1214,16 @@ export default function Home(props: PageProps<"/">) {
         markdown,
       });
       setDdeasySeeds(next);
-      if (next[0]) void autoLinkToActiveCampaign({ seedId: next[0].id });
+      const saved = next.find((s) => s.seedName?.trim() === name && s.markdown.trim() === markdown) ?? next[0];
+      if (saved) {
+        void autoLinkToActiveCampaign({ seedId: saved.id });
+        if (isLibraryView) {
+          setLibrarySelection({ kind: "seed", id: saved.id });
+        } else {
+          setMarkdown(markdown);
+        }
+        openOrFocusPreviewWindow();
+      }
     }
     setSeedEditor(null);
     setSeedEditorError("");
@@ -1310,6 +1329,7 @@ export default function Home(props: PageProps<"/">) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isLibraryView || workspace === "welcome") return;
+    openOrFocusPreviewWindow();
     const mode = workspace;
     setLoading(true);
     setError(null);
@@ -1745,25 +1765,6 @@ export default function Home(props: PageProps<"/">) {
     }
   }
 
-  function imageDownloadBaseName(): string {
-    if (workspace === "welcome") return "ddeasy";
-    const mode = workspace;
-    if (markdown.trim()) {
-      return fileBaseName(markdown, mode);
-    }
-    if (mode === "props") {
-      return slugify(propForm.title) || "ddeasy-prop";
-    }
-    return slugify(mapForm.locationName) || "ddeasy-maps";
-  }
-
-  function downloadMapImage(imageDataUrl: string, labelOrKind: string) {
-    const base = imageDownloadBaseName();
-    const part = slugFilePart(labelOrKind);
-    const filename = `${base}-${part}.png`;
-    triggerDownloadFromDataUrl(imageDataUrl, filename);
-  }
-
   const applyBattleGridSize = (cols: number, rows: number) => {
     const clamped = clampVttGridSize(cols, rows);
     setMapForm((f) => ({
@@ -1855,16 +1856,6 @@ export default function Home(props: PageProps<"/">) {
     return previewMarkdown;
   }
 
-  function exportModeForDownload(): GenerateMode {
-    if (viewingSeed) return viewingSeed.kind;
-    if (viewingResult) return viewingResult.kind;
-    if (viewingCharacter) return "characters";
-    if (viewingParty) return "characters";
-    if (isLibraryView) return "library";
-    if (workspace === "welcome") return "library";
-    return workspace;
-  }
-
   const viewingSeed =
     librarySelection?.kind === "seed"
       ? ddeasySeeds.find((s) => s.id === librarySelection.id)
@@ -1938,54 +1929,6 @@ export default function Home(props: PageProps<"/">) {
                 "")
       : markdown;
 
-  function copyMarkdown() {
-    const md = exportMarkdownForDownload();
-    if (!md.trim()) return;
-    void navigator.clipboard.writeText(md);
-  }
-
-  function downloadMarkdown() {
-    const md = exportMarkdownForDownload();
-    if (!md.trim()) return;
-    const m = exportModeForDownload();
-    const name = `${fileBaseName(md, m)}.md`;
-    triggerDownload(
-      new Blob([md], { type: "text/markdown;charset=utf-8" }),
-      name,
-    );
-  }
-
-  function downloadHtml() {
-    const md = exportMarkdownForDownload();
-    if (!md.trim()) return;
-    const m = exportModeForDownload();
-    const title =
-      firstHeading(md) ??
-      (m === "realm"
-        ? "Realm"
-        : m === "adventure"
-          ? "Adventure"
-          : m === "characters"
-            ? "Heroes"
-            : m === "props"
-              ? "Items"
-              : "Maps");
-    const doc = buildStandaloneHtmlDocument(
-      title,
-      markdownToBasicHtml(md, Boolean(md.trim())),
-    );
-    const name = `${fileBaseName(md, m)}.html`;
-    triggerDownload(
-      new Blob([doc], { type: "text/html;charset=utf-8" }),
-      name,
-    );
-  }
-
-  function printGeneration() {
-    if (!previewMarkdown.trim() && previewImages.length === 0) return;
-    window.print();
-  }
-
   async function savePartyForVtt() {
     const md = exportMarkdownForDownload();
     if (!md.trim()) return;
@@ -2006,7 +1949,7 @@ export default function Home(props: PageProps<"/">) {
       });
       if (rosters[0]) void autoLinkToActiveCampaign({ partyId: rosters[0].id });
       setPartySaveMessage(
-        `Saved ${parsed.players.length} hero${parsed.players.length === 1 ? "" : "es"} as "${parsed.rosterName}". Open Heroes & fellowships or the Virtual Table to load them.`,
+        `Saved ${parsed.players.length} hero${parsed.players.length === 1 ? "" : "es"} as "${parsed.rosterName}". Open ${THE_TAVERN} or the Virtual Table to load them.`,
       );
     } catch (err) {
       setPartySaveMessage(
@@ -2034,7 +1977,144 @@ export default function Home(props: PageProps<"/">) {
             : workspace === "welcome"
               ? "adventure"
               : (workspace as LibraryKind);
-  const previewSectionLayout = Boolean(previewMarkdown.trim());
+  const activeWorkspaceNav = isCreatingView
+    ? workspace === "characters"
+      ? workshopNavItem("tavern")
+      : workshopNavItem(workspace)
+    : null;
+
+  useEffect(() => {
+    if (isWelcomeView) return;
+
+    let viewingLabel: string | null = null;
+    let viewingSubline: string | null = null;
+    if (viewingSeed) {
+      viewingLabel = `Viewing seed: ${seedDisplayName(viewingSeed)}`;
+      viewingSubline = SEED_KIND_LABEL[viewingSeed.kind];
+    } else if (viewingResult) {
+      viewingLabel = `Viewing result: ${viewingResult.title}`;
+      viewingSubline = LIBRARY_KIND_LABEL[viewingResult.kind];
+    } else if (viewingCharacter) {
+      viewingLabel = `Viewing hero: ${viewingCharacter.player.name}`;
+      viewingSubline = characterSummary(viewingCharacter.player);
+    } else if (viewingItem) {
+      viewingLabel = `Viewing item: ${viewingItem.name}`;
+      viewingSubline = GAME_ITEM_KIND_LABEL[viewingItem.kind];
+    } else if (viewingCampaign) {
+      viewingLabel = `Viewing campaign: ${viewingCampaign.name}`;
+    } else if (viewingParty) {
+      viewingLabel = `Viewing party: ${viewingParty.name}`;
+      viewingSubline = `${viewingParty.players.length} heroes`;
+    } else if (librarySelection?.kind === "srd") {
+      viewingLabel = `Viewing SRD: ${librarySelection.name}`;
+      viewingSubline = "read-only";
+    }
+
+    let editKind: WorkshopPreviewSnapshot["editKind"] = "none";
+    let canEdit = false;
+    if (!isLibraryView && previewMarkdown.trim()) {
+      canEdit = true;
+      editKind = "result";
+    } else if (viewingSeed) {
+      canEdit = true;
+      editKind = "seed";
+    } else if (viewingResult) {
+      canEdit = true;
+      editKind = "library-result";
+    }
+
+    publishPreviewSnapshot({
+      markdown: previewMarkdown,
+      images: previewImages,
+      textModel: previewTextModel,
+      imageModel: previewImageModel,
+      outputLayoutKind,
+      workspace,
+      isLibraryView,
+      viewingLabel,
+      viewingSubline,
+      progressStage,
+      loading,
+      imageLoading,
+      error,
+      imageError,
+      partySaveMessage,
+      srdLoading: srdPreviewLoading,
+      autoMapEnabled: autoGenerateAdventureMap,
+      autoPropsEnabled: autoGenerateAdventureProps,
+      isSrdPreview: isLibraryView && librarySelection?.kind === "srd",
+      canEdit,
+      editKind,
+      showSavePartyVtt:
+        outputLayoutKind === "characters" &&
+        !isLibraryView &&
+        Boolean(previewMarkdown.trim()),
+      showLoadPartyVtt: Boolean(isLibraryView && viewingParty),
+      viewingPartyId: viewingParty?.id ?? null,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [
+    isWelcomeView,
+    previewMarkdown,
+    previewImages,
+    previewTextModel,
+    previewImageModel,
+    outputLayoutKind,
+    workspace,
+    isLibraryView,
+    viewingSeed,
+    viewingResult,
+    viewingCharacter,
+    viewingItem,
+    viewingCampaign,
+    viewingParty,
+    librarySelection,
+    progressStage,
+    loading,
+    imageLoading,
+    error,
+    imageError,
+    partySaveMessage,
+    srdPreviewLoading,
+    autoGenerateAdventureMap,
+    autoGenerateAdventureProps,
+  ]);
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== "ddeasy-preview-action") return;
+      switch (event.data.action) {
+        case "edit":
+          openResultEditor();
+          break;
+        case "edit-seed":
+          if (viewingSeed) openEditSeedEditor(viewingSeed.id);
+          break;
+        case "edit-result":
+          openLibraryResultEditor();
+          break;
+        case "save-party-vtt":
+          void savePartyForVtt();
+          break;
+        case "load-party-vtt":
+          if (viewingParty) {
+            queuePartyImport({
+              rosterId: viewingParty.id,
+              placeTokens: true,
+              linkCampaign: true,
+              replaceExisting: true,
+            });
+            window.location.href = "/table";
+          }
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [viewingSeed, viewingParty]);
 
   const libraryPanel = (
     <WorkshopLibraryPanel
@@ -2056,7 +2136,10 @@ export default function Home(props: PageProps<"/">) {
         }
       }}
       onCategoryChange={setLibraryCategory}
-      onSelect={setLibrarySelection}
+      onSelect={(selection) => {
+        setLibrarySelection(selection);
+        openOrFocusPreviewWindow();
+      }}
       onAddSeed={openNewSeedEditor}
       onEditSeed={openEditSeedEditor}
       onDeleteSeed={async (id) => {
@@ -2389,6 +2472,7 @@ export default function Home(props: PageProps<"/">) {
           </div>
         </div>
       ) : null}
+      {!isWelcomeView ? (
       <WorkshopWorkspaceTabs
         workspace={workspace === "welcome" ? "welcome" : workspace}
         onSelectWelcome={() => selectWorkspace("welcome")}
@@ -2396,40 +2480,41 @@ export default function Home(props: PageProps<"/">) {
           if (isLibraryView) router.push(`/?mode=${creation}`);
           else selectWorkspace(creation);
         }}
-        trailing={
-          <button
-            type="button"
-            onClick={() => setShowTutorialPicker(true)}
-            className="btn btn-sm btn-forest font-display whitespace-nowrap"
-          >
-            Workflow guides
-          </button>
-        }
       />
+      ) : null}
 
       <ForgeContentShell bodyClassName={forgeBodyClass}>
       {isLibraryView ? (
         <section
-          className="library-workshop-browse fantasy-panel no-print flex min-h-[28rem] flex-col rounded-xl border p-4 sm:min-h-[32rem] lg:min-h-0"
+          className="library-workshop-browse panel-scroll fantasy-panel no-print flex min-h-0 flex-1 flex-col rounded-xl border p-4"
           style={{
             background: "var(--surface)",
             borderColor: "var(--border)",
           }}
         >
-          <h2 className="font-display mb-1 shrink-0 text-base font-bold text-[var(--text)]">
-            <span aria-hidden="true">&#128218; </span>
-            Search the stacks
-          </h2>
-          <p className="mb-2 shrink-0 text-xs leading-relaxed text-[var(--muted)]">
-            Pick a shelf, narrow by kind, then choose a tome to read in the {PREVIEW_WINDOW}.
-          </p>
+          <div className="mb-3 shrink-0 space-y-2">
+            <h2 className="font-display text-base font-bold text-[var(--text)]">
+              <span aria-hidden="true">{APP_ICONS.library} </span>
+              Search the stacks
+            </h2>
+            <p className="text-xs leading-relaxed text-[var(--muted)]">
+              Pick a shelf, narrow by kind, then choose a tome — the {PREVIEW_WINDOW} opens
+              automatically for reading and export.
+            </p>
+          </div>
           {libraryPanel}
         </section>
       ) : null}
 
       {isWelcomeView ? (
-        <section className="workshop-welcome-main workshop-welcome-panel panel-scroll forge-forest-panel no-print rounded-xl border">
+        <section className="workshop-welcome-main workshop-welcome-panel forge-forest-panel no-print rounded-xl border">
           <WorkshopWelcomeLanding
+            workspace={workspace === "welcome" ? "welcome" : workspace}
+            onSelectWelcome={() => selectWorkspace("welcome")}
+            onSelectCreation={(creation) => {
+              if (isLibraryView) router.push(`/?mode=${creation}`);
+              else selectWorkspace(creation);
+            }}
             onStartWorkflow={(id) => {
               setTutorialWorkflowId(id);
               setTutorialStep(0);
@@ -2441,37 +2526,57 @@ export default function Home(props: PageProps<"/">) {
 
       {isCreatingView ? (
         <section
-          className="workshop-workspace-main fantasy-panel no-print rounded-xl border p-6"
+          className="workshop-workspace-main panel-scroll fantasy-panel no-print flex min-h-0 flex-1 flex-col rounded-xl border p-6"
           style={{
             background: "var(--surface)",
             borderColor: "var(--border)",
           }}
         >
+        <div className="workshop-workspace-hero">
+          <span className="workshop-workspace-hero-icon" aria-hidden="true">
+            {activeWorkspaceNav?.icon ?? APP_ICONS.welcome}
+          </span>
+          <div className="min-w-0">
         <h1 className="font-display text-xl font-bold text-[var(--text)]">
-          {workspace === "realm"
+          {activeWorkspaceNav?.label ??
+            (workspace === "realm"
               ? "Realm (5.2)"
               : workspace === "adventure"
                 ? "Adventure (5.2)"
                 : workspace === "characters"
-                  ? "Pre-made heroes (5.2)"
+                  ? `${THE_TAVERN} — Generate heroes`
                   : workspace === "props"
                     ? "Items (handouts)"
-                    : "Maps (5.2)"}
+                    : "Maps (5.2)")}
         </h1>
         <div className="fantasy-divider mt-2" aria-hidden="true">
           <span className="text-sm leading-none">&#10022;</span>
         </div>
         <p className="mt-2 text-sm text-[var(--muted)]">
-          {workspace === "realm"
+          {activeWorkspaceNav?.hint ??
+            (workspace === "realm"
               ? "Pick how big the place is — a whole world down to a single village — then describe it in your own words. You get table-ready pages you can read, print, or edit. Everything is original to your game."
               : workspace === "adventure"
                 ? "Pick a length — a short session or a full one-nighter — and describe the story you want. You get a ready-to-run quest, original to your game."
                 : workspace === "characters"
-                  ? "Get a ready-to-play party of heroes: stats, gear, and story hooks for each, built from the free rules included with the app."
+                  ? "Generate a ready-to-play party of heroes from the included rules. When you are done, manage sheets and fellowships in The Tavern."
                   : workspace === "props"
                     ? "Make handout images to show your players: letters, potions, weapons, tools, and more. Pick an item type, describe it, and craft it — no adventure required. Manage your equipment and magic items on the Items page."
-                    : "Draw full-color travel maps (cities, roads, coastlines) and battle maps ready for the Virtual Table — top-down views made for play, not scenic art."}
+                    : "Draw full-color travel maps (cities, roads, coastlines) and battle maps ready for the Virtual Table — top-down views made for play, not scenic art.")}
         </p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {workspace === "characters" ? (
+            <Link
+              href="/tavern"
+              className="text-xs font-semibold text-[var(--accent-dim)] underline-offset-2 hover:underline"
+            >
+              Manage heroes &amp; fellowships in {THE_TAVERN}
+            </Link>
+          ) : null}
+        </div>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
           {workspace === "maps" ? (
@@ -3339,6 +3444,44 @@ export default function Home(props: PageProps<"/">) {
             </>
           ) : null}
 
+          <ProgressPanel
+            mode={workspace}
+            stage={progressStage}
+            loading={loading}
+            imageLoading={imageLoading}
+            autoMapEnabled={autoGenerateAdventureMap}
+            autoPropsEnabled={autoGenerateAdventureProps}
+          />
+          {partySaveMessage ? (
+            <p
+              className="rounded-lg border px-3 py-2 text-xs"
+              style={{
+                borderColor: "var(--accent-dim)",
+                background: "rgba(201,162,39,0.12)",
+                color: "var(--text)",
+              }}
+              role="status"
+            >
+              {partySaveMessage}
+            </p>
+          ) : null}
+          {error ? (
+            <p
+              className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
+              role="alert"
+            >
+              {error}
+            </p>
+          ) : null}
+          {imageError ? (
+            <p
+              className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
+              role="alert"
+            >
+              {imageError}
+            </p>
+          ) : null}
+
           <button
             type="submit"
             disabled={loading}
@@ -3358,338 +3501,6 @@ export default function Home(props: PageProps<"/">) {
           </button>
         </form>
         </section>
-      ) : null}
-
-      {!isWelcomeView ? (
-      <section
-        className={`preview-window-panel fantasy-panel print-generation-root rounded-xl border p-6 ${
-          isLibraryView
-            ? "library-workshop-preview min-h-[28rem] w-full flex-1 lg:min-h-0"
-            : "min-h-[50vh] flex-1"
-        }`}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="font-display text-lg font-semibold text-[var(--accent-dim)]">
-              <span aria-hidden="true">{APP_ICONS.previewWindow} </span>
-              {PREVIEW_WINDOW}
-            </h2>
-            {viewingSeed ? (
-              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
-                Viewing seed:{" "}
-                <strong className="text-[var(--text)]">
-                  {seedDisplayName(viewingSeed)}
-                </strong>{" "}
-                ({SEED_KIND_LABEL[viewingSeed.kind]})
-              </p>
-            ) : viewingResult ? (
-              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
-                Viewing result:{" "}
-                <strong className="text-[var(--text)]">{viewingResult.title}</strong> (
-                {LIBRARY_KIND_LABEL[viewingResult.kind]})
-              </p>
-            ) : viewingCharacter ? (
-              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
-                Viewing hero:{" "}
-                <strong className="text-[var(--text)]">{viewingCharacter.player.name}</strong> (
-                {characterSummary(viewingCharacter.player)})
-              </p>
-            ) : viewingItem ? (
-              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
-                Viewing item:{" "}
-                <strong className="text-[var(--text)]">{viewingItem.name}</strong> (
-                {GAME_ITEM_KIND_LABEL[viewingItem.kind]})
-              </p>
-            ) : viewingCampaign ? (
-              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
-                Viewing campaign:{" "}
-                <strong className="text-[var(--text)]">{viewingCampaign.name}</strong>
-              </p>
-            ) : viewingParty ? (
-              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
-                Viewing party:{" "}
-                <strong className="text-[var(--text)]">{viewingParty.name}</strong> (
-                {viewingParty.players.length} heroes)
-              </p>
-            ) : librarySelection?.kind === "srd" ? (
-              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
-                Viewing SRD:{" "}
-                <strong className="text-[var(--text)]">{librarySelection.name}</strong>{" "}
-                <strong className="text-[var(--text)]">(read-only)</strong>
-              </p>
-            ) : null}
-          </div>
-          {previewMarkdown.trim() || previewImages.length > 0 ? (
-            <div className="no-print flex flex-wrap gap-2">
-              {previewMarkdown.trim() ? (
-                <>
-                  {!isLibraryView ? (
-                    <button
-                      type="button"
-                      onClick={openResultEditor}
-                      className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                      style={{ borderColor: "var(--border)" }}
-                    >
-                      Edit
-                    </button>
-                  ) : viewingSeed ? (
-                    <button
-                      type="button"
-                      onClick={() => openEditSeedEditor(viewingSeed.id)}
-                      className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                      style={{ borderColor: "var(--border)" }}
-                    >
-                      Edit seed
-                    </button>
-                  ) : viewingResult ? (
-                    <button
-                      type="button"
-                      onClick={openLibraryResultEditor}
-                      className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                      style={{ borderColor: "var(--border)" }}
-                    >
-                      Edit result
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={copyMarkdown}
-                    className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                    style={{ borderColor: "var(--border)" }}
-                  >
-                    Copy Markdown
-                  </button>
-                  <button
-                    type="button"
-                    onClick={downloadMarkdown}
-                    className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                    style={{ borderColor: "var(--border)" }}
-                  >
-                    Download .md
-                  </button>
-                  <button
-                    type="button"
-                    onClick={downloadHtml}
-                    className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                    style={{ borderColor: "var(--border)" }}
-                  >
-                    Download .html
-                  </button>
-                  {outputLayoutKind === "characters" ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => void savePartyForVtt()}
-                        className="rounded-md px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-                        style={{ background: "var(--accent)" }}
-                        title="Parse this roster and save it for the Virtual Table party panel"
-                      >
-                        Save party for VTT
-                      </button>
-                      <Link
-                        href="/parties"
-                        className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                        style={{ borderColor: "var(--border)" }}
-                      >
-                        Heroes &amp; fellowships
-                      </Link>
-                      <Link
-                        href="/table"
-                        className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                        style={{ borderColor: "var(--accent-dim)" }}
-                      >
-                        Virtual Table
-                      </Link>
-                    </>
-                  ) : null}
-                  {isLibraryView && viewingParty ? (
-                    <>
-                      <Link
-                        href="/parties"
-                        className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                        style={{ borderColor: "var(--border)" }}
-                      >
-                        Manage party
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          queuePartyImport({
-                            rosterId: viewingParty.id,
-                            placeTokens: true,
-                            linkCampaign: true,
-                            replaceExisting: true,
-                          });
-                          window.location.href = "/table";
-                        }}
-                        className="rounded-md px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-                        style={{ background: "var(--accent)" }}
-                      >
-                        Load to VTT
-                      </button>
-                    </>
-                  ) : null}
-                </>
-              ) : null}
-              <button
-                type="button"
-                onClick={printGeneration}
-                className="rounded-md px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-                style={{ background: "var(--accent)" }}
-              >
-                Print
-              </button>
-            </div>
-          ) : null}
-        </div>
-        {previewTextModel || previewImageModel ? (
-          <p className="no-print mt-1 text-xs text-[var(--muted)]">
-            {previewTextModel ? `Text model: ${previewTextModel}` : null}
-            {previewTextModel && previewImageModel ? " · " : null}
-            {previewImageModel ? `Image model: ${previewImageModel}` : null}
-          </p>
-        ) : null}
-        {partySaveMessage ? (
-          <p
-            className="no-print mt-2 rounded-lg border px-3 py-2 text-xs"
-            style={{
-              borderColor: "var(--accent-dim)",
-              background: "rgba(201,162,39,0.12)",
-              color: "var(--text)",
-            }}
-            role="status"
-          >
-            {partySaveMessage}
-          </p>
-        ) : null}
-        {!isLibraryView && workspace !== "welcome" ? (
-          <div className="no-print">
-            <ProgressPanel
-              mode={workspace}
-              stage={progressStage}
-              loading={loading}
-              imageLoading={imageLoading}
-              autoMapEnabled={autoGenerateAdventureMap}
-              autoPropsEnabled={autoGenerateAdventureProps}
-            />
-          </div>
-        ) : null}
-        {previewMarkdown.trim() ? (
-          <p className="no-print mt-2 max-w-xl text-xs leading-relaxed text-[var(--muted)]">
-            Tip: use <strong className="text-[var(--text)]/80">Print</strong> above to get text and
-            map images together (choose &ldquo;Save as PDF&rdquo; in the print window). You can also
-            export as <strong className="text-[var(--text)]/80">.md</strong> or{" "}
-            <strong className="text-[var(--text)]/80">.html</strong> files for notes apps.{" "}
-            {outputLayoutKind === "maps" && previewSectionLayout
-              ? "Use Previous / Next to page through the document. Map images download as PNG for virtual tabletops or handouts."
-              : outputLayoutKind === "maps"
-                ? "Map images download as PNG for virtual tabletops or handouts."
-                : previewSectionLayout
-                  ? "Use Previous / Next to page through the document, and scroll inside a page to read."
-                  : "You can also copy the text straight into Google Docs or Word."}
-          </p>
-        ) : null}
-
-        {error ? (
-          <p
-            className="no-print mt-4 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
-            role="alert"
-          >
-            {error}
-          </p>
-        ) : null}
-        {imageError ? (
-          <p
-            className="no-print mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
-            role="alert"
-          >
-            {imageError}
-          </p>
-        ) : null}
-
-        {previewMarkdown.trim() ? (
-          <OutputMarkdownCarousel
-            html={
-              isLibraryView && librarySelection?.kind === "srd"
-                ? renderMarkdownToHtml(previewMarkdown, "preview", false)
-                : simpleMarkdownToHtml(previewMarkdown)
-            }
-          />
-        ) : null}
-        {isLibraryView && srdPreviewLoading ? (
-          <p className="no-print mt-4 text-sm text-[var(--muted)]">Loading SRD entry…</p>
-        ) : null}
-        <MapImageOutputBlock
-          mapImages={previewImages}
-          onDownloadMap={downloadMapImage}
-        />
-
-        {isLibraryView && !previewMarkdown.trim() && previewImages.length === 0 ? (
-          <div className="library-preview-empty no-print mt-6">
-            <p className="text-sm text-[var(--muted)]">
-              {srdBrowserOpen ? (
-                <>
-                  Pick a tome in{" "}
-                  <strong className="text-[var(--text)]">Search the stacks</strong> to open the{" "}
-                  {PREVIEW_WINDOW}.
-                </>
-              ) : (
-                <>
-                  Choose any entry in{" "}
-                  <strong className="text-[var(--text)]">Search the stacks</strong> to read it
-                  here — then copy, export, or print.
-                </>
-              )}
-            </p>
-          </div>
-        ) : null}
-        {isLibraryView && (previewMarkdown.trim() || previewImages.length > 0) ? (
-          <p className="no-print mt-2 max-w-xl text-xs leading-relaxed text-[var(--muted)]">
-            Tip: use <strong className="text-[var(--text)]/80">Print</strong> to save as PDF, or
-            export <strong className="text-[var(--text)]/80">.md</strong> /{" "}
-            <strong className="text-[var(--text)]/80">.html</strong>. User-owned imports stay on
-            this device only — see{" "}
-            <Link href="/legal" className="font-semibold text-[var(--accent)] underline">
-              Licenses &amp; content
-            </Link>
-            .
-          </p>
-        ) : null}
-        {!loading &&
-        !error &&
-        !previewMarkdown.trim() &&
-        previewImages.length === 0 &&
-        !isLibraryView ? (
-          <p className="no-print mt-8 text-sm text-[var(--muted)]">
-            {workspace === "realm"
-              ? "Pick a realm size, describe what you want, and your setting pages will appear here — ready to read, print, or edit. Use the Maps workspace for map images."
-              : workspace === "adventure"
-                ? "Fill in the form and your quest will appear here, sized to the length you picked."
-                : workspace === "characters"
-                  ? "Fill in the form and your ready-to-play heroes will appear here — copy them to your notes or load them at the Virtual Table."
-                  : workspace === "props"
-                    ? "Choose an item type, write a description, and your handout image will appear here."
-                    : "Submit to generate **full-color** locale / overland maps (atlas clarity, cities & routes) and **grid-free** battle maps for the VTT."}
-          </p>
-        ) : null}
-
-        {loading ? (
-          <p className="no-print mt-8 animate-pulse text-sm text-[var(--muted)]">
-            {workspace === "adventure" || workspace === "characters" || workspace === "realm"
-              ? "Calling Claude…"
-              : "Working on images… this can take a minute."}
-          </p>
-        ) : null}
-        {imageLoading ? (
-          <p className="no-print mt-2 animate-pulse text-sm text-[var(--muted)]">
-            {workspace === "props"
-              ? "Rendering item image…"
-              : workspace === "realm"
-                ? "Draw Realm…"
-                : "Rendering maps and handouts (batched API calls)…"}
-          </p>
-        ) : null}
-      </section>
       ) : null}
       </ForgeContentShell>
 
@@ -3711,57 +3522,6 @@ export default function Home(props: PageProps<"/">) {
         onShowPickerChange={setShowTutorialPicker}
       />
     </main>
-  );
-}
-
-function MapImageOutputBlock({
-  mapImages,
-  onDownloadMap,
-}: {
-  mapImages: GeneratedImage[];
-  onDownloadMap: (imageDataUrl: string, labelOrKind: string) => void;
-}) {
-  if (mapImages.length === 0) return null;
-  return (
-    <div className="mt-6 grid gap-4">
-      {mapImages.map((img, idx) => {
-        const heading =
-          img.label ??
-          (img.kind === "locale" || img.kind === "battle"
-            ? `${img.kind} map`
-            : img.kind === "realm"
-              ? "Realm map"
-              : `${img.kind} image`);
-        const downloadSlug = img.label ?? img.kind;
-        return (
-          <div
-            key={`${idx}-${img.kind}-${downloadSlug}`}
-            className="rounded-lg border p-2"
-            style={{ borderColor: "var(--border)" }}
-          >
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-[var(--text)]">{heading}</p>
-              <button
-                type="button"
-                onClick={() => onDownloadMap(img.imageDataUrl, downloadSlug)}
-                className="no-print shrink-0 rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                style={{ borderColor: "var(--border)" }}
-              >
-                Download PNG
-              </button>
-            </div>
-            <Image
-              src={img.imageDataUrl}
-              alt={heading}
-              width={1536}
-              height={1024}
-              unoptimized
-              className="h-auto w-full rounded-md"
-            />
-          </div>
-        );
-      })}
-    </div>
   );
 }
 
@@ -4103,36 +3863,6 @@ function stateFor(
   return "pending";
 }
 
-function simpleMarkdownToHtml(md: string): string {
-  return renderMarkdownToHtml(md, "preview", true);
-}
-
-function markdownToBasicHtml(md: string, paperModuleLayout = false): string {
-  return renderMarkdownToHtml(md, "export", paperModuleLayout);
-}
-
-function triggerDownload(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function triggerDownloadFromDataUrl(dataUrl: string, filename: string) {
-  const a = document.createElement("a");
-  a.href = dataUrl;
-  a.download = filename;
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
 function firstHeading(md: string): string | null {
   const line = md
     .split("\n")
@@ -4140,151 +3870,6 @@ function firstHeading(md: string): string | null {
     .find((l) => l.startsWith("# "));
   if (!line) return null;
   return line.replace(/^#\s+/, "").trim() || null;
-}
-
-function fileBaseName(md: string, mode: GenerateMode): string {
-  if (mode === "library") {
-    return slugify(firstHeading(md) ?? "") || "ddeasy-library";
-  }
-  const fromTitle = firstHeading(md);
-  const slug = slugify(fromTitle ?? "");
-  if (slug) return slug;
-  const prefix =
-    mode === "realm"
-      ? "ddeasy-realm"
-      : mode === "adventure"
-        ? "ddeasy-adventure"
-        : mode === "characters"
-          ? "ddeasy-characters"
-          : mode === "props"
-            ? "ddeasy-props"
-            : "ddeasy-maps";
-  return `${prefix}-${new Date().toISOString().slice(0, 10)}`;
-}
-
-function slugify(s: string): string {
-  const t = s
-    .toLowerCase()
-    .replace(/['"]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 72);
-  return t;
-}
-
-function buildStandaloneHtmlDocument(title: string, bodyHtml: string): string {
-  const safeTitle = title
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/"/g, "&quot;");
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${safeTitle}</title>
-  <style>
-    body { font-family: system-ui, Segoe UI, Roboto, sans-serif; margin: 0; color: #111; background: #f2f2f0; line-height: 1.55; }
-    main { max-width: 54rem; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
-    h1 { font-size: 1.75rem; margin: 0 0 1rem; }
-    h1.module-cover-title { font-size: 1.95rem; margin: 0 0 1rem; letter-spacing: -0.02em; }
-    h2 { font-size: 1.2rem; margin: 2rem 0 0.75rem; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
-    h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
-    h4.module-keyed-heading { margin: 1rem 0 0.35rem; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #555; }
-    p { margin: 0.5rem 0; }
-    ul { margin: 0.5rem 0 0.75rem 1.25rem; }
-    li { margin: 0.25rem 0; }
-    /* Stapled pamphlet sheets (exported adventures) */
-    .module-adventure-document { max-width: 8.5in; margin: 0 auto; background: #fafaf8; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #dcdcd8; }
-    .module-cover {
-      background: #fff;
-      padding: 2rem 2.25rem 2.5rem;
-      margin: 0 0 1.25rem;
-      border: 1px solid #d0d0cc;
-      border-radius: 2px;
-      min-height: 10.5in;
-      box-sizing: border-box;
-    }
-    .module-sheet {
-      background: #fff;
-      padding: 1.75rem 2.25rem 2.25rem;
-      margin: 0 0 1.25rem;
-      border: 1px solid #d0d0cc;
-      border-radius: 2px;
-      min-height: 10in;
-      box-sizing: border-box;
-    }
-    .module-sheet-heading {
-      font-size: 1.28rem;
-      margin: 0 0 0.85rem;
-      padding-bottom: 0.35rem;
-      color: #1a1a1a;
-      border-bottom: 2px solid #333;
-    }
-    .module-h3 { font-size: 1.05rem; margin: 1.15rem 0 0.45rem; }
-    blockquote.module-read-aloud {
-      margin: 0.9rem 0;
-      padding: 0.6rem 0.85rem;
-      border-left: 4px solid #927228;
-      background: #f9f9f7;
-      color: #1a1a1a;
-      font-style: italic;
-    }
-    blockquote.module-read-aloud .read-aloud-inner { margin: 0.4rem 0; }
-    .module-table-scroll { overflow-x: auto; }
-    .module-glance-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 0.6rem 0; }
-    .module-glance-th, .module-glance-td { border: 1px solid #c8c8c8; padding: 0.4rem 0.55rem; vertical-align: top; text-align: left; }
-    .module-glance-th { background: #f0f0f0; font-weight: 600; }
-    .map-pre {
-      overflow-x: auto;
-      background: #f0f0f0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 0.75rem 1rem;
-      margin: 0.75rem 0;
-      font-family: ui-monospace, Consolas, monospace;
-      font-size: 0.72rem;
-      line-height: 1.25;
-    }
-    .map-pre code { white-space: pre; }
-    @media print {
-      @page { size: letter; margin: 0.55in; }
-      body { background: #fff; }
-      main { max-width: none; padding: 0; }
-      .module-adventure-document { border: none; box-shadow: none; background: #fff; max-width: none; }
-      .module-cover {
-        page-break-after: always;
-        min-height: 0;
-        margin: 0;
-        border: none;
-        padding: 0;
-      }
-      .module-sheet {
-        min-height: 0;
-        margin: 0;
-        border: none;
-        padding: 0;
-        background: #fff;
-      }
-      .module-adventure-has-cover .module-sheet { page-break-before: always; }
-      .module-adventure-no-cover .module-sheet ~ .module-sheet { page-break-before: always; }
-      .module-read-aloud, .module-glance-table { break-inside: avoid-page; }
-      .module-sheet-heading { page-break-after: avoid; }
-    }
-  </style>
-</head>
-<body>
-  <main>
-${bodyHtml}
-  </main>
-</body>
-</html>`;
-}
-
-function slugFilePart(raw: string): string {
-  const s = raw.replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/-+/g, "-");
-  const trimmed = s.replace(/^-|-$/g, "").slice(0, 80);
-  return trimmed || "image";
 }
 
 function buildSceneBattleMapPrompt(

@@ -15,7 +15,8 @@ describe("workplace registry", () => {
     expect(workplaceForRoute("/items")?.id).toBe("items");
     expect(workplaceForRoute("/library")?.id).toBe("library");
     expect(workplaceForRoute("/campaigns")?.id).toBe("campaigns");
-    expect(workplaceForRoute("/parties")?.id).toBe("parties");
+    expect(workplaceForRoute("/tavern")?.id).toBe("tavern");
+    expect(workplaceForRoute("/parties")?.id).toBe("tavern");
   });
 
   it("includes SRD item classes in the library workplace", () => {

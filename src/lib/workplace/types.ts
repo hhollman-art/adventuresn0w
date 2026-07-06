@@ -4,7 +4,7 @@ import type { LibraryStorageCategory } from "@/lib/workshop/libraryCatalog";
 /**
  * A workplace is the UI surface for one slice of the CMDB — it owns browse,
  * create, and edit interfaces for its CI classes. The Library aggregates all
- * workplaces; dedicated routes (e.g. /items, /parties) are the same CI types
+ * workplaces; dedicated routes (e.g. /items, /tavern) are the same CI types
  * with workplace-specific tooling.
  */
 export type WorkplaceId =
@@ -12,11 +12,10 @@ export type WorkplaceId =
   | "realm"
   | "adventure"
   | "maps"
-  | "characters"
   | "props"
   | "library"
   | "campaigns"
-  | "parties"
+  | "tavern"
   | "items";
 
 export type WorkplaceDefinition = {

@@ -179,8 +179,8 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
         title: "Establish the party once",
         body:
           "Build or generate the fellowship once, then Save party for VTT. Use the Heroes & fellowships page for campaign notes between sessions — plot threads, downtime, treasure. Each hero has their own Download button there too, so a guest hero can carry their .md sheet between arcs, fellowships, or devices.",
-        action: { type: "link", href: "/parties" },
-        actionLabel: "Open Heroes & fellowships",
+        action: { type: "link", href: "/tavern" },
+        actionLabel: "Open The Tavern",
       },
       {
         title: "Build a location kit over time",
@@ -257,8 +257,8 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
         title: "Link one party to the campaign",
         body:
           "Create heroes on the Heroes & fellowships page, group them into one saved fellowship per group, and keep campaign notes there. Pick it as the campaign's fellowship on the Campaigns page, and load with Link campaign on the VTT so save-back updates the same roster.",
-        action: { type: "link", href: "/parties" },
-        actionLabel: "Open Heroes & fellowships",
+        action: { type: "link", href: "/tavern" },
+        actionLabel: "Open The Tavern",
       },
       {
         title: "Weekly session loop",
@@ -300,8 +300,8 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
         title: "Character options: use sheet Notes",
         body:
           "Playing a subclass or casting spells that aren't in the SRD? Open the hero's sheet and type the features and spell effects you need into Notes, in your own words or as short personal reference notes with book page numbers. SRD spells still come from the built-in picker; book spells live in Notes alongside them.",
-        action: { type: "link", href: "/parties" },
-        actionLabel: "Open Heroes & fellowships",
+        action: { type: "link", href: "/tavern" },
+        actionLabel: "Open The Tavern",
       },
       {
         title: "Import a party built with book options",

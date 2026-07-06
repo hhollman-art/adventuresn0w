@@ -18,7 +18,7 @@ const themeColors = Object.fromEntries(
   Object.entries(APP_THEMES).map(([id, theme]) => [id, theme.themeColor]),
 ) as Record<string, string>;
 
-const themeBootScript = `(function(){try{var k="ddeasy-app-theme",v=localStorage.getItem(k),valid=${JSON.stringify(APP_THEME_ORDER)};var colors=${JSON.stringify(themeColors)};if(v&&valid.indexOf(v)!==-1){document.documentElement.dataset.theme=v;var m=document.querySelector('meta[name="theme-color"]');if(m&&colors[v])m.setAttribute("content",colors[v])}var p=location.pathname;if(p!=="/"&&!p.startsWith("/library")){document.documentElement.dataset.forgeBanner="compact"}else{document.documentElement.dataset.forgeBanner="welcome"}}catch(e){}})();`;
+const themeBootScript = `(function(){try{var k="ddeasy-app-theme",v=localStorage.getItem(k),valid=${JSON.stringify(APP_THEME_ORDER)};var colors=${JSON.stringify(themeColors)};if(v&&valid.indexOf(v)!==-1){document.documentElement.dataset.theme=v;var m=document.querySelector('meta[name="theme-color"]');if(m&&colors[v])m.setAttribute("content",colors[v])}var p=location.pathname;if(p==="/preview"){document.documentElement.dataset.previewWindow="standalone"}else if(p!=="/"&&!p.startsWith("/library")){document.documentElement.dataset.forgeBanner="compact"}else{document.documentElement.dataset.forgeBanner="welcome"}}catch(e){}})();`;
 
 export const metadata: Metadata = {
   title: "D&D Easy — Adventures & heroes (5.2)",

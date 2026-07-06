@@ -43,6 +43,8 @@ import {
 import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
 import { workplace } from "@/lib/workplace";
+import { THE_TAVERN } from "@/lib/workplace/forgeLexicon";
+import { APP_ICONS } from "@/lib/ui/appIcons";
 import WorkshopPageShell from "@/features/workshop/WorkshopPageShell";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
 import CharacterEditorDialog from "./CharacterEditorDialog";
@@ -260,14 +262,21 @@ export default function CharactersAndPartiesPage() {
     <WorkshopPageShell>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="zone-badge mb-3">{workplace("characters").label} workplace</p>
-          <h1 className="font-display text-2xl font-bold">Your heroes</h1>
+          <p className="zone-badge mb-3">{THE_TAVERN}</p>
+          <h1 className="font-display text-2xl font-bold">
+            <span aria-hidden="true">{APP_ICONS.tavern} </span>
+            {workplace("tavern").label}
+          </h1>
           <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">
-            Create and keep every hero here. Select a few to form a fellowship —
-            fellowships are what campaigns and the Virtual Table use.
+            {workplace("tavern").description} Generate a ready-made party with AI, create
+            sheets by hand, import .md files, then gather heroes into fellowships for campaigns
+            and the Virtual Table.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link href="/?mode=characters" className="btn btn-sm btn-accent">
+            Generate heroes (AI)
+          </Link>
           <button
             type="button"
             onClick={() => {
@@ -337,6 +346,18 @@ export default function CharactersAndPartiesPage() {
         />
       ) : null}
 
+      {/* ---- Heroes ---- */}
+
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl font-bold">Heroes</h2>
+          <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">
+            Every hero sheet you keep, import, or generate lives here. Select heroes to add them
+            to a fellowship below.
+          </p>
+        </div>
+      </div>
+
       {status ? (
         <p
           className="mb-4 rounded-lg border px-3 py-2 text-sm"
@@ -350,7 +371,7 @@ export default function CharactersAndPartiesPage() {
         </p>
       ) : null}
 
-      {/* ---- Characters ---- */}
+      {/* ---- Character list ---- */}
 
       {characters.length > 0 ? (
         <div className="mb-3 flex flex-wrap items-center gap-2">

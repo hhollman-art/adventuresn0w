@@ -427,11 +427,11 @@ function PartyPanel({
             )}
           </div>
           <Link
-            href="/parties"
+            href="/tavern"
             className="shrink-0 rounded border px-2 py-1 text-[10px] font-semibold"
             style={{ borderColor: "var(--accent-dim)" }}
           >
-            Heroes &amp; fellowships
+            The Tavern
           </Link>
         </div>
         <div className="mb-2 flex flex-wrap gap-1">

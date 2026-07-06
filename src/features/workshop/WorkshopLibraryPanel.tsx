@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 import Link from "next/link";
 import { THE_LIBRARY } from "@/lib/workplace/forgeLexicon";
+import { APP_ICONS } from "@/lib/ui/appIcons";
 import {
   campaignToLibraryEntry,
   characterToLibraryEntry,
@@ -676,7 +677,7 @@ export default function WorkshopLibraryPanel({
         <div className="min-w-0">
           {!wideLayout ? (
             <h2 className="font-display text-base font-bold text-[var(--text)]">
-              <span aria-hidden="true">&#128218; </span>
+              <span aria-hidden="true">{APP_ICONS.library} </span>
               {THE_LIBRARY}
             </h2>
           ) : null}
@@ -760,7 +761,7 @@ export default function WorkshopLibraryPanel({
             background: "rgba(201,162,39,0.08)",
           }}
         >
-          <span aria-hidden="true">{"\u{1F3F0}"}</span>
+          <span aria-hidden="true">{APP_ICONS.campaign}</span>
           <span className="text-[var(--muted)]">
             {campaignScope ? (
               <>
@@ -913,7 +914,7 @@ export default function WorkshopLibraryPanel({
                   onDelete={() => onDeleteCharacter(entry.id)}
                   editLabel="Manage heroes"
                   onEdit={() => {
-                    window.location.href = "/parties";
+                    window.location.href = "/tavern";
                   }}
                 />
               );
@@ -970,7 +971,7 @@ export default function WorkshopLibraryPanel({
                 onDelete={() => onDeleteParty(entry.id)}
                 editLabel="Gather fellowship"
                 onEdit={() => {
-                  window.location.href = "/parties";
+                  window.location.href = "/tavern";
                 }}
               />
             );
@@ -992,8 +993,8 @@ export default function WorkshopLibraryPanel({
             Virtual Table
           </button>{" "}
           or tend them on the{" "}
-          <Link href="/parties" className="font-semibold text-[var(--accent)] underline">
-            Heroes &amp; fellowships page
+          <Link href="/tavern" className="font-semibold text-[var(--accent)] underline">
+            The Tavern
           </Link>
           .
         </p>

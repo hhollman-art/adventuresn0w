@@ -19,7 +19,7 @@ export const FORGE_PRINCIPLES: readonly ForgePrinciple[] = [
   },
   {
     id: "library-heart",
-    icon: "\u{1F4DA}",
+    icon: "\u{1F4DA}\u{1F4DC}",
     title: "The Library is your prep shelf",
     body:
       "Everything you save lives in one place — lore, heroes, fellowships, items, and chronicles — linked and searchable like a DM's own archive.",

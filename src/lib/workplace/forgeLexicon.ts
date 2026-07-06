@@ -2,6 +2,7 @@
 
 export const FANTASY_FORGE = "Fantasy Forge";
 export const THE_LIBRARY = "The Library";
+export const THE_TAVERN = "The Tavern";
 export const VIRTUAL_TABLE = "Virtual Table";
 
 export const FORGE_NAV_INTRO =

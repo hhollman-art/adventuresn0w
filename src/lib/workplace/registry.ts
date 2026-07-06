@@ -1,5 +1,5 @@
 import { CI_CLASSES, CI_REGISTRY } from "@/lib/ciRegistry";
-import { LIBRARY_WORKSPACE_HINT, THE_LIBRARY } from "./forgeLexicon";
+import { LIBRARY_WORKSPACE_HINT, THE_LIBRARY, THE_TAVERN } from "./forgeLexicon";
 import type { WorkplaceDefinition, WorkplaceId } from "./types";
 
 const USER_CI_CLASSES = CI_CLASSES.filter((c) => CI_REGISTRY[c].provenance === "user");
@@ -48,14 +48,20 @@ export const WORKPLACES: Record<WorkplaceId, WorkplaceDefinition> = {
     libraryCategory: null,
     ciCategories: ["seeds", "results"],
   },
-  characters: {
-    id: "characters",
-    label: "Heroes",
-    route: "/",
-    description: "Summon a ready-made party of heroes from the included rules.",
-    ciClasses: ["seed.characters", "result.characters", "character.sheet"],
-    libraryCategory: "characters",
-    ciCategories: ["seeds", "results", "characters"],
+  tavern: {
+    id: "tavern",
+    label: THE_TAVERN,
+    route: "/tavern",
+    description:
+      "Forge heroes with AI, keep every sheet, assemble fellowships, and load them at the Virtual Table.",
+    ciClasses: [
+      "seed.characters",
+      "result.characters",
+      "character.sheet",
+      "party.roster",
+    ],
+    libraryCategory: null,
+    ciCategories: ["seeds", "results", "characters", "parties"],
   },
   props: {
     id: "props",
@@ -93,15 +99,6 @@ export const WORKPLACES: Record<WorkplaceId, WorkplaceDefinition> = {
     libraryCategory: "campaigns",
     ciCategories: ["campaigns"],
   },
-  parties: {
-    id: "parties",
-    label: "Fellowships",
-    route: "/parties",
-    description: "Party rosters assembled from hero sheets.",
-    ciClasses: ["party.roster", "character.sheet"],
-    libraryCategory: "parties",
-    ciCategories: ["parties", "characters"],
-  },
   items: {
     id: "items",
     label: "Items",
@@ -128,8 +125,13 @@ export function workplaceForRoute(pathname: string): WorkplaceDefinition | null 
   if (pathname === "/library" || pathname.startsWith("/library/")) return WORKPLACES.library;
   if (pathname === "/campaigns" || pathname.startsWith("/campaigns/")) return WORKPLACES.campaigns;
   if (pathname === "/items" || pathname.startsWith("/items/")) return WORKPLACES.items;
-  if (pathname === "/parties" || pathname.startsWith("/parties/")) {
-    return WORKPLACES.parties;
+  if (
+    pathname === "/tavern" ||
+    pathname.startsWith("/tavern/") ||
+    pathname === "/parties" ||
+    pathname.startsWith("/parties/")
+  ) {
+    return WORKPLACES.tavern;
   }
   if (pathname === "/" || pathname.startsWith("/?")) return WORKPLACES.welcome;
   return null;

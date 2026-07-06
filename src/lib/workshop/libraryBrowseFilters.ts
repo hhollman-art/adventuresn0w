@@ -209,11 +209,11 @@ export function browseEmptyMessage(
     case "results":
       return "No prepared scrolls yet — generate a realm, adventure, or map in the Fantasy Forge.";
     case "characters":
-      return "No heroes on the shelf yet — create one on the Heroes & fellowships page.";
+      return "No heroes on the shelf yet — create one in The Tavern.";
     case "items":
       return "No treasures catalogued yet — the included SRD gear is still here; add your own on the Items page.";
     case "parties":
-      return "No fellowships yet — gather heroes into a party on the Heroes & fellowships page.";
+      return "No fellowships yet — gather heroes into a party in The Tavern.";
     case "campaigns":
       return "No chronicles yet — start a campaign to link your party and prep.";
   }

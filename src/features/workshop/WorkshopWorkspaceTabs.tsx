@@ -1,7 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   activeWorkshopNavId,
@@ -9,22 +7,20 @@ import {
   type WorkshopCreationId,
 } from "@/lib/workplace/workshopNav";
 import { dispatchWorkshopWelcome } from "@/lib/workshop/goWelcome";
+import WorkshopWorkspaceIconControl from "@/features/workshop/WorkshopWorkspaceIconControl";
 
 type WorkshopWorkspaceTabsProps = {
   /** Home route workspace selection; other routes default to welcome. */
   workspace?: "welcome" | WorkshopCreationId;
   onSelectWelcome?: () => void;
   onSelectCreation?: (mode: WorkshopCreationId) => void;
-  /** Extra controls pinned at the end of the row (e.g. workflow guides). */
-  trailing?: ReactNode;
 };
 
-/** Horizontal Fantasy Forge workspace tabs — sits under the banner so content gets full width. */
+/** Horizontal Fantasy Forge workspace tabs — icon-only with hover tips. */
 export default function WorkshopWorkspaceTabs({
   workspace = "welcome",
   onSelectWelcome,
   onSelectCreation,
-  trailing,
 }: WorkshopWorkspaceTabsProps) {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
@@ -51,63 +47,43 @@ export default function WorkshopWorkspaceTabs({
       <div className="workshop-workspace-tabs-scroll" role="tablist">
         {WORKSHOP_NAV_ITEMS.map((item) => {
           const active = activeId === item.id;
-          const className = `workshop-workspace-tab${
-            active ? " workshop-workspace-tab-active" : ""
-          }${item.id === "library" ? " workshop-workspace-tab--library" : ""}`;
-          const inner = (
-            <>
-              <span className="workshop-workspace-tab-icon" aria-hidden="true">
-                {item.icon}
-              </span>
-              <span className="workshop-workspace-tab-label font-display">{item.label}</span>
-            </>
-          );
 
           if (item.id === "welcome") {
             return (
-              <button
+              <WorkshopWorkspaceIconControl
                 key={item.id}
-                type="button"
+                item={item}
+                active={active}
+                size="tab"
                 onClick={goWelcome}
-                className={className}
-                title={item.hint}
-                aria-current={active ? "page" : undefined}
-              >
-                {inner}
-              </button>
+              />
             );
           }
           if (item.creation) {
             return (
-              <button
+              <WorkshopWorkspaceIconControl
                 key={item.id}
-                type="button"
+                item={item}
+                active={active}
+                size="tab"
                 onClick={() => goCreation(item.creation!)}
-                className={className}
-                title={item.hint}
-                aria-current={active ? "page" : undefined}
-              >
-                {inner}
-              </button>
+              />
             );
           }
           if (item.href) {
             return (
-              <Link
+              <WorkshopWorkspaceIconControl
                 key={item.id}
+                item={item}
+                active={active}
+                size="tab"
                 href={item.href}
-                className={className}
-                title={item.hint}
-                aria-current={active ? "page" : undefined}
-              >
-                {inner}
-              </Link>
+              />
             );
           }
           return null;
         })}
       </div>
-      {trailing ? <div className="workshop-workspace-tabs-trailing">{trailing}</div> : null}
     </nav>
   );
 }

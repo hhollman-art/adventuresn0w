@@ -42,6 +42,7 @@ import {
 import { characterSummary } from "@/lib/tabletop/character";
 import { formatPartyUpdated } from "@/lib/tabletop/partyCampaign";
 import { workplace } from "@/lib/workplace";
+import { APP_ICONS } from "@/lib/ui/appIcons";
 import WorkshopPageShell from "@/features/workshop/WorkshopPageShell";
 
 function CheckRow({
@@ -57,13 +58,13 @@ function CheckRow({
 }) {
   return (
     <label
-      className="flex cursor-pointer items-start gap-2 rounded-md border px-2 py-1.5 text-xs"
+      className="workshop-campaign-check flex cursor-pointer items-start gap-2 rounded-md border px-2 py-1.5 text-xs"
       style={{ borderColor: checked ? "var(--accent-dim)" : "var(--border)" }}
     >
       <input type="checkbox" checked={checked} onChange={onToggle} className="mt-0.5" />
       <span className="min-w-0">
         <span className="block font-semibold text-[var(--text)]">{label}</span>
-        <span className="block text-[var(--muted)]">{detail}</span>
+        <span className="block text-[var(--text-soft)]">{detail}</span>
       </span>
     </label>
   );
@@ -195,11 +196,15 @@ export default function CampaignsPage() {
 
   return (
     <WorkshopPageShell>
+      <div className="workshop-page-panel panel-scroll forge-forest-panel fantasy-panel rounded-xl border p-6">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="zone-badge mb-3">{workplace("campaigns").label} workplace</p>
-          <h1 className="font-display text-2xl font-bold">Your campaigns</h1>
-          <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">
+          <p className="zone-badge mb-3">Campaign workplace</p>
+          <h1 className="font-display text-2xl font-bold">
+            <span aria-hidden="true">{APP_ICONS.campaign} </span>
+            {workplace("campaigns").label}
+          </h1>
+          <p className="mt-1 max-w-xl text-sm leading-relaxed text-[var(--text-soft)]">
             One campaign per group you run. Each campaign is the structural root of a CI tree:
             link adventures (seeds/results), party, characters, and items by id — never copies.
             Campaigns also keep their own Virtual Table — open one and the table comes back
@@ -218,7 +223,7 @@ export default function CampaignsPage() {
 
       {status ? (
         <p
-          className="mb-4 rounded-lg border px-3 py-2 text-sm"
+          className="mb-4 rounded-lg border px-3 py-2 text-sm text-[var(--text)]"
           style={{ borderColor: "var(--accent-dim)", background: "rgba(201,162,39,0.1)" }}
           role="status"
         >
@@ -228,8 +233,8 @@ export default function CampaignsPage() {
 
       {campaigns.length === 0 ? (
         <div
-          className="rounded-xl border p-8 text-center text-sm text-[var(--muted)]"
-          style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+          className="workshop-campaign-card rounded-xl border p-8 text-center text-sm text-[var(--text-soft)]"
+          style={{ borderColor: "var(--border)" }}
         >
           <p className="mb-2">No campaigns yet.</p>
           <p>
@@ -248,10 +253,9 @@ export default function CampaignsPage() {
             return (
               <li
                 key={campaign.id}
-                className="rounded-xl border"
+                className="workshop-campaign-card rounded-xl border"
                 style={{
                   borderColor: isActive ? "var(--accent)" : "var(--border)",
-                  background: "var(--surface)",
                 }}
               >
                 <div className="flex flex-wrap items-start gap-2 p-4">
@@ -271,7 +275,7 @@ export default function CampaignsPage() {
                           );
                         }}
                         onBlur={(e) => void patchCampaign(campaign.id, { name: e.target.value })}
-                        className="mb-1 w-full max-w-md rounded border bg-transparent px-1 py-0.5 font-display text-lg font-bold outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                        className="mb-1 w-full max-w-md rounded border bg-transparent px-1 py-0.5 font-display text-lg font-bold text-[var(--text)] outline-none focus:ring-1 focus:ring-[var(--accent)]"
                         style={{ borderColor: "transparent" }}
                         aria-label="Campaign name"
                       />
@@ -284,7 +288,7 @@ export default function CampaignsPage() {
                         </span>
                       ) : null}
                     </span>
-                    <p className="text-xs text-[var(--muted)]">
+                    <p className="text-xs text-[var(--text-soft)]">
                       {party ? `Party: ${party.name}` : "No party linked"} ·{" "}
                       {campaign.seedIds.length} seed{campaign.seedIds.length === 1 ? "" : "s"} ·{" "}
                       {campaign.resultIds.length} result
@@ -334,7 +338,7 @@ export default function CampaignsPage() {
                 {open ? (
                   <div className="border-t px-4 py-3" style={{ borderColor: "var(--border)" }}>
                     <div className="mb-3">
-                      <p className="mb-1 text-xs font-bold tracking-wide uppercase">
+                      <p className="mb-1 text-xs font-bold tracking-wide uppercase text-[var(--text)]">
                         What is this campaign about?
                       </p>
                       <textarea
@@ -352,13 +356,13 @@ export default function CampaignsPage() {
                         }
                         rows={2}
                         placeholder="The premise, the group, the night you play…"
-                        className="w-full rounded-lg border px-3 py-2 text-sm"
+                        className="w-full rounded-lg border px-3 py-2 text-sm text-[var(--text)]"
                         style={{ borderColor: "var(--border)", background: "var(--bg)" }}
                       />
                     </div>
 
                     <div className="mb-3">
-                      <p className="mb-1 text-xs font-bold tracking-wide uppercase">Party</p>
+                      <p className="mb-1 text-xs font-bold tracking-wide uppercase text-[var(--text)]">Party</p>
                       <select
                         value={campaign.partyId ?? ""}
                         onChange={(e) =>
@@ -366,7 +370,7 @@ export default function CampaignsPage() {
                             partyId: e.target.value || null,
                           })
                         }
-                        className="w-full max-w-md rounded-lg border px-3 py-2 text-sm"
+                        className="w-full max-w-md rounded-lg border px-3 py-2 text-sm text-[var(--text)]"
                         style={{ borderColor: "var(--border)", background: "var(--bg)" }}
                         aria-label="Linked party"
                       >
@@ -377,10 +381,10 @@ export default function CampaignsPage() {
                           </option>
                         ))}
                       </select>
-                      <p className="mt-1 text-[11px] text-[var(--muted)]">
+                      <p className="mt-1 text-[11px] text-[var(--text-soft)]">
                         Manage rosters on the{" "}
                         <Link
-                          href="/parties"
+                          href="/tavern"
                           className="font-semibold text-[var(--accent)] underline"
                         >
                           Parties
@@ -391,11 +395,11 @@ export default function CampaignsPage() {
 
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
-                        <p className="mb-1 text-xs font-bold tracking-wide uppercase">
+                        <p className="mb-1 text-xs font-bold tracking-wide uppercase text-[var(--text)]">
                           Linked seeds
                         </p>
                         {seeds.length === 0 ? (
-                          <p className="text-xs text-[var(--muted)]">
+                          <p className="text-xs text-[var(--text-soft)]">
                             No seeds in your library yet.
                           </p>
                         ) : (
@@ -413,11 +417,11 @@ export default function CampaignsPage() {
                         )}
                       </div>
                       <div>
-                        <p className="mb-1 text-xs font-bold tracking-wide uppercase">
+                        <p className="mb-1 text-xs font-bold tracking-wide uppercase text-[var(--text)]">
                           Linked results
                         </p>
                         {results.length === 0 ? (
-                          <p className="text-xs text-[var(--muted)]">
+                          <p className="text-xs text-[var(--text-soft)]">
                             No saved results in your library yet.
                           </p>
                         ) : (
@@ -435,11 +439,11 @@ export default function CampaignsPage() {
                         )}
                       </div>
                       <div>
-                        <p className="mb-1 text-xs font-bold tracking-wide uppercase">
+                        <p className="mb-1 text-xs font-bold tracking-wide uppercase text-[var(--text)]">
                           Linked characters
                         </p>
                         {characters.length === 0 ? (
-                          <p className="text-xs text-[var(--muted)]">
+                          <p className="text-xs text-[var(--text-soft)]">
                             No heroes in your library yet.
                           </p>
                         ) : (
@@ -455,23 +459,23 @@ export default function CampaignsPage() {
                             ))}
                           </div>
                         )}
-                        <p className="mt-1 text-[11px] text-[var(--muted)]">
+                        <p className="mt-1 text-[11px] text-[var(--text-soft)]">
                           Create heroes on the{" "}
                           <Link
-                            href="/parties"
+                            href="/tavern"
                             className="font-semibold text-[var(--accent)] underline"
                           >
-                            Heroes &amp; fellowships
+                            The Tavern
                           </Link>{" "}
                           page — they appear here once saved.
                         </p>
                       </div>
                       <div>
-                        <p className="mb-1 text-xs font-bold tracking-wide uppercase">
+                        <p className="mb-1 text-xs font-bold tracking-wide uppercase text-[var(--text)]">
                           Linked items
                         </p>
                         {items.length === 0 ? (
-                          <p className="text-xs text-[var(--muted)]">
+                          <p className="text-xs text-[var(--text-soft)]">
                             No items in your library yet.
                           </p>
                         ) : (
@@ -487,7 +491,7 @@ export default function CampaignsPage() {
                             ))}
                           </div>
                         )}
-                        <p className="mt-1 text-[11px] text-[var(--muted)]">
+                        <p className="mt-1 text-[11px] text-[var(--text-soft)]">
                           Manage equipment and magic items on the{" "}
                           <Link
                             href="/items"
@@ -500,7 +504,7 @@ export default function CampaignsPage() {
                       </div>
                     </div>
 
-                    <p className="mt-3 text-[11px] leading-relaxed text-[var(--muted)]">
+                    <p className="mt-3 text-[11px] leading-relaxed text-[var(--text-soft)]">
                       Links are id references only — each CI is saved once in the library.
                       The same seed, character, or item can belong to several campaigns.
                       Deleting a campaign never deletes linked content. While this campaign
@@ -514,6 +518,7 @@ export default function CampaignsPage() {
           })}
         </ul>
       )}
+      </div>
     </WorkshopPageShell>
   );
 }

@@ -11,8 +11,8 @@
   --surface: #1b291b;
   --border: rgba(140, 180, 100, 0.5);
   --text: #fdfaf0;
-  --text-soft: #efe7cf;
-  --muted: #cfd3ae;
+  --text-soft: #f3edd8;
+  --muted: #e0e6c8;
   --accent: #a87d10;
   --accent-dim: #ffd75e;
   --accent-muted: rgba(255, 215, 94, 0.14);
@@ -31,8 +31,8 @@
   --surface: #13233c;
   --border: rgba(95, 180, 245, 0.5);
   --text: #f2f9ff;
-  --text-soft: #d6e9fa;
-  --muted: #aecbe8;
+  --text-soft: #e3f2fc;
+  --muted: #c8dff5;
   --accent: #2f6fb0;
   --accent-dim: #5fd4ff;
   --accent-muted: rgba(95, 212, 255, 0.14);
@@ -51,8 +51,8 @@
   --surface: #241a24;
   --border: rgba(210, 140, 85, 0.48);
   --text: #f9f1e8;
-  --text-soft: #e8d9ca;
-  --muted: #d0bcae;
+  --text-soft: #f0e4d8;
+  --muted: #e0cfc0;
   --accent: #a85c22;
   --accent-dim: #ffab5e;
   --accent-muted: rgba(255, 171, 94, 0.14);
@@ -71,8 +71,8 @@
   --surface: #2c3c60;
   --border: rgba(205, 215, 240, 0.45);
   --text: #ffffff;
-  --text-soft: #eaeffa;
-  --muted: #c8d2ea;
+  --text-soft: #f0f3fc;
+  --muted: #d8e0f5;
   --accent: #a8841c;
   --accent-dim: #ffe08a;
   --accent-muted: rgba(255, 224, 138, 0.14);
@@ -91,8 +91,8 @@
   --surface: #17293c;
   --border: rgba(160, 220, 250, 0.48);
   --text: #f4fbff;
-  --text-soft: #dcf0fa;
-  --muted: #b6d8ea;
+  --text-soft: #e6f4fc;
+  --muted: #c8e6f5;
   --accent: #2e7ea0;
   --accent-dim: #8ff0ff;
   --accent-muted: rgba(143, 240, 255, 0.13);
@@ -111,8 +111,8 @@
   --surface: #162b38;
   --border: rgba(130, 180, 200, 0.48);
   --text: #fdf8ea;
-  --text-soft: #eee5cd;
-  --muted: #ccccb0;
+  --text-soft: #f4eed8;
+  --muted: #e4e4c8;
   --accent: #a87818;
   --accent-dim: #ffd24d;
   --accent-muted: rgba(255, 210, 77, 0.14);
@@ -131,8 +131,8 @@
   --surface: #291612;
   --border: rgba(235, 130, 75, 0.48);
   --text: #fdf1e4;
-  --text-soft: #f2ddc8;
-  --muted: #dcb9a0;
+  --text-soft: #f5e0cc;
+  --muted: #eccfb8;
   --accent: #b03d12;
   --accent-dim: #ff8a4a;
   --accent-muted: rgba(255, 138, 74, 0.14);
@@ -151,8 +151,8 @@
   --surface: #201430;
   --border: rgba(185, 145, 240, 0.48);
   --text: #f8f3ff;
-  --text-soft: #e6daf6;
-  --muted: #cfbde9;
+  --text-soft: #ede4f8;
+  --muted: #ddd0ef;
   --accent: #7048b8;
   --accent-dim: #d9b8ff;
   --accent-muted: rgba(217, 184, 255, 0.13);
@@ -401,6 +401,7 @@
   border-color: color-mix(in srgb, var(--accent-dim) 50%, transparent);
   background: var(--accent-muted);
   color: var(--accent-dim);
+  font-weight: 650;
 }
 
 [data-theme] .title-bar-btn {
@@ -463,21 +464,94 @@
 
 /* ---- Readability floor — text pops on every scene ------------------------- */
 
+[data-theme] body {
+  color: var(--text);
+}
+
+[data-theme] h1,
+[data-theme] h2,
+[data-theme] h3,
+[data-theme] h4,
+[data-theme] label,
+[data-theme] p,
+[data-theme] li,
+[data-theme] td,
+[data-theme] th {
+  color: inherit;
+}
+
 /* Any `text-[var(--accent)]` link/label on dark ground gets the vivid tone */
 [data-theme] .text-\[var\(--accent\)\] {
   color: var(--accent-dim) !important;
 }
 
+/* Secondary copy — never murky; blend toward primary ink */
+[data-theme] .text-\[var\(--muted\)\] {
+  color: var(--text-soft) !important;
+}
+
 [data-theme] .workshop-welcome-muted,
+[data-theme] .workshop-welcome-lede,
 [data-theme] .forge-forest-panel .workshop-nav-item-hint,
-[data-theme] .theme-picker-label {
-  color: color-mix(in srgb, var(--text) 82%, var(--muted));
+[data-theme] .theme-picker-label,
+[data-theme] .site-footnote,
+[data-theme] .zone-nav-link:not(.zone-nav-link--active),
+[data-theme] .panel-tab:not(.panel-tab-active) {
+  color: var(--text-soft);
+}
+
+[data-theme] .workshop-welcome-section-title,
+[data-theme] .forge-forest-panel .workshop-nav-section-label,
+[data-theme] .forge-forest-panel .workshop-nav-item-label {
+  color: var(--text);
+}
+
+[data-theme] input::placeholder,
+[data-theme] textarea::placeholder {
+  color: color-mix(in srgb, var(--text-soft) 88%, transparent);
 }
 
 [data-theme] .forge-forest-card,
-[data-theme] .workshop-principle-card {
-  background: color-mix(in srgb, var(--surface) 78%, black);
+[data-theme] .workshop-principle-card,
+[data-theme] .workshop-page-panel,
+[data-theme] .workshop-campaign-card,
+[data-theme] .forge-forest-panel .workshop-workflow-card {
+  background: color-mix(in srgb, var(--surface) 84%, black);
   border-color: color-mix(in srgb, var(--accent-dim) 38%, transparent);
+  color: var(--text);
+}
+
+[data-theme] .forge-forest-panel .workshop-workflow-card .text-\[var\(--muted\)\] {
+  color: var(--text-soft) !important;
+}
+
+[data-theme] .workshop-workspace-icon-tooltip {
+  background: color-mix(in srgb, var(--surface) 96%, black);
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent-dim) 55%, transparent);
+}
+
+[data-theme] .workshop-page-panel .text-\[var\(--muted\)\],
+[data-theme] .workshop-page-panel .text-\[var\(--text-soft\)\],
+[data-theme] .workshop-campaign-card .text-\[var\(--text-soft\)\] {
+  color: var(--text-soft) !important;
+}
+
+[data-theme] .workshop-workspace-icon-tooltip-hint {
+  color: var(--text-soft);
+}
+
+[data-theme] .site-title-bar-compact-brand {
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 90%, var(--accent-dim));
+}
+
+[data-theme] .site-title-bar-compact-brand:hover {
+  color: var(--accent-dim);
+}
+
+[data-theme] .theme-picker-select {
+  color: var(--text);
 }
 
 [data-theme] .preview-window-panel,

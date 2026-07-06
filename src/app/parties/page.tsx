@@ -1,5 +1,6 @@
-import CharactersAndPartiesPage from "@/features/parties/CharactersAndPartiesPage";
+import { redirect } from "next/navigation";
 
-export default function PartiesRoutePage() {
-  return <CharactersAndPartiesPage />;
+/** Legacy route — heroes & fellowships now live at The Tavern. */
+export default function PartiesRedirectPage() {
+  redirect("/tavern");
 }
