@@ -69,9 +69,9 @@ export default function SrdLibraryBrowser({
   const categoryMeta = SRD_API_CATEGORIES.find((c) => c.resource === resource);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
       <div
-        className="rounded-lg border p-3 text-xs leading-relaxed"
+        className="shrink-0 rounded-lg border p-3 text-xs leading-relaxed"
         style={{ borderColor: "var(--border)", background: "var(--bg)" }}
       >
         <p className="text-[var(--muted)]">
@@ -95,7 +95,7 @@ export default function SrdLibraryBrowser({
         </p>
       </div>
 
-      <div className="srd-button-grid srd-category-grid" role="tablist" aria-label="SRD categories">
+      <div className="srd-button-grid srd-category-grid shrink-0" role="tablist" aria-label="SRD categories">
         {SRD_API_CATEGORIES.map((cat) => (
           <button
             key={cat.resource}
@@ -114,10 +114,10 @@ export default function SrdLibraryBrowser({
       </div>
 
       {categoryMeta ? (
-        <p className="text-xs text-[var(--muted)]">{categoryMeta.description}</p>
+        <p className="shrink-0 text-xs text-[var(--muted)]">{categoryMeta.description}</p>
       ) : null}
 
-      <label className="flex flex-col gap-1 text-xs text-[var(--muted)]">
+      <label className="flex shrink-0 flex-col gap-1 text-xs text-[var(--muted)]">
         Search {categoryMeta?.label.toLowerCase() ?? "entries"}
         <input
           type="search"
@@ -130,25 +130,26 @@ export default function SrdLibraryBrowser({
       </label>
 
       {error ? (
-        <p className="rounded-lg border px-3 py-2 text-xs text-red-700" role="alert">
+        <p className="shrink-0 rounded-lg border px-3 py-2 text-xs text-red-700" role="alert">
           {error}
         </p>
       ) : null}
 
       {loading ? (
-        <p className="text-sm text-[var(--muted)]">Loading SRD entries…</p>
+        <p className="shrink-0 text-sm text-[var(--muted)]">Loading SRD entries…</p>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-[var(--muted)]">
+        <p className="shrink-0 text-sm text-[var(--muted)]">
           {query.trim() ? "No matches — try a different search." : "No entries in this category."}
         </p>
       ) : (
-        <div
-          className={
-            wideLayout
-              ? "srd-button-grid srd-entry-grid min-h-0 flex-1"
-              : "srd-button-grid srd-entry-grid max-h-[min(44vh,360px)]"
-          }
-        >
+        <div className="library-browse-scroll-host min-h-0 flex-1">
+          <div
+            className={
+              wideLayout
+                ? "srd-button-grid srd-entry-grid min-h-0"
+                : "srd-button-grid srd-entry-grid max-h-[min(44vh,360px)]"
+            }
+          >
           {filtered.map((item) => {
             const selected = isSrdSelected(selection, resource, item.index);
             const detail = srdListItemDetail(item, resource);
@@ -171,11 +172,12 @@ export default function SrdLibraryBrowser({
               </button>
             );
           })}
+          </div>
         </div>
       )}
 
       {!loading && items.length > 0 ? (
-        <p className="text-[11px] text-[var(--muted)]">
+        <p className="shrink-0 text-[11px] text-[var(--muted)]">
           {filtered.length} of {items.length} {categoryMeta?.label.toLowerCase() ?? "entries"}
           {query.trim() ? " matching search" : ""}. Select one to open in the {PREVIEW_WINDOW}.
         </p>

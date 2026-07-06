@@ -174,7 +174,7 @@ const MODE_TAB_ICON: Record<GenerateMode, string> = {
   characters: "\u{1F9D9}", // mage
   props: "\u{1F3FA}", // amphora
   maps: "\u{1F5FA}\uFE0F", // world map
-  library: "\u{1F4DC}", // scroll
+  library: "\u{1F4DA}", // bookshelf
 };
 
 async function autoSaveGeneratedSeed(params: {
@@ -2486,7 +2486,7 @@ export default function Home(props: PageProps<"/">) {
       <ForgeContentShell bodyClassName={forgeBodyClass}>
       {isLibraryView ? (
         <section
-          className="library-workshop-browse panel-scroll fantasy-panel no-print flex min-h-0 flex-1 flex-col rounded-xl border p-4"
+          className="library-workshop-browse fantasy-panel no-print flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border p-4"
           style={{
             background: "var(--surface)",
             borderColor: "var(--border)",
@@ -2502,7 +2502,7 @@ export default function Home(props: PageProps<"/">) {
               automatically for reading and export.
             </p>
           </div>
-          {libraryPanel}
+          <div className="library-workshop-browse-body min-h-0 flex-1">{libraryPanel}</div>
         </section>
       ) : null}
 

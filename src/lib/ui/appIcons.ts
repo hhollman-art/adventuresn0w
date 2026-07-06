@@ -2,7 +2,7 @@
 export const APP_ICONS = {
   previewWindow: "\u{1F4DC}",
   fantasyForge: "\u2692\uFE0F",
-  library: "\u{1F4DA}\u{1F4DC}",
+  library: "\u{1F4DA}",
   tavern: "\u{1F3EE}",
   campaign: "\u{1F3C7}",
   virtualTable: "\u{1F3B2}",
