@@ -27,6 +27,7 @@ import WorkshopWelcomeLanding from "@/features/home/WorkshopWelcomeLanding";
 import WorkflowTutorialOverlay from "@/features/workshop/WorkflowTutorialOverlay";
 import { isWorkflowTutorialId } from "@/lib/workshop/workflowTutorials";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
+import { setForgeBannerMode } from "@/lib/workshop/bannerMode";
 import {
   autoLinkToActiveCampaign,
   loadCampaigns,
@@ -911,6 +912,10 @@ export default function Home(props: PageProps<"/">) {
     pathname === "/library" || pathname.startsWith("/library/");
   const isWelcomeView = !isLibraryView && workspace === "welcome";
   const isCreatingView = !isLibraryView && workspace !== "welcome";
+
+  useEffect(() => {
+    setForgeBannerMode(isWelcomeView ? "welcome" : "compact");
+  }, [isWelcomeView]);
   const forgeBodyClass = isLibraryView
     ? "forge-content-body--library"
     : isCreatingView

@@ -15,14 +15,22 @@
   --shadow-soft: 0 2px 10px rgba(95, 70, 25, 0.12);
   --shadow-btn: 0 1px 2px rgba(95, 70, 25, 0.14);
   /* Banner + footnote + page padding — used for full-height panes */
-  --app-chrome-height: 9.25rem;
+  --app-chrome-height: 5.5rem;
   --forge-workspace-share: 42%;
   --forge-preview-share: 58%;
 }
 
+html[data-forge-banner="welcome"] {
+  --app-chrome-height: 8.25rem;
+}
+
 @media (min-width: 640px) {
   :root {
-    --app-chrome-height: 10.5rem;
+    --app-chrome-height: 6rem;
+  }
+
+  html[data-forge-banner="welcome"] {
+    --app-chrome-height: 9rem;
   }
 }
 
@@ -669,10 +677,6 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   background: var(--surface);
 }
 
-.vtt-control-sidebar-zone {
-  flex-shrink: 0;
-  padding: 0.45rem 0.55rem 0;
-}
 
 .vtt-control-sidebar-header {
   display: flex;
@@ -1709,15 +1713,15 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   position: relative;
   overflow: hidden;
   width: 100%;
-  min-height: 12rem;
-  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
-  padding-bottom: 1.25rem;
-  padding-left: max(1rem, env(safe-area-inset-left, 0px));
-  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  min-height: 9rem;
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+  padding-bottom: 0.85rem;
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
   text-align: center;
   border-bottom: 2px solid var(--scene-banner-border);
   background: var(--scene-banner-bg);
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.38);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.32);
 }
 
 .site-title-bar-scene-stack {
@@ -1751,7 +1755,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 12rem;
+  min-height: 9rem;
 }
 
 .site-title-bar-banner-shade {
@@ -1781,7 +1785,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding-top: 2.75rem;
+  padding-top: 2rem;
   pointer-events: none;
 }
 
@@ -1866,18 +1870,98 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 .site-title-bar-tagline {
   display: block;
   width: 100%;
-  margin-top: 0.65rem;
-  padding: 0.32rem 0.9rem;
+  margin-top: 0.45rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   border: 1px solid color-mix(in srgb, var(--accent-dim) 55%, transparent);
   background: rgba(0, 0, 0, 0.5);
-  font-size: 0.71875rem;
+  font-size: 0.625rem;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   text-align: center;
   color: var(--accent-dim);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* Compact banner — theme, brand, Forge/VTT toggle */
+.site-title-bar--compact .site-title-bar-compact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding:
+    max(0.35rem, env(safe-area-inset-top, 0px))
+    max(0.65rem, env(safe-area-inset-right, 0px))
+    0.35rem
+    max(0.65rem, env(safe-area-inset-left, 0px));
+  border-bottom: 1px solid var(--scene-banner-border);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 94%, var(--accent)) 0%,
+    color-mix(in srgb, var(--bg) 92%, black) 100%
+  );
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+}
+
+.site-title-bar-compact-theme,
+.site-title-bar-compact-zones {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.site-title-bar-compact-theme {
+  justify-self: start;
+}
+
+.site-title-bar-compact-zones {
+  flex-shrink: 0;
+  justify-self: end;
+}
+
+.site-title-bar-compact-brand {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--accent-dim) 35%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, var(--accent));
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.1;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: var(--shadow-soft);
+}
+
+.site-title-bar-compact-brand:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+
+.site-title-bar-compact-emblem {
+  font-size: 0.65rem;
+  line-height: 1;
+  color: var(--accent-dim);
+}
+
+@media (max-width: 420px) {
+  .site-title-bar-compact-emblem {
+    display: none;
+  }
+
+  .site-title-bar-compact-brand {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    padding-inline: 0.35rem;
+  }
 }
 
 /* ---- Preview Window — white scroll paper, dark ink, fantasy edges --------
@@ -1969,17 +2053,6 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
-.site-title-bar-campaign {
-  display: flex;
-  justify-content: center;
-}
-
-.site-title-bar-campaign .campaign-switcher {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-width: 0;
-}
 
 .site-title-bar-toolbar {
   display: grid;
@@ -2008,47 +2081,6 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   align-self: center;
 }
 
-/* Active-campaign picker — which group's table is open */
-.campaign-switcher {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-width: 0;
-}
-
-.campaign-switcher-icon {
-  font-size: 0.95rem;
-  line-height: 1;
-}
-
-.campaign-switcher-select {
-  max-width: 12rem;
-  padding: 0.4rem 0.5rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--accent-dim);
-  background: rgba(255, 252, 245, 0.65);
-  color: var(--text);
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.campaign-switcher-select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-@media (max-width: 639px) {
-  .campaign-switcher {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-self: stretch;
-  }
-
-  .campaign-switcher-select {
-    flex: 1 1 auto;
-    max-width: none;
-  }
-}
 
 .title-bar-btn {
   display: inline-flex;
@@ -2111,13 +2143,13 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 
 @media (max-width: 639px) {
   .site-title-bar-banner {
-    min-height: 11rem;
-    padding-top: max(0.65rem, env(safe-area-inset-top, 0px));
-    padding-bottom: 0.75rem;
+    min-height: 8rem;
+    padding-top: max(0.45rem, env(safe-area-inset-top, 0px));
+    padding-bottom: 0.65rem;
   }
 
   .site-title-bar-scene-svg {
-    min-height: 11rem;
+    min-height: 8rem;
   }
 
   .site-title-bar-sign {

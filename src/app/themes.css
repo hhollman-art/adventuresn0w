@@ -360,7 +360,6 @@
 }
 
 /* Selects in the banner — plain sans for legibility at small sizes */
-[data-theme] .campaign-switcher-select,
 [data-theme] .theme-picker-select {
   border-color: color-mix(in srgb, var(--accent-dim) 45%, transparent);
   background: color-mix(in srgb, var(--surface) 82%, black);

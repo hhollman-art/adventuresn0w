@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import AppZoneToggle from "@/features/shell/AppZoneToggle";
 import { ToolButton, ToggleChip } from "@/features/ui/ToggleButton";
 import type { TabletopSession } from "@/lib/tabletop/types";
 
@@ -55,10 +54,6 @@ export default function VttControlSidebar({
 }: VttControlSidebarProps) {
   return (
     <aside className="vtt-control-sidebar fantasy-panel no-print shrink-0">
-      <div className="vtt-control-sidebar-zone">
-        <AppZoneToggle compact />
-      </div>
-
       <header className="vtt-control-sidebar-header">
         <h1 className="vtt-control-sidebar-title font-display">Virtual Table</h1>
         <span className="zone-badge" title="Dungeon Master screen — players use the separate player view">
