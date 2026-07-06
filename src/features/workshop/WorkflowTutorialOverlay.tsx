@@ -1,21 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import WorkflowGuideList from "@/features/workshop/WorkflowGuideList";
 import {
   findWorkflowTutorial,
-  WORKFLOW_TUTORIALS,
   type WorkflowStep,
   type WorkflowStepAction,
   type WorkflowTutorial,
 } from "@/lib/workshop/workflowTutorials";
+import type { WorkshopLibraryCategory } from "@/lib/workshop/libraryCatalog";
 
 export type TutorialNavigateHandlers = {
   onSelectMode: (
     mode: "realm" | "adventure" | "characters" | "maps" | "props" | "library",
   ) => void;
-  onLibraryCategory: (
-    category: "all" | "seeds" | "results" | "parties",
-  ) => void;
+  onLibraryCategory: (category: WorkshopLibraryCategory) => void;
   onOpenSrdBrowser: () => void;
   onOpenSeedEditor: () => void;
 };
@@ -49,32 +48,9 @@ export function WorkflowTutorialPicker({ onStart, onClose }: WorkflowTutorialPic
             includes manual (no-AI) options.
           </p>
         </div>
-        <ul className="flex-1 overflow-y-auto px-4 py-3 sm:px-6">
-          {WORKFLOW_TUTORIALS.map((workflow) => (
-            <li key={workflow.id} className="mb-2 last:mb-0">
-              <button
-                type="button"
-                onClick={() => onStart(workflow.id)}
-                className="tutorial-workflow-card w-full rounded-lg border p-4 text-left transition hover:border-[var(--accent-dim)]"
-                style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-              >
-                <span className="flex flex-wrap items-center gap-2">
-                  <span className="font-display font-bold text-[var(--text)]">
-                    {workflow.title}
-                  </span>
-                  <span className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">
-                    {workflow.aiLabel}
-                  </span>
-                  <span className="text-[10px] text-[var(--muted)]">{workflow.estimatedTime}</span>
-                </span>
-                <span className="mt-1 block text-sm text-[var(--muted)]">{workflow.subtitle}</span>
-                <span className="mt-2 block text-xs font-semibold text-[var(--accent)]">
-                  {workflow.steps.length} steps →
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-6">
+          <WorkflowGuideList onSelect={onStart} />
+        </div>
         <div
           className="flex justify-end border-t px-6 py-4"
           style={{ borderColor: "var(--border)" }}

@@ -32,7 +32,7 @@ export const PARTY_SOURCE_LABEL: Record<PartySource, string> = {
   vtt: "Virtual Table",
   import: "Imported file",
   dndbeyond: "Your D&D Beyond import",
-  builder: "Built from your characters",
+  builder: "Built from your heroes",
 };
 
 function normalizeSource(value: unknown): PartySource {

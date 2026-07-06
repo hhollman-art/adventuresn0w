@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ABILITY_LIST,
   abilityMod,
@@ -16,6 +16,12 @@ import {
   type SavedCharacter,
 } from "@/lib/tabletop/characterLibrary";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
+import { autoLinkToActiveCampaign } from "@/lib/campaigns";
+import {
+  loadSavedGameItems,
+  MAGIC_RARITY_LABEL,
+  type SavedGameItem,
+} from "@/lib/itemLibrary";
 import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
 import type { SingleCharacterLocks } from "@/lib/characterPrompt";
 import {
@@ -23,6 +29,12 @@ import {
   SrdSpellPicker,
   SrdSpeciesSelect,
 } from "@/features/ui/SrdPickers";
+import { fetchDnd5eList } from "@/lib/srd/dnd5eApi";
+import {
+  srdItemRefFromApi,
+  type SrdItemRef,
+} from "@/lib/srd/srdItemRef";
+import { srdItemRefKey } from "@/lib/ciRelationships";
 
 const ALIGNMENTS = [
   "Lawful Good",
@@ -157,7 +169,7 @@ export default function CharacterEditorDialog({
       }
       const generated = parseCharactersMarkdown(data.markdown).players[0];
       if (!generated) {
-        setAiError("The AI response could not be read as a character. Please try again.");
+        setAiError("The AI response could not be read as a hero. Please try again.");
         return;
       }
       const { items: gearItems, rest: newNotes } = splitGearFromNotes(generated.notes);
@@ -201,11 +213,57 @@ export default function CharacterEditorDialog({
     set(key, Number.isFinite(n) ? n : fallback);
   };
 
+  const [libraryItems, setLibraryItems] = useState<SavedGameItem[]>([]);
+  const [srdEquipment, setSrdEquipment] = useState<{ index: string; name: string }[]>([]);
+  const [srdMagicItems, setSrdMagicItems] = useState<{ index: string; name: string }[]>([]);
+  useEffect(() => {
+    void loadSavedGameItems().then(setLibraryItems);
+    void fetchDnd5eList("equipment").then(setSrdEquipment);
+    void fetchDnd5eList("magic-items").then(setSrdMagicItems);
+  }, []);
+
   const addItem = () =>
     setDraft((d) => ({
       ...d,
       items: [...d.items, { id: newId(), name: "", notes: "", bonuses: emptyBonuses() }],
     }));
+
+  /** Copy a library item into this sheet's gear (bonuses included). */
+  const addLibraryItem = (item: SavedGameItem) => {
+    const noteParts = [
+      item.itemType,
+      item.kind === "magic" && item.rarity ? MAGIC_RARITY_LABEL[item.rarity] : "",
+      item.kind === "magic" && item.requiresAttunement ? "requires attunement" : "",
+    ].filter(Boolean);
+    setDraft((d) => ({
+      ...d,
+      items: [
+        ...d.items,
+        {
+          id: newId(),
+          name: item.name,
+          notes: noteParts.join(", "),
+          bonuses: { ...item.bonuses },
+        },
+      ],
+    }));
+  };
+
+  /** Reference an SRD equipment or magic item (read-only CI — not copied to item storage). */
+  const addSrdItem = (ref: SrdItemRef) => {
+    setDraft((d) => ({
+      ...d,
+      items: [
+        ...d.items,
+        {
+          id: newId(),
+          name: ref.name,
+          notes: `srd-ref:${srdItemRefKey(ref)}`,
+          bonuses: emptyBonuses(),
+        },
+      ],
+    }));
+  };
 
   const patchItem = (id: string, patch: Partial<Pick<CharacterItem, "name" | "notes">>) =>
     setDraft((d) => ({
@@ -218,7 +276,7 @@ export default function CharacterEditorDialog({
 
   const onSave = async () => {
     if (!draft.name.trim()) {
-      setError("Give this character a name first.");
+      setError("Give this hero a name first.");
       return;
     }
     setSaving(true);
@@ -231,15 +289,17 @@ export default function CharacterEditorDialog({
       const list = character
         ? await updateCharacterInLibrary(character.id, cleaned)
         : await saveCharacterToLibrary({ player: cleaned, source: "created" });
+      const saved = list.find((c) => c.id === cleaned.id) ?? list[0];
+      if (saved) void autoLinkToActiveCampaign({ characterId: saved.id });
       scheduleLibrarySnapshot();
       onSaved(
         list,
         character
           ? `Saved changes to ${draft.name.trim()}.`
-          : `${draft.name.trim()} added to your characters.`,
+          : `${draft.name.trim()} added to your heroes.`,
       );
     } catch {
-      setError("Could not save this character. Please try again.");
+      setError("Could not save this hero. Please try again.");
       setSaving(false);
     }
   };
@@ -262,11 +322,11 @@ export default function CharacterEditorDialog({
           id="character-editor-title"
           className="font-display text-lg font-bold text-[var(--text)]"
         >
-          {character ? `Edit ${character.player.name}` : "Create a character"}
+          {character ? `Edit ${character.player.name}` : "Create a hero"}
         </h2>
         <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-          Characters live in your library on this device. Add one to a party any time — the
-          party is what campaigns and the Virtual Table use.
+          Heroes live in your library on this device. Add one to a fellowship any time — the
+          fellowship is what campaigns and the Virtual Table use.
         </p>
 
         <div
@@ -283,7 +343,7 @@ export default function CharacterEditorDialog({
             <span>
               <span className="font-semibold">Create with AI</span>{" "}
               <span className="text-[var(--muted)]">
-                — describe the character below, fill in any fields you want to control, and AI
+                — describe the hero below, fill in any fields you want to control, and AI
                 creates everything you left blank.
               </span>
             </span>
@@ -297,7 +357,7 @@ export default function CharacterEditorDialog({
                 placeholder="Flavor — e.g. “A retired city guard turned reluctant treasure hunter, gruff but loyal, haunted by a debt to a smuggler.”"
                 className="rounded border px-2 py-1.5 text-sm"
                 style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-                aria-label="Character flavor for AI"
+                aria-label="Hero flavor for AI"
               />
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -323,7 +383,7 @@ export default function CharacterEditorDialog({
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-xs">
-            <span className="font-semibold">Character name</span>
+            <span className="font-semibold">Hero name</span>
             <input
               value={draft.name}
               onChange={(e) => set("name", e.target.value)}
@@ -463,16 +523,78 @@ export default function CharacterEditorDialog({
         </div>
 
         <div className="mt-4">
-          <div className="mb-1 flex items-center justify-between gap-2">
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-bold tracking-wide uppercase">Gear &amp; items</p>
-            <button
-              type="button"
-              onClick={addItem}
-              className="rounded border px-2 py-0.5 text-[10px] font-semibold"
-              style={{ borderColor: "var(--accent-dim)" }}
-            >
-              Add item
-            </button>
+            <div className="flex flex-wrap items-center gap-1">
+              {libraryItems.length > 0 ? (
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const item = libraryItems.find((i) => i.id === e.target.value);
+                    if (item) addLibraryItem(item);
+                  }}
+                  className="rounded border px-2 py-0.5 text-[10px] font-semibold"
+                  style={{ borderColor: "var(--accent-dim)", background: "var(--bg)" }}
+                  aria-label="Add gear from your item library"
+                >
+                  <option value="">From item library…</option>
+                  {libraryItems.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.name}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+              {srdEquipment.length > 0 || srdMagicItems.length > 0 ? (
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (!raw) return;
+                    const [resource, index] = raw.split(":");
+                    if (resource !== "equipment" && resource !== "magic-items") return;
+                    const list = resource === "equipment" ? srdEquipment : srdMagicItems;
+                    const hit = list.find((i) => i.index === index);
+                    if (hit) {
+                      addSrdItem(
+                        srdItemRefFromApi(resource, hit.index, hit.name),
+                      );
+                    }
+                  }}
+                  className="rounded border px-2 py-0.5 text-[10px] font-semibold"
+                  style={{ borderColor: "var(--accent-dim)", background: "var(--bg)" }}
+                  aria-label="Add gear from the SRD catalogue"
+                >
+                  <option value="">From SRD…</option>
+                  {srdEquipment.length > 0 ? (
+                    <optgroup label="SRD equipment">
+                      {srdEquipment.map((i) => (
+                        <option key={`eq-${i.index}`} value={`equipment:${i.index}`}>
+                          {i.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : null}
+                  {srdMagicItems.length > 0 ? (
+                    <optgroup label="SRD magic items">
+                      {srdMagicItems.map((i) => (
+                        <option key={`mi-${i.index}`} value={`magic-items:${i.index}`}>
+                          {i.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : null}
+                </select>
+              ) : null}
+              <button
+                type="button"
+                onClick={addItem}
+                className="rounded border px-2 py-0.5 text-[10px] font-semibold"
+                style={{ borderColor: "var(--accent-dim)" }}
+              >
+                Add item
+              </button>
+            </div>
           </div>
           {draft.items.length === 0 ? (
             <p className="text-xs text-[var(--muted)]">
@@ -549,7 +671,7 @@ export default function CharacterEditorDialog({
             disabled={saving}
             className="btn btn-sm btn-accent"
           >
-            {saving ? "Saving…" : character ? "Save changes" : "Create character"}
+            {saving ? "Saving…" : character ? "Save changes" : "Create hero"}
           </button>
         </div>
       </div>

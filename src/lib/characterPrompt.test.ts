@@ -5,7 +5,7 @@ import {
 } from "@/lib/characterPrompt";
 
 describe("buildPremadeCharactersMessage", () => {
-  it("includes per-PC class and race locks in the prompt", () => {
+  it("includes per-hero class and race locks in the prompt", () => {
     const msg = buildPremadeCharactersMessage({
       partyConcept: "City watch",
       levelRange: "3",
@@ -18,8 +18,8 @@ describe("buildPremadeCharactersMessage", () => {
         { className: "Cleric", race: undefined },
       ],
     });
-    expect(msg).toContain("PC 1: **Class** Fighter; **Race** Human");
-    expect(msg).toContain("PC 2: **Class** Cleric; **Race** Any (your choice)");
+    expect(msg).toContain("Hero 1: **Class** Fighter; **Race** Human");
+    expect(msg).toContain("Hero 2: **Class** Cleric; **Race** Any (your choice)");
   });
 
   it("embeds optional source seed markdown as reference context", () => {

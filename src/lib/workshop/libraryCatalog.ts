@@ -2,6 +2,12 @@ import {
   LIBRARY_KIND_LABEL,
   type LibraryItem,
 } from "@/lib/generationLibrary";
+import type { SavedCampaign } from "@/lib/campaigns";
+import {
+  GAME_ITEM_KIND_LABEL,
+  MAGIC_RARITY_LABEL,
+  type SavedGameItem,
+} from "@/lib/itemLibrary";
 import {
   seedDisplayName,
   seedScopeLabel,
@@ -15,19 +21,34 @@ import {
   type SavedCharacterRoster,
 } from "@/lib/tabletop/characterRoster";
 import {
+  CHARACTER_SOURCE_LABEL,
+  type SavedCharacter,
+} from "@/lib/tabletop/characterLibrary";
+import { characterSummary } from "@/lib/tabletop/character";
+import {
+  CI_CLASS_FOR_CAMPAIGN,
   CI_CLASS_FOR_PARTY,
+  ciClassForGameItem,
   ciClassForResult,
   ciClassForSeed,
   type CiClass,
 } from "@/lib/ciRegistry";
+import type { SrdItemRef } from "@/lib/srd/srdItemRef";
 
 /**
- * Workshop Library browse filters — your saved content only. The SRD rules
- * browser is a Library feature (a toggleable panel), not a category.
+ * Workshop Library — the CMDB browse UI for every Configuration Item you own.
+ * The SRD rules browser is a separate Library feature (toggle), not a category tab.
  */
-export type WorkshopLibraryCategory = "all" | "seeds" | "results" | "parties";
+export type WorkshopLibraryCategory =
+  | "all"
+  | "seeds"
+  | "results"
+  | "characters"
+  | "items"
+  | "parties"
+  | "campaigns";
 
-export type LibraryStorageCategory = "seeds" | "results" | "parties";
+export type LibraryStorageCategory = Exclude<WorkshopLibraryCategory, "all">;
 
 /** Legal / provenance tier shown in the UI. Everything you own is one tier. */
 export type LibraryProvenance = "srd" | "user";
@@ -38,13 +59,13 @@ export type LibraryProvenance = "srd" | "user";
  */
 export type LibraryOrigin = "import" | "creation";
 
-export const WORKSHOP_LIBRARY_CATEGORY_LABEL: Record<
-  Exclude<WorkshopLibraryCategory, "all">,
-  string
-> = {
+export const WORKSHOP_LIBRARY_CATEGORY_LABEL: Record<LibraryStorageCategory, string> = {
   seeds: "Seeds",
   results: "Results",
+  characters: "Heroes",
+  items: "Items",
   parties: "Parties",
+  campaigns: "Campaigns",
 };
 
 export const LIBRARY_PROVENANCE_LABEL: Record<LibraryProvenance, string> = {
@@ -64,7 +85,7 @@ export const LIBRARY_PROVENANCE_STORAGE: Record<LibraryProvenance, string> = {
 };
 
 export const LIBRARY_PROVENANCE_DESCRIPTION: Record<LibraryProvenance, string> = {
-  srd: "Free rules bundled with D&D Easy (classes, spells, ancestries, CC BY 4.0). Read-only — you can't edit or delete these, and they never need saving.",
+  srd: "Free rules bundled with D&D Easy (classes, spells, ancestries, equipment, CC BY 4.0). Read-only — you can't edit or delete these, and they never need saving.",
   user: "Everything you bring in or make — party files and notes from books you own, seeds you write, and results the generators produce. Things made in the app carry a Creation tag. All of it saves once, automatically, to your chosen folder (local or cloud-synced); never uploaded to a server.",
 };
 
@@ -77,12 +98,14 @@ export type LibraryListEntry = {
   category: LibraryStorageCategory;
   provenance: LibraryProvenance;
   /** Only user-tier items have an origin; SRD entries never do. */
-  origin: LibraryOrigin;
+  origin?: LibraryOrigin;
   kindLabel: string;
   title: string;
   detail: string;
   createdAt: string;
   tags?: string[];
+  /** Set for bundled SRD equipment / magic item rows (read-only catalogue CIs). */
+  srdItemRef?: SrdItemRef;
 };
 
 export function seedToLibraryEntry(seed: SavedRealmSeed): LibraryListEntry {
@@ -116,6 +139,37 @@ export function resultToLibraryEntry(item: LibraryItem): LibraryListEntry {
   };
 }
 
+export function characterToLibraryEntry(character: SavedCharacter): LibraryListEntry {
+  const p = character.player;
+  return {
+    id: character.id,
+    ciClass: "character.sheet",
+    category: "characters",
+    provenance: "user",
+    origin: character.source === "created" ? "creation" : "import",
+    kindLabel: CHARACTER_SOURCE_LABEL[character.source],
+    title: p.name,
+    detail: characterSummary(p),
+    createdAt: character.updatedAt,
+  };
+}
+
+export function gameItemToLibraryEntry(item: SavedGameItem): LibraryListEntry {
+  const rarity =
+    item.kind === "magic" && item.rarity ? MAGIC_RARITY_LABEL[item.rarity] : "";
+  return {
+    id: item.id,
+    ciClass: ciClassForGameItem(item.kind),
+    category: "items",
+    provenance: "user",
+    origin: item.source === "created" ? "creation" : "import",
+    kindLabel: GAME_ITEM_KIND_LABEL[item.kind],
+    title: item.name,
+    detail: [item.itemType, rarity].filter(Boolean).join(" · ") || item.description.slice(0, 80),
+    createdAt: item.updatedAt,
+  };
+}
+
 export function partyToLibraryEntry(roster: SavedCharacterRoster): LibraryListEntry {
   const count = roster.players.length;
   return {
@@ -129,6 +183,28 @@ export function partyToLibraryEntry(roster: SavedCharacterRoster): LibraryListEn
     title: roster.name,
     detail: `${count} character${count === 1 ? "" : "s"}`,
     createdAt: roster.updatedAt,
+  };
+}
+
+export function campaignToLibraryEntry(campaign: SavedCampaign): LibraryListEntry {
+  const linkCount =
+    campaign.seedIds.length +
+    campaign.resultIds.length +
+    campaign.characterIds.length +
+    campaign.itemIds.length +
+    (campaign.partyId ? 1 : 0);
+  return {
+    id: campaign.id,
+    ciClass: CI_CLASS_FOR_CAMPAIGN,
+    category: "campaigns",
+    provenance: "user",
+    origin: "creation",
+    kindLabel: "Campaign",
+    title: campaign.name,
+    detail:
+      campaign.description.trim().slice(0, 100) ||
+      `${linkCount} linked entr${linkCount === 1 ? "y" : "ies"}`,
+    createdAt: campaign.updatedAt,
   };
 }
 
@@ -161,7 +237,13 @@ export function filterLibraryEntries(
 }
 
 export function sortLibraryEntries(entries: LibraryListEntry[]): LibraryListEntry[] {
-  return [...entries].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  return [...entries].sort((a, b) => {
+    if (a.provenance !== b.provenance) {
+      return a.provenance === "user" ? -1 : 1;
+    }
+    if (a.provenance === "srd") {
+      return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+    }
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 }

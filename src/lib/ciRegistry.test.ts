@@ -36,6 +36,9 @@ describe("ciRegistry", () => {
     const srd = ciDefinition("rules.srd-entry");
     expect(srd.provenance).toBe("srd");
     expect(srd.inBackup).toBe(false);
+    const srdItem = ciDefinition("item.srd-equipment");
+    expect(srdItem.provenance).toBe("srd");
+    expect(srdItem.inBackup).toBe(false);
   });
 
   it("puts every user class except table sessions in the backup", () => {
@@ -54,6 +57,12 @@ describe("ciRegistry", () => {
   it("filters classes by category", () => {
     expect(ciClassesForCategory("seeds")).toHaveLength(5);
     expect(ciClassesForCategory("characters")).toEqual(["character.sheet"]);
+    expect(ciClassesForCategory("items")).toEqual([
+      "item.equipment",
+      "item.magic",
+      "item.srd-equipment",
+      "item.srd-magic",
+    ]);
     expect(ciClassesForCategory("parties")).toEqual(["party.roster"]);
     expect(ciClassesForCategory("campaigns")).toEqual(["campaign.record"]);
     expect(ciClassesForCategory("sessions")).toEqual([
@@ -68,6 +77,16 @@ describe("ciRegistry", () => {
     expect(character.provenance).toBe("user");
     expect(character.inBackup).toBe(true);
     expect(character.storageModule).toBe("src/lib/tabletop/characterLibrary.ts");
+  });
+
+  it("registers equipment and magic items as backed-up user items", () => {
+    for (const ciClass of ["item.equipment", "item.magic"] as const) {
+      const def = ciDefinition(ciClass);
+      expect(def.category).toBe("items");
+      expect(def.provenance).toBe("user");
+      expect(def.inBackup).toBe(true);
+      expect(def.storageModule).toBe("src/lib/itemLibrary.ts");
+    }
   });
 
   it("registers campaigns as backed-up user containers", () => {

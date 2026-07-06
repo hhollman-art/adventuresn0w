@@ -15,6 +15,8 @@ import {
   importSavedCharacters,
   loadSavedCharacters,
 } from "@/lib/tabletop/characterLibrary";
+import type { SavedGameItem } from "@/lib/itemLibrary";
+import { importGameItems, loadSavedGameItems } from "@/lib/itemLibrary";
 import type { SavedCampaign } from "@/lib/campaigns";
 import { importCampaigns, loadCampaigns } from "@/lib/campaigns";
 
@@ -33,6 +35,8 @@ export type LibraryBackupFile = {
   results: LibraryItem[];
   /** Standalone character sheets from the character library. */
   characters: SavedCharacter[];
+  /** Equipment and magic items from the item library. */
+  items: SavedGameItem[];
   parties: SavedCharacterRoster[];
   /** Campaign records (id links only — table snapshots stay local). */
   campaigns: SavedCampaign[];
@@ -45,16 +49,18 @@ export type LibraryBackupCounts = {
   seeds: number;
   results: number;
   characters: number;
+  items: number;
   parties: number;
   campaigns: number;
 };
 
 /** Gather every locally stored library item into one serializable document. */
 export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
-  const [seeds, results, characters, parties, campaigns] = await Promise.all([
+  const [seeds, results, characters, items, parties, campaigns] = await Promise.all([
     loadRealmSeeds(),
     loadGenerationLibraryItems(),
     loadSavedCharacters(),
+    loadSavedGameItems(),
     loadSavedCharacterRosters(),
     loadCampaigns(),
   ]);
@@ -65,6 +71,7 @@ export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
     seeds,
     results,
     characters,
+    items,
     parties,
     campaigns,
   };
@@ -85,6 +92,7 @@ export type ParsedBackup =
       seeds: unknown[];
       results: unknown[];
       characters: unknown[];
+      items: unknown[];
       parties: unknown[];
       campaigns: unknown[];
     }
@@ -112,8 +120,9 @@ export function parseLibraryBackup(text: string): ParsedBackup {
     ok: true,
     seeds: Array.isArray(o.seeds) ? o.seeds : [],
     results: Array.isArray(o.results) ? o.results : [],
-    // Older backups predate standalone characters/campaigns — treat as none.
+    // Older backups predate characters/items/campaigns — treat as none.
     characters: Array.isArray(o.characters) ? o.characters : [],
+    items: Array.isArray(o.items) ? o.items : [],
     parties: Array.isArray(o.parties) ? o.parties : [],
     campaigns: Array.isArray(o.campaigns) ? o.campaigns : [],
   };
@@ -124,6 +133,7 @@ export type RestoreOutcome = {
   seeds: SavedRealmSeed[];
   results: LibraryItem[];
   characters: SavedCharacter[];
+  items: SavedGameItem[];
   parties: SavedCharacterRoster[];
   campaigns: SavedCampaign[];
 };
@@ -137,12 +147,14 @@ export async function restoreLibraryBackup(parsed: {
   seeds: unknown[];
   results: unknown[];
   characters: unknown[];
+  items: unknown[];
   parties: unknown[];
   campaigns: unknown[];
 }): Promise<RestoreOutcome> {
   const seedResult = await importRealmSeeds(parsed.seeds);
   const resultResult = await importGenerationLibraryItems(parsed.results);
   const characterResult = await importSavedCharacters(parsed.characters);
+  const itemResult = await importGameItems(parsed.items);
   const partyResult = await importCharacterRosters(parsed.parties);
   const campaignResult = await importCampaigns(parsed.campaigns);
   return {
@@ -150,12 +162,14 @@ export async function restoreLibraryBackup(parsed: {
       seeds: seedResult.added,
       results: resultResult.added,
       characters: characterResult.added,
+      items: itemResult.added,
       parties: partyResult.added,
       campaigns: campaignResult.added,
     },
     seeds: seedResult.seeds,
     results: resultResult.items,
     characters: characterResult.characters,
+    items: itemResult.items,
     parties: partyResult.rosters,
     campaigns: campaignResult.campaigns,
   };
@@ -168,6 +182,8 @@ export function describeRestoreCounts(counts: LibraryBackupCounts): string {
     parts.push(`${counts.results} result${counts.results === 1 ? "" : "s"}`);
   if (counts.characters > 0)
     parts.push(`${counts.characters} character${counts.characters === 1 ? "" : "s"}`);
+  if (counts.items > 0)
+    parts.push(`${counts.items} item${counts.items === 1 ? "" : "s"}`);
   if (counts.parties > 0)
     parts.push(`${counts.parties} part${counts.parties === 1 ? "y" : "ies"}`);
   if (counts.campaigns > 0)

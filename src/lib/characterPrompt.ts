@@ -31,20 +31,20 @@ ${body}
 
 function formatCharacterSpecsBlock(specs: CharacterSlotSpec[] | undefined): string {
   if (!specs?.length) {
-    return "- (No per-PC class or race locks — build a balanced, complementary party.)";
+    return "- (No per-hero class or race locks — build a balanced, complementary party.)";
   }
   return specs
     .map((s, i) => {
       const cls = s.className?.trim() || "Any (your choice)";
       const race = s.race?.trim() || "Any (your choice)";
-      return `- PC ${i + 1}: **Class** ${cls}; **Race** ${race}`;
+      return `- Hero ${i + 1}: **Class** ${cls}; **Race** ${race}`;
     })
     .join("\n");
 }
 
 export function buildPremadeCharactersMessage(input: PremadeCharacterInput): string {
   const seedRef = sourceSeedReferenceBlock(input.sourceSeedMarkdown ?? "");
-  return `Create a roster of **pre-made player characters** ready to pick up and play in one session.
+  return `Create a roster of **pre-made heroes** ready to pick up and play in one session.
 ${seedRef}
 ## Parameters
 - Party concept or theme: ${input.partyConcept || "(you choose a cohesive party identity)"}
@@ -54,7 +54,7 @@ ${seedRef}
 - Number of characters: ${input.characterCount}
 - Additional requests: ${input.extraNotes || "(none)"}
 
-## Per-PC class & race (SRD-open)
+## Per-hero class & race (SRD-open)
 ${formatCharacterSpecsBlock(input.characterSpecs)}
 - Honor each **Class** / **Race** lock exactly when not "Any".
 - When a slot is "Any", pick to complement the rest of the party (avoid redundant builds unless the concept calls for it).
@@ -137,7 +137,7 @@ export function buildSingleCharacterMessage(input: SingleCharacterInput): string
       : null,
   ].filter((line): line is string => line !== null);
 
-  return `Create **one** pre-made player character.
+  return `Create **one** pre-made hero.
 
 ## Concept / flavor from the user
 ${input.flavor.trim() || "(none — invent a compelling, playable character)"}
@@ -171,11 +171,11 @@ Leave the "Player:" bullet value empty. Do not add headings, preamble, or commen
 
 export const CHARACTER_SYSTEM_PROMPT = `You are an experienced Dungeons & Dragons player and character builder.
 
-You write concise, table-ready **pre-made PCs** compatible with **D&D 5.2** (Creative Commons SRD-style assumptions).
+You write concise, table-ready **pre-made heroes** compatible with **D&D 5.2** (Creative Commons SRD-style assumptions).
 
 Constraints:
 - Original names and stories; no pastiche of published WotC characters.
 - Stay SRD-generic for class features and spells (describe effects plainly; do not paste non-SRD reference text).
-- Clarity beats length, but each PC must be runnable in combat and social scenes.
+- Clarity beats length, but each hero must be runnable in combat and social scenes.
 - Never use "personality hook(s)"; use the wording "Roleplay notes" instead.
 - Use Markdown only. No preamble or closing disclaimer outside the roster itself.`;

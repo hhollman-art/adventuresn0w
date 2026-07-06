@@ -45,7 +45,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Fast prep for a single session",
         body:
-          "This path uses the Workshop as a control tower without calling Claude or OpenAI. You will anchor the session with a manual seed, bring in characters, optionally sketch a map, then load everything onto the Virtual Table.",
+          "This path uses the Workshop as a control tower without calling Claude or OpenAI. You will anchor the session with a manual seed, bring in heroes (player characters), optionally sketch a map, then load everything onto the Virtual Table.",
         tip: "Every step has a manual alternative. Skip maps or props if you already have what you need.",
       },
       {
@@ -58,7 +58,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Bring a party",
         body:
-          "Click Add party in the Library to type or paste your characters (start from the built-in example — no file needed). Players on D&D Beyond? Use the From D&D Beyond tab to copy from their sheets or upload a .json they saved. You can also load saved character .md files, pick SRD class/species per slot on Characters, or build sheets directly on the Virtual Table.",
+          "Click Add party in the Library to type or paste your heroes (start from the built-in example — no file needed). Players on D&D Beyond? Use the From D&D Beyond tab to copy from their sheets or upload a .json they saved. You can also load saved hero .md files, pick SRD class/species per slot on Heroes, or build sheets directly on the Virtual Table.",
         action: { type: "library-category", category: "parties" },
         actionLabel: "Open Library → Parties",
       },
@@ -79,7 +79,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Run the session",
         body:
-          "Switch to the Virtual Table zone in the banner. Place tokens, roll dice, and track HP. A player shows up late? Use Load character file (.md) in the Party panel to drop their saved sheet straight onto the table with a token. After the session you can save back to the party library if you linked a campaign roster.",
+          "Switch to the Virtual Table zone in the banner. Place tokens, roll dice, and track HP. A player shows up late? Use Load hero file (.md) in the Party panel to drop their saved sheet straight onto the table with a token. After the session you can save back to the fellowship library if you linked a campaign roster.",
         action: { type: "link", href: "/table" },
         actionLabel: "Open Virtual Table",
       },
@@ -115,9 +115,9 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Generate a ready party",
         body:
-          "Open Characters, set party size and SRD slot picks (or leave Any). Generate, then use Save party for VTT in the preview panel. The roster appears in Library → Parties, and each PC also becomes their own portable .md character sheet — download one from the Parties page or grab it from your auto-save folder's characters directory.",
+          "Open Heroes, set party size and SRD slot picks (or leave Any). Generate, then use Save party for VTT in the Preview Window. The roster appears in Library → Fellowships, and each hero also becomes their own portable .md sheet — download one from the Heroes & fellowships page or grab it from your auto-save folder's heroes directory.",
         action: { type: "mode", mode: "characters" },
-        actionLabel: "Open Characters tab",
+        actionLabel: "Open Heroes tab",
       },
       {
         title: "Add locale and battle maps",
@@ -178,9 +178,9 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Establish the party once",
         body:
-          "Build or generate the party once, then Save party for VTT. Use the Characters & parties page for campaign notes between sessions — plot threads, downtime, treasure. Each character has their own Download button there too, so a guest PC can carry their .md sheet between arcs, parties, or devices.",
+          "Build or generate the fellowship once, then Save party for VTT. Use the Heroes & fellowships page for campaign notes between sessions — plot threads, downtime, treasure. Each hero has their own Download button there too, so a guest hero can carry their .md sheet between arcs, fellowships, or devices.",
         action: { type: "link", href: "/parties" },
-        actionLabel: "Open Characters & parties",
+        actionLabel: "Open Heroes & fellowships",
       },
       {
         title: "Build a location kit over time",
@@ -192,14 +192,14 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Between sessions: manual seeds",
         body:
-          "Before session 2+, add a short Adventure seed with bullet hooks — no AI required. Edit existing Results in the preview panel if you need to patch last session's module.",
+          "Before session 2+, add a short Adventure seed with bullet hooks — no AI required. Edit existing Results in the Preview Window if you need to patch last session's module.",
         action: { type: "open-seed-editor" },
         actionLabel: "Add adventure seed",
       },
       {
         title: "Save progress from the VTT",
         body:
-          "Link a campaign roster when loading the VTT so Save to party library writes HP, gear, and sheet changes back. With an auto-save folder set, every PC's individual .md sheet in the characters folder stays current too — your arc stays in sync on this device and in your backups.",
+          "Link a campaign roster when loading the VTT so Save to party library writes HP, gear, and sheet changes back. With an auto-save folder set, every hero's individual .md sheet in the heroes folder stays current too — your arc stays in sync on this device and in your backups.",
         action: { type: "link", href: "/table" },
         actionLabel: "Open Virtual Table",
       },
@@ -216,19 +216,19 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
         title: "Workshop as campaign HQ",
         body:
           "The Library holds two kinds of data: included rules (SRD) that ship with the app, and everything that's yours — imports you bring in and creations made in the app (seeds, generated results, workshop parties), which save once together and are told apart by a Creation tag. Only the SRD is hosted by the app — everything else lives on this device. AI is for bursts; manual curation is the default.",
-        tip: "Non-SRD spells and subclasses from books you own go in character Notes — never the included SRD catalogue.",
+        tip: "Non-SRD spells and subclasses from books you own go in hero Notes — never the included SRD catalogue.",
       },
       {
         title: "Know what's included (SRD)",
         body:
-          "In the Library, click Browse SRD rules to open the full English SRD 5.2.1 (SRD_CC_v5.2.1): playing the game, classes, spells, monsters, magic items, and more. These are read-only, ship with the app, and never need backing up. Character pickers use the structured index; custom content stays in Notes or your imports.",
+          "In the Library, click Browse SRD rules to open the full English SRD 5.2.1 (SRD_CC_v5.2.1): playing the game, classes, spells, monsters, magic items, and more. These are read-only, ship with the app, and never need backing up. Hero pickers use the structured index; custom content stays in Notes or your imports.",
         action: { type: "library-srd" },
         actionLabel: "Library → Browse SRD rules",
       },
       {
         title: "Import and own your book content",
         body:
-          "Use Add party to type, paste, or load characters — including the From D&D Beyond tab for sheets your players built there (copied by hand or uploaded as a .json they saved; converted in your browser only). Put custom material straight into sheets. Your imports stay on your devices — never on a server. Set the Library's auto-save folder (local or cloud-synced like OneDrive or Drive) so everything is saved automatically as you work.",
+          "Use Add party to type, paste, or load heroes — including the From D&D Beyond tab for sheets your players built there (copied by hand or uploaded as a .json they saved; converted in your browser only). Put custom material straight into sheets. Your imports stay on your devices — never on a server. Set the Library's auto-save folder (local or cloud-synced like OneDrive or Drive) so everything is saved automatically as you work.",
         action: { type: "library-category", category: "parties" },
         actionLabel: "Library → Parties",
       },
@@ -242,7 +242,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Catalogue adventures and assets",
         body:
-          "Adventures, maps, and props accumulate under Library → Results. Preview, export, and print from the right panel before each session.",
+          "Adventures, maps, and props accumulate under Library → Results. Use the Preview Window to read, export, and print before each session.",
         action: { type: "library-category", category: "results" },
         actionLabel: "Library → Results",
       },
@@ -256,9 +256,9 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Link one party to the campaign",
         body:
-          "Create characters on the Characters & parties page, group them into one saved party per group, and keep campaign notes there. Pick it as the campaign's party on the Campaigns page, and load with Link campaign on the VTT so save-back updates the same roster.",
+          "Create heroes on the Heroes & fellowships page, group them into one saved fellowship per group, and keep campaign notes there. Pick it as the campaign's fellowship on the Campaigns page, and load with Link campaign on the VTT so save-back updates the same roster.",
         action: { type: "link", href: "/parties" },
-        actionLabel: "Open Characters & parties",
+        actionLabel: "Open Heroes & fellowships",
       },
       {
         title: "Weekly session loop",
@@ -270,7 +270,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Auto-save and mind the policy",
         body:
-          "Included SRD material is CC BY 4.0 and hosted by the app; everything yours saves once, with creations carrying a Creation tag. With an auto-save folder set, every change writes to your chosen local or cloud folder automatically — the full library backup plus one portable .md sheet per PC in the characters folder. Nothing to remember before or after sessions.",
+          "Included SRD material is CC BY 4.0 and hosted by the app; everything yours saves once, with creations carrying a Creation tag. With an auto-save folder set, every change writes to your chosen local or cloud folder automatically — the full library backup plus one portable .md sheet per hero in the heroes folder. Nothing to remember before or after sessions.",
         action: { type: "link", href: "/legal" },
         actionLabel: "Licenses & content",
       },
@@ -299,14 +299,14 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Character options: use sheet Notes",
         body:
-          "Playing a subclass or casting spells that aren't in the SRD? Open the character's sheet and type the features and spell effects you need into Notes, in your own words or as short personal reference notes with book page numbers. SRD spells still come from the built-in picker; book spells live in Notes alongside them.",
+          "Playing a subclass or casting spells that aren't in the SRD? Open the hero's sheet and type the features and spell effects you need into Notes, in your own words or as short personal reference notes with book page numbers. SRD spells still come from the built-in picker; book spells live in Notes alongside them.",
         action: { type: "link", href: "/parties" },
-        actionLabel: "Open Characters & parties",
+        actionLabel: "Open Heroes & fellowships",
       },
       {
         title: "Import a party built with book options",
         body:
-          "If your players made characters using purchased books on D&D Beyond, open Add party → From D&D Beyond. You can copy stats from each character sheet into the template, or upload a .json backup you saved on your device — conversion runs in your browser only; we never log into D&D Beyond. The party lands in Library → Parties as your import — stored privately, never merged into the app's rules.",
+          "If your players made heroes using purchased books on D&D Beyond, open Add party → From D&D Beyond. You can copy stats from each hero sheet into the template, or upload a .json backup you saved on your device — conversion runs in your browser only; we never log into D&D Beyond. The fellowship lands in Library → Fellowships as your import — stored privately, never merged into the app's rules.",
         action: { type: "library-category", category: "parties" },
         actionLabel: "Library → Parties",
       },
@@ -320,7 +320,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Keep it private, keep it safe",
         body:
-          "Everything you typed or imported stays on your devices — the app never uploads it, and the auto-save folder only receives copies (one-way), including each PC's own .md sheet in the characters folder. The one thing to watch: exports and prints you share with others should not contain verbatim book text. Share your original material; keep page references for the rest.",
+          "Everything you typed or imported stays on your devices — the app never uploads it, and the auto-save folder only receives copies (one-way), including each hero's own .md sheet in the heroes folder. The one thing to watch: exports and prints you share with others should not contain verbatim book text. Share your original material; keep page references for the rest.",
         action: { type: "mode", mode: "library" },
         actionLabel: "Open Library",
       },
@@ -348,14 +348,14 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Session 0: import the party",
         body:
-          "In Library, click Add party to type, paste, or load your characters — the From D&D Beyond tab handles sheets your players built there (copy from the sheet or upload a saved .json). Or save characters from an earlier generation. Confirm the roster under Library → Parties before loading to the table.",
+          "In Library, click Add party to type, paste, or load your heroes — the From D&D Beyond tab handles sheets your players built there (copy from the sheet or upload a saved .json). Or save heroes from an earlier generation. Confirm the roster under Library → Fellowships before loading to the table.",
         action: { type: "library-category", category: "parties" },
         actionLabel: "Library → Parties",
       },
       {
         title: "Run sessions on the VTT",
         body:
-          "Sheets, tokens, grid, dice, and player view live here. Need to add one PC mid-campaign? Load character file (.md) in the Party panel drops a saved sheet onto the table with a token — no need to rebuild the party. Save to party library after sessions to keep HP and gear current; Link campaign for automatic save-back.",
+          "Sheets, tokens, grid, dice, and player view live here. Need to add one hero mid-campaign? Load hero file (.md) in the Party panel drops a saved sheet onto the table with a token — no need to rebuild the fellowship. Save to party library after sessions to keep HP and gear current; Link campaign for automatic save-back.",
         action: { type: "link", href: "/table" },
         actionLabel: "Open Virtual Table",
       },
@@ -376,7 +376,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Generate only when stuck",
         body:
-          "When you need a quick map or prop, use Maps or Props once, then return to the VTT. Add a manual seed after the session if you want notes for next time — no AI required.",
+          "When you need a quick map or handout, use Maps or Items once, then return to the VTT. Add a manual seed after the session if you want notes for next time — no AI required.",
         action: { type: "mode", mode: "maps" },
         actionLabel: "Open Maps tab",
       },

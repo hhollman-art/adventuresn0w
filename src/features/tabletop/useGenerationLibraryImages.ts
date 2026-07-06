@@ -1,14 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  loadGenerationLibraryImages,
-  type LibraryImageThumb,
-} from "@/lib/generationLibrary";
+import { loadMapImagesFromLibrary } from "@/modules/vtt";
+import type { LibraryImageThumb } from "@/lib/generationLibrary";
 
 type Options = { loadOnMount?: boolean };
 
-/** Lazy or eager load of flattened generation-library image thumbnails. */
+/** Lazy or eager load of map/token art from the Library CMDB (result.maps scrolls). */
 export function useGenerationLibraryImages(options: Options = {}) {
   const { loadOnMount = false } = options;
   const [images, setImages] = useState<LibraryImageThumb[] | null>(null);
@@ -17,7 +15,7 @@ export function useGenerationLibraryImages(options: Options = {}) {
   const load = useCallback(async () => {
     if (images !== null) return images;
     if (!loadPromise.current) {
-      loadPromise.current = loadGenerationLibraryImages().then((thumbs) => {
+      loadPromise.current = loadMapImagesFromLibrary().then((thumbs) => {
         setImages(thumbs);
         return thumbs;
       });

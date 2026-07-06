@@ -20,6 +20,7 @@ export type CiCategory =
   | "seeds"
   | "results"
   | "characters"
+  | "items"
   | "parties"
   | "campaigns"
   | "sessions"
@@ -38,6 +39,10 @@ export type CiClass =
   | "result.maps"
   | "result.props"
   | "character.sheet"
+  | "item.equipment"
+  | "item.magic"
+  | "item.srd-equipment"
+  | "item.srd-magic"
   | "party.roster"
   | "campaign.record"
   | "session.tabletop"
@@ -60,7 +65,8 @@ export type CiDefinition = {
 export const CI_CATEGORY_LABEL: Record<CiCategory, string> = {
   seeds: "Seeds",
   results: "Results",
-  characters: "Characters",
+  characters: "Heroes",
+  items: "Items",
   parties: "Parties",
   campaigns: "Campaigns",
   sessions: "Sessions",
@@ -87,7 +93,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "seed.characters": {
     ciClass: "seed.characters",
     category: "seeds",
-    label: "Characters seed",
+    label: "Heroes seed",
     storageModule: "src/lib/realmSeeds.ts",
     provenance: "user",
     inBackup: true,
@@ -103,7 +109,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "seed.props": {
     ciClass: "seed.props",
     category: "seeds",
-    label: "Props seed",
+    label: "Item handout seed",
     storageModule: "src/lib/realmSeeds.ts",
     provenance: "user",
     inBackup: true,
@@ -127,7 +133,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "result.characters": {
     ciClass: "result.characters",
     category: "results",
-    label: "Characters result",
+    label: "Heroes result",
     storageModule: "src/lib/generationLibrary.ts",
     provenance: "user",
     inBackup: true,
@@ -143,7 +149,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "result.props": {
     ciClass: "result.props",
     category: "results",
-    label: "Props result",
+    label: "Item handout result",
     storageModule: "src/lib/generationLibrary.ts",
     provenance: "user",
     inBackup: true,
@@ -151,10 +157,42 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "character.sheet": {
     ciClass: "character.sheet",
     category: "characters",
-    label: "Character sheet",
+    label: "Hero sheet",
     storageModule: "src/lib/tabletop/characterLibrary.ts",
     provenance: "user",
     inBackup: true,
+  },
+  "item.equipment": {
+    ciClass: "item.equipment",
+    category: "items",
+    label: "Equipment",
+    storageModule: "src/lib/itemLibrary.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "item.magic": {
+    ciClass: "item.magic",
+    category: "items",
+    label: "Magic item",
+    storageModule: "src/lib/itemLibrary.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "item.srd-equipment": {
+    ciClass: "item.srd-equipment",
+    category: "items",
+    label: "SRD equipment",
+    storageModule: "src/lib/srd/dnd5eApi.ts",
+    provenance: "srd",
+    inBackup: false,
+  },
+  "item.srd-magic": {
+    ciClass: "item.srd-magic",
+    category: "items",
+    label: "SRD magic item",
+    storageModule: "src/lib/srd/dnd5eApi.ts",
+    provenance: "srd",
+    inBackup: false,
   },
   "party.roster": {
     ciClass: "party.roster",
@@ -221,6 +259,16 @@ export function ciClassForResult(kind: LibraryKind): CiClass {
 
 export const CI_CLASS_FOR_CHARACTER: CiClass = "character.sheet";
 
+/** Resolve an item library row to its CI class. */
+export function ciClassForGameItem(kind: "equipment" | "magic"): CiClass {
+  return kind === "magic" ? "item.magic" : "item.equipment";
+}
+
 export const CI_CLASS_FOR_PARTY: CiClass = "party.roster";
 
 export const CI_CLASS_FOR_CAMPAIGN: CiClass = "campaign.record";
+
+/** Short label for a CI class (CMDB badge in the Library). */
+export function ciClassLabel(ciClass: CiClass): string {
+  return CI_REGISTRY[ciClass].label;
+}

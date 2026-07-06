@@ -3,8 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 import Link from "next/link";
+import { THE_LIBRARY } from "@/lib/workplace/forgeLexicon";
 import {
+  campaignToLibraryEntry,
+  characterToLibraryEntry,
   filterLibraryEntries,
+  gameItemToLibraryEntry,
   LIBRARY_ORIGIN_LABEL,
   LIBRARY_PROVENANCE_DESCRIPTION,
   LIBRARY_PROVENANCE_LABEL,
@@ -14,11 +18,24 @@ import {
   resultToLibraryEntry,
   seedToLibraryEntry,
   sortLibraryEntries,
-  WORKSHOP_LIBRARY_CATEGORY_LABEL,
   type LibraryListEntry,
   type LibraryProvenance,
   type WorkshopLibraryCategory,
 } from "@/lib/workshop/libraryCatalog";
+import {
+  browseEmptyMessage,
+  ciClassFilterOptions,
+  filterBrowseEntries,
+  formatEntryShelfLine,
+  fantasyCiLabel,
+  libraryShelfHint,
+  type LibraryBrowseProvenanceFilter,
+} from "@/lib/workshop/libraryBrowseFilters";
+import LibraryBrowseToolbar from "@/features/workshop/LibraryBrowseToolbar";
+import {
+  loadSrdItemCatalog,
+  srdItemCatalogToLibraryEntries,
+} from "@/lib/workplace";
 import {
   buildLibraryBackup,
   describeRestoreCounts,
@@ -40,10 +57,12 @@ import {
 } from "@/lib/workshop/librarySync";
 import type { LibraryItem } from "@/lib/generationLibrary";
 import type { RealmScopeTag, SavedRealmSeed, SeedKind } from "@/lib/realmSeeds";
+import type { SavedCharacter } from "@/lib/tabletop/characterLibrary";
 import type { SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
+import type { SavedGameItem } from "@/lib/itemLibrary";
 import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
-import { filterSeeds, seedTagLabel } from "@/lib/seedTags";
-import SeedFilterBar from "@/features/workshop/SeedFilterBar";
+import { collectUserSeedTags, filterSeeds, seedTagLabel } from "@/lib/seedTags";
+import type { CiClass } from "@/lib/ciRegistry";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
 import SrdLibraryBrowser from "@/features/workshop/SrdLibraryBrowser";
 import type { SrdApiResource } from "@/lib/srd/dnd5eApi";
@@ -58,21 +77,27 @@ import {
 export type LibraryViewSelection =
   | { kind: "seed"; id: string }
   | { kind: "result"; id: string }
+  | { kind: "character"; id: string }
+  | { kind: "item"; id: string }
   | { kind: "party"; id: string }
+  | { kind: "campaign"; id: string }
   | { kind: "srd"; resource: SrdApiResource; index: string; name: string }
   | null;
 
-const CATEGORY_TABS: WorkshopLibraryCategory[] = [
-  "all",
-  "seeds",
-  "results",
-  "parties",
-];
+function shelfEntriesForCategory(
+  all: LibraryListEntry[],
+  tab: WorkshopLibraryCategory,
+): LibraryListEntry[] {
+  return filterLibraryEntries(all, tab);
+}
 
 type WorkshopLibraryPanelProps = {
   seeds: SavedRealmSeed[];
   results: LibraryItem[];
+  characters: SavedCharacter[];
+  items: SavedGameItem[];
   parties: SavedCharacterRoster[];
+  campaigns: SavedCampaign[];
   category: WorkshopLibraryCategory;
   selection: LibraryViewSelection;
   statusMessage: string | null;
@@ -85,6 +110,8 @@ type WorkshopLibraryPanelProps = {
   onEditSeed: (id: string) => void;
   onDeleteSeed: (id: string) => void;
   onDeleteResult: (id: string) => void;
+  onDeleteCharacter: (id: string) => void;
+  onDeleteItem: (id: string) => void;
   onDeleteParty: (id: string) => void;
   onPartiesChange: (parties: SavedCharacterRoster[]) => void;
   /** Called after a backup restore so the parent can refresh all lists. */
@@ -232,7 +259,20 @@ function DataStorageExplainer({
 
 function isSelected(selection: LibraryViewSelection, entry: LibraryListEntry): boolean {
   if (!selection) return false;
-  const kindMap = { seeds: "seed", results: "result", parties: "party" } as const;
+  if (entry.srdItemRef && selection.kind === "srd") {
+    return (
+      selection.resource === entry.srdItemRef.resource &&
+      selection.index === entry.srdItemRef.index
+    );
+  }
+  const kindMap = {
+    seeds: "seed",
+    results: "result",
+    characters: "character",
+    items: "item",
+    parties: "party",
+    campaigns: "campaign",
+  } as const;
   return selection.kind === kindMap[entry.category] && selection.id === entry.id;
 }
 
@@ -248,7 +288,7 @@ function LibraryEntryRow({
   selected: boolean;
   onView: () => void;
   onEdit?: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   editLabel?: string;
 }) {
   return (
@@ -274,16 +314,19 @@ function LibraryEntryRow({
             <span
               className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
               style={{ borderColor: "var(--accent-dim)", color: "var(--accent)" }}
+              title={entry.ciClass}
             >
-              {entry.kindLabel}
+              {fantasyCiLabel(entry.ciClass)}
             </span>
             <ProvenanceBadge provenance={entry.provenance} />
             {entry.origin === "creation" ? <CreationTag /> : null}
-            <span className="font-semibold text-[var(--text)]">{entry.title}</span>
+            <span className="font-display font-semibold text-[var(--text)]">{entry.title}</span>
           </span>
           <span className="mt-1 block text-xs text-[var(--muted)]">
-            {WORKSHOP_LIBRARY_CATEGORY_LABEL[entry.category]} ·{" "}
-            {new Date(entry.createdAt).toLocaleString()}
+            {formatEntryShelfLine(entry)}
+            {entry.provenance === "user" ? (
+              <> · {new Date(entry.createdAt).toLocaleDateString()}</>
+            ) : null}
           </span>
           {entry.detail ? (
             <span className="mt-1 block text-xs text-[var(--muted)] line-clamp-2">{entry.detail}</span>
@@ -314,17 +357,19 @@ function LibraryEntryRow({
               className="rounded-md border px-2 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
               style={{ borderColor: "var(--border)" }}
             >
-              {editLabel ?? "Edit"}
+              {editLabel ?? "Revise"}
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={onDelete}
-            className="rounded-md border px-2 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
-            style={{ borderColor: "rgba(248,113,113,0.45)" }}
-          >
-            Delete
-          </button>
+          {onDelete ? (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="rounded-md border px-2 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
+              style={{ borderColor: "rgba(248,113,113,0.45)" }}
+            >
+              Remove
+            </button>
+          ) : null}
         </div>
       </div>
     </li>
@@ -334,7 +379,10 @@ function LibraryEntryRow({
 export default function WorkshopLibraryPanel({
   seeds,
   results,
+  characters,
+  items,
   parties,
+  campaigns,
   category,
   selection,
   statusMessage,
@@ -346,6 +394,8 @@ export default function WorkshopLibraryPanel({
   onEditSeed,
   onDeleteSeed,
   onDeleteResult,
+  onDeleteCharacter,
+  onDeleteItem,
   onDeleteParty,
   onPartiesChange,
   onRestore,
@@ -373,6 +423,17 @@ export default function WorkshopLibraryPanel({
   /** Open campaign: when set (and scoping is on) the list shows only its content. */
   const [activeCampaign, setActiveCampaign] = useState<SavedCampaign | null>(null);
   const [campaignScope, setCampaignScope] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [ciClassFilter, setCiClassFilter] = useState<CiClass | "all">("all");
+  const [provenanceFilter, setProvenanceFilter] =
+    useState<LibraryBrowseProvenanceFilter>("all");
+  const [srdItemEntries, setSrdItemEntries] = useState<LibraryListEntry[]>([]);
+
+  useEffect(() => {
+    void loadSrdItemCatalog().then((catalog) => {
+      setSrdItemEntries(srdItemCatalogToLibraryEntries(catalog));
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -413,6 +474,25 @@ export default function WorkshopLibraryPanel({
         : parties,
     [scopedToCampaign, parties, activeCampaign],
   );
+  const campaignCharacters = useMemo(
+    () =>
+      scopedToCampaign
+        ? characters.filter((c) => activeCampaign.characterIds.includes(c.id))
+        : characters,
+    [scopedToCampaign, characters, activeCampaign],
+  );
+  const campaignItems = useMemo(
+    () =>
+      scopedToCampaign
+        ? items.filter((i) => activeCampaign.itemIds.includes(i.id))
+        : items,
+    [scopedToCampaign, items, activeCampaign],
+  );
+  const campaignRecords = useMemo(
+    () =>
+      scopedToCampaign ? campaigns.filter((c) => c.id === activeCampaign.id) : campaigns,
+    [scopedToCampaign, campaigns, activeCampaign],
+  );
 
   const filteredSeeds = useMemo(
     () =>
@@ -424,23 +504,65 @@ export default function WorkshopLibraryPanel({
     [campaignSeeds, seedKindFilter, seedTagFilter, seedScopeFilter],
   );
 
-  const entries = useMemo(() => {
-    const all = sortLibraryEntries([
-      ...filteredSeeds.map(seedToLibraryEntry),
-      ...campaignResults.map(resultToLibraryEntry),
-      ...campaignParties.map(partyToLibraryEntry),
-    ]);
-    return filterLibraryEntries(all, category);
-  }, [filteredSeeds, campaignResults, campaignParties, category]);
+  const includeSrdItems = category === "all" || category === "items";
+  const srdItemsForShelf = includeSrdItems ? srdItemEntries : [];
 
-  const counts = useMemo(
-    () => ({
-      seeds: campaignSeeds.length,
-      results: campaignResults.length,
-      parties: campaignParties.length,
-    }),
-    [campaignSeeds, campaignResults, campaignParties],
+  const allEntries = useMemo(
+    () =>
+      sortLibraryEntries([
+        ...filteredSeeds.map(seedToLibraryEntry),
+        ...campaignResults.map(resultToLibraryEntry),
+        ...campaignCharacters.map(characterToLibraryEntry),
+        ...campaignItems.map(gameItemToLibraryEntry),
+        ...srdItemsForShelf,
+        ...campaignParties.map(partyToLibraryEntry),
+        ...campaignRecords.map(campaignToLibraryEntry),
+      ]),
+    [
+      filteredSeeds,
+      campaignResults,
+      campaignCharacters,
+      campaignItems,
+      srdItemsForShelf,
+      campaignParties,
+      campaignRecords,
+    ],
   );
+
+  const shelfCounts = useMemo(
+    (): Record<WorkshopLibraryCategory, number> => ({
+      all: allEntries.length,
+      seeds: shelfEntriesForCategory(allEntries, "seeds").length,
+      results: shelfEntriesForCategory(allEntries, "results").length,
+      characters: shelfEntriesForCategory(allEntries, "characters").length,
+      items: shelfEntriesForCategory(allEntries, "items").length,
+      parties: shelfEntriesForCategory(allEntries, "parties").length,
+      campaigns: shelfEntriesForCategory(allEntries, "campaigns").length,
+    }),
+    [allEntries],
+  );
+
+  const shelfEntries = useMemo(
+    () => shelfEntriesForCategory(allEntries, category),
+    [allEntries, category],
+  );
+
+  const ciClassOptions = useMemo(
+    () => ciClassFilterOptions(category, shelfEntries),
+    [category, shelfEntries],
+  );
+
+  const entries = useMemo(
+    () =>
+      filterBrowseEntries(shelfEntries, {
+        search: searchQuery,
+        ciClass: ciClassFilter,
+        provenance: provenanceFilter,
+      }),
+    [shelfEntries, searchQuery, ciClassFilter, provenanceFilter],
+  );
+
+  const seedTagOptions = useMemo(() => collectUserSeedTags(campaignSeeds), [campaignSeeds]);
 
   const onExportBackup = async () => {
     onStatus(null);
@@ -448,6 +570,8 @@ export default function WorkshopLibraryPanel({
     const total =
       backup.seeds.length +
       backup.results.length +
+      backup.characters.length +
+      backup.items.length +
       backup.parties.length +
       backup.campaigns.length;
     if (total === 0) {
@@ -464,7 +588,7 @@ export default function WorkshopLibraryPanel({
     a.click();
     URL.revokeObjectURL(url);
     onStatus(
-      `Backup exported (${backup.seeds.length} seeds, ${backup.results.length} results, ${backup.parties.length} parties, ${backup.campaigns.length} campaigns). Save it anywhere you like — folder, cloud drive, or repository.`,
+      `Backup exported (${backup.seeds.length} seeds, ${backup.results.length} results, ${backup.characters.length} heroes, ${backup.items.length} items, ${backup.parties.length} parties, ${backup.campaigns.length} campaigns). Save it anywhere you like — folder, cloud drive, or repository.`,
     );
   };
 
@@ -551,20 +675,22 @@ export default function WorkshopLibraryPanel({
       <div className="flex flex-wrap items-start justify-between gap-2 shrink-0">
         <div className="min-w-0">
           {!wideLayout ? (
-            <h2 className="font-display text-base font-bold text-[var(--text)]">Your library</h2>
+            <h2 className="font-display text-base font-bold text-[var(--text)]">
+              <span aria-hidden="true">&#128218; </span>
+              {THE_LIBRARY}
+            </h2>
           ) : null}
           <p className={`text-xs leading-relaxed text-[var(--muted)]${wideLayout ? "" : " mt-1"}`}>
-            <strong className="text-[var(--text)]">Included rules (SRD)</strong> ship with the app.
-            Everything else — imports and creations alike — is{" "}
-            <strong className="text-[var(--text)]">yours</strong>, saved once —{" "}
+            {libraryShelfHint(category)}{" "}
             {syncStatus.state === "on" ? (
               <>
-                auto-saving to <strong className="text-[var(--text)]">“{syncStatus.folderName}”</strong>.
+                Your collection auto-saves to{" "}
+                <strong className="text-[var(--text)]">“{syncStatus.folderName}”</strong>.
               </>
             ) : syncStatus.state === "needs-permission" ? (
-              <>auto-save is paused until you re-allow folder access.</>
+              <>Auto-save is paused — re-allow folder access when you can.</>
             ) : (
-              <>set an auto-save folder so every change is saved outside this browser.</>
+              <>Choose an auto-save folder so your archives survive beyond this browser.</>
             )}{" "}
             <button
               type="button"
@@ -572,7 +698,7 @@ export default function WorkshopLibraryPanel({
               className="font-semibold text-[var(--accent)] underline"
               aria-expanded={showStorageInfo}
             >
-              {showStorageInfo ? "Hide storage details" : "Where is my data?"}
+              {showStorageInfo ? "Hide vault notes" : "Where is my data?"}
             </button>
           </p>
         </div>
@@ -584,14 +710,14 @@ export default function WorkshopLibraryPanel({
             aria-pressed={srdOpen}
             title="Browse the read-only SRD reference that ships with the app"
           >
-            {srdOpen ? "Close SRD rules" : "Browse SRD rules"}
+            {srdOpen ? "Close rule tomes" : "Browse rule tomes"}
           </button>
           <button
             type="button"
             onClick={() => setShowAddParty(true)}
             className="btn btn-sm"
           >
-            Add party
+            Gather a fellowship
           </button>
           {syncStatus.state === "off" ? (
             <button
@@ -611,7 +737,7 @@ export default function WorkshopLibraryPanel({
             </button>
           ) : null}
           <button type="button" onClick={onAddSeed} className="btn btn-sm btn-accent">
-            Add seed
+            Plant a lore seed
           </button>
         </div>
       </div>
@@ -638,15 +764,15 @@ export default function WorkshopLibraryPanel({
           <span className="text-[var(--muted)]">
             {campaignScope ? (
               <>
-                Showing only content in{" "}
+                Showing only the shelf for{" "}
                 <strong className="text-[var(--text)]">{activeCampaign.name}</strong> — new
-                creations link to it automatically.
+                creations join this chronicle automatically.
               </>
             ) : (
               <>
-                Showing everything.{" "}
+                All shelves are open.{" "}
                 <strong className="text-[var(--text)]">{activeCampaign.name}</strong> is still
-                open — new creations link to it.
+                your active chronicle.
               </>
             )}
           </span>
@@ -655,48 +781,43 @@ export default function WorkshopLibraryPanel({
             onClick={() => setCampaignScope((v) => !v)}
             className="font-semibold text-[var(--accent)] underline"
           >
-            {campaignScope ? "Show everything" : "Show campaign only"}
+            {campaignScope ? "Show every shelf" : "Show chronicle only"}
           </button>
           <Link
             href="/campaigns"
             className="font-semibold text-[var(--accent)] underline"
           >
-            Manage campaigns
+            Tend chronicles
           </Link>
         </p>
       ) : null}
 
-      <div
-        className={wideLayout ? "library-category-tabs" : "panel-tabs"}
-        role="tablist"
-        aria-label="Library categories"
-      >
-        {CATEGORY_TABS.map((tab) => {
-          const count =
-            tab === "all"
-              ? counts.seeds + counts.results + counts.parties
-              : counts[tab];
-          const active = !srdOpen && category === tab;
-          return (
-            <button
-              key={tab}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => {
-                onSrdOpenChange(false);
-                onCategoryChange(tab);
-              }}
-              className={`panel-tab${active ? " panel-tab-active" : ""}`}
-            >
-              <span className="panel-tab-label">
-                {tab === "all" ? "All" : WORKSHOP_LIBRARY_CATEGORY_LABEL[tab]}
-                {` (${count})`}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {!srdOpen ? (
+        <LibraryBrowseToolbar
+          search={searchQuery}
+          onSearchChange={setSearchQuery}
+          shelf={category}
+          onShelfChange={(next) => {
+            onSrdOpenChange(false);
+            setCiClassFilter("all");
+            onCategoryChange(next);
+          }}
+          shelfCounts={shelfCounts}
+          ciClassFilter={ciClassFilter}
+          onCiClassFilterChange={setCiClassFilter}
+          ciClassOptions={ciClassOptions}
+          provenanceFilter={provenanceFilter}
+          onProvenanceFilterChange={setProvenanceFilter}
+          showSeedRefine={category === "seeds" || category === "all"}
+          seedKindFilter={seedKindFilter}
+          onSeedKindFilterChange={setSeedKindFilter}
+          seedTagFilter={seedTagFilter}
+          onSeedTagFilterChange={setSeedTagFilter}
+          seedScopeFilter={seedScopeFilter}
+          onSeedScopeFilterChange={setSeedScopeFilter}
+          seedTagOptions={seedTagOptions}
+        />
+      ) : null}
 
       {statusMessage ? (
         <p
@@ -711,21 +832,6 @@ export default function WorkshopLibraryPanel({
         </p>
       ) : null}
 
-      {!srdOpen && (category === "seeds" || category === "all") ? (
-        <SeedFilterBar
-          seeds={campaignSeeds}
-          kindFilter={seedKindFilter}
-          tagFilter={seedTagFilter}
-          scopeFilter={seedScopeFilter}
-          onKindFilterChange={setSeedKindFilter}
-          onTagFilterChange={setSeedTagFilter}
-          onScopeFilterChange={setSeedScopeFilter}
-          showScopeFilter
-          className="rounded-lg border p-2"
-          style={{ borderColor: "var(--border)" }}
-        />
-      ) : null}
-
       {srdOpen ? (
         <SrdLibraryBrowser
           wideLayout={wideLayout}
@@ -733,16 +839,13 @@ export default function WorkshopLibraryPanel({
           onSelect={onSelect}
         />
       ) : entries.length === 0 ? (
-        <p className="text-sm text-[var(--muted)]">
-          {scopedToCampaign
-            ? `Nothing in “${activeCampaign.name}” ${
-                category === "all"
-                  ? "yet"
-                  : `under ${WORKSHOP_LIBRARY_CATEGORY_LABEL[category].toLowerCase()} yet`
-              }. Link items on the Campaigns page, or click “Show everything”.`
-            : category === "all"
-              ? "Nothing saved yet. Generate from any tab, add a party, or add a seed manually."
-              : `No ${WORKSHOP_LIBRARY_CATEGORY_LABEL[category].toLowerCase()} yet.`}
+        <p className="text-sm leading-relaxed text-[var(--muted)]">
+          {searchQuery.trim() || ciClassFilter !== "all" || provenanceFilter !== "all"
+            ? "No entries match your search or filters — try clearing a filter or widening your query."
+            : browseEmptyMessage(
+                category,
+                scopedToCampaign ? activeCampaign?.name : undefined,
+              )}
         </p>
       ) : (
         <ul
@@ -755,8 +858,22 @@ export default function WorkshopLibraryPanel({
           {entries.map((entry) => {
             const selected = isSelected(selection, entry);
             const select = () => {
+              if (entry.srdItemRef) {
+                onSelect({
+                  kind: "srd",
+                  resource: entry.srdItemRef.resource,
+                  index: entry.srdItemRef.index,
+                  name: entry.title,
+                });
+                return;
+              }
               if (entry.category === "seeds") onSelect({ kind: "seed", id: entry.id });
               else if (entry.category === "results") onSelect({ kind: "result", id: entry.id });
+              else if (entry.category === "characters")
+                onSelect({ kind: "character", id: entry.id });
+              else if (entry.category === "items") onSelect({ kind: "item", id: entry.id });
+              else if (entry.category === "campaigns")
+                onSelect({ kind: "campaign", id: entry.id });
               else onSelect({ kind: "party", id: entry.id });
             };
 
@@ -769,7 +886,7 @@ export default function WorkshopLibraryPanel({
                   onView={select}
                   onEdit={() => onEditSeed(entry.id)}
                   onDelete={() => onDeleteSeed(entry.id)}
-                  editLabel="Edit seed"
+                  editLabel="Revise seed"
                 />
               );
             }
@@ -786,6 +903,64 @@ export default function WorkshopLibraryPanel({
               );
             }
 
+            if (entry.category === "characters") {
+              return (
+                <LibraryEntryRow
+                  key={`character-${entry.id}`}
+                  entry={entry}
+                  selected={selected}
+                  onView={select}
+                  onDelete={() => onDeleteCharacter(entry.id)}
+                  editLabel="Manage heroes"
+                  onEdit={() => {
+                    window.location.href = "/parties";
+                  }}
+                />
+              );
+            }
+
+            if (entry.srdItemRef) {
+              return (
+                <LibraryEntryRow
+                  key={entry.id}
+                  entry={entry}
+                  selected={selected}
+                  onView={select}
+                />
+              );
+            }
+
+            if (entry.category === "items") {
+              return (
+                <LibraryEntryRow
+                  key={`item-${entry.id}`}
+                  entry={entry}
+                  selected={selected}
+                  onView={select}
+                  onDelete={() => onDeleteItem(entry.id)}
+                  editLabel="Open treasury"
+                  onEdit={() => {
+                    window.location.href = "/items";
+                  }}
+                />
+              );
+            }
+
+            if (entry.category === "campaigns") {
+              return (
+                <LibraryEntryRow
+                  key={`campaign-${entry.id}`}
+                  entry={entry}
+                  selected={selected}
+                  onView={select}
+                  editLabel="Tend chronicle"
+                  onEdit={() => {
+                    window.location.href = "/campaigns";
+                  }}
+                />
+              );
+            }
+
             return (
               <LibraryEntryRow
                 key={`party-${entry.id}`}
@@ -793,7 +968,7 @@ export default function WorkshopLibraryPanel({
                 selected={selected}
                 onView={select}
                 onDelete={() => onDeleteParty(entry.id)}
-                editLabel="Manage"
+                editLabel="Gather fellowship"
                 onEdit={() => {
                   window.location.href = "/parties";
                 }}
@@ -805,7 +980,7 @@ export default function WorkshopLibraryPanel({
 
       {!srdOpen && parties.length > 0 ? (
         <p className="text-[11px] leading-relaxed text-[var(--muted)]">
-          Load a party to the{" "}
+          March a fellowship to the{" "}
           <button
             type="button"
             className="font-semibold text-[var(--accent)] underline"
@@ -816,11 +991,11 @@ export default function WorkshopLibraryPanel({
           >
             Virtual Table
           </button>{" "}
-          or open{" "}
+          or tend them on the{" "}
           <Link href="/parties" className="font-semibold text-[var(--accent)] underline">
-            Characters &amp; parties
-          </Link>{" "}
-          for campaign notes.
+            Heroes &amp; fellowships page
+          </Link>
+          .
         </p>
       ) : null}
 

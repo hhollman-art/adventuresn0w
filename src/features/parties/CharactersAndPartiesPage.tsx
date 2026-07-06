@@ -42,6 +42,8 @@ import {
 } from "@/lib/tabletop/characterMarkdown";
 import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
+import { workplace } from "@/lib/workplace";
+import WorkshopPageShell from "@/features/workshop/WorkshopPageShell";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
 import CharacterEditorDialog from "./CharacterEditorDialog";
 import PartyBuilderDialog from "./PartyBuilderDialog";
@@ -134,7 +136,7 @@ export default function CharactersAndPartiesPage() {
   const downloadCharacterFile = (c: SavedCharacter) => {
     downloadMarkdownFile(characterFileName(c.player), characterToMarkdownFile(c.player));
     setStatus(
-      `Downloaded ${c.player.name} as a .md file — a portable sheet you can load anywhere characters are accepted.`,
+      `Downloaded ${c.player.name} as a .md file — a portable sheet you can load anywhere heroes are accepted.`,
     );
   };
 
@@ -142,7 +144,7 @@ export default function CharactersAndPartiesPage() {
     setCharacters(await deleteSavedCharacter(c.id));
     setSelectedIds((prev) => prev.filter((x) => x !== c.id));
     scheduleLibrarySnapshot();
-    setStatus(`${c.player.name} removed from your characters. Parties keep their own copy.`);
+    setStatus(`${c.player.name} removed from your heroes. Fellowships keep their own copy.`);
   };
 
   const onImportCharacterFile = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -152,7 +154,7 @@ export default function CharactersAndPartiesPage() {
     e.target.value = "";
     if (parsed.players.length === 0) {
       setStatus(
-        "No characters recognized in that file. Character files need a ### heading per character — download one from a party to see the format.",
+        "No heroes recognized in that file. Hero files need a ### heading per hero — download one from a fellowship to see the format.",
       );
       return;
     }
@@ -163,7 +165,7 @@ export default function CharactersAndPartiesPage() {
     setCharacters(list);
     scheduleLibrarySnapshot();
     setStatus(
-      `Added ${parsed.players.length} character${parsed.players.length === 1 ? "" : "s"} from “${file.name}”.`,
+      `Added ${parsed.players.length} hero${parsed.players.length === 1 ? "" : "es"} from “${file.name}”.`,
     );
   };
 
@@ -189,7 +191,7 @@ export default function CharactersAndPartiesPage() {
     scheduleLibrarySnapshot();
     setSelectedIds([]);
     setStatus(
-      `Added ${additions.length} character${additions.length === 1 ? "" : "s"} to “${roster.name}”.`,
+      `Added ${additions.length} hero${additions.length === 1 ? "" : "es"} to “${roster.name}”.`,
     );
   };
 
@@ -197,7 +199,7 @@ export default function CharactersAndPartiesPage() {
     const known = new Set(characters.map((c) => c.id));
     const additions = roster.players.filter((p) => !known.has(p.id));
     if (additions.length === 0) {
-      setStatus(`Everyone in “${roster.name}” is already in your characters.`);
+      setStatus(`Everyone in “${roster.name}” is already in your heroes.`);
       return;
     }
     let list: SavedCharacter[] = characters;
@@ -207,7 +209,7 @@ export default function CharactersAndPartiesPage() {
     setCharacters(list);
     scheduleLibrarySnapshot();
     setStatus(
-      `Added ${additions.length} character${additions.length === 1 ? "" : "s"} from “${roster.name}” to your characters.`,
+      `Added ${additions.length} hero${additions.length === 1 ? "" : "es"} from “${roster.name}” to your heroes.`,
     );
   };
 
@@ -234,7 +236,7 @@ export default function CharactersAndPartiesPage() {
     const list = await deleteSavedCharacterRoster(id);
     setRosters(list);
     if (expandedId === id) setExpandedId(null);
-    setStatus("Party removed from library. Its characters stay in your character list.");
+    setStatus("Fellowship removed from library. Its heroes stay in your hero list.");
   };
 
   const downloadParty = (roster: SavedCharacterRoster) => {
@@ -255,14 +257,14 @@ export default function CharactersAndPartiesPage() {
   };
 
   return (
-    <main className="app-main app-main--workshop mx-auto max-w-4xl px-4 py-8">
+    <WorkshopPageShell>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="zone-badge mb-3">Characters &amp; parties</p>
-          <h1 className="font-display text-2xl font-bold">Your characters</h1>
+          <p className="zone-badge mb-3">{workplace("characters").label} workplace</p>
+          <h1 className="font-display text-2xl font-bold">Your heroes</h1>
           <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">
-            Create and keep every character here. Select a few to form a party — parties are
-            what campaigns and the Virtual Table use.
+            Create and keep every hero here. Select a few to form a fellowship —
+            fellowships are what campaigns and the Virtual Table use.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -274,13 +276,13 @@ export default function CharactersAndPartiesPage() {
             }}
             className="btn btn-sm btn-accent"
           >
-            New character
+            New hero
           </button>
           <button
             type="button"
             onClick={() => importInputRef.current?.click()}
             className="btn btn-sm"
-            title="Load a character .md file saved from this app"
+            title="Load a hero .md file saved from this app"
           >
             Import .md
           </button>
@@ -358,7 +360,7 @@ export default function CharactersAndPartiesPage() {
             placeholder="Search name, player, class, species…"
             className="min-w-0 flex-1 rounded-lg border px-3 py-1.5 text-sm"
             style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-            aria-label="Search characters"
+            aria-label="Search heroes"
           />
           <label className="flex items-center gap-1.5 text-xs text-[var(--muted)]">
             Sort
@@ -402,7 +404,7 @@ export default function CharactersAndPartiesPage() {
               }}
               className="rounded-md border px-2 py-1.5 text-xs font-semibold"
               style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-              aria-label="Add selected characters to an existing party"
+              aria-label="Add selected heroes to an existing fellowship"
             >
               <option value="">Add to existing party…</option>
               {rosters.map((r) => (
@@ -428,16 +430,16 @@ export default function CharactersAndPartiesPage() {
           className="rounded-xl border p-8 text-center text-sm text-[var(--muted)]"
           style={{ borderColor: "var(--border)", background: "var(--surface)" }}
         >
-          <p className="mb-2">No characters yet.</p>
+          <p className="mb-2">No heroes yet.</p>
           <p>
-            Click <strong className="text-[var(--text)]">New character</strong> to build one
+            Click <strong className="text-[var(--text)]">New hero</strong> to build one
             sheet by sheet, <strong className="text-[var(--text)]">Import .md</strong> to load a
-            saved character file, or open a saved party below and copy its members here.
+            saved hero file, or open a saved fellowship below and copy its members here.
           </p>
         </div>
       ) : visibleCharacters.length === 0 ? (
         <p className="rounded-xl border p-4 text-sm text-[var(--muted)]" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
-          No characters match “{query.trim()}”.
+          No heroes match “{query.trim()}”.
         </p>
       ) : (
         <ul className="grid gap-2 sm:grid-cols-2">
@@ -523,9 +525,9 @@ export default function CharactersAndPartiesPage() {
 
       <div className="mt-10 mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="font-display text-xl font-bold">Parties</h2>
+          <h2 className="font-display text-xl font-bold">Fellowships</h2>
           <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">
-            A party is a group of characters saved as one unit — link it to a campaign, track
+            A fellowship is a group of heroes saved as one unit — link it to a campaign, track
             its progress, and load it onto the Virtual Table.
           </p>
         </div>
@@ -534,7 +536,7 @@ export default function CharactersAndPartiesPage() {
             type="button"
             onClick={() => setShowPartyBuilder(true)}
             className="btn btn-sm btn-accent"
-            title="Combine your characters and existing parties into a new party"
+            title="Combine your heroes and existing fellowships into a new fellowship"
           >
             Build party
           </button>
@@ -551,7 +553,7 @@ export default function CharactersAndPartiesPage() {
         >
           <p className="mb-2">No parties yet.</p>
           <p>
-            Select characters above and click{" "}
+            Select heroes above and click{" "}
             <strong className="text-[var(--text)]">Create party</strong>, or click{" "}
             <strong className="text-[var(--text)]">Add party</strong> to type, paste, or import
             a whole group at once.
@@ -588,7 +590,7 @@ export default function CharactersAndPartiesPage() {
                       aria-label="Party name"
                     />
                     <p className="text-xs text-[var(--muted)]">
-                      {roster.players.length} character{roster.players.length === 1 ? "" : "s"} ·{" "}
+                      {roster.players.length} hero{roster.players.length === 1 ? "" : "es"} ·{" "}
                       {PARTY_SOURCE_LABEL[roster.source]} · Updated{" "}
                       {formatPartyUpdated(roster.updatedAt)}
                     </p>
@@ -637,9 +639,9 @@ export default function CharactersAndPartiesPage() {
                       onClick={() => void copyPartyToCharacters(roster)}
                       className="rounded-md border px-2.5 py-1.5 text-xs"
                       style={{ borderColor: "var(--border)" }}
-                      title="Copy this party's members into your character list above"
+                      title="Copy this fellowship's members into your hero list above"
                     >
-                      Copy to characters
+                      Copy to heroes
                     </button>
                     <button
                       type="button"
@@ -699,7 +701,7 @@ export default function CharactersAndPartiesPage() {
                       )}
                     </div>
 
-                    <p className="mb-2 text-xs font-bold tracking-wide uppercase">Characters</p>
+                    <p className="mb-2 text-xs font-bold tracking-wide uppercase">Heroes</p>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {roster.players.map((p) => {
                         const maxHp = effectiveMaxHp(p);
@@ -764,6 +766,6 @@ export default function CharactersAndPartiesPage() {
           })}
         </ul>
       )}
-    </main>
+    </WorkshopPageShell>
   );
 }

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import WorkflowTutorialLauncher from "@/features/help/WorkflowTutorialLauncher";
+import HelpPageClient from "@/features/help/HelpPageClient";
+import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 
 export const metadata: Metadata = {
   title: "How to use — D&D Easy",
   description:
-    "User guide for D&D Easy: generate realms, adventures, characters, props, and maps, then print or export them.",
+    "User guide for D&D Easy: generate realms, adventures, characters, items, and maps, then print or export them.",
 };
 
 function SectionHeading({
@@ -28,7 +30,7 @@ function SectionHeading({
 
 export default function HelpPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <HelpPageClient>
       <section
         className="fantasy-panel rounded-xl border p-6 sm:p-10"
         style={{ background: "var(--surface)", borderColor: "var(--border)" }}
@@ -42,7 +44,7 @@ export default function HelpPage() {
         <p className="mt-4 leading-relaxed text-[var(--text)]/90">
           D&amp;D Easy is a toolkit for Dungeon Masters. It uses Claude to write
           table-ready content (realms, adventures, characters) and OpenAI to
-          draw images (maps and prop handouts). Everything it produces is
+          draw images (maps and item handouts). Everything it produces is
           original and SRD-aware — not official Wizards of the Coast content. See{" "}
           <Link href="/legal" className="font-semibold text-[var(--accent)] underline">
             Licenses &amp; content
@@ -55,7 +57,7 @@ export default function HelpPage() {
           <li>
             On the <Link href="/" className="font-semibold text-[var(--accent)] underline">home page</Link>,
             pick what you want to create from the six tabs: Realm, Adventure,
-            Characters, Props, Maps, or Library.
+            Characters, Items, Maps, or Library.
           </li>
           <li>
             Fill in the options. Almost everything is optional — a one-line
@@ -63,7 +65,7 @@ export default function HelpPage() {
           </li>
           <li>
             Press the Generate button at the bottom of the form and watch the
-            result stream into the Output panel on the right.
+            result stream into the {PREVIEW_WINDOW} on the right.
           </li>
           <li>
             Use the buttons above the output to copy, download, or print what
@@ -110,25 +112,36 @@ export default function HelpPage() {
           should be (the 1–5 slider). Choose a D&DEasy seed to anchor the
           adventure in one of your saved settings. Adventures you generate are
           also saved as D&DEasy seeds automatically. The app can also
-          automatically generate battle maps and prop handouts for key scenes
+          automatically generate battle maps and item handouts for key scenes
           it finds in the finished adventure.
         </p>
 
-        <SectionHeading>Characters</SectionHeading>
+        <SectionHeading>Heroes</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
-          Creates a ready-to-play party of pre-made characters with stats,
+          Creates a ready-to-play party of pre-made heroes with stats,
           gear, and hooks, using SRD-open options only. Tell it how many
-          characters you need and any preferences, and hand the results to
+          heroes you need and any preferences, and hand the results to
           your players.
         </p>
 
-        <SectionHeading>Props</SectionHeading>
+        <SectionHeading>Items — management and handouts</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
-          Generates handout images of objects: letters and scrolls, potions,
-          weapons, armor, tools, chests, jewelry, food, relics, and more. Pick
-          an item type, describe the object, and optionally set its look,
-          materials, age, and wear. Great for dropping on the table when the
-          party finds something.
+          Items work in two places. The{" "}
+          <Link href="/items" className="font-semibold text-[var(--accent)] underline">
+            Items page
+          </Link>{" "}
+          is your item library: create <strong>normal equipment</strong> and{" "}
+          <strong>magic items</strong> (with rarity, attunement, and stat bonuses), search and
+          sort them, and add any item to a hero&apos;s gear — the sheet gets its own copy,
+          so treasure handed out stays put even if you edit the library later. Items from
+          books you own go here too; like all your data they stay private on this device.
+        </p>
+        <p className="mt-2 leading-relaxed text-[var(--text)]/90">
+          The workshop&apos;s <strong>Items</strong> tab generates <strong>handout images</strong>{" "}
+          of objects: letters and scrolls, potions, weapons, armor, tools, chests, jewelry,
+          food, relics, and more. Pick an item type, describe the object, and optionally set
+          its look, materials, age, and wear. Great for dropping on the table when the party
+          finds something.
         </p>
 
         <SectionHeading>Maps</SectionHeading>
@@ -142,22 +155,34 @@ export default function HelpPage() {
           as PNG — ready for virtual tabletops or printing.
         </p>
 
-        <SectionHeading>Library</SectionHeading>
+        <SectionHeading>Library — your configuration database</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
-          The Library tab is your repository. It holds two kinds of data:
+          The Library is the UI for your configuration management database (CMDB). Every
+          seed, result, character, item, party, and campaign is a{" "}
+          <strong>Configuration Item</strong> with exactly one class (for example{" "}
+          <code>character.sheet</code>, <code>item.magic</code>, <code>campaign.record</code>).
+          Campaigns are the structural root: they link other CIs by id only — never copies.
+          Generated content still saves once to your library; linking just records the id on
+          the open campaign.
+        </p>
+        <p className="mt-2 leading-relaxed text-[var(--text)]/90">
+          The Library holds two kinds of data:
         </p>
         <ul className="mt-2 list-disc space-y-2 pl-5 leading-relaxed text-[var(--text)]/90">
           <li>
             <strong>Included rules (SRD)</strong> — browse spells, monsters, classes,
             equipment, and rules via the D&amp;D 5e SRD API (2014 SRD, CC BY 4.0).
-            Character pickers use a bundled spell/class index. This is the only rules
-            reference D&amp;D Easy hosts. It is read-only and never needs backing up.
+            SRD equipment and magic items are read-only CIs (
+            <code>item.srd-equipment</code>, <code>item.srd-magic</code>) you can reference
+            on hero sheets and in the SRD browser. Hero pickers use a bundled
+            spell/class index. This is the only rules reference D&amp;D Easy hosts. It is
+            read-only and never needs backing up.
           </li>
           <li>
             <strong>Yours</strong> — everything you import or make, saved once and
-            managed the same way: party notes from books you own (typed or uploaded,
-            including a D&amp;D Beyond character JSON you saved yourself), seeds you
-            write, and results the generators produce. Things made in the app carry
+            managed the same way: heroes, items, fellowship notes from books you own (typed
+            or uploaded, including a D&amp;D Beyond character JSON you saved yourself), seeds
+            you write, and results the generators produce. Things made in the app carry
             a <strong>Creation</strong> tag so you can tell them apart from imported
             files. Stored in <em>this browser on this device only</em>, never
             uploaded to a server.
@@ -170,24 +195,24 @@ export default function HelpPage() {
           Google Drive, or Dropbox, and every change is written there
           automatically — no manual exporting. Alongside the main backup file,
           each party member is also written as their own portable{" "}
-          <code>.md</code> character sheet in a <code>characters</code> folder
-          — grab any one of those files to bring a single PC into an
+          <code>.md</code> hero sheet in a <code>characters</code> folder
+          — grab any one of those files to bring a single hero into an
           adventure, another party, or a Virtual Table session on any device. Saving is strictly one-way: the
           app writes to your folder but never reads from it on its own. To
           bring data into the app (for example on a new device), use{" "}
           <strong>Restore backup</strong> under &quot;Where is my data?&quot;
           and pick the file yourself. Browsers without folder access (Firefox,
           Safari) can use <strong>Export backup</strong> the same way. Open any
-          entry to preview it in the Output panel, copy its Markdown, or
+          entry to preview it in the {PREVIEW_WINDOW}, copy its Markdown, or
           download files.
         </p>
 
         <SectionHeading>Campaigns — running more than one group</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
           If you run several groups, create one <strong>campaign</strong> per group on the
-          Campaigns page. A campaign links that group&apos;s party plus the seeds and results
-          that belong to its story (links are references — the same realm seed can serve two
-          campaigns), and it keeps <strong>its own Virtual Table</strong>. Open a campaign
+          Campaigns page. A campaign links that group&apos;s fellowship, heroes, items, and
+          the seeds and results that belong to its story (links are id references — the same
+          realm seed can serve two campaigns), and it keeps <strong>its own Virtual Table</strong>. Open a campaign
           from the title-bar switcher and the map, tokens, fog, and initiative come back
           exactly as that group left them; the other group&apos;s table is shelved safely.
           While a campaign is open, the Library can show just its content, and anything new
@@ -195,19 +220,19 @@ export default function HelpPage() {
           container — the party, seeds, and results stay in your library.
         </p>
 
-        <SectionHeading>Characters &amp; parties — your people in one place</SectionHeading>
+        <SectionHeading>Heroes &amp; fellowships — your people in one place</SectionHeading>
         <p className="mt-3 leading-relaxed text-[var(--text)]/90">
-          The <strong>Characters</strong> page is where player characters live. Create a
+          The <strong>Heroes &amp; fellowships</strong> page is where your heroes live. Create a
           sheet with the built-in editor (SRD species, classes, and spells are one click;
           options from your own books go in Notes), import a portable <code>.md</code>{" "}
-          character file, or copy members out of a saved party. Sort and search your
-          characters, edit them any time, and download any one as its own{" "}
-          <code>.md</code> file. When a group forms, select characters and click{" "}
-          <strong>Create party</strong> — or add them to an existing party. Parties are the
+          hero file, or copy members out of a saved fellowship. Sort and search your
+          heroes, edit them any time, and download any one as its own{" "}
+          <code>.md</code> file. When a group forms, select heroes and click{" "}
+          <strong>Create party</strong> — or add them to an existing fellowship. Fellowships are the
           unit the rest of the app uses: link one to a campaign, keep campaign notes on it,
-          and load it onto the Virtual Table. Deleting a character never touches parties
-          it already joined (they keep their own copy), and deleting a party never deletes
-          your characters.
+          and load it onto the Virtual Table. Deleting a hero never touches fellowships
+          it already joined (they keep their own copy), and deleting a fellowship never deletes
+          your heroes.
         </p>
 
         <SectionHeading>Saving, printing, and making booklets</SectionHeading>
@@ -261,7 +286,7 @@ export default function HelpPage() {
         <ul className="mt-3 list-disc space-y-2 pl-5 text-[var(--text)]/90">
           <li>
             Generation takes a little while — text streams in live, and images
-            can take up to a minute. The progress checklist in the Output
+            can take up to a minute. The progress checklist in the {PREVIEW_WINDOW}
             panel shows what is happening.
           </li>
           <li>
@@ -293,6 +318,6 @@ export default function HelpPage() {
           </Link>
         </p>
       </section>
-    </main>
+    </HelpPageClient>
   );
 }

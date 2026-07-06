@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 
 type OutputMarkdownCarouselProps = {
   html: string;
@@ -113,7 +114,7 @@ export default function OutputMarkdownCarousel({ html }: OutputMarkdownCarouselP
         <div
           className="output-document-carousel-toolbar no-print"
           role="navigation"
-          aria-label="Output pages"
+          aria-label={`${PREVIEW_WINDOW} pages`}
         >
           <button
             type="button"

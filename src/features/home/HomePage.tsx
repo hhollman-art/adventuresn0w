@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
@@ -21,10 +21,18 @@ import SeedMultiSelect from "@/features/workshop/SeedMultiSelect";
 import WorkshopLibraryPanel, {
   type LibraryViewSelection,
 } from "@/features/workshop/WorkshopLibraryPanel";
+import WorkshopSidebarWithRouting from "@/features/workshop/WorkshopSidebarWithRouting";
+import ForgeContentShell from "@/features/workshop/ForgeContentShell";
+import WorkshopWelcomeLanding from "@/features/home/WorkshopWelcomeLanding";
 import WorkflowTutorialOverlay from "@/features/workshop/WorkflowTutorialOverlay";
 import { isWorkflowTutorialId } from "@/lib/workshop/workflowTutorials";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
-import { autoLinkToActiveCampaign } from "@/lib/campaigns";
+import {
+  autoLinkToActiveCampaign,
+  loadCampaigns,
+  onCampaignsChanged,
+  type SavedCampaign,
+} from "@/lib/campaigns";
 import {
   appendGenerationLibraryItem,
   deleteGenerationLibraryItem,
@@ -74,10 +82,27 @@ import {
   saveCharacterRoster,
   type SavedCharacterRoster,
 } from "@/lib/tabletop/characterRoster";
+import {
+  deleteSavedCharacter,
+  loadSavedCharacters,
+  onCharactersChanged,
+  type SavedCharacter,
+} from "@/lib/tabletop/characterLibrary";
+import { characterToMarkdownFile } from "@/lib/tabletop/characterMarkdown";
+import { characterSummary } from "@/lib/tabletop/character";
+import {
+  deleteGameItem,
+  GAME_ITEM_KIND_LABEL,
+  loadSavedGameItems,
+  onItemsChanged,
+  type SavedGameItem,
+} from "@/lib/itemLibrary";
 import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
 import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
 import { renderMarkdownToHtml } from "@/lib/markdownRender";
 import OutputMarkdownCarousel from "@/features/workshop/OutputMarkdownCarousel";
+import { PREVIEW_WINDOW } from "@/lib/ui/labels";
+import { APP_ICONS } from "@/lib/ui/appIcons";
 import { postHeartbeatJson } from "@/lib/sseClient";
 import {
   extractAdventureScenes,
@@ -107,6 +132,9 @@ type GenerateMode =
 
 type CreationMode = Exclude<GenerateMode, "library">;
 
+/** Workshop home view — welcome hearth or a creation forge. */
+type WorkshopWorkspace = "welcome" | CreationMode;
+
 /** Creation tabs only — Library lives in the site title bar (/library). */
 const MODE_TAB_ORDER: readonly CreationMode[] = [
   "realm",
@@ -119,8 +147,8 @@ const MODE_TAB_ORDER: readonly CreationMode[] = [
 const MODE_TAB_LABEL: Record<GenerateMode, string> = {
   realm: "Realm",
   adventure: "Adventure",
-  characters: "Characters",
-  props: "Props",
+  characters: "Heroes",
+  props: "Items",
   maps: "Maps",
   library: "Library",
 };
@@ -129,8 +157,8 @@ const MODE_TAB_LABEL: Record<GenerateMode, string> = {
 const MODE_TAB_HINT: Record<CreationMode, string> = {
   realm: "Build a world or town",
   adventure: "Write a night's quest",
-  characters: "Make a ready party",
-  props: "Craft handout images",
+  characters: "Make ready-made heroes",
+  props: "Craft item handout images",
   maps: "Draw travel & battle maps",
 };
 
@@ -207,7 +235,7 @@ function buildPropSeedMarkdown(form: PropFormState): string {
   const title =
     form.title.trim() ||
     form.description.trim().slice(0, 72) ||
-    "Prop handout";
+    "Item handout";
   const lines = [`# ${title}`, ""];
   lines.push(`- **Item type:** ${propCategoryLabel(form.itemCategory)}`);
   if (form.description.trim()) {
@@ -821,7 +849,10 @@ async function fetchRealmResultStream(
 export default function Home(props: PageProps<"/">) {
   void props;
 
-  const [mode, setMode] = useState<CreationMode>("realm");
+  const [workspace, setWorkspace] = useState<WorkshopWorkspace>("welcome");
+  /** Skip the next welcome reset when the user picked a specific forge workspace. */
+  const skipWelcomeOnNextHomeRef = useRef(false);
+  const prevPathnameRef = useRef<string | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
   const [realmForm, setRealmForm] = useState<RealmFormState>(initialRealmForm);
   const [mapForm, setMapForm] = useState<MapFormState>(initialMapForm);
@@ -856,10 +887,13 @@ export default function Home(props: PageProps<"/">) {
   const [characterSlots, setCharacterSlots] = useState<CharacterSlotSpec[]>(() =>
     defaultCharacterSlots(),
   );
-  /** Library tab: selected asset shown in the Output panel. */
+  /** Library tab: selected asset shown in the Preview Window. */
   const [librarySelection, setLibrarySelection] = useState<LibraryViewSelection>(null);
   const [libraryResults, setLibraryResults] = useState<LibraryItem[]>([]);
+  const [libraryCharacters, setLibraryCharacters] = useState<SavedCharacter[]>([]);
+  const [libraryItems, setLibraryItems] = useState<SavedGameItem[]>([]);
   const [libraryParties, setLibraryParties] = useState<SavedCharacterRoster[]>([]);
+  const [libraryCampaigns, setLibraryCampaigns] = useState<SavedCampaign[]>([]);
   const [libraryCategory, setLibraryCategory] = useState<WorkshopLibraryCategory>("all");
   /** Library feature: the read-only SRD reference browser, opened over the list. */
   const [srdBrowserOpen, setSrdBrowserOpen] = useState(false);
@@ -875,6 +909,52 @@ export default function Home(props: PageProps<"/">) {
   const searchParams = useSearchParams();
   const isLibraryView =
     pathname === "/library" || pathname.startsWith("/library/");
+  const isWelcomeView = !isLibraryView && workspace === "welcome";
+  const isCreatingView = !isLibraryView && workspace !== "welcome";
+  const forgeBodyClass = isLibraryView
+    ? "forge-content-body--library"
+    : isCreatingView
+      ? "forge-content-body--creating"
+      : "forge-content-body--welcome";
+
+  const goForgeWelcome = useCallback(() => {
+    setLibrarySelection(null);
+    setLibraryStatus(null);
+    setWorkspace("welcome");
+    if (pathname.startsWith("/library") || pathname !== "/") {
+      router.push("/");
+    }
+  }, [pathname, router]);
+
+  useEffect(() => {
+    window.addEventListener("ddeasy:go-welcome", goForgeWelcome);
+    return () => window.removeEventListener("ddeasy:go-welcome", goForgeWelcome);
+  }, [goForgeWelcome]);
+
+  /** Entering the forge home (`/`) always opens the welcome hearth unless a workspace was chosen. */
+  useEffect(() => {
+    const prev = prevPathnameRef.current;
+    prevPathnameRef.current = pathname;
+
+    if (pathname !== "/") return;
+
+    const mode = searchParams.get("mode");
+    if (mode && (MODE_TAB_ORDER as readonly string[]).includes(mode)) return;
+
+    const navigatedToHome = prev !== null && prev !== "/";
+    const firstLoad = prev === null;
+
+    if (!navigatedToHome && !firstLoad) return;
+
+    if (skipWelcomeOnNextHomeRef.current) {
+      skipWelcomeOnNextHomeRef.current = false;
+      return;
+    }
+
+    setLibrarySelection(null);
+    setLibraryStatus(null);
+    setWorkspace("welcome");
+  }, [pathname, searchParams]);
 
   useEffect(() => {
     void loadRealmSeeds().then(setDdeasySeeds);
@@ -886,6 +966,15 @@ export default function Home(props: PageProps<"/">) {
       setTutorialWorkflowId(id);
       setTutorialStep(0);
       setShowTutorialPicker(false);
+      router.replace("/", { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  // Deep link to a creation tab, e.g. /?mode=props from the Items page.
+  useEffect(() => {
+    const m = searchParams.get("mode");
+    if (m && (MODE_TAB_ORDER as readonly string[]).includes(m)) {
+      setWorkspace(m as CreationMode);
       router.replace("/", { scroll: false });
     }
   }, [searchParams, router]);
@@ -916,7 +1005,7 @@ export default function Home(props: PageProps<"/">) {
   // The snapshot is rebuilt from storage at write time, so firing on mount is harmless.
   useEffect(() => {
     scheduleLibrarySnapshot();
-  }, [ddeasySeeds, libraryResults, libraryParties]);
+  }, [ddeasySeeds, libraryResults, libraryCharacters, libraryItems, libraryParties, libraryCampaigns]);
 
   useEffect(() => {
     if (!librarySelection) return;
@@ -935,20 +1024,64 @@ export default function Home(props: PageProps<"/">) {
     ) {
       setLibrarySelection(null);
     }
-  }, [ddeasySeeds, libraryResults, libraryParties, librarySelection]);
+    if (
+      librarySelection.kind === "character" &&
+      !libraryCharacters.some((c) => c.id === librarySelection.id)
+    ) {
+      setLibrarySelection(null);
+    }
+    if (
+      librarySelection.kind === "item" &&
+      !libraryItems.some((i) => i.id === librarySelection.id)
+    ) {
+      setLibrarySelection(null);
+    }
+    if (
+      librarySelection.kind === "campaign" &&
+      !libraryCampaigns.some((c) => c.id === librarySelection.id)
+    ) {
+      setLibrarySelection(null);
+    }
+  }, [
+    ddeasySeeds,
+    libraryResults,
+    libraryCharacters,
+    libraryItems,
+    libraryParties,
+    libraryCampaigns,
+    librarySelection,
+  ]);
 
   function refreshLibraryData() {
     void loadRealmSeeds().then(setDdeasySeeds);
     void loadGenerationLibraryItems().then(setLibraryResults);
+    void loadSavedCharacters().then(setLibraryCharacters);
+    void loadSavedGameItems().then(setLibraryItems);
     void loadSavedCharacterRosters().then(setLibraryParties);
+    void loadCampaigns().then(setLibraryCampaigns);
   }
 
   useEffect(() => {
     if (!isLibraryView) return;
     refreshLibraryData();
-    return onRostersChanged(() => {
+    const offRosters = onRostersChanged(() => {
       void loadSavedCharacterRosters().then(setLibraryParties);
     });
+    const offCharacters = onCharactersChanged(() => {
+      void loadSavedCharacters().then(setLibraryCharacters);
+    });
+    const offItems = onItemsChanged(() => {
+      void loadSavedGameItems().then(setLibraryItems);
+    });
+    const offCampaigns = onCampaignsChanged(() => {
+      void loadCampaigns().then(setLibraryCampaigns);
+    });
+    return () => {
+      offRosters();
+      offCharacters();
+      offItems();
+      offCampaigns();
+    };
   }, [isLibraryView]);
 
   function openNewSeedEditor() {
@@ -1072,13 +1205,25 @@ export default function Home(props: PageProps<"/">) {
     setSeedEditorError("");
   }
 
-  function selectMode(next: CreationMode) {
+  function selectWorkspace(next: WorkshopWorkspace) {
+    setLibrarySelection(null);
+    setLibraryStatus(null);
+    if (next === "welcome") {
+      setWorkspace("welcome");
+      if (isLibraryView) {
+        router.push("/");
+      } else if (pathname !== "/") {
+        router.push("/");
+      } else {
+        router.replace("/", { scroll: false });
+      }
+      return;
+    }
+    skipWelcomeOnNextHomeRef.current = true;
     if (isLibraryView) {
       router.push("/");
     }
-    setMode(next);
-    setLibrarySelection(null);
-    setLibraryStatus(null);
+    setWorkspace(next);
     switch (next) {
       case "realm":
         setRealmForm(initialRealmForm);
@@ -1111,7 +1256,7 @@ export default function Home(props: PageProps<"/">) {
       setLibraryCategory("all");
       return;
     }
-    selectMode(next);
+    selectWorkspace(next);
   }
 
   /** Maps tab: optional seeds whose Markdown grounds the image prompt. */
@@ -1159,7 +1304,8 @@ export default function Home(props: PageProps<"/">) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (isLibraryView) return;
+    if (isLibraryView || workspace === "welcome") return;
+    const mode = workspace;
     setLoading(true);
     setError(null);
     setCurrentGeneratedSeedId(null);
@@ -1228,7 +1374,7 @@ export default function Home(props: PageProps<"/">) {
             title:
               propForm.title.trim() ||
               propForm.description.trim().slice(0, 72) ||
-              "Prop handout",
+              "Item handout",
             markdown: propSeedMarkdown,
             textModel: null,
             imageModel: propResult.model,
@@ -1542,7 +1688,7 @@ export default function Home(props: PageProps<"/">) {
         const libTitle =
           firstHeading(generatedMarkdown) ??
           (form.titleHint.trim() ||
-            (libKind === "characters" ? "Characters" : "Adventure"));
+            (libKind === "characters" ? "Heroes" : "Adventure"));
         const textLib = await appendGenerationLibraryItem({
           kind: libKind,
           title: libTitle,
@@ -1556,7 +1702,7 @@ export default function Home(props: PageProps<"/">) {
         if (mode === "adventure" || mode === "characters") {
           const titleSnap = form.titleHint.trim();
           const briefDescription =
-            mode === "adventure"
+            workspace === "adventure"
               ? [
                   form.setting.trim(),
                   form.villainOrThreat.trim(),
@@ -1595,6 +1741,8 @@ export default function Home(props: PageProps<"/">) {
   }
 
   function imageDownloadBaseName(): string {
+    if (workspace === "welcome") return "ddeasy";
+    const mode = workspace;
     if (markdown.trim()) {
       return fileBaseName(markdown, mode);
     }
@@ -1681,7 +1829,7 @@ export default function Home(props: PageProps<"/">) {
         setProgressStage("error");
         return { ok: false };
       }
-      const label = payload.title.trim() || "Prop handout";
+      const label = payload.title.trim() || "Item handout";
       const images = result.images.map((img) => ({
         ...img,
         label,
@@ -1705,9 +1853,11 @@ export default function Home(props: PageProps<"/">) {
   function exportModeForDownload(): GenerateMode {
     if (viewingSeed) return viewingSeed.kind;
     if (viewingResult) return viewingResult.kind;
+    if (viewingCharacter) return "characters";
     if (viewingParty) return "characters";
     if (isLibraryView) return "library";
-    return mode;
+    if (workspace === "welcome") return "library";
+    return workspace;
   }
 
   const viewingSeed =
@@ -1717,6 +1867,18 @@ export default function Home(props: PageProps<"/">) {
   const viewingResult =
     librarySelection?.kind === "result"
       ? libraryResults.find((r) => r.id === librarySelection.id)
+      : undefined;
+  const viewingCharacter =
+    librarySelection?.kind === "character"
+      ? libraryCharacters.find((c) => c.id === librarySelection.id)
+      : undefined;
+  const viewingItem =
+    librarySelection?.kind === "item"
+      ? libraryItems.find((i) => i.id === librarySelection.id)
+      : undefined;
+  const viewingCampaign =
+    librarySelection?.kind === "campaign"
+      ? libraryCampaigns.find((c) => c.id === librarySelection.id)
       : undefined;
   const viewingParty =
     librarySelection?.kind === "party"
@@ -1759,10 +1921,16 @@ export default function Home(props: PageProps<"/">) {
     isLibraryView
       ? librarySelection?.kind === "srd"
         ? srdPreviewMarkdown
-        : (viewingSeed?.markdown ??
-          viewingResult?.markdown ??
-          viewingParty?.markdown ??
-          "")
+        : viewingCharacter
+          ? characterToMarkdownFile(viewingCharacter.player)
+          : viewingItem
+            ? `# ${viewingItem.name}\n\n${viewingItem.description.trim() || `${GAME_ITEM_KIND_LABEL[viewingItem.kind]} · ${viewingItem.itemType}`.trim()}`
+            : viewingCampaign
+              ? `# ${viewingCampaign.name}\n\n${viewingCampaign.description.trim() || "Campaign container — links party, adventures, characters, and items by reference."}\n\n## Linked CIs\n\n- Party: ${viewingCampaign.partyId ? "linked" : "none"}\n- Seeds: ${viewingCampaign.seedIds.length}\n- Results: ${viewingCampaign.resultIds.length}\n- Characters: ${viewingCampaign.characterIds.length}\n- Items: ${viewingCampaign.itemIds.length}\n\nManage links on the Campaigns page.`
+              : (viewingSeed?.markdown ??
+                viewingResult?.markdown ??
+                viewingParty?.markdown ??
+                "")
       : markdown;
 
   function copyMarkdown() {
@@ -1793,9 +1961,9 @@ export default function Home(props: PageProps<"/">) {
         : m === "adventure"
           ? "Adventure"
           : m === "characters"
-            ? "Characters"
+            ? "Heroes"
             : m === "props"
-              ? "Props"
+              ? "Items"
               : "Maps");
     const doc = buildStandaloneHtmlDocument(
       title,
@@ -1820,7 +1988,7 @@ export default function Home(props: PageProps<"/">) {
     const parsed = parseCharactersMarkdown(md);
     if (parsed.players.length === 0) {
       setPartySaveMessage(
-        "Could not find any characters. Each PC needs a ### heading under ## Characters.",
+        "Could not find any heroes. Each hero needs a ### heading under ## Characters.",
       );
       return;
     }
@@ -1833,7 +2001,7 @@ export default function Home(props: PageProps<"/">) {
       });
       if (rosters[0]) void autoLinkToActiveCampaign({ partyId: rosters[0].id });
       setPartySaveMessage(
-        `Saved ${parsed.players.length} character${parsed.players.length === 1 ? "" : "s"} as "${parsed.rosterName}". Open Characters & parties or the Virtual Table to load them.`,
+        `Saved ${parsed.players.length} hero${parsed.players.length === 1 ? "" : "es"} as "${parsed.rosterName}". Open Heroes & fellowships or the Virtual Table to load them.`,
       );
     } catch (err) {
       setPartySaveMessage(
@@ -1852,11 +2020,15 @@ export default function Home(props: PageProps<"/">) {
     ? viewingSeed.kind
     : viewingResult
       ? viewingResult.kind
-      : viewingParty
+      : viewingCharacter
         ? "characters"
-        : isLibraryView
-          ? "adventure"
-          : (mode as LibraryKind);
+        : viewingParty
+          ? "characters"
+          : isLibraryView
+            ? "adventure"
+            : workspace === "welcome"
+              ? "adventure"
+              : (workspace as LibraryKind);
   const previewSectionLayout = Boolean(previewMarkdown.trim());
 
   const libraryPanel = (
@@ -1864,7 +2036,10 @@ export default function Home(props: PageProps<"/">) {
       wideLayout
       seeds={ddeasySeeds}
       results={libraryResults}
+      characters={libraryCharacters}
+      items={libraryItems}
       parties={libraryParties}
+      campaigns={libraryCampaigns}
       category={libraryCategory}
       selection={librarySelection}
       statusMessage={libraryStatus}
@@ -1897,6 +2072,20 @@ export default function Home(props: PageProps<"/">) {
           setLibrarySelection(null);
         }
       }}
+      onDeleteCharacter={async (id) => {
+        const next = await deleteSavedCharacter(id);
+        setLibraryCharacters(next);
+        if (librarySelection?.kind === "character" && librarySelection.id === id) {
+          setLibrarySelection(null);
+        }
+      }}
+      onDeleteItem={async (id) => {
+        const next = await deleteGameItem(id);
+        setLibraryItems(next);
+        if (librarySelection?.kind === "item" && librarySelection.id === id) {
+          setLibrarySelection(null);
+        }
+      }}
       onDeleteParty={async (id) => {
         const next = await deleteSavedCharacterRoster(id);
         setLibraryParties(next);
@@ -1908,7 +2097,10 @@ export default function Home(props: PageProps<"/">) {
       onRestore={(outcome) => {
         setDdeasySeeds(outcome.seeds);
         setLibraryResults(outcome.results);
+        setLibraryCharacters(outcome.characters);
+        setLibraryItems(outcome.items);
         setLibraryParties(outcome.parties);
+        setLibraryCampaigns(outcome.campaigns);
       }}
       onStatus={setLibraryStatus}
     />
@@ -1916,10 +2108,12 @@ export default function Home(props: PageProps<"/">) {
 
   return (
     <main
-      className={`app-main app-main--workshop mx-auto flex w-full flex-1 flex-col px-4 py-6 sm:px-6 ${
+      className={`app-main app-main--workshop mx-auto flex w-full max-w-[110rem] flex-1 flex-col px-4 py-6 sm:px-6 ${
         isLibraryView
           ? "app-main--library gap-4 lg:gap-5"
-          : "gap-8 lg:flex-row lg:gap-10"
+          : isCreatingView
+            ? "app-main--creating gap-4 lg:gap-5"
+            : "app-main--welcome gap-4 lg:gap-5"
       }`}
     >
       {seedEditor ? (
@@ -1947,7 +2141,7 @@ export default function Home(props: PageProps<"/">) {
             <p className="mt-2 text-sm text-[var(--muted)]">
               Seeds are story notes the generators build from. Type or paste
               anything — places, people, plots — and future realms, adventures,
-              characters, maps, and props will stay true to them. Plain text or
+              characters, maps, and items will stay true to them. Plain text or
               Markdown formatting both work.
             </p>
             <label className="mt-4 flex flex-col gap-1.5 text-sm">
@@ -2190,116 +2384,92 @@ export default function Home(props: PageProps<"/">) {
           </div>
         </div>
       ) : null}
-      <section
-        className={`fantasy-panel no-print rounded-xl border p-6 ${
-          isLibraryView
-            ? "library-workshop-nav w-full shrink-0"
-            : "w-full shrink-0 lg:max-w-md"
-        }`}
-        style={{
-          background: "var(--surface)",
-          borderColor: "var(--border)",
+      <WorkshopSidebarWithRouting
+        workspace={workspace === "welcome" ? "welcome" : workspace}
+        onSelectWelcome={() => selectWorkspace("welcome")}
+        onSelectCreation={(creation) => {
+          if (isLibraryView) router.push(`/?mode=${creation}`);
+          else selectWorkspace(creation);
         }}
-      >
-        <div>
-          {isLibraryView ? (
-            <>
-              <p className="zone-badge mb-3">Your repository</p>
-              <p className="text-sm leading-relaxed text-[var(--muted)]">
-                Browse seeds, saved results, parties, and bundled SRD rules in the center panel.
-                Use <strong className="text-[var(--text)]">Workshop</strong> in the title bar to
-                create new content.
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="zone-badge mb-3">Creation workshop</p>
-              <p
-                id="mode-tablist-label"
-                className="mb-2 text-sm font-semibold text-[var(--text)]"
-              >
-                What do you want to create?
-              </p>
-              <div className="workshop-mode-shell">
-                <div
-                  className="workshop-mode-grid"
-                  role="tablist"
-                  aria-labelledby="mode-tablist-label"
-                >
-                  {MODE_TAB_ORDER.map((tabId) => {
-                    const selected = mode === tabId;
-                    return (
-                      <button
-                        key={tabId}
-                        type="button"
-                        role="tab"
-                        aria-selected={selected}
-                        onClick={() => selectMode(tabId)}
-                        className={`btn btn-tab workshop-mode-btn w-full text-center leading-tight${
-                          selected ? " btn-tab-active" : ""
-                        }`}
-                      >
-                        <span className="workshop-mode-btn-title">
-                          <span aria-hidden="true">{MODE_TAB_ICON[tabId]} </span>
-                          {MODE_TAB_LABEL[tabId]}
-                        </span>
-                        <span className="workshop-mode-btn-hint">
-                          {MODE_TAB_HINT[tabId]}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
-                When your content is ready, open{" "}
-                <strong className="text-[var(--text)]">Virtual Table</strong> in the title bar to
-                run encounters live.
-              </p>
-            </>
-          )}
+        footer={
           <button
             type="button"
             onClick={() => setShowTutorialPicker(true)}
-            className="btn btn-sm btn-accent mt-4 w-full"
+            className="btn btn-sm btn-forest mt-4 w-full font-display"
           >
             Workflow guides
           </button>
-        </div>
+        }
+      />
 
-        <h1 className="font-display mt-6 text-xl font-bold text-[var(--text)]">
-          {isLibraryView
-            ? "Library"
-            : mode === "realm"
+      <ForgeContentShell bodyClassName={forgeBodyClass}>
+      {isLibraryView ? (
+        <section
+          className="library-workshop-browse fantasy-panel no-print flex min-h-[28rem] flex-col rounded-xl border p-4 sm:min-h-[32rem] lg:min-h-0"
+          style={{
+            background: "var(--surface)",
+            borderColor: "var(--border)",
+          }}
+        >
+          <h2 className="font-display mb-1 shrink-0 text-base font-bold text-[var(--text)]">
+            <span aria-hidden="true">&#128218; </span>
+            Search the stacks
+          </h2>
+          <p className="mb-2 shrink-0 text-xs leading-relaxed text-[var(--muted)]">
+            Pick a shelf, narrow by kind, then choose a tome to read in the {PREVIEW_WINDOW}.
+          </p>
+          {libraryPanel}
+        </section>
+      ) : null}
+
+      {isWelcomeView ? (
+        <section className="workshop-welcome-main workshop-welcome-panel forge-forest-panel no-print overflow-hidden rounded-xl border">
+          <WorkshopWelcomeLanding
+            onStartWorkflow={(id) => {
+              setTutorialWorkflowId(id);
+              setTutorialStep(0);
+              setShowTutorialPicker(false);
+            }}
+          />
+        </section>
+      ) : null}
+
+      {isCreatingView ? (
+        <section
+          className="workshop-workspace-main fantasy-panel no-print rounded-xl border p-6"
+          style={{
+            background: "var(--surface)",
+            borderColor: "var(--border)",
+          }}
+        >
+        <h1 className="font-display text-xl font-bold text-[var(--text)]">
+          {workspace === "realm"
               ? "Realm (5.2)"
-              : mode === "adventure"
+              : workspace === "adventure"
                 ? "Adventure (5.2)"
-                : mode === "characters"
-                  ? "Pre-made characters (5.2)"
-                  : mode === "props"
-                    ? "Props (handouts)"
+                : workspace === "characters"
+                  ? "Pre-made heroes (5.2)"
+                  : workspace === "props"
+                    ? "Items (handouts)"
                     : "Maps (5.2)"}
         </h1>
         <div className="fantasy-divider mt-2" aria-hidden="true">
           <span className="text-sm leading-none">&#10022;</span>
         </div>
-        {!isLibraryView ? (
         <p className="mt-2 text-sm text-[var(--muted)]">
-          {mode === "realm"
+          {workspace === "realm"
               ? "Pick how big the place is — a whole world down to a single village — then describe it in your own words. You get table-ready pages you can read, print, or edit. Everything is original to your game."
-              : mode === "adventure"
+              : workspace === "adventure"
                 ? "Pick a length — a short session or a full one-nighter — and describe the story you want. You get a ready-to-run quest, original to your game."
-                : mode === "characters"
-                  ? "Get a ready-to-play party: stats, gear, and story hooks for each hero, built from the free rules included with the app."
-                  : mode === "props"
-                    ? "Make handout images to show your players: letters, potions, weapons, tools, and more. Pick an item type, describe it, and craft it — no adventure required."
+                : workspace === "characters"
+                  ? "Get a ready-to-play party of heroes: stats, gear, and story hooks for each, built from the free rules included with the app."
+                  : workspace === "props"
+                    ? "Make handout images to show your players: letters, potions, weapons, tools, and more. Pick an item type, describe it, and craft it — no adventure required. Manage your equipment and magic items on the Items page."
                     : "Draw full-color travel maps (cities, roads, coastlines) and battle maps ready for the Virtual Table — top-down views made for play, not scenic art."}
         </p>
-        ) : null}
 
-        {isLibraryView ? null : (
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-          {mode === "maps" ? (
+          {workspace === "maps" ? (
             <>
               <fieldset className="flex flex-col gap-2">
                 <legend className="text-sm font-medium text-[var(--muted)]">
@@ -2512,7 +2682,7 @@ export default function Home(props: PageProps<"/">) {
               </p>
             </>
           ) : null}
-          {mode === "props" ? (
+          {workspace === "props" ? (
             <>
               <SelectField
                 label="Item type"
@@ -2625,7 +2795,7 @@ export default function Home(props: PageProps<"/">) {
               </div>
             </>
           ) : null}
-          {mode === "realm" ? (
+          {workspace === "realm" ? (
             <>
               <fieldset className="flex flex-col gap-2">
                 <legend className="text-sm font-medium text-[var(--muted)]">
@@ -2741,20 +2911,20 @@ export default function Home(props: PageProps<"/">) {
                   Your realm arrives as table-ready pages and{" "}
                   <strong className="text-[var(--text)]">saves itself as a seed</strong>{" "}
                   in the Library — named from your working title, and you can rename
-                  it there anytime. For travel or locale map images, open the{" "}
+                  it there anytime.                   For travel or locale map images, open the{" "}
                   <button
                     type="button"
-                    onClick={() => selectMode("maps")}
+                    onClick={() => selectWorkspace("maps")}
                     className="font-medium text-[var(--accent)] underline underline-offset-2 hover:opacity-90"
                   >
                     {MODE_TAB_LABEL.maps}
                   </button>{" "}
-                  tab and attach your saved realm seed under Library references.
+                  workspace and attach your saved realm seed under Library references.
                 </p>
               </div>
             </>
           ) : null}
-          {mode === "adventure" ? (
+          {workspace === "adventure" ? (
             <fieldset className="flex flex-col gap-2">
               <legend className="text-sm font-medium text-[var(--muted)]">
                 Adventure length
@@ -2813,7 +2983,7 @@ export default function Home(props: PageProps<"/">) {
               </div>
             </fieldset>
           ) : null}
-          {mode === "adventure" ? (
+          {workspace === "adventure" ? (
             <div
               className="flex flex-col gap-3 rounded-lg border p-3 text-sm"
               style={{ borderColor: "var(--border)" }}
@@ -2839,7 +3009,7 @@ export default function Home(props: PageProps<"/">) {
               </p>
             </div>
           ) : null}
-          {mode === "characters" ? (
+          {workspace === "characters" ? (
             <div
               className="flex flex-col gap-3 rounded-lg border p-3 text-sm"
               style={{ borderColor: "var(--border)" }}
@@ -2865,7 +3035,7 @@ export default function Home(props: PageProps<"/">) {
               </p>
             </div>
           ) : null}
-          {mode === "adventure" ? (
+          {workspace === "adventure" ? (
             <div
               className="flex flex-col gap-2 rounded-lg border p-3 text-sm"
               style={{ borderColor: "var(--border)" }}
@@ -2913,7 +3083,7 @@ export default function Home(props: PageProps<"/">) {
               </div>
             </div>
           ) : null}
-          {mode === "adventure" ? (
+          {workspace === "adventure" ? (
             <AutoGenerateToggle
               checked={autoGenerateAdventureMap}
               onChange={setAutoGenerateAdventureMap}
@@ -2923,7 +3093,7 @@ export default function Home(props: PageProps<"/">) {
               {MAX_AUTO_SCENE_IMAGES})
             </AutoGenerateToggle>
           ) : null}
-          {mode === "adventure" && autoGenerateAdventureMap ? (
+          {workspace === "adventure" && autoGenerateAdventureMap ? (
             <fieldset
               className="flex flex-col gap-2 rounded-lg border p-3 text-sm"
               style={{ borderColor: "var(--border)" }}
@@ -2965,29 +3135,29 @@ export default function Home(props: PageProps<"/">) {
                 />
             </fieldset>
           ) : null}
-          {mode === "adventure" ? (
+          {workspace === "adventure" ? (
             <AutoGenerateToggle
               checked={autoGenerateAdventureProps}
               onChange={setAutoGenerateAdventureProps}
               icon={"\u{1F3FA}"}
             >
-              Auto-generate prop handouts with adventure (one per scene when scenes are found, up to{" "}
+              Auto-generate item handouts with adventure (one per scene when scenes are found, up to{" "}
               {MAX_AUTO_SCENE_IMAGES}; otherwise one handout)
             </AutoGenerateToggle>
           ) : null}
 
-          {mode === "adventure" || mode === "characters" ? (
+          {workspace === "adventure" || workspace === "characters" ? (
             <>
               <Field
                 label={
-                  mode === "adventure"
+                  workspace === "adventure"
                     ? "Title or theme hint (optional)"
                     : "Party concept or theme (optional)"
                 }
                 value={form.titleHint}
                 onChange={(v) => setForm((f) => ({ ...f, titleHint: v }))}
                 placeholder={
-                  mode === "adventure"
+                  workspace === "adventure"
                     ? "e.g. The Drowned Choir"
                     : "e.g. Disgraced city watch turned monster slayers"
                 }
@@ -2997,7 +3167,7 @@ export default function Home(props: PageProps<"/">) {
                 value={form.levelRange}
                 onChange={(v) => setForm((f) => ({ ...f, levelRange: v }))}
                 placeholder={
-                  mode === "adventure"
+                  workspace === "adventure"
                     ? ADVENTURE_SAMPLE_LEVEL_PLACEHOLDER
                     : CHARACTERS_SAMPLE_LEVEL_PLACEHOLDER
                 }
@@ -3007,24 +3177,24 @@ export default function Home(props: PageProps<"/">) {
                 value={form.tone}
                 onChange={(v) => setForm((f) => ({ ...f, tone: v }))}
                 placeholder={
-                  mode === "adventure"
+                  workspace === "adventure"
                     ? ADVENTURE_SAMPLE_TONE_PLACEHOLDER
                     : "e.g. hopeful, witty banter"
                 }
               />
               <Field
                 label={
-                  mode === "adventure" ? "Setting (optional)" : "World flavor (optional)"
+                  workspace === "adventure" ? "Setting (optional)" : "World flavor (optional)"
                 }
                 value={form.setting}
                 onChange={(v) => setForm((f) => ({ ...f, setting: v }))}
                 placeholder={
-                  mode === "adventure"
+                  workspace === "adventure"
                     ? ADVENTURE_SAMPLE_SETTING_PLACEHOLDER
                     : "e.g. trade-road kingdoms and old battlefields"
                 }
               />
-              {mode === "adventure" ? (
+              {workspace === "adventure" ? (
                 <Field
                   label="Villain / threat (optional)"
                   value={form.villainOrThreat}
@@ -3034,7 +3204,7 @@ export default function Home(props: PageProps<"/">) {
                   placeholder={ADVENTURE_SAMPLE_VILLAIN_PLACEHOLDER}
                 />
               ) : null}
-              {mode === "adventure" ? (
+              {workspace === "adventure" ? (
                 <div className="grid grid-cols-2 gap-3">
                   <Field
                     label="Party size (optional)"
@@ -3052,7 +3222,7 @@ export default function Home(props: PageProps<"/">) {
                   />
                 </div>
               ) : null}
-              {mode === "characters" ? (
+              {workspace === "characters" ? (
                 <fieldset
                   className="flex flex-col gap-3 rounded-lg border p-3 text-sm"
                   style={{ borderColor: "var(--border)" }}
@@ -3075,7 +3245,7 @@ export default function Home(props: PageProps<"/">) {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-xs font-bold tracking-wide text-[var(--text)]">
-                            PC {index + 1}
+                            Hero {index + 1}
                           </span>
                           {characterSlots.length > MIN_PARTY_SIZE ? (
                             <button
@@ -3087,7 +3257,7 @@ export default function Home(props: PageProps<"/">) {
                               }}
                               className="rounded border px-2 py-1 text-[11px] font-semibold text-red-800"
                               style={{ borderColor: "var(--border)" }}
-                              aria-label={`Remove PC ${index + 1}`}
+                              aria-label={`Remove hero ${index + 1}`}
                             >
                               Remove
                             </button>
@@ -3158,7 +3328,7 @@ export default function Home(props: PageProps<"/">) {
                   rows={3}
                   className="rounded-lg border bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
                   style={{ borderColor: "var(--border)" }}
-                  placeholder="Puzzles to avoid, safety tools, recurring PC hooks…"
+                  placeholder="Puzzles to avoid, safety tools, recurring hero hooks…"
                 />
               </label>
             </>
@@ -3171,54 +3341,33 @@ export default function Home(props: PageProps<"/">) {
           >
             {loading
               ? "Generating…"
-              : mode === "realm"
+              : workspace === "realm"
                 ? "Generate realm"
-                : mode === "adventure"
+                : workspace === "adventure"
                   ? "Generate adventure"
-                  : mode === "characters"
-                    ? "Generate characters"
-                    : mode === "props"
-                      ? "Generate prop image"
+                  : workspace === "characters"
+                    ? "Generate heroes"
+                    : workspace === "props"
+                      ? "Generate item image"
                       : "Generate maps"}
           </button>
         </form>
-        )}
-      </section>
-
-      {isLibraryView ? (
-        <section
-          className="library-workshop-browse fantasy-panel no-print flex min-h-[28rem] flex-col rounded-xl border p-4 sm:min-h-[32rem] lg:min-h-0"
-          style={{
-            background: "var(--surface)",
-            borderColor: "var(--border)",
-          }}
-        >
-          <h2 className="font-display mb-1 shrink-0 text-base font-bold text-[var(--text)]">
-            Browse repository
-          </h2>
-          <p className="mb-2 shrink-0 text-xs text-[var(--muted)]">
-            Click an item to preview on the right. Seeds, results, and parties stay on this device.
-          </p>
-          {libraryPanel}
         </section>
       ) : null}
 
+      {!isWelcomeView ? (
       <section
-        className={`fantasy-panel print-generation-root rounded-xl border p-6 ${
+        className={`preview-window-panel fantasy-panel print-generation-root rounded-xl border p-6 ${
           isLibraryView
             ? "library-workshop-preview min-h-[28rem] w-full flex-1 lg:min-h-0"
             : "min-h-[50vh] flex-1"
         }`}
-        style={{
-          background: "var(--surface)",
-          borderColor: "var(--border)",
-        }}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-display text-lg font-semibold text-[var(--accent)]">
-              <span aria-hidden="true">&#10022; </span>
-              {isLibraryView ? "Preview" : "Output"}
+            <h2 className="font-display text-lg font-semibold text-[var(--accent-dim)]">
+              <span aria-hidden="true">{APP_ICONS.previewWindow} </span>
+              {PREVIEW_WINDOW}
             </h2>
             {viewingSeed ? (
               <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
@@ -3234,11 +3383,28 @@ export default function Home(props: PageProps<"/">) {
                 <strong className="text-[var(--text)]">{viewingResult.title}</strong> (
                 {LIBRARY_KIND_LABEL[viewingResult.kind]})
               </p>
+            ) : viewingCharacter ? (
+              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
+                Viewing hero:{" "}
+                <strong className="text-[var(--text)]">{viewingCharacter.player.name}</strong> (
+                {characterSummary(viewingCharacter.player)})
+              </p>
+            ) : viewingItem ? (
+              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
+                Viewing item:{" "}
+                <strong className="text-[var(--text)]">{viewingItem.name}</strong> (
+                {GAME_ITEM_KIND_LABEL[viewingItem.kind]})
+              </p>
+            ) : viewingCampaign ? (
+              <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
+                Viewing campaign:{" "}
+                <strong className="text-[var(--text)]">{viewingCampaign.name}</strong>
+              </p>
             ) : viewingParty ? (
               <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
                 Viewing party:{" "}
                 <strong className="text-[var(--text)]">{viewingParty.name}</strong> (
-                {viewingParty.players.length} PCs)
+                {viewingParty.players.length} heroes)
               </p>
             ) : librarySelection?.kind === "srd" ? (
               <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
@@ -3320,7 +3486,7 @@ export default function Home(props: PageProps<"/">) {
                         className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
                         style={{ borderColor: "var(--border)" }}
                       >
-                        Characters &amp; parties
+                        Heroes &amp; fellowships
                       </Link>
                       <Link
                         href="/table"
@@ -3391,10 +3557,10 @@ export default function Home(props: PageProps<"/">) {
             {partySaveMessage}
           </p>
         ) : null}
-        {!isLibraryView ? (
+        {!isLibraryView && workspace !== "welcome" ? (
           <div className="no-print">
             <ProgressPanel
-              mode={mode}
+              mode={workspace}
               stage={progressStage}
               loading={loading}
               imageLoading={imageLoading}
@@ -3458,14 +3624,14 @@ export default function Home(props: PageProps<"/">) {
             <p className="text-sm text-[var(--muted)]">
               {srdBrowserOpen ? (
                 <>
-                  Pick a category and entry in{" "}
-                  <strong className="text-[var(--text)]">Browse repository</strong> to preview
-                  SRD rules here.
+                  Pick a tome in{" "}
+                  <strong className="text-[var(--text)]">Search the stacks</strong> to open the{" "}
+                  {PREVIEW_WINDOW}.
                 </>
               ) : (
                 <>
-                  Select an item in{" "}
-                  <strong className="text-[var(--text)]">Browse repository</strong> to preview it
+                  Choose any entry in{" "}
+                  <strong className="text-[var(--text)]">Search the stacks</strong> to read it
                   here — then copy, export, or print.
                 </>
               )}
@@ -3490,13 +3656,13 @@ export default function Home(props: PageProps<"/">) {
         previewImages.length === 0 &&
         !isLibraryView ? (
           <p className="no-print mt-8 text-sm text-[var(--muted)]">
-            {mode === "realm"
-              ? "Pick a realm size, describe what you want, and your setting pages will appear here — ready to read, print, or edit. Use the Maps tab for map images."
-              : mode === "adventure"
+            {workspace === "realm"
+              ? "Pick a realm size, describe what you want, and your setting pages will appear here — ready to read, print, or edit. Use the Maps workspace for map images."
+              : workspace === "adventure"
                 ? "Fill in the form and your quest will appear here, sized to the length you picked."
-                : mode === "characters"
+                : workspace === "characters"
                   ? "Fill in the form and your ready-to-play heroes will appear here — copy them to your notes or load them at the Virtual Table."
-                  : mode === "props"
+                  : workspace === "props"
                     ? "Choose an item type, write a description, and your handout image will appear here."
                     : "Submit to generate **full-color** locale / overland maps (atlas clarity, cities & routes) and **grid-free** battle maps for the VTT."}
           </p>
@@ -3504,21 +3670,23 @@ export default function Home(props: PageProps<"/">) {
 
         {loading ? (
           <p className="no-print mt-8 animate-pulse text-sm text-[var(--muted)]">
-            {mode === "adventure" || mode === "characters" || mode === "realm"
+            {workspace === "adventure" || workspace === "characters" || workspace === "realm"
               ? "Calling Claude…"
               : "Working on images… this can take a minute."}
           </p>
         ) : null}
         {imageLoading ? (
           <p className="no-print mt-2 animate-pulse text-sm text-[var(--muted)]">
-            {mode === "props"
-              ? "Rendering prop image…"
-              : mode === "realm"
+            {workspace === "props"
+              ? "Rendering item image…"
+              : workspace === "realm"
                 ? "Draw Realm…"
                 : "Rendering maps and handouts (batched API calls)…"}
           </p>
         ) : null}
       </section>
+      ) : null}
+      </ForgeContentShell>
 
       <WorkflowTutorialOverlay
         workflowId={tutorialWorkflowId}
@@ -3870,7 +4038,7 @@ function getProgressItems(
 ): Array<{ label: string; state: "pending" | "active" | "done" }> {
   if (mode === "characters") {
     return [
-      { label: "Generate characters", state: stateFor(stage, "adventure_generating", "complete") },
+      { label: "Generate heroes", state: stateFor(stage, "adventure_generating", "complete") },
     ];
   }
 
@@ -3884,7 +4052,7 @@ function getProgressItems(
   if (mode === "props") {
     return [
       {
-        label: "Generate prop handout image",
+        label: "Generate item handout image",
         state: stateFor(stage, "prop_generating", "complete"),
       },
     ];
@@ -3911,7 +4079,7 @@ function getProgressItems(
   }
   if (autoPropsEnabled) {
     items.push({
-      label: "Generate written prop image",
+      label: "Generate written item handout",
       state: stateFor(stage, "prop_generating", "complete"),
     });
   }

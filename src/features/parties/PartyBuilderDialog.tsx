@@ -67,7 +67,7 @@ export default function PartyBuilderDialog({
 
   const onSave = async () => {
     if (members.length === 0) {
-      setError("Pick at least one character or party to build from.");
+      setError("Pick at least one hero or fellowship to build from.");
       return;
     }
     setSaving(true);
@@ -84,7 +84,7 @@ export default function PartyBuilderDialog({
       scheduleLibrarySnapshot();
       onSaved(
         list,
-        `Party “${partyName}” created with ${members.length} character${members.length === 1 ? "" : "s"} — ready for campaigns and the Virtual Table.`,
+        `Fellowship “${partyName}” created with ${members.length} hero${members.length === 1 ? "" : "es"} — ready for campaigns and the Virtual Table.`,
       );
     } catch {
       setError("Could not save the party. Please try again.");
@@ -110,8 +110,8 @@ export default function PartyBuilderDialog({
           Build a party
         </h2>
         <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-          Pick characters, existing parties, or both — members are combined into one new party
-          (each character appears once). The originals are never changed.
+          Pick heroes, existing fellowships, or both — members are combined into one new fellowship
+          (each hero appears once). The originals are never changed.
         </p>
 
         <label className="mt-4 flex flex-col gap-1 text-xs">
@@ -127,10 +127,10 @@ export default function PartyBuilderDialog({
         </label>
 
         <div className="mt-4">
-          <p className="mb-1 text-xs font-bold tracking-wide uppercase">Your characters</p>
+          <p className="mb-1 text-xs font-bold tracking-wide uppercase">Your heroes</p>
           {characters.length === 0 ? (
             <p className="text-xs text-[var(--muted)]">
-              No characters in your library yet — you can still build from existing parties
+              No heroes in your library yet — you can still build from existing fellowships
               below.
             </p>
           ) : (
@@ -187,7 +187,7 @@ export default function PartyBuilderDialog({
                   <span>
                     <span className="font-semibold">{r.name}</span>{" "}
                     <span className="text-[var(--muted)]">
-                      ({r.players.length} character{r.players.length === 1 ? "" : "s"})
+                      ({r.players.length} hero{r.players.length === 1 ? "" : "es"})
                     </span>
                   </span>
                 </label>
@@ -199,7 +199,7 @@ export default function PartyBuilderDialog({
         <p className="mt-3 text-xs text-[var(--muted)]">
           {members.length === 0
             ? "Nothing selected yet."
-            : `New party will have ${members.length} character${members.length === 1 ? "" : "s"}: ${members
+            : `New fellowship will have ${members.length} hero${members.length === 1 ? "" : "es"}: ${members
                 .map((m) => m.name)
                 .join(", ")}`}
         </p>

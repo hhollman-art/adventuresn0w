@@ -11,7 +11,8 @@
     "test:watch": "node node_modules/vitest/vitest.mjs",
     "build:srd-spells": "node scripts/build-srd-spells.mjs",
     "build:srd-document": "node scripts/build-srd-document.mjs",
-    "build:srd": "node scripts/build-srd-spells.mjs && node scripts/build-srd-document.mjs"
+    "build:srd": "node scripts/build-srd-spells.mjs && node scripts/build-srd-document.mjs",
+    "generate:theme-art": "node scripts/generate-theme-art.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

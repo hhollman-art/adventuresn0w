@@ -32,9 +32,9 @@ const KINDS: LibraryKind[] = ["realm", "adventure", "characters", "maps", "props
 export const LIBRARY_KIND_LABEL: Record<LibraryKind, string> = {
   realm: "Realm",
   adventure: "Adventure",
-  characters: "Characters",
+  characters: "Heroes",
   maps: "Maps",
-  props: "Props",
+  props: "Items",
 };
 
 function isLibraryKind(v: unknown): v is LibraryKind {

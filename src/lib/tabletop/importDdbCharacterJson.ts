@@ -219,7 +219,7 @@ export function parseDdbPartyImport(rawText: string): DdbParseResult {
   } catch {
     return {
       ok: false,
-      error: "That file is not valid JSON. Export or copy your character data and try again.",
+      error: "That file is not valid JSON. Export or copy your hero data and try again.",
     };
   }
 
@@ -228,7 +228,7 @@ export function parseDdbPartyImport(rawText: string): DdbParseResult {
     return {
       ok: false,
       error:
-        "No characters found in that JSON. It should be one character object or a list of characters.",
+        "No heroes found in that JSON. It should be one hero object or a list of heroes.",
     };
   }
 
@@ -237,7 +237,7 @@ export function parseDdbPartyImport(rawText: string): DdbParseResult {
     .filter((p): p is Omit<PlayerCharacter, "tokenId"> => p !== null);
 
   if (players.length === 0) {
-    return { ok: false, error: "Characters were found but none had a name field." };
+    return { ok: false, error: "Heroes were found but none had a name field." };
   }
 
   const rosterName =

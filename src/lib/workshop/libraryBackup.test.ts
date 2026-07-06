@@ -66,6 +66,33 @@ function sampleBackup(): LibraryBackupFile {
         },
       },
     ],
+    items: [
+      {
+        id: "i1",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        kind: "magic",
+        name: "Cloak of Billowing",
+        itemType: "Wondrous item",
+        rarity: "common",
+        requiresAttunement: false,
+        description: "Billows dramatically on command.",
+        bonuses: {
+          ac: 0,
+          maxHp: 0,
+          speed: 0,
+          initiative: 0,
+          passivePerception: 0,
+          str: 0,
+          dex: 0,
+          con: 0,
+          int: 0,
+          wis: 0,
+          cha: 0,
+        },
+        source: "created",
+      },
+    ],
     parties: [],
     campaigns: [
       {
@@ -77,6 +104,8 @@ function sampleBackup(): LibraryBackupFile {
         partyId: null,
         seedIds: ["s1"],
         resultIds: ["r1"],
+        characterIds: [],
+        itemIds: [],
       },
     ],
   };
@@ -90,6 +119,7 @@ describe("libraryBackup", () => {
     expect(parsed.seeds).toHaveLength(1);
     expect(parsed.results).toHaveLength(1);
     expect(parsed.characters).toHaveLength(1);
+    expect(parsed.items).toHaveLength(1);
     expect(parsed.parties).toHaveLength(0);
     expect(parsed.campaigns).toHaveLength(1);
   });
@@ -111,6 +141,7 @@ describe("libraryBackup", () => {
       seeds: [],
       results: [],
       characters: [],
+      items: [],
       parties: [],
       campaigns: [],
     });
@@ -124,10 +155,24 @@ describe("libraryBackup", () => {
 
   it("describes restore counts in plain language", () => {
     expect(
-      describeRestoreCounts({ seeds: 2, results: 1, characters: 3, parties: 1, campaigns: 1 }),
-    ).toBe("Restored 2 seeds, 1 result, 3 characters, 1 party, 1 campaign from backup.");
+      describeRestoreCounts({
+        seeds: 2,
+        results: 1,
+        characters: 3,
+        items: 2,
+        parties: 1,
+        campaigns: 1,
+      }),
+    ).toBe("Restored 2 seeds, 1 result, 3 characters, 2 items, 1 party, 1 campaign from backup.");
     expect(
-      describeRestoreCounts({ seeds: 0, results: 0, characters: 0, parties: 0, campaigns: 0 }),
+      describeRestoreCounts({
+        seeds: 0,
+        results: 0,
+        characters: 0,
+        items: 0,
+        parties: 0,
+        campaigns: 0,
+      }),
     ).toBe("Backup read, but everything in it is already in your library.");
   });
 });

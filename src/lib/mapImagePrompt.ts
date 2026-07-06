@@ -131,7 +131,7 @@ export function buildMapImagePrompt(
 ${battleGridSizeLine}
 - **Object scale anchors (size everything to the ${battleCellDim} square):** a **human occupies one square**; a single door is **~1 square** wide (double door 2); corridors **2–3 squares** wide; a bed or long table ≈ **1×2 squares**; a chair, barrel, or crate **well under one square**; a cart **1×2**; a large tree canopy **2–3 squares**. Keep **one consistent scale across the whole map**—no giant furniture, no doll-house rooms; if a prop would break these sizes, **resize the prop, never the room**.
 - **Edge-to-edge play space:** artwork must **bleed to all four edges**—**no decorative border, frame, outer margin, vignette, or title strip**. The Virtual Table aligns its square grid to the full image rectangle, so any border or margin **breaks the scale alignment**.
-- **No distant “establishing” floorplans** where the action is a small zone; frame where PCs stand and roll initiative.`
+- **No distant “establishing” floorplans** where the action is a small zone; frame where heroes stand and roll initiative.`
       : "";
 
   const locationName = clampImagePromptText(

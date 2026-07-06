@@ -35,6 +35,10 @@ export type SavedCampaign = {
   seedIds: string[];
   /** Linked result ids (generationLibrary.ts). References — may be shared. */
   resultIds: string[];
+  /** Linked character sheet ids (characterLibrary.ts). References — may be shared. */
+  characterIds: string[];
+  /** Linked user item ids (itemLibrary.ts). References — may be shared. */
+  itemIds: string[];
 };
 
 function newId(): string {
@@ -66,6 +70,8 @@ export function fixSavedCampaign(value: unknown): SavedCampaign | null {
     partyId: typeof o.partyId === "string" ? o.partyId : null,
     seedIds: stringArray(o.seedIds),
     resultIds: stringArray(o.resultIds),
+    characterIds: stringArray(o.characterIds),
+    itemIds: stringArray(o.itemIds),
   };
 }
 
@@ -218,6 +224,8 @@ export type SaveCampaignInput = {
   partyId?: string | null;
   seedIds?: string[];
   resultIds?: string[];
+  characterIds?: string[];
+  itemIds?: string[];
 };
 
 export async function saveCampaign(input: SaveCampaignInput): Promise<SavedCampaign[]> {
@@ -233,6 +241,8 @@ export async function saveCampaign(input: SaveCampaignInput): Promise<SavedCampa
       partyId: input.partyId ?? null,
       seedIds: stringArray(input.seedIds),
       resultIds: stringArray(input.resultIds),
+      characterIds: stringArray(input.characterIds),
+      itemIds: stringArray(input.itemIds),
     };
     const list = [campaign, ...(await loadInternal())].slice(0, MAX_CAMPAIGNS);
     await persist(list);
@@ -246,6 +256,8 @@ export type UpdateCampaignPatch = {
   partyId?: string | null;
   seedIds?: string[];
   resultIds?: string[];
+  characterIds?: string[];
+  itemIds?: string[];
 };
 
 export async function updateCampaign(
@@ -265,6 +277,9 @@ export async function updateCampaign(
         seedIds: patch.seedIds !== undefined ? stringArray(patch.seedIds) : c.seedIds,
         resultIds:
           patch.resultIds !== undefined ? stringArray(patch.resultIds) : c.resultIds,
+        characterIds:
+          patch.characterIds !== undefined ? stringArray(patch.characterIds) : c.characterIds,
+        itemIds: patch.itemIds !== undefined ? stringArray(patch.itemIds) : c.itemIds,
         updatedAt: now,
       };
     });
@@ -276,7 +291,13 @@ export async function updateCampaign(
 /** Link a newly created item to a campaign (no-op if already linked). */
 export async function linkToCampaign(
   campaignId: string,
-  link: { seedId?: string; resultId?: string; partyId?: string },
+  link: {
+    seedId?: string;
+    resultId?: string;
+    partyId?: string;
+    characterId?: string;
+    itemId?: string;
+  },
 ): Promise<SavedCampaign[]> {
   if (typeof window === "undefined") return [];
   return withWriteLock(async () => {
@@ -290,6 +311,44 @@ export async function linkToCampaign(
         next.resultIds = [...next.resultIds, link.resultId];
       }
       if (link.partyId) next.partyId = link.partyId;
+      if (link.characterId && !next.characterIds.includes(link.characterId)) {
+        next.characterIds = [...next.characterIds, link.characterId];
+      }
+      if (link.itemId && !next.itemIds.includes(link.itemId)) {
+        next.itemIds = [...next.itemIds, link.itemId];
+      }
+      return next;
+    });
+    await persist(list);
+    return list;
+  });
+}
+
+/**
+ * Remove one id link from a campaign without deleting the linked CI.
+ */
+export async function unlinkFromCampaign(
+  campaignId: string,
+  link: {
+    seedId?: string;
+    resultId?: string;
+    partyId?: boolean;
+    characterId?: string;
+    itemId?: string;
+  },
+): Promise<SavedCampaign[]> {
+  if (typeof window === "undefined") return [];
+  return withWriteLock(async () => {
+    const list = (await loadInternal()).map((c) => {
+      if (c.id !== campaignId) return c;
+      const next = { ...c, updatedAt: new Date().toISOString() };
+      if (link.seedId) next.seedIds = next.seedIds.filter((id) => id !== link.seedId);
+      if (link.resultId) next.resultIds = next.resultIds.filter((id) => id !== link.resultId);
+      if (link.partyId) next.partyId = null;
+      if (link.characterId) {
+        next.characterIds = next.characterIds.filter((id) => id !== link.characterId);
+      }
+      if (link.itemId) next.itemIds = next.itemIds.filter((id) => id !== link.itemId);
       return next;
     });
     await persist(list);
@@ -305,6 +364,8 @@ export async function autoLinkToActiveCampaign(link: {
   seedId?: string;
   resultId?: string;
   partyId?: string;
+  characterId?: string;
+  itemId?: string;
 }): Promise<void> {
   const activeId = getActiveCampaignId();
   if (!activeId) return;

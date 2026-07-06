@@ -30,7 +30,19 @@ import {
   LIBRARY_KIND_LABEL,
   type LibraryItem,
 } from "@/lib/generationLibrary";
+import {
+  GAME_ITEM_KIND_LABEL,
+  loadSavedGameItems,
+  type SavedGameItem,
+} from "@/lib/itemLibrary";
+import {
+  loadSavedCharacters,
+  type SavedCharacter,
+} from "@/lib/tabletop/characterLibrary";
+import { characterSummary } from "@/lib/tabletop/character";
 import { formatPartyUpdated } from "@/lib/tabletop/partyCampaign";
+import { workplace } from "@/lib/workplace";
+import WorkshopPageShell from "@/features/workshop/WorkshopPageShell";
 
 function CheckRow({
   checked,
@@ -61,6 +73,8 @@ export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<SavedCampaign[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [parties, setParties] = useState<SavedCharacterRoster[]>([]);
+  const [characters, setCharacters] = useState<SavedCharacter[]>([]);
+  const [items, setItems] = useState<SavedGameItem[]>([]);
   const [seeds, setSeeds] = useState<SavedRealmSeed[]>([]);
   const [results, setResults] = useState<LibraryItem[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -68,14 +82,18 @@ export default function CampaignsPage() {
   const [switching, setSwitching] = useState(false);
 
   const refresh = useCallback(async () => {
-    const [list, rosters, seedList, resultList] = await Promise.all([
+    const [list, rosters, charList, itemList, seedList, resultList] = await Promise.all([
       loadCampaigns(),
       loadSavedCharacterRosters(),
+      loadSavedCharacters(),
+      loadSavedGameItems(),
       loadRealmSeeds(),
       loadGenerationLibraryItems(),
     ]);
     setCampaigns(list);
     setParties(rosters);
+    setCharacters(charList);
+    setItems(itemList);
     setSeeds(seedList);
     setResults(resultList);
     setActiveId(getActiveCampaignId());
@@ -157,16 +175,35 @@ export default function CampaignsPage() {
     });
   };
 
+  const toggleCharacter = (campaign: SavedCampaign, characterId: string) => {
+    const linked = campaign.characterIds.includes(characterId);
+    void patchCampaign(campaign.id, {
+      characterIds: linked
+        ? campaign.characterIds.filter((id) => id !== characterId)
+        : [...campaign.characterIds, characterId],
+    });
+  };
+
+  const toggleItem = (campaign: SavedCampaign, itemId: string) => {
+    const linked = campaign.itemIds.includes(itemId);
+    void patchCampaign(campaign.id, {
+      itemIds: linked
+        ? campaign.itemIds.filter((id) => id !== itemId)
+        : [...campaign.itemIds, itemId],
+    });
+  };
+
   return (
-    <main className="app-main app-main--workshop mx-auto max-w-4xl px-4 py-8">
+    <WorkshopPageShell>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="zone-badge mb-3">Campaigns</p>
+          <p className="zone-badge mb-3">{workplace("campaigns").label} workplace</p>
           <h1 className="font-display text-2xl font-bold">Your campaigns</h1>
           <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">
-            One campaign per group you run. Each campaign links a party plus the seeds and
-            results that belong to its story, and keeps its own Virtual Table — open a
-            campaign and the table comes back exactly as that group left it.
+            One campaign per group you run. Each campaign is the structural root of a CI tree:
+            link adventures (seeds/results), party, characters, and items by id — never copies.
+            Campaigns also keep their own Virtual Table — open one and the table comes back
+            exactly as that group left it.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -251,7 +288,10 @@ export default function CampaignsPage() {
                       {party ? `Party: ${party.name}` : "No party linked"} ·{" "}
                       {campaign.seedIds.length} seed{campaign.seedIds.length === 1 ? "" : "s"} ·{" "}
                       {campaign.resultIds.length} result
-                      {campaign.resultIds.length === 1 ? "" : "s"} · Updated{" "}
+                      {campaign.resultIds.length === 1 ? "" : "s"} ·{" "}
+                      {campaign.characterIds.length} character
+                      {campaign.characterIds.length === 1 ? "" : "s"} ·{" "}
+                      {campaign.itemIds.length} item{campaign.itemIds.length === 1 ? "" : "s"} · Updated{" "}
                       {formatPartyUpdated(campaign.updatedAt)}
                     </p>
                   </button>
@@ -394,13 +434,78 @@ export default function CampaignsPage() {
                           </div>
                         )}
                       </div>
+                      <div>
+                        <p className="mb-1 text-xs font-bold tracking-wide uppercase">
+                          Linked characters
+                        </p>
+                        {characters.length === 0 ? (
+                          <p className="text-xs text-[var(--muted)]">
+                            No heroes in your library yet.
+                          </p>
+                        ) : (
+                          <div className="flex max-h-56 flex-col gap-1.5 overflow-y-auto pr-1">
+                            {characters.map((character) => (
+                              <CheckRow
+                                key={character.id}
+                                checked={campaign.characterIds.includes(character.id)}
+                                label={character.player.name}
+                                detail={characterSummary(character.player)}
+                                onToggle={() => toggleCharacter(campaign, character.id)}
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <p className="mt-1 text-[11px] text-[var(--muted)]">
+                          Create heroes on the{" "}
+                          <Link
+                            href="/parties"
+                            className="font-semibold text-[var(--accent)] underline"
+                          >
+                            Heroes &amp; fellowships
+                          </Link>{" "}
+                          page — they appear here once saved.
+                        </p>
+                      </div>
+                      <div>
+                        <p className="mb-1 text-xs font-bold tracking-wide uppercase">
+                          Linked items
+                        </p>
+                        {items.length === 0 ? (
+                          <p className="text-xs text-[var(--muted)]">
+                            No items in your library yet.
+                          </p>
+                        ) : (
+                          <div className="flex max-h-56 flex-col gap-1.5 overflow-y-auto pr-1">
+                            {items.map((item) => (
+                              <CheckRow
+                                key={item.id}
+                                checked={campaign.itemIds.includes(item.id)}
+                                label={item.name}
+                                detail={GAME_ITEM_KIND_LABEL[item.kind]}
+                                onToggle={() => toggleItem(campaign, item.id)}
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <p className="mt-1 text-[11px] text-[var(--muted)]">
+                          Manage equipment and magic items on the{" "}
+                          <Link
+                            href="/items"
+                            className="font-semibold text-[var(--accent)] underline"
+                          >
+                            Items
+                          </Link>{" "}
+                          page.
+                        </p>
+                      </div>
                     </div>
 
                     <p className="mt-3 text-[11px] leading-relaxed text-[var(--muted)]">
-                      Links are references — the same seed or result can belong to several
-                      campaigns, and deleting a campaign never deletes the linked content.
-                      While this campaign is open, the Library highlights its content and new
-                      creations link to it automatically.
+                      Links are id references only — each CI is saved once in the library.
+                      The same seed, character, or item can belong to several campaigns.
+                      Deleting a campaign never deletes linked content. While this campaign
+                      is open, the Library highlights its CIs and new creations link to it
+                      automatically.
                     </p>
                   </div>
                 ) : null}
@@ -409,6 +514,6 @@ export default function CampaignsPage() {
           })}
         </ul>
       )}
-    </main>
+    </WorkshopPageShell>
   );
 }

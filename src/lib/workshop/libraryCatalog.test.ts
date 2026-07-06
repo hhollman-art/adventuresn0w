@@ -7,6 +7,8 @@ import {
   sortLibraryEntries,
   srdCatalogueSummary,
 } from "@/lib/workshop/libraryCatalog";
+import { srdItemRefFromApi } from "@/lib/srd/srdItemRef";
+import { srdItemToLibraryEntry } from "@/lib/workplace/srdItemCatalog";
 import type { LibraryItem } from "@/lib/generationLibrary";
 import type { SavedRealmSeed } from "@/lib/realmSeeds";
 import type { SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
@@ -137,16 +139,11 @@ describe("libraryCatalog", () => {
     expect(summary.spellCount).toBeGreaterThan(100);
   });
 
-  it("sorts newest first", () => {
+  it("sorts user items newest first and SRD items alphabetically", () => {
     const sorted = sortLibraryEntries([
-      seedToLibraryEntry({
-        id: "old",
-        createdAt: "2020-01-01T00:00:00.000Z",
-        kind: "realm",
-        titleHint: "Old",
-        briefDescription: "",
-        markdown: "",
-      }),
+      srdItemToLibraryEntry(
+        srdItemRefFromApi("equipment", "zweihander", "Zweihander"),
+      ),
       seedToLibraryEntry({
         id: "new",
         createdAt: "2024-01-01T00:00:00.000Z",
@@ -155,7 +152,12 @@ describe("libraryCatalog", () => {
         briefDescription: "",
         markdown: "",
       }),
+      srdItemToLibraryEntry(
+        srdItemRefFromApi("equipment", "abacus", "Abacus"),
+      ),
     ]);
-    expect(sorted[0]?.id).toBe("new");
+    expect(sorted[0]?.provenance).toBe("user");
+    expect(sorted[1]?.title).toBe("Abacus");
+    expect(sorted[2]?.title).toBe("Zweihander");
   });
 });

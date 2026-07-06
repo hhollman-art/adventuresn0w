@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import StandaloneContentShell from "@/features/shell/StandaloneContentShell";
+import { FANTASY_FORGE } from "@/lib/workplace/forgeLexicon";
 import {
   SRD_ATTRIBUTION_MARKDOWN,
   SRD_CONTENT_POLICY,
@@ -23,7 +25,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 export default function LegalPage() {
   return (
-    <main className="app-main app-main--workshop mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <StandaloneContentShell>
       <section
         className="fantasy-panel rounded-xl border p-6 sm:p-10"
         style={{ background: "var(--surface)", borderColor: "var(--border)" }}
@@ -134,10 +136,10 @@ export default function LegalPage() {
         </div>
         <p className="mt-6 text-center">
           <Link href="/" className="btn btn-primary btn-md">
-            Back to the workshop
+            Back to the {FANTASY_FORGE}
           </Link>
         </p>
       </section>
-    </main>
+    </StandaloneContentShell>
   );
 }

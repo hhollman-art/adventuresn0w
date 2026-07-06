@@ -39,6 +39,8 @@ describe("fixSavedCampaign", () => {
       partyId: null,
       seedIds: [],
       resultIds: [],
+      characterIds: [],
+      itemIds: [],
     });
     expect(fixed!.createdAt).toBeTruthy();
     expect(fixed!.updatedAt).toBe(fixed!.createdAt);
@@ -54,11 +56,15 @@ describe("fixSavedCampaign", () => {
       partyId: "party-9",
       seedIds: ["s1", "s2", "s1", 42, null],
       resultIds: ["r1", "r1"],
+      characterIds: ["ch1", "ch1", 99],
+      itemIds: ["it1"],
     });
     expect(fixed).toMatchObject({
       partyId: "party-9",
       seedIds: ["s1", "s2"],
       resultIds: ["r1"],
+      characterIds: ["ch1"],
+      itemIds: ["it1"],
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-02-01T00:00:00.000Z",
     });

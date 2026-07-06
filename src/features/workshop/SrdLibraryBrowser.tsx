@@ -10,6 +10,7 @@ import {
   type SrdApiResource,
 } from "@/lib/srd/dnd5eApi";
 import { SRD_MANIFEST } from "@/lib/srd/manifest";
+import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 import type { LibraryViewSelection } from "@/features/workshop/WorkshopLibraryPanel";
 
 type SrdLibraryBrowserProps = {
@@ -176,7 +177,7 @@ export default function SrdLibraryBrowser({
       {!loading && items.length > 0 ? (
         <p className="text-[11px] text-[var(--muted)]">
           {filtered.length} of {items.length} {categoryMeta?.label.toLowerCase() ?? "entries"}
-          {query.trim() ? " matching search" : ""}. Select one to preview in the panel on the right.
+          {query.trim() ? " matching search" : ""}. Select one to open in the {PREVIEW_WINDOW}.
         </p>
       ) : null}
     </div>

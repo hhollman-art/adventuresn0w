@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import Link from "next/link";
+import WorkshopSidebarWithRouting from "@/features/workshop/WorkshopSidebarWithRouting";
+import ForgeContentShell from "@/features/workshop/ForgeContentShell";
 import BattleStage, { type StageTool } from "@/features/tabletop/BattleStage";
 import { useGenerationLibraryImages } from "@/features/tabletop/useGenerationLibraryImages";
 import { ToolButton, ToggleChip } from "@/features/ui/ToggleButton";
@@ -28,22 +30,27 @@ import {
   sumItemBonuses,
 } from "@/lib/tabletop/character";
 import {
-  getSavedCharacterRoster,
-  loadSavedCharacterRosters,
-  onRostersChanged,
-  type SavedCharacterRoster,
-} from "@/lib/tabletop/characterRoster";
+  applyPartyImport,
+  consumePendingPartyImport,
+  loadPartiesFromLibrary,
+  loadPartyFromLibrary,
+  loadTabletopSession,
+  queuePartyImport,
+  savePartyFromSession,
+  saveTabletopSession,
+} from "@/modules/vtt";
+import { onRostersChanged, type SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
 import { addRevealed, allCells, clampTokenPosition, removeRevealed } from "@/lib/tabletop/grid";
 import { rollDice } from "@/lib/tabletop/dice";
-import { FEET_PER_CELL_OPTIONS, formatTokenSizeOption, TOKEN_SIZE_CATEGORY, tokenCellFootprint } from "@/lib/tabletop/gridScale";
+import {
+  FEET_PER_CELL_OPTIONS,
+  formatTokenSizeOption,
+  TOKEN_SIZE_CATEGORY,
+  tokenCellFootprint,
+} from "@/lib/tabletop/gridScale";
 import { VTT_GRID_PRESETS } from "@/lib/tabletop/gridPresets";
 import { prepareMapImage, readImageSource } from "@/lib/tabletop/mapImage";
 import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
-import {
-  applyPartyImport,
-  consumePendingPartyImport,
-  savePartyFromSession,
-} from "@/lib/tabletop/partyCampaign";
 import { prepareTokenImage } from "@/lib/tabletop/tokenImage";
 import {
   advanceInitiative,
@@ -53,7 +60,6 @@ import {
   newId,
   sortInitiative,
 } from "@/lib/tabletop/session";
-import { loadTabletopSession, saveTabletopSession } from "@/lib/tabletop/store";
 import { createDmSync } from "@/lib/tabletop/sync";
 import { useFullscreen } from "@/features/tabletop/useFullscreen";
 import {
@@ -118,7 +124,7 @@ export default function TabletopPage() {
     const pending = consumePendingPartyImport();
     if (!pending) return;
     pendingImportHandled.current = true;
-    void getSavedCharacterRoster(pending.rosterId).then((roster) => {
+    void loadPartyFromLibrary(pending.rosterId).then((roster) => {
       if (!roster) return;
       update((s) => applyPartyImport(s, roster, pending, newPlayerToken));
       setPanel("party");
@@ -127,8 +133,13 @@ export default function TabletopPage() {
 
   if (!session) {
     return (
-      <main className="app-main app-main--table mx-auto px-4 py-10 text-center text-sm text-[var(--muted)]">
-        Preparing the table&hellip;
+      <main className="app-main app-main--table app-main--workplace-page mx-auto flex w-full flex-1 flex-col gap-4 px-3 py-6 min-h-0">
+        <WorkshopSidebarWithRouting />
+        <ForgeContentShell bodyClassName="forge-content-body--vtt">
+          <div className="vtt-workspace-main flex flex-1 items-center justify-center text-center text-sm text-[var(--muted)]">
+            Preparing the table&hellip;
+          </div>
+        </ForgeContentShell>
       </main>
     );
   }
@@ -156,13 +167,17 @@ export default function TabletopPage() {
   return (
     <main
       ref={mainRef}
-      className="app-main app-main--table mx-auto flex w-full flex-1 flex-col gap-3 px-3 py-3 min-h-0"
+      className="app-main app-main--table app-main--workplace-page mx-auto flex w-full flex-1 flex-col gap-3 px-3 py-3 min-h-0"
       style={{
         height: isFullscreen ? "100dvh" : undefined,
         paddingTop: isFullscreen ? 12 : undefined,
         background: isFullscreen ? "var(--bg)" : undefined,
       }}
     >
+      <WorkshopSidebarWithRouting />
+
+      <ForgeContentShell bodyClassName="forge-content-body--vtt">
+      <div className="vtt-workspace-main flex min-h-0 flex-1 flex-col gap-3">
       <div className="zone-toolbar">
         <h1 className="zone-toolbar-title">Virtual Table</h1>
         <span className="zone-badge" title="Dungeon Master screen — players use the separate player view">
@@ -340,6 +355,8 @@ export default function TabletopPage() {
           </div>
         </aside>
       </div>
+      </div>
+      </ForgeContentShell>
     </main>
   );
 }
@@ -362,7 +379,7 @@ function PartyPanel({
 
   useEffect(() => {
     const reload = () => {
-      void loadSavedCharacterRosters().then(setSavedRosters);
+      void loadPartiesFromLibrary().then(setSavedRosters);
     };
     reload();
     return onRostersChanged(reload);
@@ -393,7 +410,7 @@ function PartyPanel({
     if (linkNew || !session.activePartyId) {
       update((s) => ({ ...s, activePartyId: roster.id }));
     }
-    setSavedRosters(await loadSavedCharacterRosters());
+    setSavedRosters(await loadPartiesFromLibrary());
     setPartyMsg(
       wasLinkedUpdate
         ? `Updated "${roster.name}" — levels, gear, items, and HP saved.`
@@ -479,7 +496,7 @@ function PartyPanel({
     }
     setPartyMsg(
       added.length === 0
-        ? "No characters found in that file — it needs a ### heading per character."
+        ? "No heroes found in that file — it needs a ### heading per hero."
         : `Added ${added.join(", ")} to the table with tokens placed.`,
     );
   };
@@ -539,7 +556,7 @@ function PartyPanel({
             className="shrink-0 rounded border px-2 py-1 text-[10px] font-semibold"
             style={{ borderColor: "var(--accent-dim)" }}
           >
-            Characters &amp; parties
+            Heroes &amp; fellowships
           </Link>
         </div>
         <div className="mb-2 flex flex-wrap gap-1">
@@ -619,7 +636,7 @@ function PartyPanel({
         className="rounded-md border px-2 py-1.5 text-xs font-semibold"
         style={{ borderColor: "var(--accent-dim)", background: "rgba(201,162,39,0.2)" }}
       >
-        Add player (character sheet)
+        Add player (hero sheet)
       </button>
 
       <button
@@ -627,9 +644,9 @@ function PartyPanel({
         onClick={() => characterFileRef.current?.click()}
         className="rounded-md border px-2 py-1.5 text-xs"
         style={{ borderColor: "var(--border)" }}
-        title="Load one or more saved character .md files — from party downloads or your auto-save characters folder"
+        title="Load one or more saved hero .md files — from fellowship downloads or your auto-save heroes folder"
       >
-        Load character file (.md)
+        Load hero file (.md)
       </button>
       <input
         ref={characterFileRef}
@@ -642,7 +659,7 @@ function PartyPanel({
 
       {session.players.length === 0 && (
         <p className="text-xs text-[var(--muted)]">
-          No party members yet. Add each player from their character sheet — their token,
+          No party members yet. Add each player from their hero sheet — their token,
           hit points, and initiative bonus come along automatically.
         </p>
       )}
@@ -704,7 +721,7 @@ function PartyPanel({
                   onClick={() => onSelectToken(token.id)}
                   className="rounded border px-2 py-1 text-xs"
                   style={{ borderColor: "var(--border)" }}
-                  title="Select this character's token on the map"
+                  title="Select this hero's token on the map"
                 >
                   Select token
                 </button>
@@ -1020,12 +1037,12 @@ function PlayerSheetModal({
           style={{ borderColor: "var(--border)" }}
         >
           <h2 className="font-display text-base font-bold">
-            {initial ? `${initial.name} — character sheet` : "New party member"}
+            {initial ? `${initial.name} — hero sheet` : "New party member"}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close character sheet"
+            aria-label="Close hero sheet"
             className="rounded px-2 py-0.5 text-lg leading-none text-[var(--muted)] hover:text-[var(--text)]"
           >
             &times;
@@ -1583,7 +1600,7 @@ function TokenEditor({
           <p className="text-xs text-[var(--muted)]">Loading library&hellip;</p>
         ) : libraryImages.length === 0 ? (
           <p className="text-xs text-[var(--muted)]">
-            No images in your library yet. Generate characters or props first, or upload art.
+            No images in your library yet. Generate heroes or props first, or upload art.
           </p>
         ) : (
           <div className="grid max-h-40 grid-cols-4 gap-1 overflow-y-auto">

@@ -128,9 +128,9 @@ export type SeedKind =
 export const SEED_KIND_LABEL: Record<SeedKind, string> = {
   realm: "Realm",
   adventure: "Adventure",
-  characters: "Characters",
+  characters: "Heroes",
   maps: "Maps",
-  props: "Props",
+  props: "Items",
 };
 
 export const SEED_KINDS: SeedKind[] = [
@@ -361,7 +361,7 @@ export function suggestedSeedName(
     adventure: "My adventure",
     characters: "My party",
     maps: "My map pack",
-    props: "My prop",
+    props: "My item",
   };
   return fallbacks[kind];
 }
@@ -372,7 +372,7 @@ export function defaultSavedSeedLabel(kind: SeedKind): string {
     adventure: "Saved adventure",
     characters: "Saved characters",
     maps: "Saved map pack",
-    props: "Saved prop",
+    props: "Saved item",
   };
   return labels[kind];
 }

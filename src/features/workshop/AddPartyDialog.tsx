@@ -133,7 +133,7 @@ export default function AddPartyDialog({ onClose, onSaved }: AddPartyDialogProps
       }
     } else if (parsed.players.length === 0) {
       setError(
-        "No characters recognized yet. Each character needs a heading line starting with ### — try “Use example party” to see how it looks.",
+        "No heroes recognized yet. Each hero needs a heading line starting with ### — try “Use example party” to see how it looks.",
       );
       return;
     }
@@ -177,7 +177,7 @@ export default function AddPartyDialog({ onClose, onSaved }: AddPartyDialogProps
           Add a party
         </h2>
         <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-          Bring characters from your table into the Library. Saved parties are{" "}
+          Bring heroes from your table into the Library. Saved fellowships are{" "}
           <strong className="text-[var(--text)]">your import</strong>: private, on your devices
           only — never merged into the app&apos;s included rules.
         </p>
@@ -186,7 +186,7 @@ export default function AddPartyDialog({ onClose, onSaved }: AddPartyDialogProps
           className="mt-3 flex flex-wrap gap-1 rounded-lg border p-1"
           style={{ borderColor: "var(--border)", background: "var(--bg)" }}
           role="tablist"
-          aria-label="How to add characters"
+          aria-label="How to add heroes"
         >
           <button
             type="button"
@@ -217,7 +217,7 @@ export default function AddPartyDialog({ onClose, onSaved }: AddPartyDialogProps
         {mode === "write" ? (
           <>
             <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
-              Type or paste your characters below — no file needed. Start from the example and
+              Type or paste your heroes below — no file needed. Start from the example and
               replace the details, or load a saved <code>.md</code> file if you have one.
             </p>
 
@@ -270,7 +270,7 @@ export default function AddPartyDialog({ onClose, onSaved }: AddPartyDialogProps
             </div>
 
             <p className="mt-3 text-xs font-semibold text-[var(--text)]">
-              Option A — copy from your character sheet
+              Option A — copy from your hero sheet
             </p>
             <ol className="mt-1 list-decimal space-y-1 pl-5 text-xs leading-relaxed text-[var(--muted)]">
               <li>Open a character you created on dndbeyond.com (from books you own).</li>
@@ -338,11 +338,11 @@ export default function AddPartyDialog({ onClose, onSaved }: AddPartyDialogProps
                 ? ddbJson.trim()
                   ? ddbParsed && !ddbParsed.ok
                     ? ddbParsed.error
-                    : "No characters recognized yet — check the JSON format."
-                  : "Characters found in your JSON will appear here."
+                    : "No heroes recognized yet — check the JSON format."
+                  : "Heroes found in your JSON will appear here."
                 : hasText
-                  ? "No characters recognized yet — check that each one has a ### heading."
-                  : "Characters found in your text will appear here as you type."}
+                  ? "No heroes recognized yet — check that each one has a ### heading."
+                  : "Heroes found in your text will appear here as you type."}
             </span>
           ) : (
             <>
