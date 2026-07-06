@@ -14,6 +14,16 @@
   --accent-muted-strong: rgba(201, 162, 39, 0.28);
   --shadow-soft: 0 2px 10px rgba(95, 70, 25, 0.12);
   --shadow-btn: 0 1px 2px rgba(95, 70, 25, 0.14);
+  /* Banner + footnote + page padding — used for full-height panes */
+  --app-chrome-height: 9.25rem;
+  --forge-workspace-share: 42%;
+  --forge-preview-share: 58%;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --app-chrome-height: 10.5rem;
+  }
 }
 
 body {
@@ -78,6 +88,7 @@ body {
 .forge-content-body--library .library-workshop-preview,
 .workshop-page-preview,
 .preview-window-panel,
+.vtt-control-sidebar-body,
 article.adventure-md.output-document-view .output-document-panel {
   min-height: 0;
   overflow-x: hidden;
@@ -98,6 +109,7 @@ article.adventure-md.output-document-view .output-document-panel {
 .forge-content-body--library .library-workshop-preview::-webkit-scrollbar,
 .workshop-page-preview::-webkit-scrollbar,
 .preview-window-panel::-webkit-scrollbar,
+.vtt-control-sidebar-body::-webkit-scrollbar,
 article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar {
   width: 11px;
   height: 11px;
@@ -113,6 +125,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 .forge-content-body--library .library-workshop-preview::-webkit-scrollbar-track,
 .workshop-page-preview::-webkit-scrollbar-track,
 .preview-window-panel::-webkit-scrollbar-track,
+.vtt-control-sidebar-body::-webkit-scrollbar-track,
 article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-track {
   background: var(--scrollbar-track, rgba(0, 0, 0, 0.38));
   border-radius: 6px;
@@ -129,6 +142,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 .forge-content-body--library .library-workshop-preview::-webkit-scrollbar-thumb,
 .workshop-page-preview::-webkit-scrollbar-thumb,
 .preview-window-panel::-webkit-scrollbar-thumb,
+.vtt-control-sidebar-body::-webkit-scrollbar-thumb,
 article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-thumb {
   background: linear-gradient(
     180deg,
@@ -150,6 +164,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 .forge-content-body--library .library-workshop-preview::-webkit-scrollbar-thumb:hover,
 .workshop-page-preview::-webkit-scrollbar-thumb:hover,
 .preview-window-panel::-webkit-scrollbar-thumb:hover,
+.vtt-control-sidebar-body::-webkit-scrollbar-thumb:hover,
 article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-thumb:hover {
   background: var(--accent-dim);
 }
@@ -197,44 +212,65 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 }
 
 .app-main--table {
-  max-width: 110rem;
+  max-width: none;
   margin-inline: auto;
+  width: 100%;
 }
 
 /* Fantasy Forge: left workspace pane | right column (workspace top, preview bottom) */
 .app-main--workshop.app-main--welcome,
 .app-main--workshop.app-main--creating,
 .app-main--workshop.app-main--library,
-.app-main--workplace-page,
-.app-main--table.app-main--workplace-page {
+.app-main--workplace-page {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  min-height: calc(100dvh - 9rem);
+  gap: clamp(0.65rem, 2vw, 1rem);
+  min-height: calc(100dvh - var(--app-chrome-height));
+}
+
+.app-main--table.app-main--vtt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-width: none;
+  width: 100%;
+  min-height: calc(100dvh - var(--app-chrome-height));
+}
+
+@media (min-width: 640px) {
+  .app-main--table.app-main--vtt {
+    flex-direction: row;
+    align-items: stretch;
+    height: calc(100dvh - var(--app-chrome-height));
+    max-height: calc(100dvh - var(--app-chrome-height));
+  }
 }
 
 @media (min-width: 1024px) {
   .app-main--workshop.app-main--welcome,
   .app-main--workshop.app-main--creating,
   .app-main--workshop.app-main--library,
-  .app-main--workplace-page,
-  .app-main--table.app-main--workplace-page {
+  .app-main--workplace-page {
     display: grid;
     grid-template-columns: minmax(11.5rem, 14.25rem) minmax(0, 1fr);
     align-items: stretch;
     gap: 1rem 1.25rem;
+    height: calc(100dvh - var(--app-chrome-height));
+    max-height: calc(100dvh - var(--app-chrome-height));
   }
 
   .workshop-workspace-nav-panel {
     grid-column: 1;
     align-self: stretch;
-    max-height: calc(100dvh - 10rem);
+    max-height: none;
+    height: 100%;
   }
 
   .forge-content-shell {
     grid-column: 2;
     min-height: 0;
-    max-height: calc(100dvh - 10rem);
+    max-height: none;
+    height: 100%;
   }
 }
 
@@ -242,10 +278,16 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: calc(100dvh - 9rem);
+  max-height: clamp(14rem, 48dvh, 100%);
   border-radius: 0.875rem;
   overflow: hidden;
   width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .workshop-workspace-nav-panel {
+    max-height: none;
+  }
 }
 
 .workshop-workspace-nav {
@@ -614,12 +656,137 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   flex-direction: column;
 }
 
+/* ---- Virtual Table — left tool panel + full-screen map -------------------- */
+.vtt-control-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+  max-height: clamp(12rem, 44dvh, 100%);
+  border-radius: 0.875rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.vtt-control-sidebar-zone {
+  flex-shrink: 0;
+  padding: 0.45rem 0.55rem 0;
+}
+
+.vtt-control-sidebar-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.65rem 0.55rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.vtt-control-sidebar-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text);
+}
+
+.vtt-control-sidebar-tools {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.vtt-control-sidebar-section-label {
+  margin: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.vtt-control-sidebar-tool-grid,
+.vtt-control-sidebar-toggle-grid {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.vtt-control-sidebar-tool-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.vtt-control-sidebar-toggle-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.vtt-control-sidebar-tabs {
+  flex-shrink: 0;
+}
+
+.vtt-control-sidebar-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0.65rem;
+}
+
+.vtt-control-sidebar-footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.55rem 0.65rem 0.65rem;
+  border-top: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.14));
+}
+
+.vtt-stage-shell {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.vtt-stage-shell > * {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.vtt-loading-shell {
+  min-height: calc(100dvh - var(--app-chrome-height));
+}
+
+@media (min-width: 640px) {
+  .vtt-control-sidebar {
+    width: min(20rem, 34vw);
+    max-width: 22rem;
+    max-height: none;
+    height: 100%;
+    flex-shrink: 0;
+  }
+
+  .vtt-stage-shell {
+    height: 100%;
+  }
+}
+
+@media (min-width: 1280px) {
+  .vtt-control-sidebar {
+    width: 22rem;
+  }
+}
+
 .workshop-workspace-main,
 .library-workshop-browse,
 .workshop-page-main {
   min-width: 0;
   flex: 0 1 auto;
-  max-height: min(44vh, 22rem);
+  max-height: clamp(10rem, 38dvh, 100%);
+  min-height: clamp(8rem, 26dvh, 100%);
 }
 
 .forge-content-body--creating .print-generation-root,
@@ -627,7 +794,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 .workshop-page-preview {
   min-width: 0;
   flex: 1 1 auto;
-  min-height: min(36vh, 18rem);
+  min-height: clamp(12rem, 42dvh, 100%);
   position: static;
   border-top: 1px dashed rgba(154, 116, 22, 0.28);
   padding-top: 0.75rem;
@@ -645,7 +812,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   .workshop-workspace-main,
   .library-workshop-browse,
   .workshop-page-main {
-    flex: 0 1 42%;
+    flex: 0 1 var(--forge-workspace-share);
     max-height: none;
     min-height: 0;
   }
@@ -653,7 +820,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   .forge-content-body--creating .print-generation-root,
   .forge-content-body--library .library-workshop-preview,
   .workshop-page-preview {
-    flex: 1 1 58%;
+    flex: 1 1 var(--forge-preview-share);
     min-height: 0;
   }
 }
@@ -806,7 +973,7 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  min-height: min(70vh, 36rem);
+  min-height: clamp(14rem, 52dvh, 100%);
 }
 
 .workshop-welcome-main {
@@ -994,7 +1161,8 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   .workshop-welcome-panel,
   .forge-content-body--welcome .workshop-welcome-main {
     min-height: 0;
-    max-height: calc(100dvh - 10rem);
+    max-height: none;
+    height: 100%;
   }
 }
 

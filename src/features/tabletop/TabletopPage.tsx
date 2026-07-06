@@ -3,11 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import Link from "next/link";
-import WorkshopSidebarWithRouting from "@/features/workshop/WorkshopSidebarWithRouting";
-import ForgeContentShell from "@/features/workshop/ForgeContentShell";
 import BattleStage, { type StageTool } from "@/features/tabletop/BattleStage";
+import VttControlSidebar, { type VttSidePanel } from "@/features/tabletop/VttControlSidebar";
 import { useGenerationLibraryImages } from "@/features/tabletop/useGenerationLibraryImages";
-import { ToolButton, ToggleChip } from "@/features/ui/ToggleButton";
 import {
   SrdClassSubclassFields,
   SrdSpeciesSelect,
@@ -76,8 +74,6 @@ import {
 
 const QUICK_DICE = ["1d4", "1d6", "1d8", "1d10", "1d12", "1d20", "2d6", "1d100"];
 
-type SidePanel = "party" | "tokens" | "initiative" | "dice" | "map";
-
 export default function TabletopPage() {
   const [session, setSession] = useState<TabletopSession | null>(null);
   const sessionRef = useRef<TabletopSession>(createDefaultSession());
@@ -86,7 +82,7 @@ export default function TabletopPage() {
   const [tool, setTool] = useState<StageTool>("select");
   const [brushRadius, setBrushRadius] = useState(1);
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
-  const [panel, setPanel] = useState<SidePanel>("tokens");
+  const [panel, setPanel] = useState<VttSidePanel>("tokens");
   const mainRef = useRef<HTMLElement | null>(null);
   const pendingImportHandled = useRef(false);
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
@@ -133,13 +129,10 @@ export default function TabletopPage() {
 
   if (!session) {
     return (
-      <main className="app-main app-main--table app-main--workplace-page mx-auto flex w-full flex-1 flex-col gap-4 px-3 py-6 min-h-0">
-        <WorkshopSidebarWithRouting />
-        <ForgeContentShell bodyClassName="forge-content-body--vtt">
-          <div className="vtt-workspace-main flex flex-1 items-center justify-center text-center text-sm text-[var(--muted)]">
-            Preparing the table&hellip;
-          </div>
-        </ForgeContentShell>
+      <main className="app-main app-main--table app-main--vtt mx-auto flex w-full flex-1 flex-col min-h-0 px-2 py-2 sm:px-3 sm:py-3">
+        <div className="vtt-loading-shell flex flex-1 items-center justify-center text-center text-sm text-[var(--muted)]">
+          Preparing the table&hellip;
+        </div>
       </main>
     );
   }
@@ -164,199 +157,81 @@ export default function TabletopPage() {
     setPanel("tokens");
   };
 
+  const activeCombatantLabel = activeEntry
+    ? `Round ${session.initiative.round}: ${activeEntry.name}`
+    : null;
+
   return (
     <main
       ref={mainRef}
-      className="app-main app-main--table app-main--workplace-page mx-auto flex w-full flex-1 flex-col gap-3 px-3 py-3 min-h-0"
+      className="app-main app-main--table app-main--vtt mx-auto flex w-full flex-1 min-h-0 px-2 py-2 sm:px-3 sm:py-3"
       style={{
         height: isFullscreen ? "100dvh" : undefined,
         paddingTop: isFullscreen ? 12 : undefined,
         background: isFullscreen ? "var(--bg)" : undefined,
       }}
     >
-      <WorkshopSidebarWithRouting />
-
-      <ForgeContentShell bodyClassName="forge-content-body--vtt">
-      <div className="vtt-workspace-main flex min-h-0 flex-1 flex-col gap-3">
-      <div className="zone-toolbar">
-        <h1 className="zone-toolbar-title">Virtual Table</h1>
-        <span className="zone-badge" title="Dungeon Master screen — players use the separate player view">
-          DM view
-        </span>
-
-        <span className="zone-divider" aria-hidden="true" />
-
-        <ToolButton
-          label="Move"
-          active={tool === "select"}
-          onClick={() => setTool("select")}
-          title="Drag tokens, drag empty ground to pan, scroll to zoom"
-        />
-        <ToolButton
-          label="Reveal fog"
-          active={tool === "reveal"}
-          onClick={() => setTool("reveal")}
-          title="Paint fog away for the players"
-        />
-        <ToolButton
-          label="Hide fog"
-          active={tool === "hide"}
-          onClick={() => setTool("hide")}
-          title="Paint fog back over the map"
-        />
-        {(tool === "reveal" || tool === "hide") && (
-          <label className="flex items-center gap-1 text-xs text-[var(--muted)]">
-            Brush
-            <select
-              value={brushRadius}
-              onChange={(e) => setBrushRadius(Number(e.target.value))}
-              className="btn btn-sm"
-              style={{ padding: "0.25rem 0.5rem" }}
-            >
-              <option value={0}>1 cell</option>
-              <option value={1}>3&times;3</option>
-              <option value={2}>5&times;5</option>
-              <option value={3}>7&times;7</option>
-            </select>
-          </label>
+      <VttControlSidebar
+        session={session}
+        tool={tool}
+        onToolChange={setTool}
+        brushRadius={brushRadius}
+        onBrushRadiusChange={setBrushRadius}
+        panel={panel}
+        onPanelChange={setPanel}
+        onFogEnabledChange={(v) => update((s) => ({ ...s, fog: { ...s.fog, enabled: v } }))}
+        onGridVisibleChange={(v) => update((s) => ({ ...s, grid: { ...s.grid, visible: v } }))}
+        onGridSnapChange={(v) => update((s) => ({ ...s, grid: { ...s.grid, snap: v } }))}
+        activeCombatant={activeCombatantLabel}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={() => toggleFullscreen(mainRef.current)}
+        onOpenPlayerView={openPlayerView}
+        onClearTable={clearTable}
+      >
+        {panel === "party" && (
+          <PartyPanel session={session} update={update} onSelectToken={setSelectedTokenId} />
         )}
-
-        <span className="zone-divider" aria-hidden="true" />
-
-        <ToggleChip
-          label="Fog"
-          checked={session.fog.enabled}
-          onChange={(v) => update((s) => ({ ...s, fog: { ...s.fog, enabled: v } }))}
-          title="Fog of war — covers the map so players only see what you reveal"
-        />
-        <ToggleChip
-          label="Grid"
-          checked={session.grid.visible}
-          onChange={(v) => update((s) => ({ ...s, grid: { ...s.grid, visible: v } }))}
-          title="Show or hide the battle grid squares"
-        />
-        <ToggleChip
-          label="Snap"
-          checked={session.grid.snap}
-          onChange={(v) => update((s) => ({ ...s, grid: { ...s.grid, snap: v } }))}
-          title="Tokens click into grid squares when you drop them"
-        />
-
-        <span className="zone-divider" aria-hidden="true" />
-
-        <button
-          type="button"
-          onClick={clearTable}
-          className="btn btn-sm"
-          style={{ color: "#b91c1c", borderColor: "rgba(248,113,113,0.45)" }}
-          title="Start with a blank table — removes tokens, party, map, fog, initiative, and dice log"
-        >
-          Clear table
-        </button>
-
-        <span className="flex-1" />
-
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {activeEntry && (
-            <span
-              className="zone-badge"
-              style={{ textTransform: "none", letterSpacing: "0.02em" }}
-            >
-              Round {session.initiative.round}: {activeEntry.name}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => toggleFullscreen(mainRef.current)}
-            className="btn btn-sm"
-            title={isFullscreen ? "Leave full screen" : "Fill the whole screen for play"}
-          >
-            {isFullscreen ? "Exit full screen" : "Full screen"}
-          </button>
-          <button type="button" onClick={openPlayerView} className="btn btn-sm btn-accent">
-            Open player view &#8599;
-          </button>
-        </div>
-      </div>
-
-      <div className="flex min-h-0 flex-1 gap-3">
-        <div className="min-w-0 flex-1">
-          <BattleStage
+        {panel === "tokens" && (
+          <TokensPanel
             session={session}
-            mode="dm"
-            tool={tool}
-            brushRadius={brushRadius}
-            selectedTokenId={selectedTokenId}
-            activeTokenId={activeEntry?.tokenId ?? null}
-            onSelectToken={setSelectedTokenId}
-            onMoveToken={(id, x, y) =>
-              update((s) => ({
-                ...s,
-                tokens: s.tokens.map((t) => (t.id === id ? { ...t, x, y } : t)),
-              }))
-            }
-            onPaintCells={(keys, reveal) =>
-              update((s) => ({
-                ...s,
-                fog: {
-                  ...s.fog,
-                  revealed: reveal
-                    ? addRevealed(s.fog.revealed, keys)
-                    : removeRevealed(s.fog.revealed, keys),
-                },
-              }))
-            }
+            selectedToken={selectedToken}
+            onSelect={setSelectedTokenId}
+            update={update}
           />
-        </div>
+        )}
+        {panel === "initiative" && <InitiativePanel session={session} update={update} />}
+        {panel === "dice" && <DicePanel session={session} update={update} />}
+        {panel === "map" && <MapPanel session={session} update={update} />}
+      </VttControlSidebar>
 
-        <aside
-          className="fantasy-panel flex w-[21rem] shrink-0 flex-col overflow-hidden rounded-xl border sm:w-[22rem]"
-          style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-        >
-          <div className="panel-tabs" role="tablist" aria-label="Virtual Table panels">
-            {(
-              [
-                ["party", "Party", "Party"],
-                ["tokens", "Tokens", "Tokens"],
-                ["initiative", "Init.", "Initiative"],
-                ["dice", "Dice", "Dice"],
-                ["map", "Map", "Map"],
-              ] as [SidePanel, string, string][]
-            ).map(([id, label, title]) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                title={title}
-                onClick={() => setPanel(id)}
-                className={`panel-tab${panel === id ? " panel-tab-active" : ""}`}
-                aria-selected={panel === id}
-              >
-                <span className="panel-tab-label">{label}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto p-3">
-            {panel === "party" && (
-              <PartyPanel session={session} update={update} onSelectToken={setSelectedTokenId} />
-            )}
-            {panel === "tokens" && (
-              <TokensPanel
-                session={session}
-                selectedToken={selectedToken}
-                onSelect={setSelectedTokenId}
-                update={update}
-              />
-            )}
-            {panel === "initiative" && <InitiativePanel session={session} update={update} />}
-            {panel === "dice" && <DicePanel session={session} update={update} />}
-            {panel === "map" && <MapPanel session={session} update={update} />}
-          </div>
-        </aside>
+      <div className="vtt-stage-shell min-h-0 min-w-0 flex-1">
+        <BattleStage
+          session={session}
+          mode="dm"
+          tool={tool}
+          brushRadius={brushRadius}
+          selectedTokenId={selectedTokenId}
+          activeTokenId={activeEntry?.tokenId ?? null}
+          onSelectToken={setSelectedTokenId}
+          onMoveToken={(id, x, y) =>
+            update((s) => ({
+              ...s,
+              tokens: s.tokens.map((t) => (t.id === id ? { ...t, x, y } : t)),
+            }))
+          }
+          onPaintCells={(keys, reveal) =>
+            update((s) => ({
+              ...s,
+              fog: {
+                ...s.fog,
+                revealed: reveal
+                  ? addRevealed(s.fog.revealed, keys)
+                  : removeRevealed(s.fog.revealed, keys),
+              },
+            }))
+          }
+        />
       </div>
-      </div>
-      </ForgeContentShell>
     </main>
   );
 }
