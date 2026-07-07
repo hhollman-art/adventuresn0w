@@ -26,4 +26,4 @@ Before any change to campaigns, characters, Creation Files (CFs), the Library, S
 
 *Can a DM still do everything they could before this change, using manual tools and saved assets?* If not, add the missing path before merging.
 
-Related: `cmdb-configuration-items`, `workshop-library`, `dm-control-tower`, `campaign-cf-management`.
+Related: `dm-management-system`, `cmdb-configuration-items`, `workshop-library`, `dm-control-tower`, `campaign-cf-management`.

@@ -21,6 +21,7 @@ export type CiCategory =
   | "results"
   | "characters"
   | "items"
+  | "world"
   | "parties"
   | "campaigns"
   | "sessions"
@@ -46,6 +47,9 @@ export type CiClass =
   | "item.srd-magic"
   | "party.roster"
   | "campaign.record"
+  | "npc.record"
+  | "location.record"
+  | "session.record"
   | "session.tabletop"
   | "session.snapshot"
   | "rules.srd-entry"
@@ -201,6 +205,30 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
     provenance: "user",
     inBackup: true,
   },
+  "npc.record": {
+    ciClass: "npc.record",
+    category: "world",
+    label: "NPC record",
+    storageModule: "src/lib/worldAssets/npc.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "location.record": {
+    ciClass: "location.record",
+    category: "world",
+    label: "Location record",
+    storageModule: "src/lib/worldAssets/location.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "session.record": {
+    ciClass: "session.record",
+    category: "sessions",
+    label: "Session log",
+    storageModule: "src/lib/sessions/record.ts",
+    provenance: "user",
+    inBackup: true,
+  },
   "session.tabletop": {
     ciClass: "session.tabletop",
     category: "sessions",
@@ -266,6 +294,12 @@ export function ciClassForGameItem(kind: "equipment" | "magic"): CiClass {
 export const CI_CLASS_FOR_PARTY: CiClass = "party.roster";
 
 export const CI_CLASS_FOR_CAMPAIGN: CiClass = "campaign.record";
+
+export const CI_CLASS_FOR_NPC: CiClass = "npc.record";
+
+export const CI_CLASS_FOR_LOCATION: CiClass = "location.record";
+
+export const CI_CLASS_FOR_SESSION_RECORD: CiClass = "session.record";
 
 /** Short label for a Creation File (CF) class (CMDB badge in the Library). */
 export function ciClassLabel(ciClass: CiClass): string {

@@ -10,6 +10,7 @@ import {
   openSrdSpellPreview,
   srdSpellsForClass,
 } from "@/lib/srd";
+import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 
 type SrdNamedSelectProps = {
   label: string;
@@ -204,7 +205,7 @@ export function SrdSpellPicker({ className, selectedIds, onChange }: SrdSpellPic
                 onClick={() => openSrdSpellPreview(spell)}
                 className="shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold text-[var(--accent)]"
                 style={{ borderColor: "var(--accent-dim)" }}
-                title={`Open ${spell.name} in the Preview Window`}
+                title={`Open ${spell.name} in the ${PREVIEW_WINDOW}`}
               >
                 Rules
               </button>

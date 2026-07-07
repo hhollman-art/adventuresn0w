@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Campaign & Creation File management (AI instructions)
 
-Complements `preserve-and-expand` and `cmdb-configuration-items`. Expand the CMDB; do not replace it.
+Complements `preserve-and-expand`, `dm-management-system`, and `cmdb-configuration-items`. Expand the CMDB; do not replace it.
 
 ## Core principles
 

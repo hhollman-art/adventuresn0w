@@ -15,9 +15,12 @@ import {
   LIBRARY_PROVENANCE_LABEL,
   LIBRARY_PROVENANCE_STORAGE,
   LIBRARY_PROVENANCE_TIERS,
+  locationToLibraryEntry,
+  npcToLibraryEntry,
   partyToLibraryEntry,
   resultToLibraryEntry,
   seedToLibraryEntry,
+  sessionRecordToLibraryEntry,
   sortLibraryEntries,
   type LibraryListEntry,
   type LibraryProvenance,
@@ -34,6 +37,8 @@ import {
 } from "@/lib/workshop/libraryBrowseFilters";
 import { ciClassVisual } from "@/lib/ui/ciClassVisuals";
 import LibraryBrowseToolbar from "@/features/workshop/LibraryBrowseToolbar";
+import LibraryEntryDetailPane from "@/features/workshop/LibraryEntryDetailPane";
+import LibraryThreePaneBrowse from "@/features/workshop/LibraryThreePaneBrowse";
 import {
   listSrdItemLibraryEntries,
   listSrdMonstersLibraryEntries,
@@ -63,6 +68,9 @@ import type { RealmScopeTag, SavedRealmSeed, SeedKind } from "@/lib/realmSeeds";
 import type { SavedCharacter } from "@/lib/tabletop/characterLibrary";
 import type { SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
 import type { SavedGameItem } from "@/lib/itemLibrary";
+import type { SavedSessionRecord } from "@/lib/sessions/record";
+import type { SavedNpc } from "@/lib/worldAssets/npc";
+import type { SavedLocation } from "@/lib/worldAssets/location";
 import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
 import { collectUserSeedTags, filterSeeds, seedTagLabel } from "@/lib/seedTags";
 import type { CiClass } from "@/lib/ciRegistry";
@@ -86,6 +94,9 @@ export type LibraryViewSelection =
   | { kind: "item"; id: string }
   | { kind: "party"; id: string }
   | { kind: "campaign"; id: string }
+  | { kind: "npc"; id: string }
+  | { kind: "location"; id: string }
+  | { kind: "session"; id: string }
   | { kind: "srd"; resource: SrdApiResource; index: string; name: string }
   | { kind: "srd-entity"; entityId: SrdEntityId; name: string }
   | null;
@@ -104,6 +115,9 @@ type WorkshopLibraryPanelProps = {
   items: SavedGameItem[];
   parties: SavedCharacterRoster[];
   campaigns: SavedCampaign[];
+  npcs: SavedNpc[];
+  locations: SavedLocation[];
+  sessionRecords: SavedSessionRecord[];
   category: WorkshopLibraryCategory;
   selection: LibraryViewSelection;
   statusMessage: string | null;
@@ -119,6 +133,12 @@ type WorkshopLibraryPanelProps = {
   onDeleteCharacter: (id: string) => void;
   onDeleteItem: (id: string) => void;
   onDeleteParty: (id: string) => void;
+  onDeleteNpc: (id: string) => void;
+  onDeleteLocation: (id: string) => void;
+  onDeleteSession: (id: string) => void;
+  onAddNpc?: () => void;
+  onAddLocation?: () => void;
+  onAddSession?: () => void;
   onPartiesChange: (parties: SavedCharacterRoster[]) => void;
   /** Called after a backup restore so the parent can refresh all lists. */
   onRestore: (outcome: RestoreOutcome) => void;
@@ -279,8 +299,10 @@ function isSelected(selection: LibraryViewSelection, entry: LibraryListEntry): b
     results: "result",
     characters: "character",
     items: "item",
+    world: entry.ciClass === "location.record" ? "location" : "npc",
     parties: "party",
     campaigns: "campaign",
+    sessions: "session",
   } as const;
   const expectedKind = kindMap[entry.category as keyof typeof kindMap];
   if (!expectedKind || selection.kind !== expectedKind) return false;
@@ -303,6 +325,7 @@ function LibraryEntryRow({
   editLabel?: string;
 }) {
   const visual = ciClassVisual(entry.ciClass);
+  const borderTone = selected ? "var(--accent)" : "var(--border)";
   return (
     <li
       draggable={Boolean(entry.srdEntityId)}
@@ -334,7 +357,9 @@ function LibraryEntryRow({
         }`}
         data-ci-class={entry.ciClass}
         style={{
-          borderColor: selected ? "var(--accent)" : "var(--border)",
+          borderTopColor: borderTone,
+          borderRightColor: borderTone,
+          borderBottomColor: borderTone,
           background: selected ? "rgba(201, 162, 39, 0.1)" : undefined,
           borderLeftWidth: "3px",
           borderLeftColor: visual.accent,
@@ -415,6 +440,9 @@ export default function WorkshopLibraryPanel({
   items,
   parties,
   campaigns,
+  npcs = [],
+  locations = [],
+  sessionRecords = [],
   category,
   selection,
   statusMessage,
@@ -429,6 +457,12 @@ export default function WorkshopLibraryPanel({
   onDeleteCharacter,
   onDeleteItem,
   onDeleteParty,
+  onDeleteNpc,
+  onDeleteLocation,
+  onDeleteSession,
+  onAddNpc,
+  onAddLocation,
+  onAddSession,
   onPartiesChange,
   onRestore,
   onStatus,
@@ -517,6 +551,25 @@ export default function WorkshopLibraryPanel({
         : items,
     [scopedToCampaign, items, activeCampaign],
   );
+  const campaignNpcs = useMemo(
+    () =>
+      scopedToCampaign ? npcs.filter((n) => activeCampaign.npcIds.includes(n.id)) : npcs,
+    [scopedToCampaign, npcs, activeCampaign],
+  );
+  const campaignLocations = useMemo(
+    () =>
+      scopedToCampaign
+        ? locations.filter((l) => activeCampaign.locationIds.includes(l.id))
+        : locations,
+    [scopedToCampaign, locations, activeCampaign],
+  );
+  const campaignSessionRecords = useMemo(
+    () =>
+      scopedToCampaign
+        ? sessionRecords.filter((r) => activeCampaign.sessionRecordIds.includes(r.id))
+        : sessionRecords,
+    [scopedToCampaign, sessionRecords, activeCampaign],
+  );
   const campaignRecords = useMemo(
     () =>
       scopedToCampaign ? campaigns.filter((c) => c.id === activeCampaign.id) : campaigns,
@@ -546,6 +599,9 @@ export default function WorkshopLibraryPanel({
       ...campaignResults.map(resultToLibraryEntry),
       ...campaignCharacters.map(characterToLibraryEntry),
       ...campaignItems.map(gameItemToLibraryEntry),
+      ...campaignNpcs.map(npcToLibraryEntry),
+      ...campaignLocations.map(locationToLibraryEntry),
+      ...campaignSessionRecords.map(sessionRecordToLibraryEntry),
       ...srdItemsForShelf,
       ...srdRulesForShelf,
       ...srdMonstersForShelf,
@@ -563,6 +619,9 @@ export default function WorkshopLibraryPanel({
     campaignResults,
     campaignCharacters,
     campaignItems,
+    campaignNpcs,
+    campaignLocations,
+    campaignSessionRecords,
     campaignParties,
     campaignRecords,
   ]);
@@ -574,10 +633,12 @@ export default function WorkshopLibraryPanel({
       results: shelfEntriesForCategory(allEntries, "results").length,
       characters: shelfEntriesForCategory(allEntries, "characters").length,
       items: shelfEntriesForCategory(allEntries, "items").length,
+      world: shelfEntriesForCategory(allEntries, "world").length,
       rules: shelfEntriesForCategory(allEntries, "rules").length,
       monsters: shelfEntriesForCategory(allEntries, "monsters").length,
       parties: shelfEntriesForCategory(allEntries, "parties").length,
       campaigns: shelfEntriesForCategory(allEntries, "campaigns").length,
+      sessions: shelfEntriesForCategory(allEntries, "sessions").length,
     }),
     [allEntries],
   );
@@ -604,6 +665,11 @@ export default function WorkshopLibraryPanel({
 
   const seedTagOptions = useMemo(() => collectUserSeedTags(campaignSeeds), [campaignSeeds]);
 
+  const selectedEntry = useMemo(
+    () => (selection ? entries.find((e) => isSelected(selection, e)) ?? null : null),
+    [selection, entries],
+  );
+
   const onExportBackup = async () => {
     onStatus(null);
     const backup = await buildLibraryBackup();
@@ -613,7 +679,10 @@ export default function WorkshopLibraryPanel({
       backup.characters.length +
       backup.items.length +
       backup.parties.length +
-      backup.campaigns.length;
+      backup.campaigns.length +
+      (backup.npcs?.length ?? 0) +
+      (backup.locations?.length ?? 0) +
+      (backup.sessionRecords?.length ?? 0);
     if (total === 0) {
       onStatus("Nothing to back up yet — your library is empty.");
       return;
@@ -628,7 +697,7 @@ export default function WorkshopLibraryPanel({
     a.click();
     URL.revokeObjectURL(url);
     onStatus(
-      `Backup exported (${backup.seeds.length} CFs, ${backup.results.length} results, ${backup.characters.length} heroes, ${backup.items.length} items, ${backup.parties.length} parties, ${backup.campaigns.length} campaigns). Save it anywhere you like — folder, cloud drive, or repository.`,
+      `Backup exported (${backup.seeds.length} CFs, ${backup.results.length} results, ${backup.characters.length} heroes, ${backup.items.length} items, ${backup.npcs?.length ?? 0} NPCs, ${backup.locations?.length ?? 0} locations, ${backup.sessionRecords?.length ?? 0} session logs, ${backup.parties.length} parties, ${backup.campaigns.length} campaigns). Save it anywhere you like — folder, cloud drive, or repository.`,
     );
   };
 
@@ -782,6 +851,21 @@ export default function WorkshopLibraryPanel({
           <button type="button" onClick={onAddSeed} className="btn btn-sm btn-accent">
             Plant a CF
           </button>
+          {onAddNpc && (category === "world" || category === "all") ? (
+            <button type="button" onClick={onAddNpc} className="btn btn-sm">
+              Add NPC
+            </button>
+          ) : null}
+          {onAddLocation && (category === "world" || category === "all") ? (
+            <button type="button" onClick={onAddLocation} className="btn btn-sm">
+              Add location
+            </button>
+          ) : null}
+          {onAddSession && (category === "sessions" || category === "all") ? (
+            <button type="button" onClick={onAddSession} className="btn btn-sm">
+              Log session
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -835,7 +919,7 @@ export default function WorkshopLibraryPanel({
         </p>
       ) : null}
 
-      {!srdOpen ? (
+      {!srdOpen && !wideLayout ? (
         <LibraryBrowseToolbar
           search={searchQuery}
           onSearchChange={setSearchQuery}
@@ -881,6 +965,250 @@ export default function WorkshopLibraryPanel({
           selection={selection}
           onSelect={onSelect}
         />
+      ) : wideLayout ? (
+        <LibraryThreePaneBrowse
+          navPane={
+            <LibraryBrowseToolbar
+              variant="shelves-only"
+              search={searchQuery}
+              onSearchChange={setSearchQuery}
+              shelf={category}
+              onShelfChange={(next) => {
+                onSrdOpenChange(false);
+                setCiClassFilter("all");
+                onCategoryChange(next);
+              }}
+              shelfCounts={shelfCounts}
+              ciClassFilter={ciClassFilter}
+              onCiClassFilterChange={setCiClassFilter}
+              ciClassOptions={ciClassOptions}
+              provenanceFilter={provenanceFilter}
+              onProvenanceFilterChange={setProvenanceFilter}
+            />
+          }
+          listPane={
+            <>
+              <LibraryBrowseToolbar
+                variant="filters-only"
+                search={searchQuery}
+                onSearchChange={setSearchQuery}
+                shelf={category}
+                onShelfChange={(next) => {
+                  onSrdOpenChange(false);
+                  setCiClassFilter("all");
+                  onCategoryChange(next);
+                }}
+                shelfCounts={shelfCounts}
+                ciClassFilter={ciClassFilter}
+                onCiClassFilterChange={setCiClassFilter}
+                ciClassOptions={ciClassOptions}
+                provenanceFilter={provenanceFilter}
+                onProvenanceFilterChange={setProvenanceFilter}
+                showSeedRefine={category === "seeds" || category === "all"}
+                seedKindFilter={seedKindFilter}
+                onSeedKindFilterChange={setSeedKindFilter}
+                seedTagFilter={seedTagFilter}
+                onSeedTagFilterChange={setSeedTagFilter}
+                seedScopeFilter={seedScopeFilter}
+                onSeedScopeFilterChange={setSeedScopeFilter}
+                seedTagOptions={seedTagOptions}
+              />
+              {entries.length === 0 ? (
+                <p className="text-sm leading-relaxed text-[var(--muted)]">
+                  {searchQuery.trim() || ciClassFilter !== "all" || provenanceFilter !== "all"
+                    ? "No entries match your search or filters — try clearing a filter or widening your query."
+                    : browseEmptyMessage(
+                        category,
+                        scopedToCampaign ? activeCampaign?.name : undefined,
+                      )}
+                </p>
+              ) : (
+                <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
+                  {entries.map((entry) => {
+                    const selected = isSelected(selection, entry);
+                    const select = () => {
+                      if (entry.srdEntityId) {
+                        onSelect({
+                          kind: "srd-entity",
+                          entityId: entry.srdEntityId,
+                          name: entry.title,
+                        });
+                        return;
+                      }
+                      if (entry.srdItemRef) {
+                        onSelect({
+                          kind: "srd",
+                          resource: entry.srdItemRef.resource,
+                          index: entry.srdItemRef.index,
+                          name: entry.title,
+                        });
+                        return;
+                      }
+                      if (entry.category === "seeds") onSelect({ kind: "seed", id: entry.id });
+                      else if (entry.category === "results")
+                        onSelect({ kind: "result", id: entry.id });
+                      else if (entry.category === "characters")
+                        onSelect({ kind: "character", id: entry.id });
+                      else if (entry.category === "items")
+                        onSelect({ kind: "item", id: entry.id });
+                      else if (entry.category === "world") {
+                        if (entry.ciClass === "location.record") {
+                          onSelect({ kind: "location", id: entry.id });
+                        } else {
+                          onSelect({ kind: "npc", id: entry.id });
+                        }
+                      } else if (entry.category === "sessions")
+                        onSelect({ kind: "session", id: entry.id });
+                      else if (entry.category === "campaigns")
+                        onSelect({ kind: "campaign", id: entry.id });
+                      else onSelect({ kind: "party", id: entry.id });
+                    };
+
+                    if (entry.category === "seeds") {
+                      return (
+                        <LibraryEntryRow
+                          key={`seed-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          onEdit={() => onEditSeed(entry.id)}
+                          onDelete={() => onDeleteSeed(entry.id)}
+                          editLabel="Revise CF"
+                        />
+                      );
+                    }
+
+                    if (entry.category === "results") {
+                      return (
+                        <LibraryEntryRow
+                          key={`result-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          onDelete={() => onDeleteResult(entry.id)}
+                        />
+                      );
+                    }
+
+                    if (entry.category === "characters") {
+                      return (
+                        <LibraryEntryRow
+                          key={`character-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          onDelete={() => onDeleteCharacter(entry.id)}
+                          editLabel="Manage heroes"
+                          onEdit={() => {
+                            window.location.href = "/tavern";
+                          }}
+                        />
+                      );
+                    }
+
+                    if (entry.srdItemRef || entry.srdEntityId) {
+                      return (
+                        <LibraryEntryRow
+                          key={entry.id}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                        />
+                      );
+                    }
+
+                    if (entry.category === "items") {
+                      return (
+                        <LibraryEntryRow
+                          key={`item-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          onDelete={() => onDeleteItem(entry.id)}
+                          editLabel="Open treasury"
+                          onEdit={() => {
+                            window.location.href = "/items";
+                          }}
+                        />
+                      );
+                    }
+
+                    if (entry.category === "world") {
+                      const isNpc = entry.ciClass === "npc.record";
+                      return (
+                        <LibraryEntryRow
+                          key={`world-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          onDelete={() =>
+                            isNpc ? onDeleteNpc(entry.id) : onDeleteLocation(entry.id)
+                          }
+                        />
+                      );
+                    }
+
+                    if (entry.category === "sessions") {
+                      return (
+                        <LibraryEntryRow
+                          key={`session-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          onDelete={() => onDeleteSession(entry.id)}
+                        />
+                      );
+                    }
+
+                    if (entry.category === "campaigns") {
+                      return (
+                        <LibraryEntryRow
+                          key={`campaign-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          editLabel="Tend chronicle"
+                          onEdit={() => {
+                            window.location.href = "/campaigns";
+                          }}
+                        />
+                      );
+                    }
+
+                    return (
+                      <LibraryEntryRow
+                        key={`party-${entry.id}`}
+                        entry={entry}
+                        selected={selected}
+                        onView={select}
+                        onDelete={() => onDeleteParty(entry.id)}
+                        editLabel="Gather fellowship"
+                        onEdit={() => {
+                          window.location.href = "/tavern";
+                        }}
+                      />
+                    );
+                  })}
+                </ul>
+              )}
+            </>
+          }
+          detailPane={
+            <LibraryEntryDetailPane
+              selection={selection}
+              entry={selectedEntry}
+              seeds={seeds}
+              results={results}
+              characters={characters}
+              items={items}
+              parties={parties}
+              campaigns={campaigns}
+              npcs={npcs}
+              locations={locations}
+              sessionRecords={sessionRecords}
+            />
+          }
+        />
       ) : entries.length === 0 ? (
         <p className="text-sm leading-relaxed text-[var(--muted)]">
           {searchQuery.trim() || ciClassFilter !== "all" || provenanceFilter !== "all"
@@ -923,6 +1251,14 @@ export default function WorkshopLibraryPanel({
               else if (entry.category === "characters")
                 onSelect({ kind: "character", id: entry.id });
               else if (entry.category === "items") onSelect({ kind: "item", id: entry.id });
+              else if (entry.category === "world") {
+                if (entry.ciClass === "location.record") {
+                  onSelect({ kind: "location", id: entry.id });
+                } else {
+                  onSelect({ kind: "npc", id: entry.id });
+                }
+              } else if (entry.category === "sessions")
+                onSelect({ kind: "session", id: entry.id });
               else if (entry.category === "campaigns")
                 onSelect({ kind: "campaign", id: entry.id });
               else onSelect({ kind: "party", id: entry.id });
@@ -993,6 +1329,31 @@ export default function WorkshopLibraryPanel({
                   onEdit={() => {
                     window.location.href = "/items";
                   }}
+                />
+              );
+            }
+
+            if (entry.category === "world") {
+              const isNpc = entry.ciClass === "npc.record";
+              return (
+                <LibraryEntryRow
+                  key={`world-${entry.id}`}
+                  entry={entry}
+                  selected={selected}
+                  onView={select}
+                  onDelete={() => (isNpc ? onDeleteNpc : onDeleteLocation)(entry.id)}
+                />
+              );
+            }
+
+            if (entry.category === "sessions") {
+              return (
+                <LibraryEntryRow
+                  key={`session-${entry.id}`}
+                  entry={entry}
+                  selected={selected}
+                  onView={select}
+                  onDelete={() => onDeleteSession(entry.id)}
                 />
               );
             }

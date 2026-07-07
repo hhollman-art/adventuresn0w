@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
+import { THE_HEARTH } from "@/lib/workplace/forgeLexicon";
 import { buildWorkshopBreadcrumbs } from "@/lib/workshop/workshopBreadcrumbs";
 
 describe("buildWorkshopBreadcrumbs", () => {
+  it("shows only The Hearth on the welcome page", () => {
+    expect(
+      buildWorkshopBreadcrumbs({
+        pathname: "/",
+        workspace: "welcome",
+      }),
+    ).toEqual([{ label: THE_HEARTH }]);
+  });
+
   it("builds library shelf crumbs", () => {
     expect(
       buildWorkshopBreadcrumbs({
@@ -10,7 +20,7 @@ describe("buildWorkshopBreadcrumbs", () => {
         libraryCategory: "monsters",
       }),
     ).toEqual([
-      { label: "Home", href: "/" },
+      { label: THE_HEARTH, href: "/" },
       { label: "Library", href: "/library" },
       { label: "Bestiary" },
     ]);
@@ -22,6 +32,6 @@ describe("buildWorkshopBreadcrumbs", () => {
         pathname: "/",
         workspace: "adventure",
       }),
-    ).toEqual([{ label: "Home", href: "/" }, { label: "Adventure" }]);
+    ).toEqual([{ label: THE_HEARTH, href: "/" }, { label: "Adventure" }]);
   });
 });

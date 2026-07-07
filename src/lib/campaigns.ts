@@ -39,6 +39,12 @@ export type SavedCampaign = {
   characterIds: string[];
   /** Linked user item ids (itemLibrary.ts). References — may be shared. */
   itemIds: string[];
+  /** Linked NPC ids (worldAssets/npc.ts). References — may be shared. */
+  npcIds: string[];
+  /** Linked location ids (worldAssets/location.ts). References — may be shared. */
+  locationIds: string[];
+  /** Linked session log ids (sessions/record.ts). References — may be shared. */
+  sessionRecordIds: string[];
 };
 
 function newId(): string {
@@ -72,6 +78,9 @@ export function fixSavedCampaign(value: unknown): SavedCampaign | null {
     resultIds: stringArray(o.resultIds),
     characterIds: stringArray(o.characterIds),
     itemIds: stringArray(o.itemIds),
+    npcIds: stringArray(o.npcIds),
+    locationIds: stringArray(o.locationIds),
+    sessionRecordIds: stringArray(o.sessionRecordIds),
   };
 }
 
@@ -226,6 +235,9 @@ export type SaveCampaignInput = {
   resultIds?: string[];
   characterIds?: string[];
   itemIds?: string[];
+  npcIds?: string[];
+  locationIds?: string[];
+  sessionRecordIds?: string[];
 };
 
 export async function saveCampaign(input: SaveCampaignInput): Promise<SavedCampaign[]> {
@@ -243,6 +255,9 @@ export async function saveCampaign(input: SaveCampaignInput): Promise<SavedCampa
       resultIds: stringArray(input.resultIds),
       characterIds: stringArray(input.characterIds),
       itemIds: stringArray(input.itemIds),
+      npcIds: stringArray(input.npcIds),
+      locationIds: stringArray(input.locationIds),
+      sessionRecordIds: stringArray(input.sessionRecordIds),
     };
     const list = [campaign, ...(await loadInternal())].slice(0, MAX_CAMPAIGNS);
     await persist(list);
@@ -258,6 +273,9 @@ export type UpdateCampaignPatch = {
   resultIds?: string[];
   characterIds?: string[];
   itemIds?: string[];
+  npcIds?: string[];
+  locationIds?: string[];
+  sessionRecordIds?: string[];
 };
 
 export async function updateCampaign(
@@ -280,6 +298,13 @@ export async function updateCampaign(
         characterIds:
           patch.characterIds !== undefined ? stringArray(patch.characterIds) : c.characterIds,
         itemIds: patch.itemIds !== undefined ? stringArray(patch.itemIds) : c.itemIds,
+        npcIds: patch.npcIds !== undefined ? stringArray(patch.npcIds) : c.npcIds,
+        locationIds:
+          patch.locationIds !== undefined ? stringArray(patch.locationIds) : c.locationIds,
+        sessionRecordIds:
+          patch.sessionRecordIds !== undefined
+            ? stringArray(patch.sessionRecordIds)
+            : c.sessionRecordIds,
         updatedAt: now,
       };
     });
@@ -297,6 +322,9 @@ export async function linkToCampaign(
     partyId?: string;
     characterId?: string;
     itemId?: string;
+    npcId?: string;
+    locationId?: string;
+    sessionRecordId?: string;
   },
 ): Promise<SavedCampaign[]> {
   if (typeof window === "undefined") return [];
@@ -317,6 +345,15 @@ export async function linkToCampaign(
       if (link.itemId && !next.itemIds.includes(link.itemId)) {
         next.itemIds = [...next.itemIds, link.itemId];
       }
+      if (link.npcId && !next.npcIds.includes(link.npcId)) {
+        next.npcIds = [...next.npcIds, link.npcId];
+      }
+      if (link.locationId && !next.locationIds.includes(link.locationId)) {
+        next.locationIds = [...next.locationIds, link.locationId];
+      }
+      if (link.sessionRecordId && !next.sessionRecordIds.includes(link.sessionRecordId)) {
+        next.sessionRecordIds = [...next.sessionRecordIds, link.sessionRecordId];
+      }
       return next;
     });
     await persist(list);
@@ -335,6 +372,9 @@ export async function unlinkFromCampaign(
     partyId?: boolean;
     characterId?: string;
     itemId?: string;
+    npcId?: string;
+    locationId?: string;
+    sessionRecordId?: string;
   },
 ): Promise<SavedCampaign[]> {
   if (typeof window === "undefined") return [];
@@ -349,6 +389,11 @@ export async function unlinkFromCampaign(
         next.characterIds = next.characterIds.filter((id) => id !== link.characterId);
       }
       if (link.itemId) next.itemIds = next.itemIds.filter((id) => id !== link.itemId);
+      if (link.npcId) next.npcIds = next.npcIds.filter((id) => id !== link.npcId);
+      if (link.locationId) next.locationIds = next.locationIds.filter((id) => id !== link.locationId);
+      if (link.sessionRecordId) {
+        next.sessionRecordIds = next.sessionRecordIds.filter((id) => id !== link.sessionRecordId);
+      }
       return next;
     });
     await persist(list);
@@ -366,6 +411,9 @@ export async function autoLinkToActiveCampaign(link: {
   partyId?: string;
   characterId?: string;
   itemId?: string;
+  npcId?: string;
+  locationId?: string;
+  sessionRecordId?: string;
 }): Promise<void> {
   const activeId = getActiveCampaignId();
   if (!activeId) return;

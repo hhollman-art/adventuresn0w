@@ -9,10 +9,12 @@ export const LIBRARY_SHELF_LABEL: Record<WorkshopLibraryCategory, string> = {
   results: "Prepared scrolls",
   characters: "Heroes",
   items: "Items",
+  world: "World",
   rules: "Rule tomes",
   monsters: "Bestiary",
   parties: "Fellowships",
   campaigns: "Chronicles",
+  sessions: "Session logs",
 };
 
 /** User-facing kind labels mapped from Creation File (CF) class — the “subclass” the filters use. */
@@ -34,6 +36,9 @@ export const LIBRARY_CI_FANTASY_LABEL: Record<CiClass, string> = {
   "item.srd-magic": "SRD magic treasure",
   "party.roster": "Fellowship roster",
   "campaign.record": "Campaign chronicle",
+  "npc.record": "Named NPC",
+  "location.record": "World place",
+  "session.record": "Session log",
   "session.tabletop": "Game table",
   "session.snapshot": "Shelved table",
   "rules.srd-entry": "SRD rule",
@@ -53,10 +58,12 @@ const SHELF_CI_CLASSES: Record<Exclude<WorkshopLibraryCategory, "all">, CiClass[
   results: ciClassesForCategory("results"),
   characters: ciClassesForCategory("characters"),
   items: ciClassesForCategory("items"),
+  world: ciClassesForCategory("world"),
   rules: ciClassesForCategory("rules"),
   monsters: ciClassesForCategory("monsters"),
   parties: ciClassesForCategory("parties"),
   campaigns: ciClassesForCategory("campaigns"),
+  sessions: ciClassesForCategory("sessions"),
 };
 
 export function fantasyCiLabel(ciClass: CiClass): string {
@@ -174,6 +181,8 @@ export function libraryShelfHint(shelf: WorkshopLibraryCategory): string {
       return "Standalone hero sheets — yours to edit and add to fellowships.";
     case "items":
       return "Gear and magic — your creations plus the included SRD catalogue.";
+    case "world":
+      return "Named NPCs and places — motives, secrets, and locations for your table.";
     case "rules":
       return "Spells, classes, and core rules from the bundled SRD — read-only reference.";
     case "monsters":
@@ -182,6 +191,8 @@ export function libraryShelfHint(shelf: WorkshopLibraryCategory): string {
       return "Fellowships assembled for the Virtual Table and campaigns.";
     case "campaigns":
       return "Chronicles that link your party, adventures, and treasures.";
+    case "sessions":
+      return "Play session logs — scenes, clues, loot, and promises from the table.";
   }
 }
 
@@ -225,5 +236,9 @@ export function browseEmptyMessage(
       return "No fellowships yet — gather heroes into a party in The Tavern.";
     case "campaigns":
       return "No chronicles yet — start a campaign to link your party and prep.";
+    case "sessions":
+      return "No session logs yet — record what happened at the table after each game.";
+    case "world":
+      return "No world entries yet — add an NPC or location to build your setting.";
   }
 }

@@ -23,8 +23,8 @@ export function LibraryWorkspaceSection({ libraryPanel }: LibraryWorkspaceSectio
           Search the stacks
         </h2>
         <p className="text-xs leading-relaxed text-[var(--muted)]">
-          Pick a shelf, narrow by kind, then choose a tome — the {PREVIEW_WINDOW} opens
-          automatically for reading and export.
+          Browse shelves on the left, search the stacks in the middle, and read the
+          selected tome on the right — the {PREVIEW_WINDOW} still opens for export.
         </p>
       </div>
       {libraryPanel}

@@ -1,5 +1,5 @@
 import type { WorkplaceId } from "./types";
-import { THE_LIBRARY, THE_TAVERN } from "./forgeLexicon";
+import { THE_HEARTH, THE_LIBRARY, THE_TAVERN } from "./forgeLexicon";
 import { dmTip } from "@/lib/ui/dmTips";
 
 /** Creation generators on the Fantasy Forge home route (`/`). */
@@ -32,7 +32,7 @@ export const WORKSHOP_NAV_GROUP_LABEL: Record<WorkshopNavGroup, string> = {
 export const WORKSHOP_NAV_ITEMS: WorkshopNavItem[] = [
   {
     id: "welcome",
-    label: "Welcome",
+    label: THE_HEARTH,
     hint: "Start at the hearth",
     dmTip: dmTip("welcome"),
     icon: "\u{1F3E0}",

@@ -15,6 +15,10 @@ import { characterToMarkdownFile } from "@/lib/tabletop/characterMarkdown";
 import type { SavedCharacter } from "@/lib/tabletop/characterLibrary";
 import type { SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
 import { SEED_KIND_LABEL, seedDisplayName, type SavedRealmSeed } from "@/lib/realmSeeds";
+import type { SavedSessionRecord } from "@/lib/sessions/record";
+import { sessionRecordToMarkdown } from "@/lib/workshop/libraryCatalog";
+import type { SavedNpc } from "@/lib/worldAssets/npc";
+import type { SavedLocation } from "@/lib/worldAssets/location";
 import type { WorkshopPreviewSnapshot } from "@/lib/workshop/previewSnapshot";
 
 export type BuildLibraryPreviewSnapshotParams = {
@@ -25,13 +29,16 @@ export type BuildLibraryPreviewSnapshotParams = {
   items: SavedGameItem[];
   parties: SavedCharacterRoster[];
   campaigns: SavedCampaign[];
+  npcs: SavedNpc[];
+  locations: SavedLocation[];
+  sessionRecords: SavedSessionRecord[];
   srdPreviewMarkdown?: string;
   srdPreviewLoading?: boolean;
   workspace?: string;
 };
 
 function libraryPreviewMarkdown(params: BuildLibraryPreviewSnapshotParams): string {
-  const { selection, seeds, results, characters, items, parties, campaigns } = params;
+  const { selection, seeds, results, characters, items, parties, campaigns, npcs, locations, sessionRecords } = params;
   if (!selection) return "";
 
   if (selection.kind === "srd") {
@@ -58,7 +65,25 @@ function libraryPreviewMarkdown(params: BuildLibraryPreviewSnapshotParams): stri
   if (selection.kind === "campaign") {
     const campaign = campaigns.find((c) => c.id === selection.id);
     if (!campaign) return "";
-    return `# ${campaign.name}\n\n${campaign.description.trim() || "Campaign container — links party, adventures, characters, and items by reference."}\n\n## Linked CFs\n\n- Party: ${campaign.partyId ? "linked" : "none"}\n- CFs: ${campaign.seedIds.length}\n- Results: ${campaign.resultIds.length}\n- Characters: ${campaign.characterIds.length}\n- Items: ${campaign.itemIds.length}\n\nManage links on the Campaigns page.`;
+    return `# ${campaign.name}\n\n${campaign.description.trim() || "Campaign container — links party, adventures, characters, and items by reference."}\n\n## Linked CFs\n\n- Party: ${campaign.partyId ? "linked" : "none"}\n- CFs: ${campaign.seedIds.length}\n- Results: ${campaign.resultIds.length}\n- Characters: ${campaign.characterIds.length}\n- Items: ${campaign.itemIds.length}\n- NPCs: ${campaign.npcIds.length}\n- Locations: ${campaign.locationIds.length}\n- Session logs: ${campaign.sessionRecordIds.length}\n\nManage links on the Campaigns page.`;
+  }
+
+  if (selection.kind === "npc") {
+    const npc = npcs.find((n) => n.id === selection.id);
+    if (!npc) return "";
+    const parts = [npc.markdown.trim() || `# ${npc.name}\n`];
+    if (npc.motivation.trim()) parts.push(`\n## Motivation\n\n${npc.motivation.trim()}`);
+    if (npc.secrets.trim()) parts.push(`\n## Secrets\n\n${npc.secrets.trim()}`);
+    return parts.join("");
+  }
+
+  if (selection.kind === "location") {
+    return locations.find((l) => l.id === selection.id)?.markdown ?? "";
+  }
+
+  if (selection.kind === "session") {
+    const record = sessionRecords.find((r) => r.id === selection.id);
+    return record ? sessionRecordToMarkdown(record) : "";
   }
 
   if (selection.kind === "seed") {
@@ -97,6 +122,16 @@ export function buildLibraryPreviewSnapshot(
     selection.kind === "campaign"
       ? params.campaigns.find((c) => c.id === selection.id)
       : undefined;
+  const viewingNpc =
+    selection.kind === "npc" ? params.npcs.find((n) => n.id === selection.id) : undefined;
+  const viewingLocation =
+    selection.kind === "location"
+      ? params.locations.find((l) => l.id === selection.id)
+      : undefined;
+  const viewingSession =
+    selection.kind === "session"
+      ? params.sessionRecords.find((r) => r.id === selection.id)
+      : undefined;
   const viewingParty =
     selection.kind === "party" ? params.parties.find((p) => p.id === selection.id) : undefined;
 
@@ -124,6 +159,12 @@ export function buildLibraryPreviewSnapshot(
     viewingSubline = GAME_ITEM_KIND_LABEL[viewingItem.kind];
   } else if (viewingCampaign) {
     viewingLabel = `Viewing campaign: ${viewingCampaign.name}`;
+  } else if (viewingNpc) {
+    viewingLabel = `Viewing NPC: ${viewingNpc.name}`;
+  } else if (viewingLocation) {
+    viewingLabel = `Viewing location: ${viewingLocation.name}`;
+  } else if (viewingSession) {
+    viewingLabel = `Viewing session: ${viewingSession.title || `Session ${viewingSession.sessionNumber}`}`;
   } else if (viewingParty) {
     viewingLabel = `Viewing party: ${viewingParty.name}`;
     viewingSubline = `${viewingParty.players.length} heroes`;

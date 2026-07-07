@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/location.record.json",
+  "title": "location.record — Location CF",
+  "description": "Cities, dungeons, regions, planes, and sites.",
+  "type": "object",
+  "required": ["id", "createdAt", "updatedAt", "name", "locationKind", "markdown"],
+  "properties": {
+    "id": { "$ref": "common.json#/$defs/uuidOrId" },
+    "createdAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "updatedAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "name": { "$ref": "common.json#/$defs/nonEmptyString" },
+    "locationKind": {
+      "type": "string",
+      "enum": ["city", "dungeon", "region", "wilderness", "site", "plane", "other"]
+    },
+    "parentLocationId": { "type": ["string", "null"] },
+    "inhabitantNpcIds": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/uuidOrId" }
+    },
+    "factionIds": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/uuidOrId" }
+    },
+    "timelineNotes": { "type": "string" },
+    "markdown": { "type": "string" },
+    "source": { "type": "string", "enum": ["created", "import"] },
+    "cfMetadata": { "$ref": "common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": false
+}

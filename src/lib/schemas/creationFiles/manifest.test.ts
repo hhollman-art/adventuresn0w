@@ -58,7 +58,7 @@ describe("creation-files schema manifest", () => {
   });
 
   it("includes planned stubs for world assets and session log", () => {
-    const planned = ["npc.record", "location.record", "faction.record", "encounter.record", "session.record"];
+    const planned = ["faction.record", "encounter.record"];
     for (const ciClass of planned) {
       expect(manifest.schemas[ciClass]?.status).toBe("planned");
       expect(manifest.schemas[ciClass]?.file.startsWith("planned/")).toBe(true);

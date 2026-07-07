@@ -4,6 +4,9 @@ import { useEffect, useRef } from "react";
 import type { LibraryViewSelection } from "@/features/workshop/WorkshopLibraryPanel";
 import { autoLinkToActiveCampaign } from "@/lib/campaigns";
 import type { SavedCampaign } from "@/lib/campaigns";
+import type { SavedSessionRecord } from "@/lib/sessions/record";
+import type { SavedNpc } from "@/lib/worldAssets/npc";
+import type { SavedLocation } from "@/lib/worldAssets/location";
 import {
   LIBRARY_KIND_LABEL,
   type LibraryItem,
@@ -52,6 +55,9 @@ export type UseHomePreviewSnapshotParams = {
   libraryItems: SavedGameItem[];
   libraryParties: SavedCharacterRoster[];
   libraryCampaigns: SavedCampaign[];
+  libraryNpcs: SavedNpc[];
+  libraryLocations: SavedLocation[];
+  librarySessionRecords: SavedSessionRecord[];
   progressStage: ProgressStage;
   loading: boolean;
   imageLoading: boolean;
@@ -86,6 +92,9 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
     libraryItems,
     libraryParties,
     libraryCampaigns,
+    libraryNpcs,
+    libraryLocations,
+    librarySessionRecords,
     progressStage,
     loading,
     imageLoading,
@@ -316,6 +325,9 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
         items: libraryItems,
         parties: libraryParties,
         campaigns: libraryCampaigns,
+        npcs: libraryNpcs,
+        locations: libraryLocations,
+        sessionRecords: librarySessionRecords,
         srdPreviewMarkdown,
         srdPreviewLoading,
         workspace,
@@ -428,6 +440,9 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
     libraryItems,
     libraryParties,
     libraryCampaigns,
+    libraryNpcs,
+    libraryLocations,
+    librarySessionRecords,
   ]);
 
   useEffect(() => {

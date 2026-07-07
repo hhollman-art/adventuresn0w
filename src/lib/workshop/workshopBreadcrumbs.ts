@@ -1,3 +1,4 @@
+import { THE_HEARTH } from "@/lib/workplace/forgeLexicon";
 import type { WorkshopLibraryCategory } from "@/lib/workshop/libraryCatalog";
 import { LIBRARY_SHELF_LABEL } from "@/lib/workshop/libraryBrowseFilters";
 import { MODE_TAB_LABEL, type CreationMode } from "@/features/home/homeTypes";
@@ -18,7 +19,12 @@ export function buildWorkshopBreadcrumbs(options: {
   libraryCategory?: WorkshopLibraryCategory;
 }): BreadcrumbSegment[] {
   const { pathname, workspace, libraryCategory } = options;
-  const trail: BreadcrumbSegment[] = [{ label: "Home", href: "/" }];
+
+  if (pathname === "/" && workspace === "welcome") {
+    return [{ label: THE_HEARTH }];
+  }
+
+  const trail: BreadcrumbSegment[] = [{ label: THE_HEARTH, href: "/" }];
 
   if (pathname === "/library" || pathname.startsWith("/library/")) {
     trail.push({ label: "Library", href: "/library" });
@@ -59,7 +65,6 @@ export function buildWorkshopBreadcrumbs(options: {
   }
 
   if (workspace === "welcome") {
-    trail.push({ label: "Welcome hearth" });
     return trail;
   }
 

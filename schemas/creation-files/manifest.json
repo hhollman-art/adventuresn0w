@@ -171,20 +171,20 @@
       "status": "shipped"
     },
     "npc.record": {
-      "file": "planned/npc.record.json",
-      "category": "seeds",
+      "file": "npc.record.json",
+      "category": "world",
       "provenance": "user",
       "inBackup": true,
       "storageModule": "src/lib/worldAssets/npc.ts",
-      "status": "planned"
+      "status": "shipped"
     },
     "location.record": {
-      "file": "planned/location.record.json",
-      "category": "seeds",
+      "file": "location.record.json",
+      "category": "world",
       "provenance": "user",
       "inBackup": true,
       "storageModule": "src/lib/worldAssets/location.ts",
-      "status": "planned"
+      "status": "shipped"
     },
     "faction.record": {
       "file": "planned/faction.record.json",
@@ -203,12 +203,12 @@
       "status": "planned"
     },
     "session.record": {
-      "file": "planned/session.record.json",
+      "file": "session.record.json",
       "category": "sessions",
       "provenance": "user",
       "inBackup": true,
       "storageModule": "src/lib/sessions/record.ts",
-      "status": "planned"
+      "status": "shipped"
     }
   }
 }

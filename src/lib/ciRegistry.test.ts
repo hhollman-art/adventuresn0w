@@ -41,11 +41,11 @@ describe("ciRegistry", () => {
     expect(srdItem.inBackup).toBe(false);
   });
 
-  it("puts every user class except table sessions in the backup", () => {
+  it("puts every user class except VTT table sessions in the backup", () => {
     for (const ciClass of CI_CLASSES) {
       const def = CI_REGISTRY[ciClass];
       if (def.provenance !== "user") continue;
-      if (def.category === "sessions") {
+      if (ciClass === "session.tabletop" || ciClass === "session.snapshot") {
         // Live table + shelved campaign tables carry large map images — local only.
         expect(def.inBackup).toBe(false);
       } else {
@@ -56,6 +56,7 @@ describe("ciRegistry", () => {
 
   it("filters classes by category", () => {
     expect(ciClassesForCategory("seeds")).toHaveLength(5);
+    expect(ciClassesForCategory("world")).toEqual(["npc.record", "location.record"]);
     expect(ciClassesForCategory("characters")).toEqual(["character.sheet"]);
     expect(ciClassesForCategory("items")).toEqual([
       "item.equipment",
@@ -66,6 +67,7 @@ describe("ciRegistry", () => {
     expect(ciClassesForCategory("parties")).toEqual(["party.roster"]);
     expect(ciClassesForCategory("campaigns")).toEqual(["campaign.record"]);
     expect(ciClassesForCategory("sessions")).toEqual([
+      "session.record",
       "session.tabletop",
       "session.snapshot",
     ]);

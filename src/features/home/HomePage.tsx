@@ -19,6 +19,7 @@ import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
 import { setForgeBannerMode } from "@/lib/workshop/bannerMode";
 import {
   autoLinkToActiveCampaign,
+  getActiveCampaignId,
   loadCampaigns,
   onCampaignsChanged,
   type SavedCampaign,
@@ -70,6 +71,27 @@ import {
   onItemsChanged,
   type SavedGameItem,
 } from "@/lib/itemLibrary";
+import {
+  deleteSavedNpc,
+  loadSavedNpcs,
+  onNpcsChanged,
+  saveNpc,
+  type SavedNpc,
+} from "@/lib/worldAssets/npc";
+import {
+  deleteSavedLocation,
+  loadSavedLocations,
+  onLocationsChanged,
+  saveLocation,
+  type SavedLocation,
+} from "@/lib/worldAssets/location";
+import {
+  deleteSavedSessionRecord,
+  loadSavedSessionRecords,
+  onSessionRecordsChanged,
+  saveSessionRecord,
+  type SavedSessionRecord,
+} from "@/lib/sessions/record";
 import { openOrFocusPreviewWindow, publishPreviewSnapshot } from "@/lib/workshop/previewSnapshot";
 import { buildLibraryPreviewSnapshot } from "@/lib/workshop/libraryPreviewSnapshot";
 import { getSrdEntity, srdEntityToPreviewMarkdown } from "@/lib/srd/corpus";
@@ -169,13 +191,16 @@ export default function Home(props: PageProps<"/">) {
   const [characterSlots, setCharacterSlots] = useState<CharacterSlotSpec[]>(() =>
     defaultCharacterSlots(),
   );
-  /** Library tab: selected asset shown in the Preview Window. */
+  /** Library tab: selected asset shown in the Scy Window. */
   const [librarySelection, setLibrarySelection] = useState<LibraryViewSelection>(null);
   const [libraryResults, setLibraryResults] = useState<LibraryItem[]>([]);
   const [libraryCharacters, setLibraryCharacters] = useState<SavedCharacter[]>([]);
   const [libraryItems, setLibraryItems] = useState<SavedGameItem[]>([]);
   const [libraryParties, setLibraryParties] = useState<SavedCharacterRoster[]>([]);
   const [libraryCampaigns, setLibraryCampaigns] = useState<SavedCampaign[]>([]);
+  const [libraryNpcs, setLibraryNpcs] = useState<SavedNpc[]>([]);
+  const [libraryLocations, setLibraryLocations] = useState<SavedLocation[]>([]);
+  const [librarySessionRecords, setLibrarySessionRecords] = useState<SavedSessionRecord[]>([]);
   const [libraryCategory, setLibraryCategory] = useState<WorkshopLibraryCategory>("all");
   /** Library feature: the read-only SRD reference browser, opened over the list. */
   const [srdBrowserOpen, setSrdBrowserOpen] = useState(false);
@@ -291,7 +316,17 @@ export default function Home(props: PageProps<"/">) {
   // The snapshot is rebuilt from storage at write time, so firing on mount is harmless.
   useEffect(() => {
     scheduleLibrarySnapshot();
-  }, [ddeasySeeds, libraryResults, libraryCharacters, libraryItems, libraryParties, libraryCampaigns]);
+  }, [
+    ddeasySeeds,
+    libraryResults,
+    libraryCharacters,
+    libraryItems,
+    libraryParties,
+    libraryCampaigns,
+    libraryNpcs,
+    libraryLocations,
+    librarySessionRecords,
+  ]);
 
   useEffect(() => {
     if (!librarySelection) return;
@@ -328,6 +363,24 @@ export default function Home(props: PageProps<"/">) {
     ) {
       setLibrarySelection(null);
     }
+    if (
+      librarySelection.kind === "npc" &&
+      !libraryNpcs.some((n) => n.id === librarySelection.id)
+    ) {
+      setLibrarySelection(null);
+    }
+    if (
+      librarySelection.kind === "location" &&
+      !libraryLocations.some((l) => l.id === librarySelection.id)
+    ) {
+      setLibrarySelection(null);
+    }
+    if (
+      librarySelection.kind === "session" &&
+      !librarySessionRecords.some((r) => r.id === librarySelection.id)
+    ) {
+      setLibrarySelection(null);
+    }
   }, [
     ddeasySeeds,
     libraryResults,
@@ -335,6 +388,9 @@ export default function Home(props: PageProps<"/">) {
     libraryItems,
     libraryParties,
     libraryCampaigns,
+    libraryNpcs,
+    libraryLocations,
+    librarySessionRecords,
     librarySelection,
   ]);
 
@@ -345,6 +401,9 @@ export default function Home(props: PageProps<"/">) {
     void loadSavedGameItems().then(setLibraryItems);
     void loadSavedCharacterRosters().then(setLibraryParties);
     void loadCampaigns().then(setLibraryCampaigns);
+    void loadSavedNpcs().then(setLibraryNpcs);
+    void loadSavedLocations().then(setLibraryLocations);
+    void loadSavedSessionRecords().then(setLibrarySessionRecords);
   }
 
   useEffect(() => {
@@ -362,11 +421,23 @@ export default function Home(props: PageProps<"/">) {
     const offCampaigns = onCampaignsChanged(() => {
       void loadCampaigns().then(setLibraryCampaigns);
     });
+    const offNpcs = onNpcsChanged(() => {
+      void loadSavedNpcs().then(setLibraryNpcs);
+    });
+    const offLocations = onLocationsChanged(() => {
+      void loadSavedLocations().then(setLibraryLocations);
+    });
+    const offSessions = onSessionRecordsChanged(() => {
+      void loadSavedSessionRecords().then(setLibrarySessionRecords);
+    });
     return () => {
       offRosters();
       offCharacters();
       offItems();
       offCampaigns();
+      offNpcs();
+      offLocations();
+      offSessions();
     };
   }, [isLibraryView]);
 
@@ -1176,6 +1247,9 @@ useHomePreviewSnapshot({
     libraryItems,
     libraryParties,
     libraryCampaigns,
+    libraryNpcs,
+    libraryLocations,
+    librarySessionRecords,
     progressStage,
     loading,
     imageLoading,
@@ -1204,6 +1278,9 @@ useHomePreviewSnapshot({
       items={libraryItems}
       parties={libraryParties}
       campaigns={libraryCampaigns}
+      npcs={libraryNpcs}
+      locations={libraryLocations}
+      sessionRecords={librarySessionRecords}
       category={libraryCategory}
       selection={librarySelection}
       statusMessage={libraryStatus}
@@ -1249,6 +1326,9 @@ useHomePreviewSnapshot({
           items: libraryItems,
           parties: libraryParties,
           campaigns: libraryCampaigns,
+          npcs: libraryNpcs,
+          locations: libraryLocations,
+          sessionRecords: librarySessionRecords,
           srdPreviewMarkdown: bundledSrdMarkdown ?? undefined,
           srdPreviewLoading,
           workspace,
@@ -1297,6 +1377,69 @@ useHomePreviewSnapshot({
           setLibrarySelection(null);
         }
       }}
+      onDeleteNpc={async (id) => {
+        const next = await deleteSavedNpc(id);
+        setLibraryNpcs(next);
+        if (librarySelection?.kind === "npc" && librarySelection.id === id) {
+          setLibrarySelection(null);
+        }
+      }}
+      onDeleteLocation={async (id) => {
+        const next = await deleteSavedLocation(id);
+        setLibraryLocations(next);
+        if (librarySelection?.kind === "location" && librarySelection.id === id) {
+          setLibrarySelection(null);
+        }
+      }}
+      onDeleteSession={async (id) => {
+        const next = await deleteSavedSessionRecord(id);
+        setLibrarySessionRecords(next);
+        if (librarySelection?.kind === "session" && librarySelection.id === id) {
+          setLibrarySelection(null);
+        }
+      }}
+      onAddNpc={async () => {
+        const name = window.prompt("What is this NPC called?");
+        if (!name?.trim()) return;
+        const list = await saveNpc({ name: name.trim() });
+        setLibraryNpcs(list);
+        const created = list[0];
+        if (!created) return;
+        await autoLinkToActiveCampaign({ npcId: created.id });
+        setLibrarySelection({ kind: "npc", id: created.id });
+        setLibraryStatus(`Added NPC “${created.name}”.`);
+      }}
+      onAddLocation={async () => {
+        const name = window.prompt("What is this place called?");
+        if (!name?.trim()) return;
+        const list = await saveLocation({ name: name.trim() });
+        setLibraryLocations(list);
+        const created = list[0];
+        if (!created) return;
+        await autoLinkToActiveCampaign({ locationId: created.id });
+        setLibrarySelection({ kind: "location", id: created.id });
+        setLibraryStatus(`Added location “${created.name}”.`);
+      }}
+      onAddSession={async () => {
+        const campaignId = getActiveCampaignId();
+        if (!campaignId) {
+          setLibraryStatus("Set an active campaign on the Campaigns page before logging a session.");
+          return;
+        }
+        const sessionNumber =
+          librarySessionRecords.filter((r) => r.campaignId === campaignId).length + 1;
+        const list = await saveSessionRecord({
+          campaignId,
+          sessionNumber,
+          summary: "",
+        });
+        setLibrarySessionRecords(list);
+        const created = list[0];
+        if (!created) return;
+        await autoLinkToActiveCampaign({ sessionRecordId: created.id });
+        setLibrarySelection({ kind: "session", id: created.id });
+        setLibraryStatus(`Logged session #${created.sessionNumber}.`);
+      }}
       onPartiesChange={setLibraryParties}
       onRestore={(outcome) => {
         setDdeasySeeds(outcome.seeds);
@@ -1305,6 +1448,9 @@ useHomePreviewSnapshot({
         setLibraryItems(outcome.items);
         setLibraryParties(outcome.parties);
         setLibraryCampaigns(outcome.campaigns);
+        setLibraryNpcs(outcome.npcs);
+        setLibraryLocations(outcome.locations);
+        setLibrarySessionRecords(outcome.sessionRecords);
       }}
       onStatus={setLibraryStatus}
     />

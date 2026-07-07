@@ -19,6 +19,15 @@ import type { SavedGameItem } from "@/lib/itemLibrary";
 import { importGameItems, loadSavedGameItems } from "@/lib/itemLibrary";
 import type { SavedCampaign } from "@/lib/campaigns";
 import { importCampaigns, loadCampaigns } from "@/lib/campaigns";
+import type { SavedSessionRecord } from "@/lib/sessions/record";
+import {
+  importSavedSessionRecords,
+  loadSavedSessionRecords,
+} from "@/lib/sessions/record";
+import type { SavedNpc } from "@/lib/worldAssets/npc";
+import { importSavedNpcs, loadSavedNpcs } from "@/lib/worldAssets/npc";
+import type { SavedLocation } from "@/lib/worldAssets/location";
+import { importSavedLocations, loadSavedLocations } from "@/lib/worldAssets/location";
 import type { CampaignRelationshipGraph } from "@/lib/ciRelationshipGraph";
 import {
   importCampaignRelationshipGraphs,
@@ -45,6 +54,12 @@ export type LibraryBackupFile = {
   parties: SavedCharacterRoster[];
   /** Campaign records (id links only — table snapshots stay local). */
   campaigns: SavedCampaign[];
+  /** Named NPC records (npc.record). */
+  npcs?: SavedNpc[];
+  /** Location records (location.record). */
+  locations?: SavedLocation[];
+  /** Play session logs (session.record). */
+  sessionRecords?: SavedSessionRecord[];
   /** Optional Tier-2 relationship graphs (semantic edges per campaign). */
   relationshipGraphs?: CampaignRelationshipGraph[];
 };
@@ -59,12 +74,15 @@ export type LibraryBackupCounts = {
   items: number;
   parties: number;
   campaigns: number;
+  npcs: number;
+  locations: number;
+  sessionRecords: number;
   relationshipGraphs: number;
 };
 
 /** Gather every locally stored library item into one serializable document. */
 export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
-  const [seeds, results, characters, items, parties, campaigns, relationshipGraphs] =
+  const [seeds, results, characters, items, parties, campaigns, npcs, locations, sessionRecords, relationshipGraphs] =
     await Promise.all([
     loadRealmSeeds(),
     loadGenerationLibraryItems(),
@@ -72,6 +90,9 @@ export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
     loadSavedGameItems(),
     loadSavedCharacterRosters(),
     loadCampaigns(),
+    loadSavedNpcs(),
+    loadSavedLocations(),
+    loadSavedSessionRecords(),
     loadCampaignRelationshipGraphs(),
   ]);
   return {
@@ -84,6 +105,9 @@ export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
     items,
     parties,
     campaigns,
+    npcs,
+    locations,
+    sessionRecords,
     relationshipGraphs,
   };
 }
@@ -106,6 +130,9 @@ export type ParsedBackup =
       items: unknown[];
       parties: unknown[];
       campaigns: unknown[];
+      npcs: unknown[];
+      locations: unknown[];
+      sessionRecords: unknown[];
       relationshipGraphs: unknown[];
     }
   | { ok: false; error: string };
@@ -137,6 +164,9 @@ export function parseLibraryBackup(text: string): ParsedBackup {
     items: Array.isArray(o.items) ? o.items : [],
     parties: Array.isArray(o.parties) ? o.parties : [],
     campaigns: Array.isArray(o.campaigns) ? o.campaigns : [],
+    npcs: Array.isArray(o.npcs) ? o.npcs : [],
+    locations: Array.isArray(o.locations) ? o.locations : [],
+    sessionRecords: Array.isArray(o.sessionRecords) ? o.sessionRecords : [],
     relationshipGraphs: Array.isArray(o.relationshipGraphs) ? o.relationshipGraphs : [],
   };
 }
@@ -149,6 +179,9 @@ export type RestoreOutcome = {
   items: SavedGameItem[];
   parties: SavedCharacterRoster[];
   campaigns: SavedCampaign[];
+  npcs: SavedNpc[];
+  locations: SavedLocation[];
+  sessionRecords: SavedSessionRecord[];
   relationshipGraphs: CampaignRelationshipGraph[];
 };
 
@@ -164,6 +197,9 @@ export async function restoreLibraryBackup(parsed: {
   items: unknown[];
   parties: unknown[];
   campaigns: unknown[];
+  npcs?: unknown[];
+  locations?: unknown[];
+  sessionRecords?: unknown[];
   relationshipGraphs?: unknown[];
 }): Promise<RestoreOutcome> {
   const seedResult = await importRealmSeeds(parsed.seeds);
@@ -172,6 +208,9 @@ export async function restoreLibraryBackup(parsed: {
   const itemResult = await importGameItems(parsed.items);
   const partyResult = await importCharacterRosters(parsed.parties);
   const campaignResult = await importCampaigns(parsed.campaigns);
+  const npcResult = await importSavedNpcs(parsed.npcs ?? []);
+  const locationResult = await importSavedLocations(parsed.locations ?? []);
+  const sessionResult = await importSavedSessionRecords(parsed.sessionRecords ?? []);
   const graphResult = await importCampaignRelationshipGraphs(parsed.relationshipGraphs ?? []);
   return {
     counts: {
@@ -181,6 +220,9 @@ export async function restoreLibraryBackup(parsed: {
       items: itemResult.added,
       parties: partyResult.added,
       campaigns: campaignResult.added,
+      npcs: npcResult.added,
+      locations: locationResult.added,
+      sessionRecords: sessionResult.added,
       relationshipGraphs: graphResult.added,
     },
     seeds: seedResult.seeds,
@@ -189,6 +231,9 @@ export async function restoreLibraryBackup(parsed: {
     items: itemResult.items,
     parties: partyResult.rosters,
     campaigns: campaignResult.campaigns,
+    npcs: npcResult.npcs,
+    locations: locationResult.locations,
+    sessionRecords: sessionResult.sessionRecords,
     relationshipGraphs: graphResult.graphs,
   };
 }
@@ -212,6 +257,14 @@ export function describeRestoreCounts(counts: LibraryBackupCounts): string {
     parts.push(`${counts.parties} part${counts.parties === 1 ? "y" : "ies"}`);
   if (counts.campaigns > 0)
     parts.push(`${counts.campaigns} campaign${counts.campaigns === 1 ? "" : "s"}`);
+  if (counts.npcs > 0)
+    parts.push(`${counts.npcs} NPC${counts.npcs === 1 ? "" : "s"}`);
+  if (counts.locations > 0)
+    parts.push(`${counts.locations} location${counts.locations === 1 ? "" : "s"}`);
+  if (counts.sessionRecords > 0)
+    parts.push(
+      `${counts.sessionRecords} session log${counts.sessionRecords === 1 ? "" : "s"}`,
+    );
   if (counts.relationshipGraphs > 0)
     parts.push(
       `${counts.relationshipGraphs} relationship graph${counts.relationshipGraphs === 1 ? "" : "s"}`,

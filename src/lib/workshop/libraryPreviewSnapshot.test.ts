@@ -16,6 +16,9 @@ describe("buildLibraryPreviewSnapshot", () => {
       items: [],
       parties: [],
       campaigns: [],
+      npcs: [],
+      locations: [],
+      sessionRecords: [],
       srdPreviewLoading: true,
     });
 
@@ -49,6 +52,9 @@ describe("buildLibraryPreviewSnapshot", () => {
       ],
       parties: [],
       campaigns: [],
+      npcs: [],
+      locations: [],
+      sessionRecords: [],
     });
 
     expect(snapshot?.markdown).toContain("# Sun Blade");

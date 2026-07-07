@@ -37,6 +37,8 @@ type LibraryBrowseToolbarProps = {
   onSeedScopeFilterChange?: (value: RealmScopeTag | "all") => void;
   seedTagOptions?: string[];
   showSeedRefine?: boolean;
+  /** full = default toolbar; shelves-only = vertical shelf nav for 3-pane layout. */
+  variant?: "full" | "shelves-only" | "filters-only";
 };
 
 const SHELF_TABS: WorkshopLibraryCategory[] = [
@@ -45,10 +47,12 @@ const SHELF_TABS: WorkshopLibraryCategory[] = [
   "results",
   "characters",
   "items",
+  "world",
   "rules",
   "monsters",
   "parties",
   "campaigns",
+  "sessions",
 ];
 
 function FilterChip({
@@ -98,11 +102,20 @@ export default function LibraryBrowseToolbar({
   onSeedScopeFilterChange,
   seedTagOptions = [],
   showSeedRefine = false,
+  variant = "full",
 }: LibraryBrowseToolbarProps) {
   const kindOptions = ciClassOptions.length > 1 ? ciClassOptions : [];
+  const showShelves = variant === "full" || variant === "shelves-only";
+  const showSearch = variant === "full" || variant === "filters-only";
+  const showSecondaryFilters = variant === "full" || variant === "filters-only";
 
   return (
-    <div className="library-browse-toolbar flex shrink-0 flex-col gap-3">
+    <div
+      className={`library-browse-toolbar flex shrink-0 flex-col gap-3${
+        variant === "shelves-only" ? " library-browse-toolbar--shelves" : ""
+      }`}
+    >
+      {showSearch ? (
       <label className="library-browse-search flex items-center gap-2 rounded-lg border px-3 py-2">
         <span className="font-display text-sm text-[var(--accent)]" aria-hidden="true">
           &#10022;
@@ -115,9 +128,13 @@ export default function LibraryBrowseToolbar({
           aria-label="Search The Library"
         />
       </label>
+      ) : null}
 
+      {showShelves ? (
       <div
-        className="library-shelf-tabs flex flex-wrap gap-1.5"
+        className={`library-shelf-tabs flex gap-1.5${
+          variant === "shelves-only" ? " flex-col" : " flex-wrap"
+        }`}
         role="tablist"
         aria-label="Archive shelves"
       >
@@ -146,8 +163,9 @@ export default function LibraryBrowseToolbar({
           );
         })}
       </div>
+      ) : null}
 
-      {kindOptions.length > 0 ? (
+      {showSecondaryFilters && kindOptions.length > 0 ? (
         <div className="flex flex-col gap-1.5">
           <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">
             Kind of entry
@@ -166,6 +184,7 @@ export default function LibraryBrowseToolbar({
         </div>
       ) : null}
 
+      {showSecondaryFilters ? (
       <div className="flex flex-col gap-1.5">
         <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">
           Where it comes from
@@ -181,8 +200,10 @@ export default function LibraryBrowseToolbar({
           ))}
         </div>
       </div>
+      ) : null}
 
-      {showSeedRefine &&
+      {showSecondaryFilters &&
+      showSeedRefine &&
       onSeedKindFilterChange &&
       onSeedScopeFilterChange &&
       onSeedTagFilterChange ? (

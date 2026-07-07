@@ -8,6 +8,7 @@ export const CHARACTER_CF = "character CF";
 export const PARTY_CF = "party CF";
 
 export const FANTASY_FORGE = "Fantasy Forge";
+export const THE_HEARTH = "The Hearth";
 export const THE_LIBRARY = "The Library";
 export const THE_TAVERN = "The Tavern";
 export const VIRTUAL_TABLE = "Virtual Table";

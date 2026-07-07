@@ -1,0 +1,65 @@
+---
+description: DM Management System — pillars, data-model map, workspace targets, VTT scaffold, AI directives
+alwaysApply: true
+---
+
+# Dungeon Master Management System (authoritative vision)
+
+Complements `preserve-and-expand`, `dm-control-tower`, `campaign-cf-management`, and `cmdb-configuration-items`. **Never remove** working features — merge and extend.
+
+## I. Three pillars
+
+1. **User-friendly with charm** — clean UX, fantasy micro-delights (`approachable-interface`), intuitive navigation (Fantasy Forge tabs, The Library, The Hearth).
+2. **AI-assisted creation** — AI accelerates; **homebrew is the star**; AI never overwrites user CFs; all output editable; manual path always works.
+3. **Modular VTT** — scene/map, tokens, initiative, player portal; uses Library (CMDB) as integrated read source (`src/lib/tabletop/`).
+
+## II. Data models — spec → shipped today
+
+Register **new** types in `ciRegistry.ts` + `schemas/creation-files/`; do not replace existing classes.
+
+| Spec entity | Shipped CF / module | Notes |
+|-------------|---------------------|-------|
+| `Campaign` | `campaign.record` — `src/lib/campaigns.ts` | Links: `partyId`, `seedIds`, `resultIds`, `characterIds`, `itemIds`; Tier-2 graph in `campaignRelationships.ts` |
+| `Session` (prep log) | *planned* `session.record` | Today: `session.tabletop`, `session.snapshot` in VTT store |
+| `NPC` | *planned* `npc.record` | Today: heroes (`character.sheet`), markdown in seeds/results |
+| `Location` | *planned* `location.record` | Today: `seed.realm`, `result.realm`, maps |
+| `Item` | `item.equipment`, `item.magic`, SRD item CFs | `src/lib/itemLibrary.ts` |
+| `Encounter` | *planned* `encounter.record` | Today: VTT combat + adventure markdown |
+| `Creature` | `monster.srd-entry` + bestiary | Bundled SRD corpus |
+| `PlayerCharacter` | `character.sheet` | Tavern workplace; party via `party.roster` |
+| `CreationFile` (wrapper) | Every row has `ciClass` + storage module | Generic `data` lives in class-specific shapes, not one blob |
+
+Extend spec fields (`tags`, `system`, `sessions[]`) as **optional** on new/planned CFs; keep `SavedCampaign` links working.
+
+## III. Workspace UI — current vs target
+
+**Shipped (preserve):** horizontal workspace icon bar, The Library shelves, creation workspaces (Realm, Adventure, Maps, Tavern, Items, Campaigns), Preview Window tab, relationship graph on Campaigns page.
+
+**Target (additive only):** 3-pane Library/workspace pattern — folder/tag browser | searchable list | detail + optional AI enhance buttons. New panels/views; do not remove tabs, shelves, or workplaces.
+
+Sidebar spec items map to workplaces: Campaigns → `/campaigns`; NPCs/Locations/Encounters → future CF classes + Library filters; Creation Files → The Library; SRD Reference → Rule tomes / Bestiary; Settings → existing settings/help paths.
+
+## IV. VTT scaffolding — spec → shipped
+
+| Spec | Shipped | Module |
+|------|---------|--------|
+| `Scene` | `TabletopSession` (map, fog, grid) | `src/lib/tabletop/session.ts`, `store.ts` |
+| `Token` | Session tokens linked to players/NPCs | tabletop types |
+| `FogOfWar` | Fog reveal/hide on map | VTT UI |
+| `InitiativeEntry` | Initiative tracker in session | VTT sidebar |
+
+Add spec fields (`campaignId`, `initiativeOrder`) alongside existing session shape; migrate only with explicit backup compatibility.
+
+## V. AI behavior
+
+- Preserve functionality; expand without breaking import/backup.
+- Auto-tag and suggest links — never silently overwrite user CFs.
+- SRD-compliant reference only; homebrew stays user-owned.
+- AI actions: Enhance, add details, expand lore, variants, consistency checks — all produce **drafts** the DM saves explicitly.
+
+## VI. Development directives
+
+1. Treat `ciRegistry.ts` and `schemas/creation-files/manifest.json` as authoritative for CF types.
+2. New UI: modular components; match Fantasy Forge / Library patterns.
+3. VTT changes stay in `src/lib/tabletop/` and `src/features/tabletop/` — module boundary intact.
+4. Before shipping: *Can a DM still do everything manually without API keys?* (see `dm-control-tower`).

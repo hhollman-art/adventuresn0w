@@ -161,6 +161,9 @@ describe("libraryBackup", () => {
       items: [],
       parties: [],
       campaigns: [],
+      npcs: [],
+      locations: [],
+      sessionRecords: [],
       relationshipGraphs: [],
     });
   });
@@ -180,6 +183,9 @@ describe("libraryBackup", () => {
         items: 2,
         parties: 1,
         campaigns: 1,
+        npcs: 0,
+        locations: 0,
+        sessionRecords: 0,
         relationshipGraphs: 0,
       }),
     ).toBe("Restored 2 CFs, 1 result, 3 characters, 2 items, 1 party, 1 campaign from backup.");
@@ -191,6 +197,9 @@ describe("libraryBackup", () => {
         items: 0,
         parties: 0,
         campaigns: 0,
+        npcs: 0,
+        locations: 0,
+        sessionRecords: 0,
         relationshipGraphs: 0,
       }),
     ).toBe("Backup read, but everything in it is already in your library.");

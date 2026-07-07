@@ -27,12 +27,22 @@ import {
 import { characterSummary } from "@/lib/tabletop/character";
 import {
   CI_CLASS_FOR_CAMPAIGN,
+  CI_CLASS_FOR_LOCATION,
+  CI_CLASS_FOR_NPC,
   CI_CLASS_FOR_PARTY,
+  CI_CLASS_FOR_SESSION_RECORD,
   ciClassForGameItem,
   ciClassForResult,
   ciClassForSeed,
   type CiClass,
 } from "@/lib/ciRegistry";
+import type { SavedSessionRecord } from "@/lib/sessions/record";
+import { SESSION_EVENT_KIND_LABEL } from "@/lib/sessions/record";
+import type { SavedNpc } from "@/lib/worldAssets/npc";
+import {
+  LOCATION_KIND_LABEL,
+  type SavedLocation,
+} from "@/lib/worldAssets/location";
 import type { SrdItemRef } from "@/lib/srd/srdItemRef";
 import type { SrdEntityId } from "@/lib/srd/types";
 
@@ -46,10 +56,12 @@ export type WorkshopLibraryCategory =
   | "results"
   | "characters"
   | "items"
+  | "world"
   | "rules"
   | "monsters"
   | "parties"
-  | "campaigns";
+  | "campaigns"
+  | "sessions";
 
 export type LibraryStorageCategory = Exclude<WorkshopLibraryCategory, "all">;
 
@@ -188,6 +200,9 @@ export function campaignToLibraryEntry(campaign: SavedCampaign): LibraryListEntr
     campaign.resultIds.length +
     campaign.characterIds.length +
     campaign.itemIds.length +
+    campaign.npcIds.length +
+    campaign.locationIds.length +
+    campaign.sessionRecordIds.length +
     (campaign.partyId ? 1 : 0);
   return {
     id: campaign.id,
@@ -202,6 +217,83 @@ export function campaignToLibraryEntry(campaign: SavedCampaign): LibraryListEntr
       `${linkCount} linked entr${linkCount === 1 ? "y" : "ies"}`,
     createdAt: campaign.updatedAt,
   };
+}
+
+export function npcToLibraryEntry(npc: SavedNpc): LibraryListEntry {
+  return {
+    id: npc.id,
+    ciClass: CI_CLASS_FOR_NPC,
+    category: "world",
+    provenance: "user",
+    origin: npc.source === "created" ? "creation" : "import",
+    kindLabel: "NPC",
+    title: npc.name,
+    detail: npc.briefDescription.trim() || npc.motivation.trim().slice(0, 100) || "Named NPC",
+    createdAt: npc.updatedAt,
+    ...(npc.tags.length ? { tags: npc.tags } : {}),
+  };
+}
+
+export function locationToLibraryEntry(location: SavedLocation): LibraryListEntry {
+  return {
+    id: location.id,
+    ciClass: CI_CLASS_FOR_LOCATION,
+    category: "world",
+    provenance: "user",
+    origin: location.source === "created" ? "creation" : "import",
+    kindLabel: LOCATION_KIND_LABEL[location.locationKind],
+    title: location.name,
+    detail:
+      location.timelineNotes.trim().slice(0, 100) ||
+      `${LOCATION_KIND_LABEL[location.locationKind]} · world place`,
+    createdAt: location.updatedAt,
+  };
+}
+
+export function sessionRecordToLibraryEntry(record: SavedSessionRecord): LibraryListEntry {
+  const title =
+    record.title.trim() || `Session ${record.sessionNumber}`;
+  const eventNote =
+    record.events.length > 0
+      ? `${record.events.length} event${record.events.length === 1 ? "" : "s"}`
+      : "";
+  return {
+    id: record.id,
+    ciClass: CI_CLASS_FOR_SESSION_RECORD,
+    category: "sessions",
+    provenance: "user",
+    origin: "creation",
+    kindLabel: "Session log",
+    title,
+    detail: record.summary.trim().slice(0, 100) || eventNote || "Play session record",
+    createdAt: record.playedAt,
+  };
+}
+
+export function sessionRecordToMarkdown(record: SavedSessionRecord): string {
+  const lines = [
+    `# ${record.title.trim() || `Session ${record.sessionNumber}`}`,
+    "",
+    `**Played:** ${record.playedAt.slice(0, 10)} · **Session #** ${record.sessionNumber}`,
+    "",
+    record.summary.trim() || "_No summary yet._",
+    "",
+  ];
+  if (record.events.length > 0) {
+    lines.push("## Events", "");
+    for (const event of record.events) {
+      const kind = SESSION_EVENT_KIND_LABEL[event.kind];
+      lines.push(`- **${kind}**${event.at ? ` (${event.at})` : ""}: ${event.text}`);
+    }
+    lines.push("");
+  }
+  if (record.followUpTasks.length > 0) {
+    lines.push("## Follow-ups", "");
+    for (const task of record.followUpTasks) {
+      lines.push(`- ${task}`);
+    }
+  }
+  return lines.join("\n");
 }
 
 export type SrdCatalogueSummary = {

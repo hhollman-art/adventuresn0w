@@ -1,5 +1,5 @@
 import { CI_CLASSES, CI_REGISTRY } from "@/lib/ciRegistry";
-import { LIBRARY_WORKSPACE_HINT, THE_LIBRARY, THE_TAVERN } from "./forgeLexicon";
+import { LIBRARY_WORKSPACE_HINT, THE_HEARTH, THE_LIBRARY, THE_TAVERN } from "./forgeLexicon";
 import type { WorkplaceDefinition, WorkplaceId } from "./types";
 
 /** SRD item CFs ship with the app and appear in the Items workplace + Library items tab. */
@@ -10,7 +10,7 @@ const USER_CI_CLASSES = CI_CLASSES.filter((c) => CI_REGISTRY[c].provenance === "
 export const WORKPLACES: Record<WorkplaceId, WorkplaceDefinition> = {
   welcome: {
     id: "welcome",
-    label: "Welcome",
+    label: THE_HEARTH,
     route: "/",
     description: "The Fantasy Forge hearth — pick a workspace to create something new for your table.",
     ciClasses: [],
@@ -80,8 +80,10 @@ export const WORKPLACES: Record<WorkplaceId, WorkplaceDefinition> = {
       "results",
       "characters",
       "items",
+      "world",
       "parties",
       "campaigns",
+      "sessions",
       "rules",
     ],
   },

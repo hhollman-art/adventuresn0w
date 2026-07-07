@@ -41,6 +41,9 @@ describe("fixSavedCampaign", () => {
       resultIds: [],
       characterIds: [],
       itemIds: [],
+      npcIds: [],
+      locationIds: [],
+      sessionRecordIds: [],
     });
     expect(fixed!.createdAt).toBeTruthy();
     expect(fixed!.updatedAt).toBe(fixed!.createdAt);

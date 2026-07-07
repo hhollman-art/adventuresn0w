@@ -1,5 +1,5 @@
 import { FORGE_PRINCIPLES } from "@/lib/workshop/forgePrinciples";
-import { FANTASY_FORGE, THE_LIBRARY } from "@/lib/workplace/forgeLexicon";
+import { FANTASY_FORGE, THE_HEARTH, THE_LIBRARY } from "@/lib/workplace/forgeLexicon";
 import { APP_ICONS } from "@/lib/ui/appIcons";
 import WorkflowGuideList from "@/features/workshop/WorkflowGuideList";
 import WorkshopWorkspaceDock from "@/features/workshop/WorkshopWorkspaceDock";
@@ -40,7 +40,7 @@ export default function WorkshopWelcomeLanding({
           save organized; the Virtual Table runs the session when dice hit the map.
         </p>
         <p className="workshop-welcome-muted mt-3 max-w-2xl text-sm leading-relaxed">
-          This hearth is your home base in the {FANTASY_FORGE} — application announcements and
+          The {THE_HEARTH} is your starting point in the {FANTASY_FORGE} — application announcements and
           status updates will appear here. Pick a workspace from the icons below when you know
           what you need. Not sure where to begin? Choose a workflow path below — each guide walks
           you step by step, with or without AI.

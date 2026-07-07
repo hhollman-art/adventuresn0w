@@ -39,6 +39,7 @@ import {
   type SrdItemRef,
 } from "@/lib/srd/srdItemRef";
 import { srdItemRefKey } from "@/lib/ciRelationships";
+import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 
 const ALIGNMENTS = [
   "Lawful Good",
@@ -636,7 +637,7 @@ export default function CharacterEditorDialog({
                       onClick={() => openSrdItemPreview(srdRef)}
                       className="rounded border px-2 py-1 text-xs font-semibold text-[var(--accent)]"
                       style={{ borderColor: "var(--accent-dim)" }}
-                      title={`Open ${srdRef.name} rules in the Preview Window`}
+                      title={`Open ${srdRef.name} rules in the ${PREVIEW_WINDOW}`}
                     >
                       Rules
                     </button>

@@ -38,6 +38,18 @@
       "type": "array",
       "items": { "$ref": "common.json#/$defs/uuidOrId" }
     },
+    "npcIds": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/uuidOrId" }
+    },
+    "locationIds": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/uuidOrId" }
+    },
+    "sessionRecordIds": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/uuidOrId" }
+    },
     "cfMetadata": { "$ref": "common.json#/$defs/cfMetadata" }
   },
   "additionalProperties": false

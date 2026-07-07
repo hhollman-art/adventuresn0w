@@ -350,7 +350,7 @@ export default function WorkshopPreviewPanel({
         </div>
       ) : isSrdPreview && !previewMarkdown.trim() && !srdLoading ? (
         <p className="no-print mt-6 text-sm text-[var(--muted)]">
-          Could not load this SRD entry. Close the Preview Window, pick the entry again, or check
+          Could not load this SRD entry. Close the {PREVIEW_WINDOW}, pick the entry again, or check
           your connection.
         </p>
       ) : null}

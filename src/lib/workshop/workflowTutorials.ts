@@ -115,7 +115,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Generate a ready party",
         body:
-          "Open Heroes, set party size and SRD slot picks (or leave Any). Generate, then use Save party for VTT in the Preview Window. The roster appears in Library → Fellowships, and each hero also becomes their own portable .md sheet — download one from the Heroes & fellowships page or grab it from your auto-save folder's heroes directory.",
+          "Open Heroes, set party size and SRD slot picks (or leave Any). Generate, then use Save party for VTT in the Scy Window. The roster appears in Library → Fellowships, and each hero also becomes their own portable .md sheet — download one from the Heroes & fellowships page or grab it from your auto-save folder's heroes directory.",
         action: { type: "mode", mode: "characters" },
         actionLabel: "Open Heroes tab",
       },
@@ -192,7 +192,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Between sessions: manual CFs",
         body:
-          "Before session 2+, add a short adventure CF with bullet hooks — no AI required. Edit existing Results in the Preview Window if you need to patch last session's module.",
+          "Before session 2+, add a short adventure CF with bullet hooks — no AI required. Edit existing Results in the Scy Window if you need to patch last session's module.",
         action: { type: "open-seed-editor" },
         actionLabel: "Add adventure CF",
       },
@@ -242,7 +242,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Catalogue adventures and assets",
         body:
-          "Adventures, maps, and props accumulate under Library → Results. Use the Preview Window to read, export, and print before each session.",
+          "Adventures, maps, and props accumulate under Library → Results. Use the Scy Window to read, export, and print before each session.",
         action: { type: "library-category", category: "results" },
         actionLabel: "Library → Results",
       },

@@ -6,6 +6,7 @@ import {
   WORKSHOP_NAV_ITEMS,
   type WorkshopCreationId,
 } from "@/lib/workplace/workshopNav";
+import { THE_HEARTH } from "@/lib/workplace/forgeLexicon";
 import { dispatchWorkshopWelcome } from "@/lib/workshop/goWelcome";
 import WorkshopWorkspaceIconControl from "@/features/workshop/WorkshopWorkspaceIconControl";
 
@@ -84,7 +85,7 @@ export default function WorkshopWorkspaceDock({
         onClick={goWelcome}
         className="workshop-workspace-dock-home mt-4 text-xs font-semibold text-[var(--accent-dim)] underline-offset-2 hover:underline"
       >
-        Return to welcome hearth
+        Return to {THE_HEARTH}
       </button>
     </nav>
   );
