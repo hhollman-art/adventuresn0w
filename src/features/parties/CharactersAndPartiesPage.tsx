@@ -49,6 +49,7 @@ import WorkshopPageShell from "@/features/workshop/WorkshopPageShell";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
 import CharacterEditorDialog from "./CharacterEditorDialog";
 import PartyBuilderDialog from "./PartyBuilderDialog";
+import VttExportPanel from "@/features/tabletop/VttExportPanel";
 
 function downloadMarkdownFile(filename: string, contents: string) {
   const blob = new Blob([contents], { type: "text/markdown;charset=utf-8" });
@@ -528,6 +529,7 @@ export default function CharactersAndPartiesPage() {
                   >
                     Export character CF
                   </button>
+                  <VttExportPanel compact player={p} />
                   <button
                     type="button"
                     onClick={() => void removeCharacter(c)}
@@ -653,6 +655,7 @@ export default function CharactersAndPartiesPage() {
                     >
                       Export party CF
                     </button>
+                    <VttExportPanel compact party={roster} />
                     <button
                       type="button"
                       onClick={() => void copyPartyToCharacters(roster)}

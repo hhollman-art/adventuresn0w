@@ -5,6 +5,7 @@ import type { ChangeEvent } from "react";
 import Link from "next/link";
 import BattleStage, { type StageTool } from "@/features/tabletop/BattleStage";
 import VttControlSidebar, { type VttSidePanel } from "@/features/tabletop/VttControlSidebar";
+import VttExportPanel from "@/features/tabletop/VttExportPanel";
 import { useGenerationLibraryImages } from "@/features/tabletop/useGenerationLibraryImages";
 import {
   SrdClassSubclassFields,
@@ -502,6 +503,7 @@ function PartyPanel({
             {partyMsg}
           </p>
         ) : null}
+        <VttExportPanel compact session={session} party={linkedRoster} modes={["party"]} />
       </div>
 
       <button
@@ -2156,6 +2158,8 @@ function MapPanel({
           </p>
         )}
       </div>
+
+      <VttExportPanel compact session={session} modes={["scene"]} />
     </div>
   );
 }

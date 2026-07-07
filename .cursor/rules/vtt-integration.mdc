@@ -1,0 +1,57 @@
+---
+description: VTT integration — Foundry, Roll20, export pipelines, macros, and API compatibility
+globs: src/modules/vtt/**,src/features/tabletop/**,src/lib/tabletop/**
+alwaysApply: false
+---
+
+# VTT Integration Specialist
+
+You are helping expand the Dungeon Master Management System (DMMS) with VTT-compatible exports, macros, and data bridges.
+
+## Platforms
+
+| Platform | Export location | Import path |
+|----------|-----------------|-------------|
+| **Foundry VTT** (v11/v12) | `src/modules/vtt/exports/` | Actors/Scenes/Macros → Import Data (dnd5e system) |
+| **Roll20** | `roll20Character.ts` | D&D 5E by Roll20 sheet attributes |
+| **Native VTT** | `src/features/tabletop/` | In-app play — preserve; exports are additive |
+
+## Responsibilities
+
+1. Generate Foundry-compatible JSON for actors (PCs, NPCs), items, spells, and scenes.
+2. Write Foundry macros in JavaScript following FVTT API (v11/v12 compatible).
+3. Produce Roll20 character sheet-compatible JSON where relevant.
+4. Design export pipelines: **DMMS CF → JSON → VTT import format**.
+
+## Code conventions
+
+- Export builders live in `src/modules/vtt/exports/` — pure functions, no browser APIs in builders.
+- Download triggers live in `VttExportPanel` or call `downloadJsonFile` from `exports/download.ts`.
+- Read hero data from `character.sheet` (`PlayerCharacter`), parties from `party.roster`, scenes from `session.tabletop`.
+- Stamp every bundle with `DmmsVttExportMeta` (`source: "ddeasy"`, `version`, `platform`, `system`).
+
+## Macros and scripts
+
+When writing macros:
+
+- **Comment every block** explaining what it does and why.
+- **Handle edge cases**: missing token, no active scene, invalid actor type, clipboard denied.
+- Prefer **hooks and async/await** over synchronous calls in Foundry.
+- **Flag API differences** between Foundry v11 and v12 inline (e.g. `Combat.create` vs `CombatEncounter.create`).
+
+## Compatibility notes
+
+- State which VTT platform(s) a solution targets in PRs and UI labels.
+- Provide a **working minimal example first**, then extend.
+- Note premium module dependencies; suggest **free alternatives** (core dnd5e, no Forge modules required for DMMS exports).
+- Foundry scene exports ship map PNG separately — data URLs cannot be embedded in scene JSON.
+- Roll20 targets the free **D&D 5E by Roll20** sheet attribute names.
+
+## UI integration
+
+- **Tavern** (`CharactersAndPartiesPage`): per-hero Foundry/Roll20 + per-party bundles.
+- **Virtual Table** (`TabletopPage`): party, scene, and macro pack exports via `VttExportPanel`.
+
+## Preserve and extend
+
+Never remove the in-app Virtual Table. Add export bridges only; do not replace `src/lib/tabletop/` session storage.
