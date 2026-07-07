@@ -24,6 +24,16 @@ export const metadata: Metadata = {
   title: "D&D Easy — Adventures & heroes (5.2)",
   description:
     "Generate D&D 5.2-style adventures (short or one-nighter), pre-made heroes, and map images with Claude.",
+  applicationName: "D&D Easy",
+  appleWebApp: {
+    capable: true,
+    title: "D&D Easy",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
