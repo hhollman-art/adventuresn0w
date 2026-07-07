@@ -36,6 +36,9 @@ describe("ciRegistry", () => {
     const srd = ciDefinition("rules.srd-entry");
     expect(srd.provenance).toBe("srd");
     expect(srd.inBackup).toBe(false);
+    const spell = ciDefinition("spell.srd-entry");
+    expect(spell.provenance).toBe("srd");
+    expect(spell.inBackup).toBe(false);
     const srdItem = ciDefinition("item.srd-equipment");
     expect(srdItem.provenance).toBe("srd");
     expect(srdItem.inBackup).toBe(false);
@@ -71,6 +74,7 @@ describe("ciRegistry", () => {
       "session.tabletop",
       "session.snapshot",
     ]);
+    expect(ciClassesForCategory("rules")).toEqual(["rules.srd-entry", "spell.srd-entry"]);
   });
 
   it("registers standalone characters as backed-up user sheets", () => {

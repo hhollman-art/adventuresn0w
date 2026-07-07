@@ -1,3 +1,4 @@
+import type { CiClass } from "@/lib/ciRegistry";
 import type { LibraryImage } from "@/lib/generationLibrary";
 
 export const PREVIEW_SYNC_CHANNEL = "ddeasy-preview-sync";
@@ -14,6 +15,8 @@ export type WorkshopPreviewSnapshot = {
   isLibraryView: boolean;
   viewingLabel: string | null;
   viewingSubline: string | null;
+  /** CMDB Creation File class for the document being read (e.g. rules.srd-entry). */
+  ciClass: CiClass | null;
   progressStage: string;
   loading: boolean;
   imageLoading: boolean;

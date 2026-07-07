@@ -1,6 +1,7 @@
 import type { SrdApiResource } from "@/lib/srd/dnd5eApi";
 import { dnd5eResourceToMarkdown } from "@/lib/srd/dnd5eApiMarkdown";
 import { lookupSrdDocumentMarkdown } from "@/lib/srd/srdDocumentLookup";
+import { buildSrdSpellPreviewMarkdown } from "@/lib/srd/srdSpellPreview";
 import { SRD_DOCUMENT_PDF_ID } from "@/lib/srd/srdDocument.data";
 import { SRD_ATTRIBUTION_SHORT } from "@/lib/srd/manifest";
 
@@ -17,6 +18,11 @@ export type BuildSrdPreviewMarkdownParams = {
  */
 export function buildSrdPreviewMarkdown(params: BuildSrdPreviewMarkdownParams): string {
   const { resource, index, name, apiData } = params;
+
+  if (resource === "spells") {
+    const spellMarkdown = buildSrdSpellPreviewMarkdown({ key: index, name });
+    if (spellMarkdown?.trim()) return spellMarkdown;
+  }
 
   const documentMarkdown = lookupSrdDocumentMarkdown({ resource, name, index });
   if (documentMarkdown?.trim()) {
@@ -41,6 +47,11 @@ export async function fetchSrdPreviewMarkdown(
     index: string,
   ) => Promise<Record<string, unknown>>,
 ): Promise<string> {
+  if (resource === "spells") {
+    const spellMarkdown = buildSrdSpellPreviewMarkdown({ key: index, name });
+    if (spellMarkdown?.trim()) return spellMarkdown;
+  }
+
   const documentMarkdown = lookupSrdDocumentMarkdown({ resource, name, index });
   if (documentMarkdown?.trim()) {
     return documentMarkdown;

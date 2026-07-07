@@ -26,6 +26,7 @@ describe("buildLibraryPreviewSnapshot", () => {
     expect(snapshot?.isSrdPreview).toBe(true);
     expect(snapshot?.srdLoading).toBe(true);
     expect(snapshot?.viewingLabel).toContain("Bag of Holding");
+    expect(snapshot?.ciClass).toBe("item.srd-magic");
     expect(snapshot?.markdown).toBe("");
   });
 
@@ -60,5 +61,6 @@ describe("buildLibraryPreviewSnapshot", () => {
     expect(snapshot?.markdown).toContain("# Sun Blade");
     expect(snapshot?.markdown).toContain("radiant sword");
     expect(snapshot?.viewingLabel).toContain("Sun Blade");
+    expect(snapshot?.ciClass).toBe("item.magic");
   });
 });

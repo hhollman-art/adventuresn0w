@@ -37,6 +37,7 @@ import {
   PREVIEW_SYNC_CHANNEL,
   publishPreviewSnapshot,
 } from "@/lib/workshop/previewSnapshot";
+import { resolvePreviewCiClass } from "@/lib/workshop/previewCiClass";
 import { SEED_KIND_LABEL, seedDisplayName, type SavedRealmSeed } from "@/lib/realmSeeds";
 import type { GeneratedImage, ProgressStage, WorkshopWorkspace } from "./homeTypes";
 
@@ -386,6 +387,23 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
       isLibraryView,
       viewingLabel,
       viewingSubline,
+      ciClass: resolvePreviewCiClass({
+        selection: librarySelection,
+        viewingSeed,
+        viewingResult,
+        viewingCharacter,
+        viewingItem,
+        viewingCampaign,
+        viewingParty,
+        outputLayoutKind,
+        editKind,
+        isSrdPreview:
+          librarySelection?.kind === "srd" || librarySelection?.kind === "srd-entity",
+        srdResource:
+          librarySelection?.kind === "srd" ? librarySelection.resource : undefined,
+        srdEntityId:
+          librarySelection?.kind === "srd-entity" ? librarySelection.entityId : undefined,
+      }),
       progressStage,
       loading,
       imageLoading,

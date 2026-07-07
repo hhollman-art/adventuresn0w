@@ -31,16 +31,19 @@ describe("SRD corpus", () => {
     const entity = getSrdEntity("spell:fireball");
     expect(entity).toBeDefined();
     const md = srdEntityToPreviewMarkdown(entity!);
+    expect(md).toContain("| **Casting Time** | 1 action |");
     expect(md).toContain("8d6 Fire damage");
     expect(md).toContain("SRD_CC_v5.2.1");
   });
 
-  it("maps spell entities to the rules shelf", () => {
+  it("maps spell entities to spell.srd-entry with full library detail", () => {
     const entity = getSrdEntity("spell:fireball");
     expect(entity).toBeDefined();
     const entry = srdEntityToLibraryEntry(entity!);
     expect(entry.category).toBe("rules");
-    expect(entry.ciClass).toBe("rules.srd-entry");
+    expect(entry.ciClass).toBe("spell.srd-entry");
+    expect(entry.detail).toContain("150 feet");
+    expect(entry.detail).toContain("Sorcerer");
     expect(entry.srdEntityId).toBe("spell:fireball");
   });
 

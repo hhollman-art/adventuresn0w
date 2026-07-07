@@ -1,5 +1,6 @@
+import type { CiClass } from "@/lib/ciRegistry";
 import { fetchDnd5eResource, type SrdApiResource } from "@/lib/srd/dnd5eApi";
-import { getSrdEntity, srdEntityToPreviewMarkdown, KIND_TO_API_RESOURCE } from "@/lib/srd/corpus";
+import { ciClassForSrdEntity, getSrdEntity, srdEntityToPreviewMarkdown, KIND_TO_API_RESOURCE } from "@/lib/srd/corpus";
 import { lookupSrdDocumentMarkdown } from "@/lib/srd/srdDocumentLookup";
 import { buildSrdPreviewMarkdown } from "@/lib/srd/srdPreviewMarkdown";
 import type { SrdItemRef } from "@/lib/srd/srdItemRef";
@@ -9,6 +10,7 @@ import {
   publishPreviewSnapshot,
   type WorkshopPreviewSnapshot,
 } from "@/lib/workshop/previewSnapshot";
+import { ciClassForSrdResource } from "@/lib/workshop/previewCiClass";
 
 export type SrdPreviewRef = {
   resource: SrdApiResource;
@@ -20,6 +22,7 @@ function srdPreviewSnapshot(
   name: string,
   markdown: string,
   loading: boolean,
+  ciClass?: CiClass | null,
 ): WorkshopPreviewSnapshot {
   return {
     markdown,
@@ -31,6 +34,7 @@ function srdPreviewSnapshot(
     isLibraryView: true,
     viewingLabel: `Viewing SRD: ${name}`,
     viewingSubline: "read-only",
+    ciClass: ciClass ?? "rules.srd-entry",
     progressStage: "idle",
     loading: false,
     imageLoading: false,
@@ -62,11 +66,11 @@ export function openSrdPreview(ref: SrdPreviewRef): void {
     index: ref.index,
   });
   if (bundled?.trim()) {
-    publishPreviewSnapshot(srdPreviewSnapshot(ref.name, bundled, false));
+    publishPreviewSnapshot(srdPreviewSnapshot(ref.name, bundled, false, ciClassForSrdResource(ref.resource)));
     return;
   }
 
-  publishPreviewSnapshot(srdPreviewSnapshot(ref.name, "", true));
+  publishPreviewSnapshot(srdPreviewSnapshot(ref.name, "", true, ciClassForSrdResource(ref.resource)));
 
   void fetchDnd5eResource(ref.resource, ref.index)
     .then((data) => {
@@ -113,14 +117,14 @@ export function openSrdEntityPreview(entityId: SrdEntityId): void {
 
   const bundled = srdEntityToPreviewMarkdown(entity);
   if (bundled?.trim()) {
-    publishPreviewSnapshot(srdPreviewSnapshot(entity.name, bundled, false));
+    publishPreviewSnapshot(srdPreviewSnapshot(entity.name, bundled, false, ciClassForSrdEntity(entity.kind)));
     return;
   }
 
   const resource = KIND_TO_API_RESOURCE[entity.kind];
   if (!resource) return;
 
-  publishPreviewSnapshot(srdPreviewSnapshot(entity.name, "", true));
+  publishPreviewSnapshot(srdPreviewSnapshot(entity.name, "", true, ciClassForSrdEntity(entity.kind)));
 
   void fetchDnd5eResource(resource, entity.key)
     .then((data) => {

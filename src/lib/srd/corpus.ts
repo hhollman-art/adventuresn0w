@@ -1,11 +1,15 @@
 import type { CiClass } from "@/lib/ciRegistry";
 import type { SrdApiResource } from "@/lib/srd/dnd5eApi";
-import { lookupSrdDocumentMarkdown } from "@/lib/srd/srdDocumentLookup";
+import { findSpellIndexEntry } from "@/lib/srd/spellIndex";
+import {
+  buildSrdSpellPreviewMarkdown,
+  formatSrdSpellLibraryDetail,
+} from "@/lib/srd/srdSpellPreview";
 import { SRD_ENTITIES } from "@/lib/srd/srdEntities.data";
 import type { LibraryListEntry } from "@/lib/workshop/libraryCatalog";
 import { ciClassLabel } from "@/lib/ciRegistry";
 import type { SrdEntityId, SrdEntityKind, SrdEntitySummary } from "@/lib/srd/types";
-import { normalizeSrdDocumentKey } from "@/lib/srd/srdDocumentLookup";
+import { normalizeSrdDocumentKey, lookupSrdDocumentMarkdown } from "@/lib/srd/srdDocumentLookup";
 import type { SrdItemRef } from "@/lib/srd/srdItemRef";
 
 const ENTITY_KIND_LABEL: Record<SrdEntityKind, string> = {
@@ -60,6 +64,7 @@ export function srdEntityKindLabel(kind: SrdEntityKind): string {
 }
 
 export function ciClassForSrdEntity(kind: SrdEntityKind): CiClass {
+  if (kind === "spell") return "spell.srd-entry";
   if (kind === "equipment" || kind === "weapon" || kind === "armor") return "item.srd-equipment";
   if (kind === "magic-item") return "item.srd-magic";
   if (kind === "monster") return "monster.srd-entry";
@@ -110,6 +115,9 @@ export function searchSrdEntities(
 }
 
 export function srdEntityToPreviewMarkdown(entity: SrdEntitySummary): string | null {
+  if (entity.kind === "spell") {
+    return buildSrdSpellPreviewMarkdown({ key: entity.key, name: entity.name });
+  }
   const resource = KIND_TO_API_RESOURCE[entity.kind];
   if (!resource) return null;
   return lookupSrdDocumentMarkdown({
@@ -153,14 +161,26 @@ export function listSrdMonstersLibraryEntries(): LibraryListEntry[] {
 export function listSrdRulesLibraryEntries(): LibraryListEntry[] {
   return SRD_ENTITIES.filter(
     (entity) =>
-      !ITEM_ENTITY_KINDS.includes(entity.kind) && entity.kind !== "monster",
+      !ITEM_ENTITY_KINDS.includes(entity.kind) &&
+      entity.kind !== "monster" &&
+      entity.kind !== "spell",
   ).map(srdEntityToLibraryEntry);
+}
+
+/** Bundled SRD spells with full index detail for the Rules shelf. */
+export function listSrdSpellsLibraryEntries(): LibraryListEntry[] {
+  return (byKind.get("spell") ?? []).map(srdEntityToLibraryEntry);
 }
 
 /** Virtual read-only Library row — not stored in user backup. */
 export function srdEntityToLibraryEntry(entity: SrdEntitySummary): LibraryListEntry {
   const ciClass = ciClassForSrdEntity(entity.kind);
   const itemRef = srdEntityToItemRef(entity);
+  const spellIndex = entity.kind === "spell" ? findSpellIndexEntry(entity.key) : undefined;
+  const detail =
+    spellIndex != null
+      ? formatSrdSpellLibraryDetail(spellIndex)
+      : entity.subtitle ?? ciClassLabel(ciClass);
   return {
     id: `srd-entity:${entity.id}`,
     ciClass,
@@ -176,7 +196,7 @@ export function srdEntityToLibraryEntry(entity: SrdEntitySummary): LibraryListEn
     provenance: "srd",
     kindLabel: srdEntityKindLabel(entity.kind),
     title: entity.name,
-    detail: entity.subtitle ?? ciClassLabel(ciClass),
+    detail,
     createdAt: "5.2.1-01-01T00:00:00.000Z",
     srdItemRef: itemRef ?? undefined,
     srdEntityId: entity.id,

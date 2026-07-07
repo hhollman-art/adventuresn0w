@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import WorkshopPreviewPanel from "@/features/workshop/WorkshopPreviewPanel";
-import { APP_ICONS } from "@/lib/ui/appIcons";
+import ScryingGlassIcon from "@/features/ui/ScryingGlassIcon";
 import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 import {
   isPreviewSnapshotMessage,
@@ -24,6 +24,7 @@ const EMPTY_SNAPSHOT: WorkshopPreviewSnapshot = {
   isLibraryView: false,
   viewingLabel: null,
   viewingSubline: null,
+  ciClass: null,
   progressStage: "idle",
   loading: false,
   imageLoading: false,
@@ -42,16 +43,28 @@ const EMPTY_SNAPSHOT: WorkshopPreviewSnapshot = {
   updatedAt: new Date(0).toISOString(),
 };
 
+const CLOSE_MS = 140;
+
 export default function ScryingGlassPopup() {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [snapshot, setSnapshot] = useState<WorkshopPreviewSnapshot>(EMPTY_SNAPSHOT);
 
-  const close = useCallback(() => setOpen(false), []);
+  const close = useCallback(() => {
+    setClosing(true);
+    setRevealed(false);
+    window.setTimeout(() => {
+      setOpen(false);
+      setClosing(false);
+    }, CLOSE_MS);
+  }, []);
 
   const openPopup = useCallback(() => {
     const stored = readPreviewSnapshot();
     if (stored) setSnapshot(stored);
+    setClosing(false);
     setOpen(true);
   }, []);
 
@@ -59,6 +72,15 @@ export default function ScryingGlassPopup() {
     setMounted(true);
     return subscribeScryingGlassOpen(openPopup);
   }, [openPopup]);
+
+  useEffect(() => {
+    if (!open) {
+      setRevealed(false);
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => setRevealed(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -104,50 +126,42 @@ export default function ScryingGlassPopup() {
 
   if (!mounted || !open) return null;
 
+  const motionClass = revealed && !closing ? "is-open" : closing ? "is-closing" : "";
+
   return createPortal(
     <div
-      className="scrying-glass-backdrop no-print"
+      className={`scrying-glass-backdrop no-print ${motionClass}`.trim()}
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) close();
       }}
     >
       <div
-        className="preview-window-frame scrying-glass-popup-frame"
+        className={`preview-window-frame scrying-glass-frame scrying-glass-popup-frame ${motionClass}`.trim()}
         role="dialog"
         aria-modal="true"
         aria-label={PREVIEW_WINDOW}
       >
-        <header className="preview-window-titlebar" aria-label={`${PREVIEW_WINDOW} title bar`}>
-          <div className="preview-window-titlebar-dots" aria-hidden="true">
-            <button
-              type="button"
-              className="scrying-glass-close-dot"
-              aria-label={`Close ${PREVIEW_WINDOW}`}
-              onClick={close}
-            />
-            <span />
-            <span />
-          </div>
+        <header className="preview-window-titlebar scrying-glass-titlebar" aria-label={`${PREVIEW_WINDOW} title bar`}>
+          <ScryingGlassIcon size={24} className="scrying-glass-titlebar-icon" />
           <p className="preview-window-titlebar-label">
-            <span aria-hidden="true">{APP_ICONS.previewWindow} </span>
             D&amp;D EASY — {PREVIEW_WINDOW}
           </p>
           <button
             type="button"
-            className="scrying-glass-close-btn"
+            className="scrying-glass-dismiss-btn"
             aria-label={`Close ${PREVIEW_WINDOW}`}
             onClick={close}
           >
-            Close
+            <span aria-hidden="true">✕</span>
           </button>
         </header>
-        <div className="preview-window-body flex min-h-0 flex-1 flex-col">
-          <p className="no-print shrink-0 px-4 py-2 text-xs text-[var(--text-soft)]">
+        <div className="preview-window-body scrying-glass-body flex min-h-0 flex-1 flex-col">
+          <p className="scrying-glass-hint no-print shrink-0">
             Review output here. Edit and save actions run in the main Fantasy Forge tab behind this
             popup.
           </p>
-          <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 sm:px-4 sm:pb-4">
+          <div className="scrying-glass-content-wrap flex min-h-0 flex-1 flex-col">
             <WorkshopPreviewPanel snapshot={snapshot} popupMode />
           </div>
         </div>

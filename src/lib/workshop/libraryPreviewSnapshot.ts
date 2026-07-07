@@ -20,6 +20,7 @@ import { sessionRecordToMarkdown } from "@/lib/workshop/libraryCatalog";
 import type { SavedNpc } from "@/lib/worldAssets/npc";
 import type { SavedLocation } from "@/lib/worldAssets/location";
 import type { WorkshopPreviewSnapshot } from "@/lib/workshop/previewSnapshot";
+import { resolvePreviewCiClass } from "@/lib/workshop/previewCiClass";
 
 export type BuildLibraryPreviewSnapshotParams = {
   selection: LibraryViewSelection;
@@ -203,6 +204,19 @@ export function buildLibraryPreviewSnapshot(
     isLibraryView: true,
     viewingLabel,
     viewingSubline,
+    ciClass: resolvePreviewCiClass({
+      selection,
+      viewingSeed,
+      viewingResult,
+      viewingCharacter,
+      viewingItem,
+      viewingCampaign,
+      viewingNpc,
+      viewingLocation,
+      viewingSession,
+      viewingParty,
+      isSrdPreview: isSrd,
+    }),
     progressStage: "idle",
     loading: false,
     imageLoading: false,

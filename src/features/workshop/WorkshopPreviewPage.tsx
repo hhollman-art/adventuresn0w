@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import WorkshopPreviewPanel from "@/features/workshop/WorkshopPreviewPanel";
-import { APP_ICONS } from "@/lib/ui/appIcons";
+import ScryingGlassIcon from "@/features/ui/ScryingGlassIcon";
 import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 import {
   isPreviewSnapshotMessage,
@@ -23,6 +23,7 @@ const EMPTY_SNAPSHOT: WorkshopPreviewSnapshot = {
   isLibraryView: false,
   viewingLabel: null,
   viewingSubline: null,
+  ciClass: null,
   progressStage: "idle",
   loading: false,
   imageLoading: false,
@@ -81,23 +82,18 @@ export default function WorkshopPreviewPage() {
   }, []);
 
   return (
-    <div className="preview-window-frame">
-      <header className="preview-window-titlebar no-print" aria-label={`${PREVIEW_WINDOW} title bar`}>
-        <div className="preview-window-titlebar-dots" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
+    <div className="preview-window-frame scrying-glass-frame is-open">
+      <header className="preview-window-titlebar scrying-glass-titlebar no-print" aria-label={`${PREVIEW_WINDOW} title bar`}>
+        <ScryingGlassIcon size={24} className="scrying-glass-titlebar-icon" />
         <p className="preview-window-titlebar-label">
-          <span aria-hidden="true">{APP_ICONS.previewWindow} </span>
           D&amp;D EASY — {PREVIEW_WINDOW}
         </p>
       </header>
-      <div className="preview-window-body flex min-h-0 flex-1 flex-col">
-        <p className="no-print shrink-0 px-4 py-2 text-xs text-[var(--text-soft)]">
+      <div className="preview-window-body scrying-glass-body flex min-h-0 flex-1 flex-col">
+        <p className="scrying-glass-hint no-print shrink-0">
           Review output here. Edit and save actions run in the main Fantasy Forge tab.
         </p>
-        <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 sm:px-4 sm:pb-4">
+        <div className="scrying-glass-content-wrap flex min-h-0 flex-1 flex-col">
           <WorkshopPreviewPanel snapshot={snapshot} popupMode />
         </div>
       </div>

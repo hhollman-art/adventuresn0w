@@ -53,6 +53,7 @@ export type CiClass =
   | "session.tabletop"
   | "session.snapshot"
   | "rules.srd-entry"
+  | "spell.srd-entry"
   | "monster.srd-entry";
 
 export type CiDefinition = {
@@ -250,6 +251,14 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
     category: "rules",
     label: "SRD reference entry",
     storageModule: "src/lib/srd/",
+    provenance: "srd",
+    inBackup: false,
+  },
+  "spell.srd-entry": {
+    ciClass: "spell.srd-entry",
+    category: "rules",
+    label: "SRD spell",
+    storageModule: "src/lib/srd/spellIndex.ts",
     provenance: "srd",
     inBackup: false,
   },

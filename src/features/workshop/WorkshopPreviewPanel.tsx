@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import OutputMarkdownCarousel from "@/features/workshop/OutputMarkdownCarousel";
 import { PREVIEW_WINDOW } from "@/lib/ui/labels";
-import { APP_ICONS } from "@/lib/ui/appIcons";
+import { ciClassVisual } from "@/lib/ui/ciClassVisuals";
+import { fantasyCiLabel } from "@/lib/workshop/libraryBrowseFilters";
 import type { LibraryImage } from "@/lib/generationLibrary";
 import {
   copyMarkdownText,
@@ -119,6 +120,7 @@ export default function WorkshopPreviewPanel({
     isLibraryView,
     viewingLabel,
     viewingSubline,
+    ciClass,
     loading,
     imageLoading,
     error,
@@ -135,6 +137,7 @@ export default function WorkshopPreviewPanel({
   const exportMode = (outputLayoutKind || workspace || "adventure") as PreviewExportMode;
   const exportBaseName = fileBaseName(previewMarkdown, exportMode);
   const hasContent = previewMarkdown.trim() || previewImages.length > 0;
+  const ciVisual = ciClass ? ciClassVisual(ciClass) : null;
 
   function handleEdit() {
     if (popupMode) {
@@ -159,25 +162,39 @@ export default function WorkshopPreviewPanel({
   }
 
   return (
-    <section className="preview-window-panel fantasy-panel print-generation-root panel-scroll panel-scroll--parchment min-h-0 flex-1 rounded-xl border p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="font-display text-lg font-semibold text-[var(--accent-dim)]">
-            <span aria-hidden="true">{APP_ICONS.previewWindow} </span>
-            {PREVIEW_WINDOW}
-          </h2>
-          {viewingLabel ? (
-            <p className="no-print mt-0.5 text-xs text-[var(--muted)]">
-              {viewingLabel}
-              {viewingSubline ? (
-                <>
-                  {" "}
-                  <strong className="text-[var(--text)]">({viewingSubline})</strong>
-                </>
-              ) : null}
-            </p>
-          ) : null}
-        </div>
+    <section
+      className="preview-window-panel fantasy-panel print-generation-root panel-scroll panel-scroll--scrying-glass min-h-0 flex-1 rounded-xl border p-6"
+      data-ci-class={ciClass ?? undefined}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        {(ciClass && ciVisual) || viewingLabel ? (
+          <div className="scrying-glass-file-meta no-print min-w-0 flex-1">
+            {ciClass && ciVisual ? (
+              <span
+                className="scrying-glass-ci-class"
+                style={{ borderColor: ciVisual.accent, color: ciVisual.accent }}
+                title={ciClass}
+              >
+                <span aria-hidden="true">{ciVisual.icon}</span>
+                <span>{fantasyCiLabel(ciClass)}</span>
+                <span className="scrying-glass-ci-class-key">{ciClass}</span>
+              </span>
+            ) : null}
+            {viewingLabel ? (
+              <p className="scrying-glass-file-label text-xs text-[var(--muted)]">
+                {viewingLabel}
+                {viewingSubline ? (
+                  <>
+                    {" "}
+                    <strong className="text-[var(--text)]">({viewingSubline})</strong>
+                  </>
+                ) : null}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <div className="min-w-0 flex-1" />
+        )}
         {hasContent ? (
           <div className="no-print flex flex-wrap gap-2">
             {previewMarkdown.trim() && canEdit ? (
@@ -289,15 +306,7 @@ export default function WorkshopPreviewPanel({
       ) : null}
 
       {partySaveMessage ? (
-        <p
-          className="no-print mt-2 rounded-lg border px-3 py-2 text-xs"
-          style={{
-            borderColor: "var(--accent-dim)",
-            background: "rgba(201,162,39,0.12)",
-            color: "var(--text)",
-          }}
-          role="status"
-        >
+        <p className="scrying-glass-status no-print mt-2 rounded-lg border px-3 py-2 text-xs" role="status">
           {partySaveMessage}
         </p>
       ) : null}
@@ -312,18 +321,12 @@ export default function WorkshopPreviewPanel({
       ) : null}
 
       {error ? (
-        <p
-          className="no-print mt-4 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
-          role="alert"
-        >
+        <p className="scrying-glass-alert no-print mt-4 rounded-lg border px-3 py-2 text-sm" role="alert">
           {error}
         </p>
       ) : null}
       {imageError ? (
-        <p
-          className="no-print mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
-          role="alert"
-        >
+        <p className="scrying-glass-alert no-print mt-3 rounded-lg border px-3 py-2 text-sm" role="alert">
           {imageError}
         </p>
       ) : null}

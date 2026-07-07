@@ -42,6 +42,7 @@ export const LIBRARY_CI_FANTASY_LABEL: Record<CiClass, string> = {
   "session.tabletop": "Game table",
   "session.snapshot": "Shelved table",
   "rules.srd-entry": "SRD rule",
+  "spell.srd-entry": "SRD spell",
   "monster.srd-entry": "SRD monster",
 };
 

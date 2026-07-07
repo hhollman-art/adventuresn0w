@@ -43,6 +43,7 @@ import {
   listSrdItemLibraryEntries,
   listSrdMonstersLibraryEntries,
   listSrdRulesLibraryEntries,
+  listSrdSpellsLibraryEntries,
 } from "@/lib/srd/corpus";
 import {
   buildLibraryBackup,
@@ -495,6 +496,7 @@ export default function WorkshopLibraryPanel({
     useState<LibraryBrowseProvenanceFilter>("all");
 
   const srdItemEntries = useMemo(() => listSrdItemLibraryEntries(), []);
+  const srdSpellEntries = useMemo(() => listSrdSpellsLibraryEntries(), []);
   const srdRulesEntries = useMemo(() => listSrdRulesLibraryEntries(), []);
   const srdMonsterEntries = useMemo(() => listSrdMonstersLibraryEntries(), []);
 
@@ -592,6 +594,7 @@ export default function WorkshopLibraryPanel({
 
   const allEntries = useMemo(() => {
     const srdItemsForShelf = includeSrdItems ? srdItemEntries : [];
+    const srdSpellsForShelf = includeSrdRules ? srdSpellEntries : [];
     const srdRulesForShelf = includeSrdRules ? srdRulesEntries : [];
     const srdMonstersForShelf = includeSrdMonsters ? srdMonsterEntries : [];
     return sortLibraryEntries([
@@ -603,6 +606,7 @@ export default function WorkshopLibraryPanel({
       ...campaignLocations.map(locationToLibraryEntry),
       ...campaignSessionRecords.map(sessionRecordToLibraryEntry),
       ...srdItemsForShelf,
+      ...srdSpellsForShelf,
       ...srdRulesForShelf,
       ...srdMonstersForShelf,
       ...campaignParties.map(partyToLibraryEntry),
@@ -613,6 +617,7 @@ export default function WorkshopLibraryPanel({
     includeSrdRules,
     includeSrdMonsters,
     srdItemEntries,
+    srdSpellEntries,
     srdRulesEntries,
     srdMonsterEntries,
     filteredSeeds,
