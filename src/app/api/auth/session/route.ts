@@ -1,17 +1,23 @@
 import { NextResponse } from "next/server";
-import { isDmHostingEnabled, requireDmSession } from "@/lib/auth";
+import { isAuthEnabled, isDmHostingEnabled, requireDmSession } from "@/lib/auth";
 
 export async function GET() {
-  if (!isDmHostingEnabled()) {
-    return NextResponse.json({ authenticated: false, hostingEnabled: false });
+  const authEnabled = isAuthEnabled();
+  const hostingEnabled = isDmHostingEnabled();
+
+  if (!authEnabled) {
+    return NextResponse.json({ authenticated: false, hostingEnabled, authEnabled: false });
   }
+
   const session = await requireDmSession();
   if (!session) {
-    return NextResponse.json({ authenticated: false, hostingEnabled: true });
+    return NextResponse.json({ authenticated: false, hostingEnabled, authEnabled: true });
   }
+
   return NextResponse.json({
     authenticated: true,
-    hostingEnabled: true,
+    hostingEnabled,
+    authEnabled: true,
     session,
   });
 }

@@ -4,6 +4,7 @@ import { APP_ICONS } from "@/lib/ui/appIcons";
 import WorkflowGuideList from "@/features/workshop/WorkflowGuideList";
 import WorkshopWorkspaceDock from "@/features/workshop/WorkshopWorkspaceDock";
 import DmDashboardPanel from "@/features/home/DmDashboardPanel";
+import AdminAnnouncementBanner from "@/features/admin/AdminAnnouncementBanner";
 import type { QuickCreateAction } from "@/lib/workshop/dmDashboard";
 import type { WorkshopCreationId } from "@/lib/workplace/workshopNav";
 
@@ -24,6 +25,7 @@ export default function WorkshopWelcomeLanding({
 }: WorkshopWelcomeLandingProps) {
   return (
     <div className="workshop-welcome">
+      <AdminAnnouncementBanner className="mb-4" />
       <header className="forge-forest-card workshop-welcome-intro">
         <p className="zone-badge mb-3">The {FANTASY_FORGE}</p>
         <h1 className="font-display text-2xl font-bold sm:text-3xl">

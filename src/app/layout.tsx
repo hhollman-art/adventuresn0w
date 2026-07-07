@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Cinzel } from "next/font/google";
 import SiteTitleBar from "@/features/shell/SiteTitleBar";
 import AppChrome from "@/features/shell/AppChrome";
+import Providers from "@/app/Providers";
 import { APP_THEME_ORDER, APP_THEMES, DEFAULT_APP_THEME, LEGACY_THEME_MAP } from "@/lib/themes";
 import "./globals.css";
 import pkg from "../../package.json";
@@ -52,7 +53,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="app-shell flex min-h-dvh flex-col antialiased">
         <SiteTitleBar />
         <AppChrome>
-          <div className="app-content">{children}</div>
+          <Providers>
+            <div className="app-content">{children}</div>
+          </Providers>
         </AppChrome>
         <p
           className="site-footnote shrink-0 px-4 py-3 text-center text-xs text-[var(--muted)]"

@@ -1,15 +1,8 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import type { DmAccount, DmAuthSession } from "./types";
+import { getAuthSecret } from "./authSecret";
 
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
-
-function signingSecret(): string {
-  const secret = process.env.DM_AUTH_SECRET?.trim();
-  if (!secret) {
-    throw new Error("DM_AUTH_SECRET is not configured.");
-  }
-  return secret;
-}
 
 function b64url(input: string): string {
   return Buffer.from(input, "utf8").toString("base64url");
@@ -20,7 +13,7 @@ function fromB64url(input: string): string {
 }
 
 function sign(payloadB64: string): string {
-  return createHmac("sha256", signingSecret()).update(payloadB64).digest("base64url");
+  return createHmac("sha256", getAuthSecret()).update(payloadB64).digest("base64url");
 }
 
 /** Issue a stateless signed DM session token (JWT-style, no external deps). */
@@ -57,3 +50,23 @@ export function verifyDmSessionToken(token: string): DmAuthSession | null {
 }
 
 export const DM_SESSION_COOKIE = "ddeasy-dm-session";
+
+export function setSessionCookie(response: import("next/server").NextResponse, token: string): void {
+  response.cookies.set(DM_SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 12 * 60 * 60,
+  });
+}
+
+export function clearSessionCookie(response: import("next/server").NextResponse): void {
+  response.cookies.set(DM_SESSION_COOKIE, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
+}

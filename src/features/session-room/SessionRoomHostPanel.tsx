@@ -31,9 +31,9 @@ export default function SessionRoomHostPanel({ onRoomChange }: SessionRoomHostPa
     let cancelled = false;
     void fetch("/api/auth/session")
       .then((res) => res.json())
-      .then((data: { authenticated?: boolean; hostingEnabled?: boolean; session?: { dm: { username: string } } }) => {
+      .then((data: { authenticated?: boolean; authEnabled?: boolean; hostingEnabled?: boolean; session?: { dm: { username: string; email?: string } } }) => {
         if (cancelled) return;
-        if (!data.hostingEnabled) {
+        if (data.authEnabled === false && !data.hostingEnabled) {
           setAuth({ kind: "disabled" });
           return;
         }
@@ -41,7 +41,10 @@ export default function SessionRoomHostPanel({ onRoomChange }: SessionRoomHostPa
           setAuth({ kind: "unauthenticated" });
           return;
         }
-        setAuth({ kind: "authenticated", username: data.session?.dm.username ?? "DM" });
+        setAuth({
+          kind: "authenticated",
+          username: data.session?.dm.username ?? data.session?.dm.email ?? "DM",
+        });
       })
       .catch(() => {
         if (!cancelled) setAuth({ kind: "disabled" });
