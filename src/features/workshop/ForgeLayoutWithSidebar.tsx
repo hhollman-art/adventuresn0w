@@ -17,7 +17,7 @@ type ForgeLayoutWithSidebarProps = {
 
 export default function ForgeLayoutWithSidebar({
   children,
-  showSidebar = true,
+  showSidebar = false,
   breadcrumbs,
   workspace = "welcome",
   onSelectWelcome,

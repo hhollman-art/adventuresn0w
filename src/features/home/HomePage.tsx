@@ -1359,7 +1359,7 @@ useHomePreviewSnapshot({
 
       <ForgeContentShell bodyClassName={forgeBodyClass}>
       <ForgeLayoutWithSidebar
-        showSidebar={!isWelcomeView}
+        showSidebar={false}
         breadcrumbs={workshopBreadcrumbs}
         workspace={workspace === "welcome" ? "welcome" : workspace}
         onSelectWelcome={() => selectWorkspace("welcome")}
