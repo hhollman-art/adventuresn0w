@@ -22,6 +22,7 @@ type VttControlSidebarProps = {
   onToggleFullscreen: () => void;
   onOpenPlayerView: () => void;
   onClearTable: () => void;
+  sessionRoom?: ReactNode;
   children: ReactNode;
 };
 
@@ -50,6 +51,7 @@ export default function VttControlSidebar({
   onToggleFullscreen,
   onOpenPlayerView,
   onClearTable,
+  sessionRoom,
   children,
 }: VttControlSidebarProps) {
   return (
@@ -150,6 +152,12 @@ export default function VttControlSidebar({
       </div>
 
       <div className="vtt-control-sidebar-body panel-scroll">{children}</div>
+
+      {sessionRoom ? (
+        <div className="vtt-control-sidebar-session-room shrink-0 border-t px-3 py-3" style={{ borderColor: "var(--border)" }}>
+          {sessionRoom}
+        </div>
+      ) : null}
 
       <footer className="vtt-control-sidebar-footer">
         {activeCombatant ? (

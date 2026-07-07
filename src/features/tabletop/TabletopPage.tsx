@@ -59,6 +59,8 @@ import {
   sortInitiative,
 } from "@/lib/tabletop/session";
 import { createDmSync } from "@/lib/tabletop/sync";
+import { createDmHostSync, loadDmActiveRoom, type DmActiveRoom } from "@/lib/session-room/dmHost";
+import SessionRoomHostPanel from "@/features/session-room/SessionRoomHostPanel";
 import { useFullscreen } from "@/features/tabletop/useFullscreen";
 import {
   TOKEN_COLOR_PALETTE,
@@ -78,6 +80,7 @@ export default function TabletopPage() {
   const [session, setSession] = useState<TabletopSession | null>(null);
   const sessionRef = useRef<TabletopSession>(createDefaultSession());
   const syncRef = useRef<ReturnType<typeof createDmSync> | null>(null);
+  const hostSyncRef = useRef<ReturnType<typeof createDmHostSync> | null>(null);
 
   const [tool, setTool] = useState<StageTool>("select");
   const [brushRadius, setBrushRadius] = useState(1);
@@ -89,11 +92,16 @@ export default function TabletopPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const storedRoom = loadDmActiveRoom();
+    if (storedRoom) {
+      hostSyncRef.current = createDmHostSync(storedRoom.code);
+    }
     void loadTabletopSession().then((stored) => {
       if (cancelled) return;
       const initial = stored ?? createDefaultSession();
       sessionRef.current = initial;
       setSession(initial);
+      hostSyncRef.current?.publish(initial);
     });
     const sync = createDmSync(() => sessionRef.current);
     syncRef.current = sync;
@@ -101,7 +109,18 @@ export default function TabletopPage() {
       cancelled = true;
       sync.close();
       syncRef.current = null;
+      hostSyncRef.current?.close();
+      hostSyncRef.current = null;
     };
+  }, []);
+
+  const handleRoomChange = useCallback((room: DmActiveRoom | null) => {
+    hostSyncRef.current?.close();
+    hostSyncRef.current = null;
+    if (room) {
+      hostSyncRef.current = createDmHostSync(room.code);
+      hostSyncRef.current.publish(sessionRef.current);
+    }
   }, []);
 
   const update = useCallback((fn: (s: TabletopSession) => TabletopSession) => {
@@ -111,6 +130,7 @@ export default function TabletopPage() {
       sessionRef.current = next;
       saveTabletopSession(next);
       syncRef.current?.publish(next);
+      hostSyncRef.current?.publish(next);
       return next;
     });
   }, []);
@@ -187,6 +207,7 @@ export default function TabletopPage() {
         onToggleFullscreen={() => toggleFullscreen(mainRef.current)}
         onOpenPlayerView={openPlayerView}
         onClearTable={clearTable}
+        sessionRoom={<SessionRoomHostPanel onRoomChange={handleRoomChange} />}
       >
         {panel === "party" && (
           <PartyPanel session={session} update={update} onSelectToken={setSelectedTokenId} />

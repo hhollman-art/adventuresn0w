@@ -1,26 +1,51 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import BattleStage from "@/features/tabletop/BattleStage";
 import { playerVisibleSession } from "@/lib/tabletop/session";
 import { loadTabletopSession } from "@/lib/tabletop/store";
 import { createPlayerSync } from "@/lib/tabletop/sync";
+import { createRoomRelayTransport } from "@/lib/tabletop/transport/roomRelayTransport";
+import { loadPlayerSession, normalizeRoomCode } from "@/lib/session-room";
 import type { TabletopSession } from "@/lib/tabletop/types";
 import { useFullscreen } from "@/features/tabletop/useFullscreen";
 
-export default function PlayerViewPage() {
+function PlayerViewContent() {
+  const searchParams = useSearchParams();
   const [session, setSession] = useState<TabletopSession | null>(null);
   const [connected, setConnected] = useState(false);
+  const [roomCode, setRoomCode] = useState<string | null>(null);
   const mainRef = useRef<HTMLElement | null>(null);
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
 
   useEffect(() => {
     let cancelled = false;
+    const fromQuery = searchParams.get("room");
+    const stored = loadPlayerSession();
+    const code = fromQuery
+      ? normalizeRoomCode(fromQuery)
+      : stored?.roomCode
+        ? normalizeRoomCode(stored.roomCode)
+        : null;
+    setRoomCode(code);
 
-    void loadTabletopSession().then((stored) => {
-      if (!cancelled && stored) {
-        setSession((current) => current ?? playerVisibleSession(stored));
+    if (code) {
+      const relay = createRoomRelayTransport({ roomCode: code }, (incoming) => {
+        if (cancelled) return;
+        setSession(incoming);
+        setConnected(true);
+      });
+      return () => {
+        cancelled = true;
+        relay.close();
+      };
+    }
+
+    void loadTabletopSession().then((storedSession) => {
+      if (!cancelled && storedSession) {
+        setSession((current) => current ?? playerVisibleSession(storedSession));
       }
     });
 
@@ -34,7 +59,7 @@ export default function PlayerViewPage() {
       cancelled = true;
       sync.close();
     };
-  }, []);
+  }, [searchParams]);
 
   if (!session) {
     return (
@@ -42,12 +67,15 @@ export default function PlayerViewPage() {
         <p className="zone-badge mb-3">Virtual Table</p>
         <h1 className="font-display text-xl font-bold">Player view</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
-          Waiting for the Dungeon Master&hellip; Keep the Virtual Table open in another tab of
-          this browser.
+          {roomCode
+            ? "Connecting to the DM\u2019s session room\u2026"
+            : "Waiting for the Dungeon Master\u2026 Keep the Virtual Table open in another tab of this browser."}
         </p>
-        <Link href="/table" className="btn btn-accent btn-sm mt-4 inline-flex">
-          Open DM view
-        </Link>
+        {!roomCode ? (
+          <Link href="/join" className="btn btn-accent btn-sm mt-4 inline-flex">
+            Join with room code
+          </Link>
+        ) : null}
       </main>
     );
   }
@@ -67,6 +95,11 @@ export default function PlayerViewPage() {
       <div className="zone-toolbar">
         <h1 className="zone-toolbar-title">Player view</h1>
         <span className="zone-badge">Player screen</span>
+        {roomCode ? (
+          <span className="zone-badge" style={{ textTransform: "none", letterSpacing: "0.02em" }}>
+            Room {roomCode}
+          </span>
+        ) : null}
         {activeEntry && (
           <span className="zone-badge" style={{ textTransform: "none", letterSpacing: "0.02em" }}>
             Round {session.initiative.round}: {activeEntry.name}&rsquo;s turn
@@ -74,7 +107,11 @@ export default function PlayerViewPage() {
         )}
         <span className="flex-1" />
         <span className="text-xs text-[var(--muted)]">
-          {connected ? "Live — mirroring the DM's table" : "Showing last saved state"}
+          {connected
+            ? roomCode
+              ? "Live — connected via session room"
+              : "Live — mirroring the DM\u2019s table"
+            : "Showing last saved state"}
         </span>
         <button
           type="button"
@@ -147,5 +184,19 @@ export default function PlayerViewPage() {
         </aside>
       </div>
     </main>
+  );
+}
+
+export default function PlayerViewPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="app-main app-main--table mx-auto max-w-3xl px-4 py-16 text-center text-sm text-[var(--muted)]">
+          Loading player view&hellip;
+        </main>
+      }
+    >
+      <PlayerViewContent />
+    </Suspense>
   );
 }

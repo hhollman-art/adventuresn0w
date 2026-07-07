@@ -48,3 +48,12 @@ export {
   PLAYER_SESSION_STORAGE_KEY,
   type StoredPlayerSession,
 } from "./byod";
+
+export {
+  saveDmActiveRoom,
+  loadDmActiveRoom,
+  clearDmActiveRoom,
+  postDmHostSync,
+  createDmHostSync,
+  type DmActiveRoom,
+} from "./dmHost";
