@@ -30,6 +30,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 525802,
     end: 526252,
     subtitle: "Evocation Cantrip (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "animated-object",
@@ -58,6 +60,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 535039,
     end: 536130,
     subtitle: "Huge or Smaller Construct, Unaligned",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "aura-of-life",
@@ -86,6 +90,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 547048,
     end: 547492,
     subtitle: "Level 4 Abjuration (Cleric, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "befuddlement",
@@ -114,6 +120,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 550720,
     end: 551375,
     subtitle: "Level 8 Enchantment (Bard, Druid, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "charm-monster",
@@ -142,6 +150,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 560327,
     end: 560958,
     subtitle: "Level 4 Enchantment (Bard, Druid, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "chill-touch",
@@ -170,6 +180,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 561589,
     end: 562063,
     subtitle: "Necromancy Cantrip (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "chromatic-orb",
@@ -198,6 +210,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 562063,
     end: 563043,
     subtitle: "Level 1 Evocation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "dancing-lights",
@@ -226,6 +240,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 592707,
     end: 593432,
     subtitle: "Illusion Cantrip (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "dissonant-whispers",
@@ -254,6 +270,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 605712,
     end: 606324,
     subtitle: "Level 1 Enchantment (Bard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "divine-smite",
@@ -282,6 +300,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 607287,
     end: 607752,
     subtitle: "Level 1 Evocation (Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "dragons-breath",
@@ -310,6 +330,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 612522,
     end: 613144,
     subtitle: "Level 2 Transmutation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "druidcraft",
@@ -338,6 +360,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 614419,
     end: 615318,
     subtitle: "Transmutation Cantrip (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "eldritch-blast",
@@ -366,6 +390,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 617095,
     end: 617617,
     subtitle: "Evocation Cantrip (Warlock)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "elementalism",
@@ -394,6 +420,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 617617,
     end: 618932,
     subtitle: "Transmutation Cantrip (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "ensnaring-strike",
@@ -422,6 +450,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 620837,
     end: 621710,
     subtitle: "Level 1 Conjuration (Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "fire-bolt",
@@ -450,6 +480,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 638043,
     end: 638547,
     subtitle: "Evocation Cantrip (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "guidance",
@@ -478,6 +510,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 666899,
     end: 667199,
     subtitle: "Divination Cantrip (Cleric, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "hex",
@@ -506,6 +540,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 676639,
     end: 677421,
     subtitle: "Level 1 Enchantment (Warlock)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "ice-knife",
@@ -534,6 +570,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 681435,
     end: 682054,
     subtitle: "Level 1 Conjuration (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "light",
@@ -562,6 +600,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 694146,
     end: 694671,
     subtitle: "Evocation Cantrip (Bard, Cleric, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "mage-hand",
@@ -590,6 +630,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 698087,
     end: 698858,
     subtitle: "Conjuration Cantrip (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "mending",
@@ -618,6 +660,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 712634,
     end: 713207,
     subtitle: "Transmutation Cantrip (Bard, Cleric, Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "message",
@@ -646,6 +690,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 713207,
     end: 713760,
     subtitle: "Transmutation Cantrip (Bard, Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "mind-spike",
@@ -674,6 +720,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 714972,
     end: 715779,
     subtitle: "Level 2 Divination (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "minor-illusion",
@@ -702,6 +750,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 715779,
     end: 717075,
     subtitle: "Illusion Cantrip (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "phantasmal-force",
@@ -730,6 +780,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 726287,
     end: 727722,
     subtitle: "Level 2 Illusion (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "poison-spray",
@@ -758,6 +810,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 734838,
     end: 735260,
     subtitle: "Necromancy Cantrip (Druid, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "power-word-heal",
@@ -786,6 +840,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 736540,
     end: 736993,
     subtitle: "Level 9 Enchantment (Bard, Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "prestidigitation",
@@ -814,6 +870,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 738327,
     end: 739442,
     subtitle: "Transmutation Cantrip (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "produce-flame",
@@ -842,6 +900,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 746728,
     end: 747422,
     subtitle: "Conjuration Cantrip (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "ray-of-frost",
@@ -870,6 +930,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 753462,
     end: 753948,
     subtitle: "Evocation Cantrip (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "ray-of-sickness",
@@ -898,6 +960,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 754306,
     end: 754773,
     subtitle: "Level 1 Necromancy (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "resistance",
@@ -926,6 +990,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 757666,
     end: 758170,
     subtitle: "Abjuration Cantrip (Cleric, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "sacred-flame",
@@ -954,6 +1020,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 761179,
     end: 761664,
     subtitle: "Evocation Cantrip (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "searing-smite",
@@ -982,6 +1050,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 764677,
     end: 765297,
     subtitle: "Level 1 Evocation (Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "shillelagh",
@@ -1010,6 +1080,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 772408,
     end: 773097,
     subtitle: "Transmutation Cantrip (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "shining-smite",
@@ -1038,6 +1110,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 773097,
     end: 773699,
     subtitle: "Level 2 Transmutation (Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "shocking-grasp",
@@ -1066,6 +1140,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 773699,
     end: 774188,
     subtitle: "Evocation Cantrip (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "sorcerous-burst",
@@ -1094,6 +1170,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 779557,
     end: 780269,
     subtitle: "Evocation Cantrip (Sorcerer)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "spare-the-dying",
@@ -1122,6 +1200,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 780269,
     end: 780629,
     subtitle: "Necromancy Cantrip (Cleric, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "starry-wisp",
@@ -1150,6 +1230,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 786309,
     end: 786846,
     subtitle: "Evocation Cantrip (Bard, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "summon-dragon",
@@ -1178,6 +1260,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 790858,
     end: 791710,
     subtitle: "Level 5 Conjuration (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "thaumaturgy",
@@ -1206,6 +1290,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 805136,
     end: 806139,
     subtitle: "Transmutation Cantrip (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "traits",
@@ -1234,6 +1320,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 634405,
     end: 634566,
     subtitle: null,
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "true-strike",
@@ -1262,6 +1350,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 813970,
     end: 814705,
     subtitle: "Divination Cantrip (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "tsunami",
@@ -1290,6 +1380,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 814705,
     end: 816043,
     subtitle: "Level 8 Conjuration (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "vicious-mockery",
@@ -1318,6 +1410,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 817843,
     end: 818368,
     subtitle: "Enchantment Cantrip (Bard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "vitriolic-sphere",
@@ -1346,6 +1440,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 818368,
     end: 819029,
     subtitle: "Level 4 Evocation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "alarm",
@@ -1374,6 +1470,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 526681,
     end: 527472,
     subtitle: "Level 1 Abjuration (Ranger, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "animal-friendship",
@@ -1402,6 +1500,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 528954,
     end: 529460,
     subtitle: "Level 1 Enchantment (Bard, Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "bane",
@@ -1430,6 +1530,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 548535,
     end: 549103,
     subtitle: "Level 1 Enchantment (Bard, Cleric, Warlock)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "bless",
@@ -1458,6 +1560,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 554137,
     end: 554618,
     subtitle: "Level 1 Enchantment (Cleric, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "burning-hands",
@@ -1486,6 +1590,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 557194,
     end: 557720,
     subtitle: "Level 1 Evocation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "charm-person",
@@ -1514,6 +1620,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 560958,
     end: 561589,
     subtitle: "Level 1 Enchantment (Bard, Druid, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "color-spray",
@@ -1542,6 +1650,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 566505,
     end: 566908,
     subtitle: "Level 1 Illusion (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "command",
@@ -1570,6 +1680,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 566908,
     end: 567824,
     subtitle: "Level 1 Enchantment (Bard, Cleric, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "comprehend-languages",
@@ -1598,6 +1710,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 569753,
     end: 570288,
     subtitle: "Level 1 Divination (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "create-or-destroy-water",
@@ -1626,6 +1740,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 588347,
     end: 589102,
     subtitle: "Level 1 Transmutation (Cleric, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "cure-wounds",
@@ -1654,6 +1770,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 592328,
     end: 592707,
     subtitle: "Level 1 Abjuration (Bard, Cleric, Druid, Paladin, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "detect-evil-and-good",
@@ -1682,6 +1800,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 598074,
     end: 598560,
     subtitle: "Level 1 Divination (Cleric, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "detect-magic",
@@ -1710,6 +1830,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 598560,
     end: 599204,
     subtitle: "Level 1 Divination (Bard, Cleric, Druid, Paladin, Ranger, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "detect-poison-and-disease",
@@ -1738,6 +1860,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 599204,
     end: 599731,
     subtitle: "Level 1 Divination (Cleric, Druid, Paladin, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "disguise-self",
@@ -1766,6 +1890,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 602152,
     end: 603037,
     subtitle: "Level 1 Illusion (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "divine-favor",
@@ -1794,6 +1920,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 607048,
     end: 607287,
     subtitle: "Level 1 Transmutation (Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "entangle",
@@ -1822,6 +1950,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 621710,
     end: 622429,
     subtitle: "Level 1 Conjuration (Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "expeditious-retreat",
@@ -1850,6 +1980,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 624368,
     end: 624666,
     subtitle: "Level 1 Transmutation (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "faerie-fire",
@@ -1878,6 +2010,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 626810,
     end: 627380,
     subtitle: "Level 1 Evocation (Bard, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "false-life",
@@ -1906,6 +2040,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 628285,
     end: 628612,
     subtitle: "Level 1 Necromancy (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "feather-fall",
@@ -1934,6 +2070,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 629285,
     end: 629822,
     subtitle: "Level 1 Transmutation (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "find-familiar",
@@ -1962,6 +2100,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 629822,
     end: 631913,
     subtitle: "Level 1 Conjuration (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "floating-disk",
@@ -1990,6 +2130,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 643414,
     end: 644501,
     subtitle: "Level 1 Conjuration (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "fog-cloud",
@@ -2018,6 +2160,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 644992,
     end: 645496,
     subtitle: "Level 1 Conjuration (Druid, Ranger, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "goodberry",
@@ -2046,6 +2190,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 662127,
     end: 662588,
     subtitle: "Level 1 Conjuration (Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "grease",
@@ -2074,6 +2220,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 662588,
     end: 663145,
     subtitle: "Level 1 Conjuration (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "guiding-bolt",
@@ -2102,6 +2250,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 667199,
     end: 667670,
     subtitle: "Level 1 Evocation (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "healing-word",
@@ -2130,6 +2280,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 673424,
     end: 673815,
     subtitle: "Level 1 Abjuration (Bard, Cleric, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "hellish-rebuke",
@@ -2158,6 +2310,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 674801,
     end: 675349,
     subtitle: "Level 1 Evocation (Warlock)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "heroism",
@@ -2186,6 +2340,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 676130,
     end: 676639,
     subtitle: "Level 1 Enchantment (Bard, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "hideous-laughter",
@@ -2214,6 +2370,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 677421,
     end: 678241,
     subtitle: "Level 1 Enchantment (Bard, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "hunters-mark",
@@ -2242,6 +2400,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 680020,
     end: 680751,
     subtitle: "Level 1 Divination (Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "identify",
@@ -2270,6 +2430,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 682707,
     end: 683388,
     subtitle: "Level 1 Divination (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "illusory-script",
@@ -2298,6 +2460,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 683388,
     end: 684297,
     subtitle: "Level 1 Illusion (Bard, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "inflict-wounds",
@@ -2326,6 +2490,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 687342,
     end: 687733,
     subtitle: "Level 1 Necromancy (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "jump",
@@ -2354,6 +2520,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 690744,
     end: 691196,
     subtitle: "Level 1 Transmutation (Druid, Ranger, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "longstrider",
@@ -2382,6 +2550,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 697352,
     end: 697727,
     subtitle: "Level 1 Transmutation (Bard, Druid, Ranger, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "mage-armor",
@@ -2410,6 +2580,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 697727,
     end: 698087,
     subtitle: "Level 1 Abjuration (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "magic-missile",
@@ -2438,6 +2610,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 702474,
     end: 703000,
     subtitle: "Level 1 Evocation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "protection-from-evil-and-good",
@@ -2466,6 +2640,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 750460,
     end: 751263,
     subtitle: "Level 1 Abjuration (Cleric, Druid, Paladin, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "purify-food-and-drink",
@@ -2494,6 +2670,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 751633,
     end: 751934,
     subtitle: "Level 1 Transmutation (Cleric, Druid, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "sanctuary",
@@ -2522,6 +2700,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 761664,
     end: 762243,
     subtitle: "Level 1 Abjuration (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "shield",
@@ -2550,6 +2730,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 771650,
     end: 772089,
     subtitle: "Level 1 Abjuration (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "shield-of-faith",
@@ -2578,6 +2760,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 772089,
     end: 772408,
     subtitle: "Level 1 Abjuration (Cleric, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "silent-image",
@@ -2606,6 +2790,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 774724,
     end: 775883,
     subtitle: "Level 1 Illusion (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "sleep",
@@ -2634,6 +2820,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 777196,
     end: 778011,
     subtitle: "Level 1 Enchantment (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "speak-with-animals",
@@ -2662,6 +2850,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 780629,
     end: 781190,
     subtitle: "Level 1 Divination (Bard, Druid, Ranger, Warlock)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "thunderwave",
@@ -2690,6 +2880,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 806139,
     end: 806837,
     subtitle: "Level 1 Evocation (Bard, Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "unseen-servant",
@@ -2718,6 +2910,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 816043,
     end: 817142,
     subtitle: "Level 1 Conjuration (Bard, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "acid-arrow",
@@ -2746,6 +2940,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 525180,
     end: 525802,
     subtitle: "Level 2 Evocation (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "aid",
@@ -2774,6 +2970,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 526252,
     end: 526681,
     subtitle: "Level 2 Abjuration (Bard, Cleric, Druid, Paladin, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "alter-self",
@@ -2802,6 +3000,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 527472,
     end: 528954,
     subtitle: "Level 2 Transmutation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "animal-messenger",
@@ -2830,6 +3030,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 529460,
     end: 530627,
     subtitle: "Level 2 Enchantment (Bard, Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "arcane-lock",
@@ -2858,6 +3060,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 542084,
     end: 542643,
     subtitle: "Level 2 Abjuration (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "arcanists-magic-aura",
@@ -2886,6 +3090,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 543293,
     end: 544290,
     subtitle: "Level 2 Illusion (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "augury",
@@ -2914,6 +3120,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 545926,
     end: 547048,
     subtitle: "Level 2 Divination (Cleric, Druid, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "barkskin",
@@ -2942,6 +3150,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 550003,
     end: 550347,
     subtitle: "Level 2 Transmutation (Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "blindnessdeafness",
@@ -2970,6 +3180,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 555236,
     end: 555785,
     subtitle: "Level 2 Transmutation (Bard, Cleric, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "blur",
@@ -2998,6 +3210,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 556847,
     end: 557194,
     subtitle: "Level 2 Illusion (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "branding-smite",
@@ -3026,6 +3240,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: null,
     end: null,
     subtitle: null,
+    edition: "2014",
+    dataSource: "open5e",
   },
   {
     id: "calm-emotions",
@@ -3054,6 +3270,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 558762,
     end: 559570,
     subtitle: "Level 2 Enchantment (Bard, Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "continual-flame",
@@ -3082,6 +3300,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 581816,
     end: 582313,
     subtitle: "Level 2 Evocation (Cleric, Druid, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "darkness",
@@ -3110,6 +3330,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 593432,
     end: 594220,
     subtitle: "Level 2 Evocation (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "darkvision",
@@ -3138,6 +3360,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 594220,
     end: 594492,
     subtitle: "Level 2 Transmutation (Druid, Ranger, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "detect-thoughts",
@@ -3166,6 +3390,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 599731,
     end: 601289,
     subtitle: "Level 2 Divination (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "enhance-ability",
@@ -3194,6 +3420,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 618932,
     end: 619494,
     subtitle: "Level 2 Transmutation (Bard, Cleric, Druid, Ranger, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "enlargereduce",
@@ -3222,6 +3450,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 619494,
     end: 620837,
     subtitle: "Level 2 Transmutation (Bard, Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "enthrall",
@@ -3250,6 +3480,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 622429,
     end: 622936,
     subtitle: "Level 2 Enchantment (Bard, Warlock)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "find-steed",
@@ -3278,6 +3510,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 631913,
     end: 633288,
     subtitle: "Level 2 Conjuration (Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "find-traps",
@@ -3306,6 +3540,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 636180,
     end: 636855,
     subtitle: "Level 2 Divination (Cleric, Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "flame-blade",
@@ -3334,6 +3570,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 639847,
     end: 640623,
     subtitle: "Level 2 Evocation (Druid, Sorcerer)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "flaming-sphere",
@@ -3362,6 +3600,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 641205,
     end: 642330,
     subtitle: "Level 2 Conjuration (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "gentle-repose",
@@ -3390,6 +3630,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 654774,
     end: 655308,
     subtitle: "Level 2 Necromancy (Cleric, Paladin, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "gust-of-wind",
@@ -3418,6 +3660,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 667670,
     end: 668625,
     subtitle: "Level 2 Evocation (Druid, Ranger, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "heat-metal",
@@ -3446,6 +3690,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 673815,
     end: 674801,
     subtitle: "Level 2 Transmutation (Bard, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "hold-person",
@@ -3474,6 +3720,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 678820,
     end: 679413,
     subtitle: "Level 2 Enchantment (Bard, Cleric, Druid, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "invisibility",
@@ -3502,6 +3750,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 690248,
     end: 690744,
     subtitle: "Level 2 Illusion (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "knock",
@@ -3530,6 +3780,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 691196,
     end: 691965,
     subtitle: "Level 2 Transmutation (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "lesser-restoration",
@@ -3558,6 +3810,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 692861,
     end: 693140,
     subtitle: "Level 2 Abjuration (Bard, Cleric, Druid, Paladin, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "levitate",
@@ -3586,6 +3840,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 693140,
     end: 694146,
     subtitle: "Level 2 Transmutation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "locate-animals-or-plants",
@@ -3614,6 +3870,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 695218,
     end: 695622,
     subtitle: "Level 2 Divination (Bard, Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "locate-object",
@@ -3642,6 +3900,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 696550,
     end: 697352,
     subtitle: "Level 2 Divination (Bard, Cleric, Druid, Paladin, Ranger, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "magic-mouth",
@@ -3670,6 +3930,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 703000,
     end: 704414,
     subtitle: "Level 2 Illusion (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "magic-weapon",
@@ -3698,6 +3960,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 704414,
     end: 704913,
     subtitle: "Level 2 Transmutation (Paladin, Ranger, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "mirror-image",
@@ -3726,6 +3990,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 718305,
     end: 719130,
     subtitle: "Level 2 Illusion (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "misty-step",
@@ -3754,6 +4020,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 719809,
     end: 720072,
     subtitle: "Level 2 Conjuration (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "moonbeam",
@@ -3782,6 +4050,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 722236,
     end: 723321,
     subtitle: "Level 2 Evocation (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "pass-without-trace",
@@ -3810,6 +4080,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 725893,
     end: 726287,
     subtitle: "Level 2 Abjuration (Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "prayer-of-healing",
@@ -3838,6 +4110,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 737818,
     end: 738327,
     subtitle: "Level 2 Abjuration (Cleric, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "protection-from-poison",
@@ -3866,6 +4140,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 751263,
     end: 751633,
     subtitle: "Level 2 Abjuration (Cleric, Druid, Paladin, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "ray-of-enfeeblement",
@@ -3894,6 +4170,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 752788,
     end: 753462,
     subtitle: "Level 2 Necromancy (Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "rope-trick",
@@ -3922,6 +4200,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 760425,
     end: 761179,
     subtitle: "Level 2 Transmutation (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "scorching-ray",
@@ -3950,6 +4230,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 762243,
     end: 762673,
     subtitle: "Level 2 Evocation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "see-invisibility",
@@ -3978,6 +4260,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 766477,
     end: 766846,
     subtitle: "Level 2 Divination (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "shatter",
@@ -4006,6 +4290,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 770988,
     end: 771650,
     subtitle: "Level 2 Evocation (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "silence",
@@ -4034,6 +4320,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 774188,
     end: 774724,
     subtitle: "Level 2 Illusion (Bard, Cleric, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "spider-climb",
@@ -4062,6 +4350,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 783226,
     end: 783776,
     subtitle: "Level 2 Transmutation (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "spike-growth",
@@ -4090,6 +4380,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 783776,
     end: 784522,
     subtitle: "Level 2 Transmutation (Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "spiritual-weapon",
@@ -4118,6 +4410,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 785547,
     end: 786309,
     subtitle: "Level 2 Evocation (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "suggestion",
@@ -4146,6 +4440,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 789807,
     end: 790858,
     subtitle: "Level 2 Enchantment (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "warding-bond",
@@ -4174,6 +4470,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 825811,
     end: 826561,
     subtitle: "Level 2 Abjuration (Cleric, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "web",
@@ -4202,6 +4500,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 827685,
     end: 828849,
     subtitle: "Level 2 Conjuration (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "zone-of-truth",
@@ -4230,6 +4530,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 835920,
     end: 836680,
     subtitle: "Level 2 Enchantment (Bard, Cleric, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "animate-dead",
@@ -4258,6 +4560,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 531788,
     end: 533459,
     subtitle: "Level 3 Necromancy (Cleric, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "beacon-of-hope",
@@ -4286,6 +4590,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 550347,
     end: 550720,
     subtitle: "Level 3 Abjuration (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "bestow-curse",
@@ -4314,6 +4620,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 551375,
     end: 552537,
     subtitle: "Level 3 Necromancy (Bard, Cleric, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "blink",
@@ -4342,6 +4650,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 555785,
     end: 556847,
     subtitle: "Level 3 Transmutation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "call-lightning",
@@ -4370,6 +4680,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 557720,
     end: 558762,
     subtitle: "Level 3 Conjuration (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "clairvoyance",
@@ -4398,6 +4710,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 563609,
     end: 564535,
     subtitle: "Level 3 Divination (Bard, Cleric, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "conjure-animals",
@@ -4426,6 +4740,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 572958,
     end: 574010,
     subtitle: "Level 3 Conjuration (Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "counterspell",
@@ -4454,6 +4770,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 587267,
     end: 587869,
     subtitle: "Level 3 Abjuration (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "create-food-and-water",
@@ -4482,6 +4800,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 587869,
     end: 588347,
     subtitle: "Level 3 Conjuration (Cleric, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "daylight",
@@ -4510,6 +4830,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 594492,
     end: 595223,
     subtitle: "Level 3 Evocation (Cleric, Druid, Paladin, Ranger, Sorcerer)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "dispel-magic",
@@ -4538,6 +4860,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 605041,
     end: 605712,
     subtitle: "Level 3 Abjuration (Bard, Cleric, Druid, Paladin, Ranger, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "fear",
@@ -4566,6 +4890,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 628612,
     end: 629285,
     subtitle: "Level 3 Illusion (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "fireball",
@@ -4594,6 +4920,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 637370,
     end: 638043,
     subtitle: "Level 3 Evocation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "fly",
@@ -4622,6 +4950,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 644501,
     end: 644992,
     subtitle: "Level 3 Transmutation (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "gaseous-form",
@@ -4650,6 +4980,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 651065,
     end: 652270,
     subtitle: "Level 3 Transmutation (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "glyph-of-warding",
@@ -4678,6 +5010,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 659259,
     end: 662127,
     subtitle: "Level 3 Abjuration (Bard, Cleric, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "haste",
@@ -4706,6 +5040,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 672283,
     end: 672980,
     subtitle: "Level 3 Transmutation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "hypnotic-pattern",
@@ -4734,6 +5070,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 680751,
     end: 681435,
     subtitle: "Level 3 Illusion (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "lightning-bolt",
@@ -4762,6 +5100,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 694671,
     end: 695218,
     subtitle: "Level 3 Evocation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "magic-circle",
@@ -4790,6 +5130,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 698858,
     end: 700192,
     subtitle: "Level 3 Abjuration (Cleric, Paladin, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "major-image",
@@ -4818,6 +5160,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 706587,
     end: 708203,
     subtitle: "Level 3 Illusion (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "mass-healing-word",
@@ -4846,6 +5190,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 709139,
     end: 709536,
     subtitle: "Level 3 Abjuration (Bard, Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "meld-into-stone",
@@ -4874,6 +5220,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 711370,
     end: 712634,
     subtitle: "Level 3 Transmutation (Cleric, Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "nondetection",
@@ -4902,6 +5250,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 724712,
     end: 725220,
     subtitle: "Level 3 Abjuration (Bard, Ranger, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "phantom-steed",
@@ -4930,6 +5280,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 728568,
     end: 729385,
     subtitle: "Level 3 Illusion (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "plant-growth",
@@ -4958,6 +5310,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 733934,
     end: 734838,
     subtitle: "Level 3 Transmutation (Bard, Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "protection-from-energy",
@@ -4986,6 +5340,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 750119,
     end: 750460,
     subtitle: "Level 3 Abjuration (Cleric, Druid, Ranger, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "remove-curse",
@@ -5014,6 +5370,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 756183,
     end: 756568,
     subtitle: "Level 3 Abjuration (Cleric, Paladin, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "revivify",
@@ -5042,6 +5400,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 760002,
     end: 760425,
     subtitle: "Level 3 Necromancy (Cleric, Druid, Paladin, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "sending",
@@ -5070,6 +5430,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 767977,
     end: 768933,
     subtitle: "Level 3 Divination (Bard, Cleric, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "sleet-storm",
@@ -5098,6 +5460,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 778011,
     end: 778645,
     subtitle: "Level 3 Conjuration (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "slow",
@@ -5126,6 +5490,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 778645,
     end: 779557,
     subtitle: "Level 3 Transmutation (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "speak-with-dead",
@@ -5154,6 +5520,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 781190,
     end: 782239,
     subtitle: "Level 3 Necromancy (Bard, Cleric, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "speak-with-plants",
@@ -5182,6 +5550,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 782239,
     end: 783226,
     subtitle: "Level 3 Transmutation (Bard, Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "spirit-guardians",
@@ -5210,6 +5580,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 784522,
     end: 785547,
     subtitle: "Level 3 Conjuration (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "stinking-cloud",
@@ -5238,6 +5610,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 786846,
     end: 787539,
     subtitle: "Level 3 Conjuration (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "tiny-hut",
@@ -5266,6 +5640,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 807490,
     end: 808521,
     subtitle: "Level 3 Evocation (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "tongues",
@@ -5294,6 +5670,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 808521,
     end: 809013,
     subtitle: "Level 3 Divination (Bard, Cleric, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "vampiric-touch",
@@ -5322,6 +5700,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 817142,
     end: 817843,
     subtitle: "Level 3 Necromancy (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "water-breathing",
@@ -5350,6 +5730,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 826561,
     end: 826956,
     subtitle: "Level 3 Transmutation (Druid, Ranger, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "water-walk",
@@ -5378,6 +5760,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 826956,
     end: 827685,
     subtitle: "Level 3 Transmutation (Cleric, Druid, Ranger, Sorcerer)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "wind-wall",
@@ -5406,6 +5790,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 830561,
     end: 831671,
     subtitle: "Level 3 Evocation (Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "arcane-eye",
@@ -5434,6 +5820,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 539485,
     end: 540074,
     subtitle: "Level 4 Divination (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "banishment",
@@ -5462,6 +5850,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 549103,
     end: 550003,
     subtitle: "Level 4 Abjuration (Cleric, Paladin, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "black-tentacles",
@@ -5490,6 +5880,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 552537,
     end: 553340,
     subtitle: "Level 4 Conjuration (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "blight",
@@ -5518,6 +5910,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 554618,
     end: 555236,
     subtitle: "Level 4 Necromancy (Druid, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "compulsion",
@@ -5546,6 +5940,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 570288,
     end: 570923,
     subtitle: "Level 4 Enchantment (Bard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "confusion",
@@ -5574,6 +5970,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 571493,
     end: 572958,
     subtitle: "Level 4 Enchantment (Bard, Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "conjure-minor-elementals",
@@ -5602,6 +6000,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 577256,
     end: 577921,
     subtitle: "Level 4 Conjuration (Druid, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "conjure-woodland-beings",
@@ -5630,6 +6030,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 577921,
     end: 578731,
     subtitle: "Level 4 Conjuration (Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "control-water",
@@ -5658,6 +6060,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 582313,
     end: 584970,
     subtitle: "Level 4 Transmutation (Cleric, Druid, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "death-ward",
@@ -5686,6 +6090,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 595223,
     end: 595766,
     subtitle: "Level 4 Abjuration (Cleric, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "dimension-door",
@@ -5714,6 +6120,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 601289,
     end: 602152,
     subtitle: "Level 4 Conjuration (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "divination",
@@ -5742,6 +6150,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 606324,
     end: 607048,
     subtitle: "Level 4 Divination (Cleric, Druid, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "dominate-beast",
@@ -5770,6 +6180,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 609016,
     end: 610196,
     subtitle: "Level 4 Enchantment (Druid, Ranger, Sorcerer)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "fabricate",
@@ -5798,6 +6210,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 625771,
     end: 626810,
     subtitle: "Level 4 Transmutation (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "faithful-hound",
@@ -5826,6 +6240,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 627380,
     end: 628285,
     subtitle: "Level 4 Conjuration (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "fire-shield",
@@ -5854,6 +6270,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 638547,
     end: 639276,
     subtitle: "Level 4 Evocation (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "freedom-of-movement",
@@ -5882,6 +6300,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 648834,
     end: 649609,
     subtitle: "Level 4 Abjuration (Bard, Cleric, Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "giant-insect",
@@ -5910,6 +6330,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: null,
     end: null,
     subtitle: null,
+    edition: "2014",
+    dataSource: "open5e",
   },
   {
     id: "greater-invisibility",
@@ -5938,6 +6360,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 663145,
     end: 663398,
     subtitle: "Level 4 Illusion (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "guardian-of-faith",
@@ -5966,6 +6390,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 663948,
     end: 664624,
     subtitle: "Level 4 Conjuration (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "hallucinatory-terrain",
@@ -5994,6 +6420,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 670694,
     end: 671776,
     subtitle: "Level 4 Illusion (Bard, Druid, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "ice-storm",
@@ -6022,6 +6450,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 682054,
     end: 682707,
     subtitle: "Level 4 Evocation (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "locate-creature",
@@ -6050,6 +6480,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 695622,
     end: 696550,
     subtitle: "Level 4 Divination (Bard, Cleric, Druid, Paladin, Ranger, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "phantasmal-killer",
@@ -6078,6 +6510,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 727722,
     end: 728568,
     subtitle: "Level 4 Illusion (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "polymorph",
@@ -6106,6 +6540,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 735260,
     end: 736540,
     subtitle: "Level 4 Transmutation (Bard, Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "private-sanctum",
@@ -6134,6 +6570,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 745567,
     end: 746728,
     subtitle: "Level 4 Abjuration (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "resilient-sphere",
@@ -6162,6 +6600,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 756568,
     end: 757666,
     subtitle: "Level 4 Abjuration (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "secret-chest",
@@ -6190,6 +6630,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 765297,
     end: 766477,
     subtitle: "Level 4 Conjuration (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "stone-shape",
@@ -6218,6 +6660,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 787539,
     end: 788184,
     subtitle: "Level 4 Transmutation (Cleric, Druid, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "stoneskin",
@@ -6246,6 +6690,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 788184,
     end: 788540,
     subtitle: "Level 4 Transmutation (Druid, Ranger, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "wall-of-fire",
@@ -6274,6 +6720,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 819029,
     end: 820079,
     subtitle: "Level 4 Evocation (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "animate-objects",
@@ -6302,6 +6750,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 533459,
     end: 535039,
     subtitle: "Level 5 Transmutation (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "antilife-shell",
@@ -6330,6 +6780,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 536397,
     end: 536919,
     subtitle: "Level 5 Abjuration (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "arcane-hand",
@@ -6358,6 +6810,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 540074,
     end: 542084,
     subtitle: "Level 5 Evocation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "awaken",
@@ -6386,6 +6840,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 547492,
     end: 548535,
     subtitle: "Level 5 Transmutation (Bard, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "cloudkill",
@@ -6414,6 +6870,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 565586,
     end: 566505,
     subtitle: "Level 5 Conjuration (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "commune",
@@ -6442,6 +6900,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 567824,
     end: 568667,
     subtitle: "Level 5 Divination (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "commune-with-nature",
@@ -6470,6 +6930,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 568667,
     end: 569753,
     subtitle: "Level 5 Divination (Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "cone-of-cold",
@@ -6498,6 +6960,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 570923,
     end: 571493,
     subtitle: "Level 5 Evocation (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "conjure-elemental",
@@ -6526,6 +6990,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 575179,
     end: 576283,
     subtitle: "Level 5 Conjuration (Druid, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "contact-other-plane",
@@ -6554,6 +7020,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 578731,
     end: 579699,
     subtitle: "Level 5 Divination (Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "contagion",
@@ -6582,6 +7050,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 579699,
     end: 580595,
     subtitle: "Level 5 Necromancy (Cleric, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "creation",
@@ -6610,6 +7080,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 590939,
     end: 592328,
     subtitle: "Level 5 Illusion (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "dispel-evil-and-good",
@@ -6638,6 +7110,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 604044,
     end: 605041,
     subtitle: "Level 5 Abjuration (Cleric, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "dominate-person",
@@ -6666,6 +7140,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 611339,
     end: 612522,
     subtitle: "Level 5 Enchantment (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "dream",
@@ -6694,6 +7170,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 613144,
     end: 614419,
     subtitle: "Level 5 Illusion (Bard, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "flame-strike",
@@ -6722,6 +7200,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 640623,
     end: 641205,
     subtitle: "Level 5 Evocation (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "geas",
@@ -6750,6 +7230,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 653680,
     end: 654774,
     subtitle: "Level 5 Enchantment (Bard, Cleric, Druid, Paladin, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "greater-restoration",
@@ -6778,6 +7260,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 663398,
     end: 663948,
     subtitle: "Level 5 Abjuration (Bard, Cleric, Druid, Paladin, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "hallow",
@@ -6806,6 +7290,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 668625,
     end: 670694,
     subtitle: "Level 5 Abjuration (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "hold-monster",
@@ -6834,6 +7320,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 678241,
     end: 678820,
     subtitle: "Level 5 Enchantment (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "insect-plague",
@@ -6862,6 +7350,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 687733,
     end: 688548,
     subtitle: "Level 5 Conjuration (Cleric, Druid, Sorcerer)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "legend-lore",
@@ -6890,6 +7380,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 691965,
     end: 692861,
     subtitle: "Level 5 Divination (Bard, Cleric, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "mass-cure-wounds",
@@ -6918,6 +7410,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 708203,
     end: 708704,
     subtitle: "Level 5 Abjuration (Bard, Cleric, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "mislead",
@@ -6946,6 +7440,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 719130,
     end: 719809,
     subtitle: "Level 5 Illusion (Bard, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "modify-memory",
@@ -6974,6 +7470,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 720072,
     end: 722236,
     subtitle: "Level 5 Enchantment (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "passwall",
@@ -7002,6 +7500,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 725220,
     end: 725893,
     subtitle: "Level 5 Transmutation (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "planar-binding",
@@ -7030,6 +7530,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 731565,
     end: 733044,
     subtitle: "Level 5 Abjuration (Bard, Cleric, Druid, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "raise-dead",
@@ -7058,6 +7560,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 751934,
     end: 752788,
     subtitle: "Level 5 Necromancy (Bard, Cleric, Paladin)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "reincarnate",
@@ -7086,6 +7590,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 754773,
     end: 756183,
     subtitle: "Level 5 Necromancy (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "scrying",
@@ -7114,6 +7620,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 762673,
     end: 764677,
     subtitle: "Level 5 Divination (Bard, Cleric, Druid, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "seeming",
@@ -7142,6 +7650,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 766846,
     end: 767977,
     subtitle: "Level 5 Illusion (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "telekinesis",
@@ -7170,6 +7680,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 797942,
     end: 799585,
     subtitle: "Level 5 Transmutation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "telepathic-bond",
@@ -7198,6 +7710,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 799585,
     end: 800224,
     subtitle: "Level 5 Divination (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "teleportation-circle",
@@ -7226,6 +7740,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 803798,
     end: 805136,
     subtitle: "Level 5 Conjuration (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "tree-stride",
@@ -7254,6 +7770,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 809520,
     end: 810424,
     subtitle: "Level 5 Conjuration (Druid, Ranger)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "wall-of-force",
@@ -7282,6 +7800,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 820079,
     end: 821185,
     subtitle: "Level 5 Evocation (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "wall-of-stone",
@@ -7310,6 +7830,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 822698,
     end: 824565,
     subtitle: "Level 5 Evocation (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "blade-barrier",
@@ -7338,6 +7860,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 553340,
     end: 554137,
     subtitle: "Level 6 Evocation (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "chain-lightning",
@@ -7366,6 +7890,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 559570,
     end: 560327,
     subtitle: "Level 6 Evocation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "circle-of-death",
@@ -7394,6 +7920,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 563043,
     end: 563609,
     subtitle: "Level 6 Necromancy (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "conjure-fey",
@@ -7422,6 +7950,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 576283,
     end: 577256,
     subtitle: "Level 6 Conjuration (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "contingency",
@@ -7450,6 +7980,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 580595,
     end: 581816,
     subtitle: "Level 6 Abjuration (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "create-undead",
@@ -7478,6 +8010,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 589102,
     end: 590939,
     subtitle: "Level 6 Necromancy (Cleric, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "disintegrate",
@@ -7506,6 +8040,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 603037,
     end: 604044,
     subtitle: "Level 6 Transmutation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "eyebite",
@@ -7534,6 +8070,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 624666,
     end: 625771,
     subtitle: "Level 6 Necromancy (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "find-the-path",
@@ -7562,6 +8100,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 635394,
     end: 636180,
     subtitle: "Level 6 Divination (Bard, Cleric, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "flesh-to-stone",
@@ -7590,6 +8130,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 642330,
     end: 643414,
     subtitle: "Level 6 Transmutation (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "forbiddance",
@@ -7618,6 +8160,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 645496,
     end: 646936,
     subtitle: "Level 6 Abjuration (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "freezing-sphere",
@@ -7646,6 +8190,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 649609,
     end: 651065,
     subtitle: "Level 6 Evocation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "globe-of-invulnerability",
@@ -7674,6 +8220,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 658548,
     end: 659259,
     subtitle: "Level 6 Abjuration (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "guards-and-wards",
@@ -7702,6 +8250,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 664624,
     end: 666899,
     subtitle: "Level 6 Abjuration (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "harm",
@@ -7730,6 +8280,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 671776,
     end: 672283,
     subtitle: "Level 6 Necromancy (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "heal",
@@ -7758,6 +8310,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 672980,
     end: 673424,
     subtitle: "Level 6 Abjuration (Cleric, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "heroes-feast",
@@ -7786,6 +8340,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 675349,
     end: 676130,
     subtitle: "Level 6 Conjuration (Bard, Cleric, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "instant-summons",
@@ -7814,6 +8370,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 688548,
     end: 689431,
     subtitle: "Level 6 Conjuration (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "irresistible-dance",
@@ -7842,6 +8400,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 689431,
     end: 690248,
     subtitle: "Level 6 Enchantment (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "magic-jar",
@@ -7870,6 +8430,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 700192,
     end: 702474,
     subtitle: "Level 6 Necromancy (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "mass-suggestion",
@@ -7898,6 +8460,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 709536,
     end: 710758,
     subtitle: "Level 6 Enchantment (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "move-earth",
@@ -7926,6 +8490,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 723321,
     end: 724712,
     subtitle: "Level 6 Transmutation (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "planar-ally",
@@ -7954,6 +8520,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 729385,
     end: 731565,
     subtitle: "Level 6 Conjuration (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "programmed-illusion",
@@ -7982,6 +8550,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 747422,
     end: 748928,
     subtitle: "Level 6 Illusion (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "sunbeam",
@@ -8010,6 +8580,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 793541,
     end: 794296,
     subtitle: "Level 6 Evocation (Cleric, Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "transport-via-plants",
@@ -8038,6 +8610,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 809013,
     end: 809520,
     subtitle: "Level 6 Conjuration (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "true-seeing",
@@ -8066,6 +8640,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 813652,
     end: 813970,
     subtitle: "Level 6 Divination (Bard, Cleric, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "wall-of-ice",
@@ -8094,6 +8670,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 821185,
     end: 822698,
     subtitle: "Level 6 Evocation (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "wall-of-thorns",
@@ -8122,6 +8700,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 824565,
     end: 825811,
     subtitle: "Level 6 Conjuration (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "wind-walk",
@@ -8150,6 +8730,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 829534,
     end: 830561,
     subtitle: "Level 6 Transmutation (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "word-of-recall",
@@ -8178,6 +8760,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 835324,
     end: 835920,
     subtitle: "Level 6 Conjuration (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "arcane-sword",
@@ -8206,6 +8790,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 542643,
     end: 543293,
     subtitle: "Level 7 Evocation (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "conjure-celestial",
@@ -8234,6 +8820,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 574010,
     end: 575179,
     subtitle: "Level 7 Conjuration (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "delayed-blast-fireball",
@@ -8262,6 +8850,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 595766,
     end: 597064,
     subtitle: "Level 7 Evocation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "divine-word",
@@ -8290,6 +8880,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 607752,
     end: 609016,
     subtitle: "Level 7 Evocation (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "etherealness",
@@ -8318,6 +8910,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 622936,
     end: 624368,
     subtitle: "Level 7 Conjuration (Bard, Cleric, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "finger-of-death",
@@ -8346,6 +8940,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 636855,
     end: 637370,
     subtitle: "Level 7 Necromancy (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "fire-storm",
@@ -8374,6 +8970,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 639276,
     end: 639847,
     subtitle: "Level 7 Evocation (Cleric, Druid, Sorcerer)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "forcecage",
@@ -8402,6 +9000,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 646936,
     end: 648390,
     subtitle: "Level 7 Evocation (Bard, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "magnificent-mansion",
@@ -8430,6 +9030,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 704913,
     end: 706587,
     subtitle: "Level 7 Conjuration (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "mirage-arcane",
@@ -8458,6 +9060,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 717075,
     end: 718305,
     subtitle: "Level 7 Illusion (Bard, Druid, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "plane-shift",
@@ -8486,6 +9090,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 733044,
     end: 733934,
     subtitle: "Level 7 Conjuration (Cleric, Druid, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "prismatic-spray",
@@ -8514,6 +9120,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 739442,
     end: 741580,
     subtitle: "Level 7 Evocation (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "project-image",
@@ -8542,6 +9150,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 748928,
     end: 750119,
     subtitle: "Level 7 Illusion (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "regenerate",
@@ -8570,6 +9180,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 753948,
     end: 754306,
     subtitle: "Level 7 Transmutation (Bard, Cleric, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "resurrection",
@@ -8598,6 +9210,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 758170,
     end: 759106,
     subtitle: "Level 7 Necromancy (Bard, Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "reverse-gravity",
@@ -8626,6 +9240,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 759106,
     end: 760002,
     subtitle: "Level 7 Transmutation (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "sequester",
@@ -8654,6 +9270,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 768933,
     end: 769793,
     subtitle: "Level 7 Transmutation (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "simulacrum",
@@ -8682,6 +9300,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 775883,
     end: 777196,
     subtitle: "Level 7 Illusion (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "symbol",
@@ -8710,6 +9330,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 795027,
     end: 797942,
     subtitle: "Level 7 Abjuration (Bard, Cleric, Druid, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "teleport",
@@ -8738,6 +9360,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 800224,
     end: 803798,
     subtitle: "Level 7 Conjuration (Bard, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "animal-shapes",
@@ -8766,6 +9390,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 530627,
     end: 531788,
     subtitle: "Level 8 Transmutation (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "antimagic-field",
@@ -8794,6 +9420,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 536919,
     end: 537939,
     subtitle: "Level 8 Abjuration (Cleric, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "antipathysympathy",
@@ -8822,6 +9450,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 537939,
     end: 539485,
     subtitle: "Level 8 Enchantment (Bard, Druid, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "clone",
@@ -8850,6 +9480,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 564535,
     end: 565586,
     subtitle: "Level 8 Necromancy (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "control-weather",
@@ -8878,6 +9510,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 584970,
     end: 587267,
     subtitle: "Level 8 Transmutation (Cleric, Druid, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "demiplane",
@@ -8906,6 +9540,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 597064,
     end: 598074,
     subtitle: "Level 8 Conjuration (Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "dominate-monster",
@@ -8934,6 +9570,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 610196,
     end: 611339,
     subtitle: "Level 8 Enchantment (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "earthquake",
@@ -8962,6 +9600,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 615318,
     end: 617095,
     subtitle: "Level 8 Transmutation (Cleric, Druid, Sorcerer)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "feeblemind",
@@ -8990,6 +9630,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: null,
     end: null,
     subtitle: null,
+    edition: "2014",
+    dataSource: "open5e",
   },
   {
     id: "glibness",
@@ -9018,6 +9660,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 658177,
     end: 658548,
     subtitle: "Level 8 Enchantment (Bard, Warlock)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "holy-aura",
@@ -9046,6 +9690,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 679413,
     end: 680020,
     subtitle: "Level 8 Abjuration (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "incendiary-cloud",
@@ -9074,6 +9720,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 686481,
     end: 687342,
     subtitle: "Level 8 Conjuration (Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "maze",
@@ -9102,6 +9750,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 710758,
     end: 711370,
     subtitle: "Level 8 Conjuration (Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "mind-blank",
@@ -9130,6 +9780,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 714467,
     end: 714972,
     subtitle: "Level 8 Abjuration (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "power-word-stun",
@@ -9158,6 +9810,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 737315,
     end: 737818,
     subtitle: "Level 8 Enchantment (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "sunburst",
@@ -9186,6 +9840,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 794296,
     end: 795027,
     subtitle: "Level 8 Evocation (Cleric, Druid, Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "astral-projection",
@@ -9214,6 +9870,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 544290,
     end: 545926,
     subtitle: "Level 9 Necromancy (Cleric, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "foresight",
@@ -9242,6 +9900,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 648390,
     end: 648834,
     subtitle: "Level 9 Divination (Bard, Druid, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "gate",
@@ -9270,6 +9930,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 652270,
     end: 653680,
     subtitle: "Level 9 Conjuration (Cleric, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "imprisonment",
@@ -9298,6 +9960,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 684297,
     end: 686481,
     subtitle: "Level 9 Abjuration (Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "mass-heal",
@@ -9326,6 +9990,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 708704,
     end: 709139,
     subtitle: "Level 9 Abjuration (Cleric)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "meteor-swarm",
@@ -9354,6 +10020,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 713760,
     end: 714467,
     subtitle: "Level 9 Evocation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "power-word-kill",
@@ -9382,6 +10050,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 736993,
     end: 737315,
     subtitle: "Level 9 Enchantment (Bard, Sorcerer, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "prismatic-wall",
@@ -9410,6 +10080,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 741580,
     end: 745567,
     subtitle: "Level 9 Abjuration (Bard, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "shapechange",
@@ -9438,6 +10110,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 769793,
     end: 770988,
     subtitle: "Level 9 Transmutation (Druid, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "storm-of-vengeance",
@@ -9466,6 +10140,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 788540,
     end: 789807,
     subtitle: "Level 9 Conjuration (Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "time-stop",
@@ -9494,6 +10170,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 806837,
     end: 807490,
     subtitle: "Level 9 Transmutation (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "true-polymorph",
@@ -9522,6 +10200,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 810424,
     end: 812809,
     subtitle: "Level 9 Transmutation (Bard, Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "true-resurrection",
@@ -9550,6 +10230,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 812809,
     end: 813652,
     subtitle: "Level 9 Necromancy (Cleric, Druid)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "weird",
@@ -9578,6 +10260,8 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 828849,
     end: 829534,
     subtitle: "Level 9 Illusion (Warlock, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
   {
     id: "wish",
@@ -9606,5 +10290,7 @@ export const SRD_SPELL_INDEX: readonly SrdSpellIndexEntry[] = [
     start: 831671,
     end: 835324,
     subtitle: "Level 9 Conjuration (Sorcerer, Wizard)",
+    edition: "5.2.1",
+    dataSource: "document",
   },
 ];

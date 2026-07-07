@@ -7,6 +7,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseEquipmentTables } from "./srd-table-parser.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -175,21 +176,38 @@ function parentSectionKey(index, entry) {
   return parent?.key ?? null;
 }
 
+const RULE_CHAPTERS = new Set([
+  "playing-the-game",
+  "gameplay-toolbox",
+  "character-creation",
+]);
+
 function classify(entry, body, index) {
   const { chapter, level, key, title } = entry;
   if (META_KEYS.has(key)) return { kind: null };
 
-  if (chapter === "spells" && level === 5) {
-    return { kind: "spell", taxonomy: "spells" };
+  if (chapter === "spells") {
+    if (level === 5) return { kind: "spell", taxonomy: "spells" };
+    if (level <= 4) return { kind: "rule", taxonomy: "rules" };
   }
-  if (chapter === "magic-items" && level === 5) {
-    return { kind: "magic-item", taxonomy: "magic_items" };
+
+  if (chapter === "magic-items") {
+    if (level === 5) return { kind: "magic-item", taxonomy: "magic_items" };
+    if (level <= 4) return { kind: "rule", taxonomy: "rules" };
   }
-  if ((chapter === "monsters-a-z" || chapter === "animals") && level >= 4) {
+
+  if (chapter === "animals" && level === 3) {
     return { kind: "monster", taxonomy: "monsters" };
   }
-  if (chapter === "monsters" && level === 3) {
-    return { kind: null };
+  if (chapter === "monsters-a-z" && level >= 4) {
+    return { kind: "monster", taxonomy: "monsters" };
+  }
+  if (chapter === "monsters-a-z" && level === 3) {
+    return { kind: "rule", taxonomy: "rules" };
+  }
+  if (chapter === "monsters") {
+    if (level === 3 || level === 4) return { kind: "rule", taxonomy: "rules" };
+    if (level === 5) return { kind: "glossary-term", taxonomy: "rules" };
   }
 
   if (chapter === "classes") {
@@ -201,8 +219,9 @@ function classify(entry, body, index) {
     }
   }
 
-  if (chapter === "feats" && level === 5) {
-    return { kind: "feat", taxonomy: "feats" };
+  if (chapter === "feats") {
+    if (level === 5) return { kind: "feat", taxonomy: "feats" };
+    if (level <= 4) return { kind: "rule", taxonomy: "rules" };
   }
 
   if (chapter === "character-origins") {
@@ -214,51 +233,71 @@ function classify(entry, body, index) {
     if (level === 5 && SPECIES_KEYS.has(key)) {
       return { kind: "species", taxonomy: "races" };
     }
+    if (level >= 4) return { kind: "rule", taxonomy: "rules" };
   }
 
-  if (chapter === "rules-glossary" && level === 5) {
-    const baseKey = key.replace(/-condition$/, "");
-    if (COMBAT_CONDITION_KEYS.has(baseKey)) {
-      return { kind: "condition", taxonomy: "conditions" };
+  if (chapter === "rules-glossary") {
+    if (level === 5) {
+      const baseKey = key.replace(/-condition$/, "");
+      if (COMBAT_CONDITION_KEYS.has(baseKey)) {
+        return { kind: "condition", taxonomy: "conditions" };
+      }
+      if (SKILL_KEYS.has(key)) {
+        return { kind: "skill", taxonomy: "skills" };
+      }
+      return { kind: "glossary-term", taxonomy: "rules" };
     }
-    if (SKILL_KEYS.has(key)) {
-      return { kind: "skill", taxonomy: "skills" };
-    }
-    return { kind: "glossary-term", taxonomy: "rules" };
+    if (level === 4) return { kind: "glossary-term", taxonomy: "rules" };
   }
 
-  if (
-    (chapter === "playing-the-game" ||
-      chapter === "gameplay-toolbox" ||
-      chapter === "character-creation") &&
-    level === 3
-  ) {
-    return { kind: "rule", taxonomy: "rules" };
+  if (RULE_CHAPTERS.has(chapter)) {
+    if (level === 3 || level === 4) return { kind: "rule", taxonomy: "rules" };
+    if (level === 5) return { kind: "glossary-term", taxonomy: "rules" };
   }
 
-  if (chapter === "equipment" && level === 5) {
-    const subtitle = extractSubtitle(body, entry.start, entry.end) ?? "";
-    const parentKey = parentSectionKey(index, entry);
-    if (parentKey === "armor" || /\barmor\b/i.test(subtitle) || /^armor\b/i.test(title)) {
-      return { kind: "armor", taxonomy: "armor" };
+  if (chapter === "equipment") {
+    if (level <= 4) return { kind: "rule", taxonomy: "rules" };
+    if (level === 5) {
+      const subtitle = extractSubtitle(body, entry.start, entry.end) ?? "";
+      const parentKey = parentSectionKey(index, entry);
+      if (parentKey === "armor" || /\barmor\b/i.test(subtitle) || /^armor\b/i.test(title)) {
+        return { kind: "armor", taxonomy: "armor" };
+      }
+      if (
+        parentKey === "weapons" ||
+        /\bweapon\b/i.test(subtitle) ||
+        /\(d\d|versatile|finesse|thrown|ammunition|loading|reach|two-handed|light|heavy|martial|simple/i.test(
+          subtitle,
+        )
+      ) {
+        return { kind: "weapon", taxonomy: "weapons" };
+      }
+      return { kind: "equipment", taxonomy: "equipment" };
     }
-    if (
-      parentKey === "weapons" ||
-      /\bweapon\b/i.test(subtitle) ||
-      /\(d\d|versatile|finesse|thrown|ammunition|loading|reach|two-handed|light|heavy|martial|simple/i.test(
-        subtitle,
-      )
-    ) {
-      return { kind: "weapon", taxonomy: "weapons" };
-    }
-    return { kind: "equipment", taxonomy: "equipment" };
-  }
-
-  if (chapter === "equipment" && level === 3) {
-    return { kind: "rule", taxonomy: "rules" };
   }
 
   return { kind: null };
+}
+
+function pushEntity(entities, seen, row) {
+  const id = `${row.kind}:${row.key}`;
+  if (seen.has(id)) return false;
+  seen.add(id);
+  entities.push({
+    id,
+    kind: row.kind,
+    name: row.name,
+    key: row.key,
+    chapter: row.chapter,
+    subtitle: row.subtitle ?? null,
+    start: row.start,
+    end: row.end,
+    taxonomyCategory: row.taxonomy,
+    sourceFile: row.sourceFile,
+    edition: row.edition ?? "5.2.1",
+    dataSource: row.dataSource ?? "document",
+  });
+  return true;
 }
 
 const body = readExportedJson(DOC, "SRD_DOCUMENT_BODY");
@@ -299,19 +338,50 @@ for (const entry of index) {
     });
     continue;
   }
-  seen.add(id);
-
-  entities.push({
-    id,
+  pushEntity(entities, seen, {
     kind: result.kind,
-    name: entry.title,
     key: entry.key,
+    name: entry.title,
     chapter: entry.chapter,
     subtitle: extractSubtitle(body, entry.start, entry.end),
     start: entry.start,
     end: entry.end,
-    taxonomyCategory: result.taxonomy,
+    taxonomy: result.taxonomy,
     sourceFile: `srdDocumentIndex:${entry.chapter}/${entry.key}`,
+    edition: "5.2.1",
+    dataSource: "document",
+  });
+}
+
+const { weapons: tableWeapons, armor: tableArmor } = parseEquipmentTables(body);
+for (const row of tableWeapons) {
+  pushEntity(entities, seen, {
+    kind: "weapon",
+    key: row.key,
+    name: row.name,
+    chapter: row.chapter,
+    subtitle: row.subtitle,
+    start: row.start,
+    end: row.end,
+    taxonomy: "weapons",
+    sourceFile: `srdDocumentTable:equipment/weapons/${row.key}`,
+    edition: "5.2.1",
+    dataSource: "document",
+  });
+}
+for (const row of tableArmor) {
+  pushEntity(entities, seen, {
+    kind: "armor",
+    key: row.key,
+    name: row.name,
+    chapter: row.chapter,
+    subtitle: row.subtitle,
+    start: row.start,
+    end: row.end,
+    taxonomy: "armor",
+    sourceFile: `srdDocumentTable:equipment/armor/${row.key}`,
+    edition: "5.2.1",
+    dataSource: "document",
   });
 }
 

@@ -35,6 +35,12 @@ export type SrdCatalogue = {
   ancestries: readonly SrdAncestryEntry[];
 };
 
+/** SRD rules edition for bundled catalogue rows. */
+export type SrdEdition = "5.2.1" | "2014";
+
+/** Where structured fields were sourced at build time. */
+export type SrdDataSource = "document" | "open5e" | "api";
+
 /** DMMS canonical taxonomy keys assigned at build time. */
 export type SrdTaxonomyCategory =
   | "races"
@@ -92,6 +98,10 @@ export type SrdEntitySummary = {
   taxonomyCategory: SrdTaxonomyCategory;
   /** Original index path (`_source_file` in build output). */
   sourceFile: string;
+  /** Rules document edition (5.2.1 bundled text vs 2014 API supplements). */
+  edition: SrdEdition;
+  /** Build-time data origin for structured fields. */
+  dataSource: SrdDataSource;
 };
 
 /** Unclassified or ambiguous index row kept for manual review. */
@@ -135,4 +145,6 @@ export type SrdSpellIndexEntry = {
   start: number | null;
   end: number | null;
   subtitle: string | null;
+  edition: SrdEdition;
+  dataSource: SrdDataSource;
 };

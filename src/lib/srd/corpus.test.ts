@@ -49,6 +49,18 @@ describe("SRD corpus", () => {
     const wizard = getSrdEntity("class:wizard");
     expect(wizard?.kind).toBe("class");
     expect(wizard?.taxonomyCategory).toBe("classes");
+    expect(wizard?.edition).toBe("5.2.1");
+    expect(wizard?.dataSource).toBe("document");
+  });
+
+  it("indexes weapons and armor parsed from equipment tables", () => {
+    expect(SRD_ENTITY_COUNTS.weapon).toBe(38);
+    expect(SRD_ENTITY_COUNTS.armor).toBe(13);
+    const longsword = getSrdEntity("weapon:longsword");
+    expect(longsword?.name).toBe("Longsword");
+    expect(longsword?.subtitle).toContain("Slashing");
+    const chainMail = getSrdEntity("armor:chain-mail");
+    expect(chainMail?.name).toBe("Chain Mail");
   });
 
   it("maps monster entities to the monsters shelf", () => {

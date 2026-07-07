@@ -90,6 +90,7 @@ const open5eSpells = await fetchAllSpells();
 const merged = open5eSpells.map((spell) => {
   const key = normalizeKey(spell.name);
   const doc = documentSpells.get(key) ?? documentSpells.get(spell.id);
+  const hasDoc = Boolean(doc);
   return {
     ...spell,
     key,
@@ -100,6 +101,8 @@ const merged = open5eSpells.map((spell) => {
     start: doc?.start ?? null,
     end: doc?.end ?? null,
     subtitle: doc?.subtitle ?? null,
+    edition: hasDoc ? "5.2.1" : "2014",
+    dataSource: hasDoc ? "document" : "open5e",
   };
 });
 
@@ -128,6 +131,8 @@ for (const [key, doc] of documentSpells) {
     start: doc.start,
     end: doc.end,
     subtitle: doc.subtitle,
+    edition: "5.2.1",
+    dataSource: "document",
   });
 }
 
@@ -179,6 +184,8 @@ const lines = merged.map((spell) => {
     start: ${spell.start ?? "null"},
     end: ${spell.end ?? "null"},
     subtitle: ${spell.subtitle ? JSON.stringify(spell.subtitle) : "null"},
+    edition: ${JSON.stringify(spell.edition)},
+    dataSource: ${JSON.stringify(spell.dataSource)},
   },`;
 });
 
