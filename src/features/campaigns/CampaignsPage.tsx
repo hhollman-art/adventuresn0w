@@ -51,6 +51,7 @@ import { formatPartyUpdated } from "@/lib/tabletop/partyCampaign";
 import { workplace } from "@/lib/workplace";
 import { APP_ICONS } from "@/lib/ui/appIcons";
 import WorkshopPageShell from "@/features/workshop/WorkshopPageShell";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 
 function CheckRow({
   checked,
@@ -226,12 +227,16 @@ export default function CampaignsPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => void createCampaign()} className="btn btn-sm btn-accent">
-            New campaign
-          </button>
-          <Link href="/library" className="btn btn-sm">
-            Library
-          </Link>
+          <FantasyTooltipWrap label="New campaign" hint="Create a chronicle for another group you run">
+            <button type="button" onClick={() => void createCampaign()} className="btn btn-sm btn-accent">
+              New campaign
+            </button>
+          </FantasyTooltipWrap>
+          <FantasyTooltipWrap label="Library" hint="Browse your saved prep and imports">
+            <Link href="/library" className="btn btn-sm">
+              Library
+            </Link>
+          </FantasyTooltipWrap>
         </div>
       </div>
 
@@ -328,37 +333,49 @@ export default function CampaignsPage() {
                   </button>
                   <div className="flex flex-wrap gap-1">
                     {isActive ? (
-                      <button
-                        type="button"
-                        disabled={switching}
-                        onClick={() => void closeCampaign()}
-                        className="rounded-md border px-2.5 py-1.5 text-xs font-semibold"
-                        style={{ borderColor: "var(--accent-dim)" }}
-                        title="Shelve this campaign's table and step out of campaign mode"
+                      <FantasyTooltipWrap
+                        label="Close campaign"
+                        hint="Shelve this campaign's table and step out of campaign mode"
                       >
-                        Close campaign
-                      </button>
+                        <button
+                          type="button"
+                          disabled={switching}
+                          onClick={() => void closeCampaign()}
+                          className="rounded-md border px-2.5 py-1.5 text-xs font-semibold"
+                          style={{ borderColor: "var(--accent-dim)" }}
+                        >
+                          Close campaign
+                        </button>
+                      </FantasyTooltipWrap>
                     ) : (
+                      <FantasyTooltipWrap
+                        label="Open campaign"
+                        hint="Make this the active campaign and restore its Virtual Table"
+                      >
+                        <button
+                          type="button"
+                          disabled={switching}
+                          onClick={() => void openCampaign(campaign)}
+                          className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-white"
+                          style={{ background: "var(--accent)" }}
+                        >
+                          Open campaign
+                        </button>
+                      </FantasyTooltipWrap>
+                    )}
+                    <FantasyTooltipWrap
+                      label="Delete"
+                      hint="Delete the campaign record — linked content stays in your library"
+                    >
                       <button
                         type="button"
-                        disabled={switching}
-                        onClick={() => void openCampaign(campaign)}
-                        className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-white"
-                        style={{ background: "var(--accent)" }}
-                        title="Make this the active campaign and restore its Virtual Table"
+                        onClick={() => void removeCampaign(campaign)}
+                        className="rounded-md border px-2.5 py-1.5 text-xs text-red-800"
+                        style={{ borderColor: "var(--border)" }}
                       >
-                        Open campaign
+                        Delete
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => void removeCampaign(campaign)}
-                      className="rounded-md border px-2.5 py-1.5 text-xs text-red-800"
-                      style={{ borderColor: "var(--border)" }}
-                      title="Delete the campaign record — linked content stays in your library"
-                    >
-                      Delete
-                    </button>
+                    </FantasyTooltipWrap>
                   </div>
                 </div>
 

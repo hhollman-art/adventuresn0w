@@ -3126,6 +3126,36 @@ article.adventure-md .module-read-aloud p {
   color: var(--text-soft);
 }
 
+/* Shared hover wrapper — same reveal behavior as workshop workspace icons */
+.fantasy-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.fantasy-tooltip-wrap--block {
+  display: flex;
+  width: 100%;
+}
+
+.fantasy-tooltip-wrap--block > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fantasy-tooltip-wrap:hover .fantasy-tooltip-wrap__tooltip,
+.fantasy-tooltip-wrap:focus-within .fantasy-tooltip-wrap__tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.fantasy-tooltip-wrap:hover .fantasy-tooltip-wrap__tooltip.workshop-workspace-icon-tooltip--below,
+.fantasy-tooltip-wrap:focus-within .fantasy-tooltip-wrap__tooltip.workshop-workspace-icon-tooltip--below {
+  transform: translate(-50%, 0) scale(1);
+}
+
 .btn,
 .library-shelf-tab,
 .workshop-workspace-icon {

@@ -31,6 +31,7 @@ import type { LibraryListEntry } from "@/lib/workshop/libraryCatalog";
 import { ciClassLabel } from "@/lib/ciRegistry";
 import WorkshopPageShell from "@/features/workshop/WorkshopPageShell";
 import ItemEditorDialog from "./ItemEditorDialog";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 
 type KindFilter = "all" | GameItemKind;
 
@@ -138,30 +139,37 @@ export default function ItemLibraryPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => openEditor(null, "equipment")}
-            className="btn btn-sm btn-accent"
+          <FantasyTooltipWrap label="New equipment" hint="Create mundane gear for heroes and loot tables">
+            <button
+              type="button"
+              onClick={() => openEditor(null, "equipment")}
+              className="btn btn-sm btn-accent"
+            >
+              New equipment
+            </button>
+          </FantasyTooltipWrap>
+          <FantasyTooltipWrap label="New magic item" hint="Create a magic item with rarity and attunement">
+            <button
+              type="button"
+              onClick={() => openEditor(null, "magic")}
+              className="btn btn-sm btn-accent"
+            >
+              New magic item
+            </button>
+          </FantasyTooltipWrap>
+          <FantasyTooltipWrap label={THE_LIBRARY} hint="Browse your saved prep and imports">
+            <Link href="/library" className="btn btn-sm">
+              {THE_LIBRARY}
+            </Link>
+          </FantasyTooltipWrap>
+          <FantasyTooltipWrap
+            label="Craft handout image"
+            hint="Open the workshop handout generator to craft an item card image"
           >
-            New equipment
-          </button>
-          <button
-            type="button"
-            onClick={() => openEditor(null, "magic")}
-            className="btn btn-sm btn-accent"
-          >
-            New magic item
-          </button>
-          <Link href="/library" className="btn btn-sm">
-            {THE_LIBRARY}
-          </Link>
-          <Link
-            href="/?mode=props"
-            className="btn btn-sm"
-            title="Open the workshop's handout generator to craft an item card image"
-          >
-            Craft handout image
-          </Link>
+            <Link href="/?mode=props" className="btn btn-sm">
+              Craft handout image
+            </Link>
+          </FantasyTooltipWrap>
         </div>
       </div>
 
@@ -323,22 +331,26 @@ export default function ItemLibraryPage() {
                     {formatPartyUpdated(item.updatedAt)}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-1">
-                    <button
-                      type="button"
-                      onClick={() => openEditor(item)}
-                      className="rounded-md border px-2.5 py-1 text-xs font-semibold"
-                      style={{ borderColor: "var(--border)" }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void removeItem(item)}
-                      className="rounded-md border px-2.5 py-1 text-xs text-red-800"
-                      style={{ borderColor: "var(--border)" }}
-                    >
-                      Delete
-                    </button>
+                    <FantasyTooltipWrap label="Edit" hint={`Edit ${item.name}`}>
+                      <button
+                        type="button"
+                        onClick={() => openEditor(item)}
+                        className="rounded-md border px-2.5 py-1 text-xs font-semibold"
+                        style={{ borderColor: "var(--border)" }}
+                      >
+                        Edit
+                      </button>
+                    </FantasyTooltipWrap>
+                    <FantasyTooltipWrap label="Delete" hint="Remove from your items library">
+                      <button
+                        type="button"
+                        onClick={() => void removeItem(item)}
+                        className="rounded-md border px-2.5 py-1 text-xs text-red-800"
+                        style={{ borderColor: "var(--border)" }}
+                      >
+                        Delete
+                      </button>
+                    </FantasyTooltipWrap>
                   </div>
                 </li>
               );
@@ -348,18 +360,19 @@ export default function ItemLibraryPage() {
               const ref = entry.srdItemRef!;
               return (
                 <li key={entry.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      openSrdItemPreview(ref);
-                      setStatus(`Opened SRD preview: ${ref.name}`);
-                    }}
-                    className="w-full rounded-xl border p-3 text-left text-sm transition hover:border-[var(--accent-dim)]"
-                    style={{
-                      borderColor: "var(--border)",
-                      background: "var(--surface)",
-                    }}
-                  >
+                  <FantasyTooltipWrap label={entry.title} hint={`Open SRD preview: ${entry.kindLabel}`} block>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        openSrdItemPreview(ref);
+                        setStatus(`Opened SRD preview: ${ref.name}`);
+                      }}
+                      className="w-full rounded-xl border p-3 text-left text-sm transition hover:border-[var(--accent-dim)]"
+                      style={{
+                        borderColor: "var(--border)",
+                        background: "var(--surface)",
+                      }}
+                    >
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span
                         className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
@@ -376,7 +389,8 @@ export default function ItemLibraryPage() {
                       <span className="font-bold text-[var(--text)]">{entry.title}</span>
                     </span>
                     <span className="mt-1 block text-xs text-[var(--muted)]">{entry.kindLabel}</span>
-                  </button>
+                    </button>
+                  </FantasyTooltipWrap>
                 </li>
               );
             })}

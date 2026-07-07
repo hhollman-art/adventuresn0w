@@ -1,6 +1,7 @@
 "use client";
 
 import { useAdminAnnouncement } from "@/contexts/AdminAnnouncementContext";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 
 type AdminAnnouncementBannerProps = {
   className?: string;
@@ -23,14 +24,16 @@ export default function AdminAnnouncementBanner({ className = "" }: AdminAnnounc
       aria-live="polite"
     >
       <p className="admin-announcement-banner-text">{config.message}</p>
-      <button
-        type="button"
-        className="admin-announcement-banner-dismiss"
-        onClick={dismiss}
-        aria-label="Dismiss announcement for this session"
-      >
-        ×
-      </button>
+      <FantasyTooltipWrap label="Dismiss" hint="Hide this announcement for the rest of your session">
+        <button
+          type="button"
+          className="admin-announcement-banner-dismiss"
+          onClick={dismiss}
+          aria-label="Dismiss announcement for this session"
+        >
+          ×
+        </button>
+      </FantasyTooltipWrap>
     </div>
   );
 }

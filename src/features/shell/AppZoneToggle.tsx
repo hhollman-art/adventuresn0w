@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { FANTASY_FORGE, VIRTUAL_TABLE } from "@/lib/workplace/forgeLexicon";
 import { dispatchWorkshopWelcome } from "@/lib/workshop/goWelcome";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 
 export { WORKSHOP_WELCOME_EVENT } from "@/lib/workshop/goWelcome";
 
@@ -37,31 +38,41 @@ export default function AppZoneToggle({ compact = false }: AppZoneToggleProps) {
         className="zone-nav forge-zone-switch-nav"
         aria-label="Fantasy Forge or Virtual Table"
       >
-        <button
-          type="button"
-          onClick={goFantasyForgeWelcome}
-          className={`zone-nav-link forge-zone-link${!onTable ? " zone-nav-link--active" : ""}`}
-          aria-current={!onTable ? "page" : undefined}
-          title={`Return to the ${FANTASY_FORGE} welcome hearth`}
+        <FantasyTooltipWrap
+          label={compact ? "Forge" : FANTASY_FORGE}
+          hint={`Return to the ${FANTASY_FORGE} welcome hearth`}
+          placement="below"
         >
-          <span className="zone-nav-icon" aria-hidden="true">
-            {"\u2692\uFE0F"}
-          </span>
-          <span className="forge-zone-link-text">
-            {compact ? "Forge" : FANTASY_FORGE}
-          </span>
-        </button>
-        <Link
-          href="/table"
-          className={`zone-nav-link forge-zone-link${onTable ? " zone-nav-link--active" : ""}`}
-          aria-current={onTable ? "page" : undefined}
-          title={`Open the ${VIRTUAL_TABLE} (DM view)`}
+          <button
+            type="button"
+            onClick={goFantasyForgeWelcome}
+            className={`zone-nav-link forge-zone-link${!onTable ? " zone-nav-link--active" : ""}`}
+            aria-current={!onTable ? "page" : undefined}
+          >
+            <span className="zone-nav-icon" aria-hidden="true">
+              {"\u2692\uFE0F"}
+            </span>
+            <span className="forge-zone-link-text">
+              {compact ? "Forge" : FANTASY_FORGE}
+            </span>
+          </button>
+        </FantasyTooltipWrap>
+        <FantasyTooltipWrap
+          label={compact ? "VTT" : VIRTUAL_TABLE}
+          hint={`Open the ${VIRTUAL_TABLE} (DM view)`}
+          placement="below"
         >
-          <span className="zone-nav-icon" aria-hidden="true">
-            {"\u{1F3B2}"}
-          </span>
-          <span className="forge-zone-link-text">{compact ? "VTT" : VIRTUAL_TABLE}</span>
-        </Link>
+          <Link
+            href="/table"
+            className={`zone-nav-link forge-zone-link${onTable ? " zone-nav-link--active" : ""}`}
+            aria-current={onTable ? "page" : undefined}
+          >
+            <span className="zone-nav-icon" aria-hidden="true">
+              {"\u{1F3B2}"}
+            </span>
+            <span className="forge-zone-link-text">{compact ? "VTT" : VIRTUAL_TABLE}</span>
+          </Link>
+        </FantasyTooltipWrap>
       </nav>
     </div>
   );

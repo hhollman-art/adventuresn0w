@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import AuthField from "@/features/auth/AuthField";
 import { useAuthForm } from "@/features/auth/useAuthForm";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 
 function AuthCardContent() {
   const searchParams = useSearchParams();
@@ -41,24 +42,28 @@ function AuthCardContent() {
       </header>
 
       <div className="auth-card-tabs" role="tablist" aria-label="Authentication mode">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mode === "sign-in"}
-          className={`auth-card-tab ${mode === "sign-in" ? "auth-card-tab--active" : ""}`}
-          onClick={() => switchMode("sign-in")}
-        >
-          Sign in
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mode === "sign-up"}
-          className={`auth-card-tab ${mode === "sign-up" ? "auth-card-tab--active" : ""}`}
-          onClick={() => switchMode("sign-up")}
-        >
-          Create account
-        </button>
+        <FantasyTooltipWrap label="Sign in" hint="Use your existing DM account">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "sign-in"}
+            className={`auth-card-tab ${mode === "sign-in" ? "auth-card-tab--active" : ""}`}
+            onClick={() => switchMode("sign-in")}
+          >
+            Sign in
+          </button>
+        </FantasyTooltipWrap>
+        <FantasyTooltipWrap label="Create account" hint="Register a free DM account during early access">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "sign-up"}
+            className={`auth-card-tab ${mode === "sign-up" ? "auth-card-tab--active" : ""}`}
+            onClick={() => switchMode("sign-up")}
+          >
+            Create account
+          </button>
+        </FantasyTooltipWrap>
       </div>
 
       <form
@@ -112,15 +117,25 @@ function AuthCardContent() {
           </p>
         ) : null}
 
-        <button type="submit" className="btn btn-accent auth-card-submit" disabled={loading}>
-          {loading
-            ? mode === "sign-in"
-              ? "Signing in…"
-              : "Creating account…"
-            : mode === "sign-in"
-              ? "Sign in"
-              : "Create account"}
-        </button>
+        <FantasyTooltipWrap
+          label={mode === "sign-in" ? "Sign in" : "Create account"}
+          hint={
+            mode === "sign-in"
+              ? "Access campaigns, hosting, and your dashboard"
+              : "Start with a free account — premium tiers come later"
+          }
+          block
+        >
+          <button type="submit" className="btn btn-accent auth-card-submit" disabled={loading}>
+            {loading
+              ? mode === "sign-in"
+                ? "Signing in…"
+                : "Creating account…"
+              : mode === "sign-in"
+                ? "Sign in"
+                : "Create account"}
+          </button>
+        </FantasyTooltipWrap>
       </form>
 
       <footer className="auth-card-footer">

@@ -8,6 +8,7 @@ import {
   saveDmActiveRoom,
   type DmActiveRoom,
 } from "@/lib/session-room/dmHost";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 
 type AuthStatus =
   | { kind: "loading" }
@@ -135,9 +136,11 @@ export default function SessionRoomHostPanel({ onRoomChange }: SessionRoomHostPa
         <p className="text-xs leading-relaxed text-[var(--muted)]">
           Sign in to host tablets over Wi-Fi or online.
         </p>
-        <Link href="/login" className="btn btn-sm btn-accent w-full">
-          DM sign in
-        </Link>
+        <FantasyTooltipWrap label="DM sign in" hint="Sign in to host tablet players via room code" block>
+          <Link href="/login" className="btn btn-sm btn-accent w-full">
+            DM sign in
+          </Link>
+        </FantasyTooltipWrap>
       </section>
     );
   }
@@ -163,26 +166,36 @@ export default function SessionRoomHostPanel({ onRoomChange }: SessionRoomHostPa
             </Link>{" "}
             — no account needed.
           </p>
-          <button type="button" className="btn btn-sm w-full" onClick={() => void copyJoinLink()}>
-            {copied ? "Link copied!" : "Copy join link"}
-          </button>
-          <button type="button" className="btn btn-sm w-full" onClick={endRoom}>
-            End session room
-          </button>
+          <FantasyTooltipWrap label="Copy join link" hint="Copy the tablet join URL to share with players" block>
+            <button type="button" className="btn btn-sm w-full" onClick={() => void copyJoinLink()}>
+              {copied ? "Link copied!" : "Copy join link"}
+            </button>
+          </FantasyTooltipWrap>
+          <FantasyTooltipWrap label="End session room" hint="Close the room code and stop relay hosting" block>
+            <button type="button" className="btn btn-sm w-full" onClick={endRoom}>
+              End session room
+            </button>
+          </FantasyTooltipWrap>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
           <p className="text-xs leading-relaxed text-[var(--muted)]">
             Create a room code so tablets on Wi-Fi or online can join this table.
           </p>
-          <button
-            type="button"
-            className="btn btn-sm btn-accent w-full"
-            disabled={creating}
-            onClick={() => void createRoom()}
+          <FantasyTooltipWrap
+            label="Create room code"
+            hint="Generate a code so tablets on Wi-Fi or online can join this table"
+            block
           >
-            {creating ? "Creating…" : "Create room code"}
-          </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-accent w-full"
+              disabled={creating}
+              onClick={() => void createRoom()}
+            >
+              {creating ? "Creating…" : "Create room code"}
+            </button>
+          </FantasyTooltipWrap>
         </div>
       )}
       {error ? (

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { ToolButton, ToggleChip } from "@/features/ui/ToggleButton";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 import type { TabletopSession } from "@/lib/tabletop/types";
 
 export type VttSidePanel = "party" | "tokens" | "initiative" | "dice" | "map";
@@ -124,30 +125,35 @@ export default function VttControlSidebar({
           />
         </div>
 
-        <button
-          type="button"
-          onClick={onClearTable}
-          className="btn btn-sm w-full"
-          style={{ color: "#b91c1c", borderColor: "rgba(248,113,113,0.45)" }}
-          title="Start with a blank table — removes tokens, party, map, fog, initiative, and dice log"
+        <FantasyTooltipWrap
+          label="Clear table"
+          hint="Start with a blank table — removes tokens, party, map, fog, initiative, and dice log"
+          block
         >
-          Clear table
-        </button>
+          <button
+            type="button"
+            onClick={onClearTable}
+            className="btn btn-sm w-full"
+            style={{ color: "#b91c1c", borderColor: "rgba(248,113,113,0.45)" }}
+          >
+            Clear table
+          </button>
+        </FantasyTooltipWrap>
       </section>
 
       <div className="panel-tabs vtt-control-sidebar-tabs" role="tablist" aria-label="Virtual Table panels">
-        {PANEL_TABS.map(([id, label, title]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            title={title}
-            onClick={() => onPanelChange(id)}
-            className={`panel-tab${panel === id ? " panel-tab-active" : ""}`}
-            aria-selected={panel === id}
-          >
-            <span className="panel-tab-label">{label}</span>
-          </button>
+        {PANEL_TABS.map(([id, label, hint]) => (
+          <FantasyTooltipWrap key={id} label={label} hint={hint}>
+            <button
+              type="button"
+              role="tab"
+              onClick={() => onPanelChange(id)}
+              className={`panel-tab${panel === id ? " panel-tab-active" : ""}`}
+              aria-selected={panel === id}
+            >
+              <span className="panel-tab-label">{label}</span>
+            </button>
+          </FantasyTooltipWrap>
         ))}
       </div>
 
@@ -168,17 +174,28 @@ export default function VttControlSidebar({
             {activeCombatant}
           </span>
         ) : null}
-        <button
-          type="button"
-          onClick={onToggleFullscreen}
-          className="btn btn-sm w-full"
-          title={isFullscreen ? "Leave full screen" : "Fill the whole screen for play"}
+        <FantasyTooltipWrap
+          label={isFullscreen ? "Exit full screen" : "Full screen"}
+          hint={
+            isFullscreen
+              ? "Return to the normal window layout"
+              : "Fill the whole screen for in-person play"
+          }
+          block
         >
-          {isFullscreen ? "Exit full screen" : "Full screen"}
-        </button>
-        <button type="button" onClick={onOpenPlayerView} className="btn btn-sm btn-accent w-full">
-          Open player view &#8599;
-        </button>
+          <button type="button" onClick={onToggleFullscreen} className="btn btn-sm w-full">
+            {isFullscreen ? "Exit full screen" : "Full screen"}
+          </button>
+        </FantasyTooltipWrap>
+        <FantasyTooltipWrap
+          label="Open player view"
+          hint="Open the players' mirror window in a new tab"
+          block
+        >
+          <button type="button" onClick={onOpenPlayerView} className="btn btn-sm btn-accent w-full">
+            Open player view &#8599;
+          </button>
+        </FantasyTooltipWrap>
       </footer>
     </aside>
   );

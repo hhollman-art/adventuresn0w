@@ -1,5 +1,7 @@
 "use client";
 
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
+
 type ToolButtonProps = {
   label: string;
   active: boolean;
@@ -8,16 +10,24 @@ type ToolButtonProps = {
 };
 
 export function ToolButton({ label, active, onClick, title }: ToolButtonProps) {
-  return (
+  const button = (
     <button
       type="button"
       onClick={onClick}
-      title={title}
       className={`btn btn-sm${active ? " btn-tool-active" : ""}`}
       aria-pressed={active}
+      aria-label={title ?? label}
     >
       {label}
     </button>
+  );
+
+  if (!title) return button;
+
+  return (
+    <FantasyTooltipWrap label={label} hint={title} block>
+      {button}
+    </FantasyTooltipWrap>
   );
 }
 
@@ -30,15 +40,23 @@ type ToggleChipProps = {
 };
 
 export function ToggleChip({ label, checked, onChange, title }: ToggleChipProps) {
-  return (
+  const button = (
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      title={title}
       className={`btn btn-sm${checked ? " btn-tool-active" : ""}`}
       aria-pressed={checked}
+      aria-label={title ? `${label}: ${title}` : label}
     >
       {label} {checked ? "on" : "off"}
     </button>
+  );
+
+  if (!title) return button;
+
+  return (
+    <FantasyTooltipWrap label={label} hint={title} block>
+      {button}
+    </FantasyTooltipWrap>
   );
 }

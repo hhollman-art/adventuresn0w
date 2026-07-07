@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ANNOUNCEMENT_BANNER_VARIANTS } from "@/lib/admin/announcementConfig";
 import { useAdminAnnouncement } from "@/contexts/AdminAnnouncementContext";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 
 /**
  * Admin control panel for the site-wide announcement banner.
@@ -111,14 +112,20 @@ export default function AdminUiPanel() {
           </p>
         ) : null}
 
-        <button
-          type="button"
-          className="btn btn-accent w-full sm:w-auto"
-          disabled={saving}
-          onClick={() => void handleSave()}
+        <FantasyTooltipWrap
+          label="Save changes"
+          hint="Publish the announcement banner for all users on this device"
+          block
         >
-          {saving ? "Saving…" : "Save changes"}
-        </button>
+          <button
+            type="button"
+            className="btn btn-accent w-full sm:w-auto"
+            disabled={saving}
+            onClick={() => void handleSave()}
+          >
+            {saving ? "Saving…" : "Save changes"}
+          </button>
+        </FantasyTooltipWrap>
       </div>
     </section>
   );

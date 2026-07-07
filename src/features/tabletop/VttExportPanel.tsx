@@ -15,6 +15,7 @@ import {
   exportRoll20CharacterBundle,
   exportRoll20PartyBundle,
 } from "@/modules/vtt/exports";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 
 type VttExportPanelProps = {
   /** Compact layout for inline button rows. */
@@ -91,32 +92,74 @@ export default function VttExportPanel({ compact, player, party, session, modes 
       <>
         {showHero && (
           <>
-            <button type="button" className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]" style={{ borderColor: "var(--border)" }} onClick={exportFoundryActor} title="Foundry actor JSON">
-              Foundry
-            </button>
-            <button type="button" className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]" style={{ borderColor: "var(--border)" }} onClick={exportRoll20Actor} title="Roll20 character JSON">
-              Roll20
-            </button>
+            <FantasyTooltipWrap label="Foundry" hint="Download Foundry actor JSON">
+              <button
+                type="button"
+                className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]"
+                style={{ borderColor: "var(--border)" }}
+                onClick={exportFoundryActor}
+              >
+                Foundry
+              </button>
+            </FantasyTooltipWrap>
+            <FantasyTooltipWrap label="Roll20" hint="Download Roll20 character JSON">
+              <button
+                type="button"
+                className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]"
+                style={{ borderColor: "var(--border)" }}
+                onClick={exportRoll20Actor}
+              >
+                Roll20
+              </button>
+            </FantasyTooltipWrap>
           </>
         )}
         {showParty && (
           <>
-            <button type="button" className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]" style={{ borderColor: "var(--border)" }} onClick={exportFoundryParty} title="Foundry party bundle">
-              Foundry party
-            </button>
-            <button type="button" className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]" style={{ borderColor: "var(--border)" }} onClick={exportRoll20Party} title="Roll20 party bundle">
-              Roll20 party
-            </button>
+            <FantasyTooltipWrap label="Foundry party" hint="Download Foundry party bundle">
+              <button
+                type="button"
+                className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]"
+                style={{ borderColor: "var(--border)" }}
+                onClick={exportFoundryParty}
+              >
+                Foundry party
+              </button>
+            </FantasyTooltipWrap>
+            <FantasyTooltipWrap label="Roll20 party" hint="Download Roll20 party bundle">
+              <button
+                type="button"
+                className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]"
+                style={{ borderColor: "var(--border)" }}
+                onClick={exportRoll20Party}
+              >
+                Roll20 party
+              </button>
+            </FantasyTooltipWrap>
           </>
         )}
         {showSession && (
           <>
-            <button type="button" className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]" style={{ borderColor: "var(--border)" }} onClick={exportFoundryScene} title="Scene JSON + map PNG">
-              Foundry scene
-            </button>
-            <button type="button" className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]" style={{ borderColor: "var(--border)" }} onClick={exportMacroPack} title="Initiative, token link, party-import macros">
-              Foundry macros
-            </button>
+            <FantasyTooltipWrap label="Foundry scene" hint="Download scene JSON and map PNG">
+              <button
+                type="button"
+                className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]"
+                style={{ borderColor: "var(--border)" }}
+                onClick={exportFoundryScene}
+              >
+                Foundry scene
+              </button>
+            </FantasyTooltipWrap>
+            <FantasyTooltipWrap label="Foundry macros" hint="Download initiative, token link, and party-import macros">
+              <button
+                type="button"
+                className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]"
+                style={{ borderColor: "var(--border)" }}
+                onClick={exportMacroPack}
+              >
+                Foundry macros
+              </button>
+            </FantasyTooltipWrap>
           </>
         )}
       </>
@@ -141,12 +184,16 @@ export default function VttExportPanel({ compact, player, party, session, modes 
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-bold text-[var(--muted)]">Hero → VTT</p>
           <div className="flex flex-wrap gap-1">
-            <button type="button" className="btn btn-sm" onClick={exportFoundryActor} title="Foundry actor JSON">
-              Foundry actor
-            </button>
-            <button type="button" className="btn btn-sm" onClick={exportRoll20Actor} title="Roll20 character JSON">
-              Roll20 sheet
-            </button>
+            <FantasyTooltipWrap label="Foundry actor" hint="Download Foundry actor JSON">
+              <button type="button" className="btn btn-sm" onClick={exportFoundryActor}>
+                Foundry actor
+              </button>
+            </FantasyTooltipWrap>
+            <FantasyTooltipWrap label="Roll20 sheet" hint="Download Roll20 character JSON">
+              <button type="button" className="btn btn-sm" onClick={exportRoll20Actor}>
+                Roll20 sheet
+              </button>
+            </FantasyTooltipWrap>
           </div>
         </div>
       )}
@@ -155,12 +202,16 @@ export default function VttExportPanel({ compact, player, party, session, modes 
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-bold text-[var(--muted)]">Party → VTT</p>
           <div className="flex flex-wrap gap-1">
-            <button type="button" className="btn btn-sm" onClick={exportFoundryParty} title="Foundry party bundle">
-              Foundry party
-            </button>
-            <button type="button" className="btn btn-sm" onClick={exportRoll20Party} title="Roll20 party bundle">
-              Roll20 party
-            </button>
+            <FantasyTooltipWrap label="Foundry party" hint="Download Foundry party bundle">
+              <button type="button" className="btn btn-sm" onClick={exportFoundryParty}>
+                Foundry party
+              </button>
+            </FantasyTooltipWrap>
+            <FantasyTooltipWrap label="Roll20 party" hint="Download Roll20 party bundle">
+              <button type="button" className="btn btn-sm" onClick={exportRoll20Party}>
+                Roll20 party
+              </button>
+            </FantasyTooltipWrap>
           </div>
         </div>
       )}
@@ -169,22 +220,22 @@ export default function VttExportPanel({ compact, player, party, session, modes 
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-bold text-[var(--muted)]">Table → Foundry</p>
           <div className="flex flex-wrap gap-1">
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={exportFoundryScene}
-              title="Scene JSON + map PNG + import notes"
+            <FantasyTooltipWrap
+              label="Foundry scene"
+              hint="Download scene JSON, map PNG, and import notes"
             >
-              Foundry scene
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={exportMacroPack}
-              title="Initiative, token link, and party-import macros"
+              <button type="button" className="btn btn-sm" onClick={exportFoundryScene}>
+                Foundry scene
+              </button>
+            </FantasyTooltipWrap>
+            <FantasyTooltipWrap
+              label="Foundry macros"
+              hint="Download initiative, token link, and party-import macros"
             >
-              Foundry macros
-            </button>
+              <button type="button" className="btn btn-sm" onClick={exportMacroPack}>
+                Foundry macros
+              </button>
+            </FantasyTooltipWrap>
           </div>
         </div>
       )}

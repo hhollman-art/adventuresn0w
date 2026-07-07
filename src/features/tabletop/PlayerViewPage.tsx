@@ -11,6 +11,7 @@ import { createRoomRelayTransport } from "@/lib/tabletop/transport/roomRelayTran
 import { loadPlayerSession, normalizeRoomCode } from "@/lib/session-room";
 import type { TabletopSession } from "@/lib/tabletop/types";
 import { useFullscreen } from "@/features/tabletop/useFullscreen";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 
 function PlayerViewContent() {
   const searchParams = useSearchParams();
@@ -72,9 +73,11 @@ function PlayerViewContent() {
             : "Waiting for the Dungeon Master\u2026 Keep the Virtual Table open in another tab of this browser."}
         </p>
         {!roomCode ? (
-          <Link href="/join" className="btn btn-accent btn-sm mt-4 inline-flex">
-            Join with room code
-          </Link>
+          <FantasyTooltipWrap label="Join with room code" hint="Enter the DM's room code on a tablet or second device">
+            <Link href="/join" className="btn btn-accent btn-sm mt-4 inline-flex">
+              Join with room code
+            </Link>
+          </FantasyTooltipWrap>
         ) : null}
       </main>
     );
@@ -113,14 +116,22 @@ function PlayerViewContent() {
               : "Live — mirroring the DM\u2019s table"
             : "Showing last saved state"}
         </span>
-        <button
-          type="button"
-          onClick={() => toggleFullscreen(mainRef.current)}
-          className="btn btn-sm"
-          title={isFullscreen ? "Leave full screen" : "Fill the whole screen for play"}
+        <FantasyTooltipWrap
+          label={isFullscreen ? "Exit full screen" : "Full screen"}
+          hint={
+            isFullscreen
+              ? "Return to the normal window layout"
+              : "Fill the whole screen for in-person play"
+          }
         >
-          {isFullscreen ? "Exit full screen" : "Full screen"}
-        </button>
+          <button
+            type="button"
+            onClick={() => toggleFullscreen(mainRef.current)}
+            className="btn btn-sm"
+          >
+            {isFullscreen ? "Exit full screen" : "Full screen"}
+          </button>
+        </FantasyTooltipWrap>
       </div>
 
       <div className="flex min-h-0 flex-1 gap-3">

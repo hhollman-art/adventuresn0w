@@ -10,6 +10,7 @@ import {
 } from "@/lib/workplace/workshopNav";
 import { dispatchWorkshopWelcome } from "@/lib/workshop/goWelcome";
 import WorkshopWorkspaceIconControl from "@/features/workshop/WorkshopWorkspaceIconControl";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 
 const SIDEBAR_STORAGE_KEY = "ddeasy-workshop-sidebar-collapsed";
 
@@ -74,15 +75,21 @@ export default function CollapsibleWorkspaceSidebar({
             Workspaces
           </p>
         ) : null}
-        <button
-          type="button"
-          onClick={toggle}
-          className="btn btn-sm btn-ghost collapsible-workshop-sidebar-toggle"
-          aria-expanded={!collapsed}
-          aria-label={collapsed ? "Expand workspace sidebar" : "Collapse workspace sidebar"}
+        <FantasyTooltipWrap
+          label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          hint="Show or hide workspace navigation labels"
+          placement="below"
         >
-          {collapsed ? "»" : "«"}
-        </button>
+          <button
+            type="button"
+            onClick={toggle}
+            className="btn btn-sm btn-ghost collapsible-workshop-sidebar-toggle"
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? "Expand workspace sidebar" : "Collapse workspace sidebar"}
+          >
+            {collapsed ? "»" : "«"}
+          </button>
+        </FantasyTooltipWrap>
       </div>
 
       <div className="collapsible-workshop-sidebar-body panel-scroll">

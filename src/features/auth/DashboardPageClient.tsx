@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import DmDashboardPanel from "@/features/home/DmDashboardPanel";
 import AdminAnnouncementBanner from "@/features/admin/AdminAnnouncementBanner";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 import { useAuth } from "@/contexts/AuthContext";
 import { isAdmin } from "@/lib/auth/tiers";
 import type { QuickCreateAction } from "@/lib/workshop/dmDashboard";
@@ -48,20 +49,28 @@ export default function DashboardPageClient() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/library" className="btn btn-accent btn-sm">
-            Fantasy Forge
-          </Link>
-          <Link href="/table" className="btn btn-sm">
-            Virtual Table
-          </Link>
-          {isAdmin(session.dm) ? (
-            <Link href="/admin" className="btn btn-sm">
-              Admin UI
+          <FantasyTooltipWrap label="Fantasy Forge" hint="Open the workshop to create and browse your prep">
+            <Link href="/library" className="btn btn-accent btn-sm">
+              Fantasy Forge
             </Link>
+          </FantasyTooltipWrap>
+          <FantasyTooltipWrap label="Virtual Table" hint="Run combat, fog, tokens, and dice at the table">
+            <Link href="/table" className="btn btn-sm">
+              Virtual Table
+            </Link>
+          </FantasyTooltipWrap>
+          {isAdmin(session.dm) ? (
+            <FantasyTooltipWrap label="Admin UI" hint="Configure site-wide banners and admin settings">
+              <Link href="/admin" className="btn btn-sm">
+                Admin UI
+              </Link>
+            </FantasyTooltipWrap>
           ) : null}
-          <button type="button" className="btn btn-sm btn-ghost" onClick={() => void logout()}>
-            Sign out
-          </button>
+          <FantasyTooltipWrap label="Sign out" hint="End your DM session on this device">
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => void logout()}>
+              Sign out
+            </button>
+          </FantasyTooltipWrap>
         </div>
       </header>
 

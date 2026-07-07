@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 import type { PlayerCharacter } from "@/lib/tabletop/types";
 import {
   getOrCreatePlayerClientId,
@@ -152,9 +153,11 @@ export default function PlayerJoinPage() {
         </p>
       ) : null}
 
-      <button type="button" className="btn btn-accent w-full" disabled={joining} onClick={() => void joinRoom()}>
-        {joining ? "Joining…" : "Join table"}
-      </button>
+      <FantasyTooltipWrap label="Join table" hint="Connect this tablet to the DM's session room" block>
+        <button type="button" className="btn btn-accent w-full" disabled={joining} onClick={() => void joinRoom()}>
+          {joining ? "Joining…" : "Join table"}
+        </button>
+      </FantasyTooltipWrap>
 
       <p className="text-center text-xs text-[var(--muted)]">
         DM? <Link href="/login" className="underline">Sign in here</Link>
