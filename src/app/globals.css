@@ -2331,6 +2331,10 @@ html[data-preview-window="standalone"] .app-content {
   box-shadow:
     inset 0 0 48px rgba(8, 20, 42, 0.28),
     0 0 16px rgba(94, 184, 255, 0.12);
+  /* Scrying Glass: one scrollbar on the panel shell — not nested per-page panels */
+  overflow-y: visible;
+  max-height: none;
+  min-height: 0;
 }
 
 .preview-window-panel .output-document-carousel-page-btn-active {
@@ -2730,7 +2734,7 @@ article.adventure-md .module-read-aloud p {
     padding-bottom: 0.35rem;
   }
 
-  /* Output preview: one full-width page at a time + vertical scroll inside each panel */
+  /* Output preview: one full-width page at a time; Scrying Glass scrolls the outer panel only */
   .output-document-carousel-root {
     min-height: 0;
   }
@@ -2865,6 +2869,18 @@ article.adventure-md .module-read-aloud p {
 
   article.adventure-md.output-document-view .output-document-panel-active {
     display: block;
+  }
+
+  /* Scrying Glass / preview window — single vertical scrollbar on .preview-window-panel */
+  .preview-window-panel article.adventure-md.output-document-view .output-document-panel {
+    overflow-y: visible;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .preview-window-panel .output-document-carousel-viewport,
+  .preview-window-panel article.adventure-md.output-document-view {
+    overflow: visible;
   }
 
   article.adventure-md.output-document-view .module-toc-panel {
