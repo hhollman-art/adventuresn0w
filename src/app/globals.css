@@ -88,7 +88,6 @@ body {
 }
 
 .panel-scroll,
-.workshop-welcome-main,
 .workshop-workspace-main,
 .workshop-page-main,
 .library-workshop-browse .library-browse-panel > ul,
@@ -105,7 +104,6 @@ article.adventure-md.output-document-view .output-document-panel {
 }
 
 .panel-scroll::-webkit-scrollbar,
-.workshop-welcome-main::-webkit-scrollbar,
 .workshop-workspace-main::-webkit-scrollbar,
 .workshop-page-main::-webkit-scrollbar,
 .library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar,
@@ -117,7 +115,6 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 }
 
 .panel-scroll::-webkit-scrollbar-track,
-.workshop-welcome-main::-webkit-scrollbar-track,
 .workshop-workspace-main::-webkit-scrollbar-track,
 .workshop-page-main::-webkit-scrollbar-track,
 .library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar-track,
@@ -130,7 +127,6 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 }
 
 .panel-scroll::-webkit-scrollbar-thumb,
-.workshop-welcome-main::-webkit-scrollbar-thumb,
 .workshop-workspace-main::-webkit-scrollbar-thumb,
 .workshop-page-main::-webkit-scrollbar-thumb,
 .library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar-thumb,
@@ -148,7 +144,6 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 }
 
 .panel-scroll::-webkit-scrollbar-thumb:hover,
-.workshop-welcome-main::-webkit-scrollbar-thumb:hover,
 .workshop-workspace-main::-webkit-scrollbar-thumb:hover,
 .workshop-page-main::-webkit-scrollbar-thumb:hover,
 .library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar-thumb:hover,
@@ -258,6 +253,22 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
+}
+
+/* Hearth / welcome — native window scroll; do not trap wheel events in inner panels */
+.app-main--workshop.app-main--welcome .forge-content-shell,
+.app-main--workshop.app-main--welcome .forge-content-body,
+.app-main--workshop.app-main--welcome .forge-layout-with-sidebar,
+.app-main--workshop.app-main--welcome .forge-layout-main {
+  flex: none;
+  min-height: auto;
+  overflow: visible;
+}
+
+.app-main--workshop.app-main--welcome {
+  flex: none;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .app-main--workshop .forge-content-body,
@@ -828,14 +839,14 @@ html[data-preview-window="standalone"] .app-content {
 .forge-content-body--welcome {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  flex: 1 1 auto;
+  min-height: auto;
+  flex: none;
   overflow: visible;
 }
 
 .forge-content-body--welcome .workshop-welcome-main {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: none;
+  min-height: auto;
   overflow: visible;
   max-height: none;
 }
@@ -1181,15 +1192,17 @@ html[data-preview-window="standalone"] .app-content {
   background: rgba(201, 162, 39, 0.06);
 }
 
-/* Welcome hearth — scrollable panel below workspace tabs */
+/* Welcome hearth — full viewport scroll (not a nested panel-scroll region) */
 .workshop-welcome-panel {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: none;
+  min-height: auto;
 }
 
 .workshop-welcome-main {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: none;
+  min-height: auto;
+  overflow: visible;
+  max-height: none;
 }
 
 .workshop-welcome {
@@ -1359,7 +1372,7 @@ html[data-preview-window="standalone"] .app-content {
 }
 
 @media (min-width: 1024px) {
-  .forge-content-body--welcome .workshop-welcome-main {
+  .app-main--workshop.app-main--welcome .workshop-welcome-main {
     min-height: auto;
     height: auto;
   }

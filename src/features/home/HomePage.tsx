@@ -1458,11 +1458,11 @@ useHomePreviewSnapshot({
 
   return (
     <main
-      className={`app-main app-main--workshop mx-auto flex w-full max-w-[110rem] flex-1 flex-col px-4 py-6 sm:px-6 ${
+      className={`app-main app-main--workshop mx-auto flex w-full max-w-[110rem] flex-col px-4 py-6 sm:px-6 ${
         isLibraryView
-          ? "app-main--library gap-4 lg:gap-5"
+          ? "app-main--library flex-1 gap-4 lg:gap-5"
           : isCreatingView
-            ? "app-main--creating gap-4 lg:gap-5"
+            ? "app-main--creating flex-1 gap-4 lg:gap-5"
             : "app-main--welcome gap-4 lg:gap-5"
       }`}
     >

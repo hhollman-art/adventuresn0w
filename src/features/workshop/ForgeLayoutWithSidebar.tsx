@@ -24,7 +24,10 @@ export default function ForgeLayoutWithSidebar({
   onSelectCreation,
 }: ForgeLayoutWithSidebarProps) {
   return (
-    <div className="forge-layout-with-sidebar min-h-0 flex-1">
+    <div
+      className="forge-layout-with-sidebar min-h-0 flex-1 data-[welcome=true]:min-h-auto data-[welcome=true]:flex-none"
+      data-welcome={workspace === "welcome" ? "true" : undefined}
+    >
       {showSidebar ? (
         <CollapsibleWorkspaceSidebar
           workspace={workspace}
