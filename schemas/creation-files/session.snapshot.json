@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/session.snapshot.json",
+  "title": "session.snapshot — Shelved campaign table",
+  "description": "Large map snapshot stored locally — not in library backup.",
+  "type": "object",
+  "required": ["id", "updatedAt"],
+  "properties": {
+    "id": { "$ref": "common.json#/$defs/uuidOrId" },
+    "updatedAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "campaignId": { "type": ["string", "null"] },
+    "label": { "type": "string" },
+    "cfMetadata": { "$ref": "common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": true
+}

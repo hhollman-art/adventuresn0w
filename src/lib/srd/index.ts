@@ -34,6 +34,21 @@ export {
   type SrdManifest,
 } from "./manifest";
 
+export {
+  ciClassForSrdEntity,
+  findSrdEntityByName,
+  getSrdEntity,
+  listSrdEntities,
+  parseSrdEntityId,
+  searchSrdEntities,
+  srdEntityKindLabel,
+  srdEntityToItemRef,
+  srdEntityToLibraryEntry,
+  srdEntityToPreviewMarkdown,
+  SRD_ENTITIES,
+} from "./corpus";
+export { SRD_ENTITY_COUNTS } from "./srdEntities.data";
+export type { SrdEntityId, SrdEntityKind, SrdEntitySummary } from "./types";
 export type {
   SrdAncestryEntry,
   SrdCatalogue,
@@ -71,3 +86,20 @@ export {
   dnd5eResourceToMarkdown,
   SRD_LIBRARY_INTRO_MARKDOWN,
 } from "./dnd5eApiMarkdown";
+export {
+  openSrdItemPreview,
+  openSrdPreview,
+  openSrdSpellPreview,
+  type SrdPreviewRef,
+} from "./openSrdPreview";
+export {
+  buildSrdPreviewMarkdown,
+  fetchSrdPreviewMarkdown,
+} from "./srdPreviewMarkdown";
+export {
+  hasSrdDocumentEntry,
+  lookupSrdDocumentMarkdown,
+  normalizeSrdDocumentKey,
+  type SrdDocumentChapterId,
+} from "./srdDocumentLookup";
+export { SRD_DOCUMENT_INDEX, type SrdDocumentIndexEntry } from "./srdDocumentIndex.data";

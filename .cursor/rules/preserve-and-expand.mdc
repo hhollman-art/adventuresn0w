@@ -1,0 +1,29 @@
+---
+description: Global rule — never remove working features; only add, improve, and merge
+alwaysApply: true
+---
+
+# Preserve and expand (global rule)
+
+Before any change to campaigns, characters, Creation Files (CFs), the Library, SRD integration, or AI workflows:
+
+## Required behavior
+
+- **Add** missing pieces; **improve** weak pieces.
+- **Never delete** working features, categories, shelves, CF classes, or capabilities.
+- **Never reduce** functionality or collapse categories to “simplify.”
+- **Never overwrite** user data or break backup/import compatibility without a migration.
+- **Replace** an existing UI or API only when the new version is clearly superior — and the old path still works or is migrated explicitly.
+- Treat existing CF classes (`src/lib/ciRegistry.ts`), storage modules, Library shelves, SRD corpus, and workspace tabs as **authoritative**.
+
+## When a spec overlaps existing work
+
+- Merge: wire new fields, edges, or views **alongside** what exists.
+- If a prompt lists NPCs, locations, factions, etc., register **new** classes — do not repurpose or remove `seed.*`, `result.*`, `party.roster`, or `campaign.record`.
+- Campaign links (`partyId`, `seedIds`, `resultIds`, `characterIds`, `itemIds`) remain valid; new relationship graphs extend them.
+
+## Quick check before shipping
+
+*Can a DM still do everything they could before this change, using manual tools and saved assets?* If not, add the missing path before merging.
+
+Related: `cmdb-configuration-items`, `workshop-library`, `dm-control-tower`, `campaign-cf-management`.

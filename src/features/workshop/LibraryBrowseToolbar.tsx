@@ -45,6 +45,8 @@ const SHELF_TABS: WorkshopLibraryCategory[] = [
   "results",
   "characters",
   "items",
+  "rules",
+  "monsters",
   "parties",
   "campaigns",
 ];
@@ -189,12 +191,12 @@ export default function LibraryBrowseToolbar({
           style={{ borderColor: "var(--border)", background: "rgba(154, 116, 22, 0.03)" }}
         >
           <summary className="cursor-pointer text-xs font-semibold text-[var(--text)]">
-            Refine Creation Files (CFs)
+            Refine CFs
           </summary>
           <div className="mt-2 flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">
-                Creation File (CF) type
+                CF type
               </span>
               <FilterChip
                 active={seedKindFilter === "all"}

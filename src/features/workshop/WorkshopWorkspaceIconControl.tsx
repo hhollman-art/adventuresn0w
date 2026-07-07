@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { WorkshopNavItem } from "@/lib/workplace/workshopNav";
+import FantasyTooltip from "@/features/ui/FantasyTooltip";
 
 type WorkshopWorkspaceIconControlProps = {
   item: WorkshopNavItem;
@@ -35,15 +36,14 @@ function WorkshopWorkspaceIconContent({
       <span className="workshop-workspace-icon-glyph" aria-hidden="true">
         {item.icon}
       </span>
-      <span
+      <FantasyTooltip
+        label={item.label}
+        hint={item.hint}
+        dmTip={item.dmTip}
         className={`workshop-workspace-icon-tooltip${
           size === "tab" ? " workshop-workspace-icon-tooltip--below" : ""
         }`}
-        role="tooltip"
-      >
-        <span className="workshop-workspace-icon-tooltip-label">{item.label}</span>
-        <span className="workshop-workspace-icon-tooltip-hint">{item.hint}</span>
-      </span>
+      />
     </>
   );
 }

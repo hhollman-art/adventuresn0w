@@ -4,6 +4,8 @@ export {
   APP_THEME_ORDER,
   DEFAULT_APP_THEME,
   isAppThemeId,
+  LEGACY_THEME_MAP,
+  resolveThemeId,
 } from "./registry";
 export { applyAppTheme } from "./applyTheme";
 export { readStoredTheme, writeStoredTheme, THEME_STORAGE_KEY } from "./themeStorage";

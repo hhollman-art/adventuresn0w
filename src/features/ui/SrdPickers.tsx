@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import SrdEntityCombobox from "@/features/ui/SrdEntityCombobox";
 import {
   SRD_ANCESTRY_NAMES,
   SRD_CLASS_NAMES,
   findSrdClass,
   formatSpellLevel,
+  openSrdSpellPreview,
   srdSpellsForClass,
 } from "@/lib/srd";
 
@@ -150,6 +152,16 @@ export function SrdSpellPicker({ className, selectedIds, onChange }: SrdSpellPic
 
   return (
     <div className="flex flex-col gap-2">
+      <SrdEntityCombobox
+        label="Find any SRD spell"
+        kinds={["spell"]}
+        placeholder="Search the full spell list…"
+        onSelect={(entity) => {
+          if (!selectedIds.includes(entity.key)) {
+            onChange([...selectedIds, entity.key]);
+          }
+        }}
+      />
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-bold tracking-wide uppercase">Spells (included rules)</p>
         <span className="text-[10px] text-[var(--muted)]">{selectedIds.length} selected</span>
@@ -169,23 +181,34 @@ export function SrdSpellPicker({ className, selectedIds, onChange }: SrdSpellPic
           <p className="px-2 py-1 text-xs text-[var(--muted)]">No matches.</p>
         ) : (
           filtered.map((spell) => (
-            <label
+            <div
               key={spell.id}
-              className="flex cursor-pointer items-start gap-2 rounded px-2 py-1 text-xs hover:bg-[rgba(154,116,22,0.06)]"
+              className="flex items-start gap-2 rounded px-2 py-1 text-xs hover:bg-[rgba(154,116,22,0.06)]"
             >
-              <input
-                type="checkbox"
-                checked={selectedIds.includes(spell.id)}
-                onChange={() => toggle(spell.id)}
-                className="mt-0.5"
-              />
-              <span>
-                <span className="font-semibold">{spell.name}</span>{" "}
-                <span className="text-[var(--muted)]">
-                  ({formatSpellLevel(spell.level)}, {spell.school})
+              <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-2">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(spell.id)}
+                  onChange={() => toggle(spell.id)}
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="font-semibold">{spell.name}</span>{" "}
+                  <span className="text-[var(--muted)]">
+                    ({formatSpellLevel(spell.level)}, {spell.school})
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
+              <button
+                type="button"
+                onClick={() => openSrdSpellPreview(spell)}
+                className="shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold text-[var(--accent)]"
+                style={{ borderColor: "var(--accent-dim)" }}
+                title={`Open ${spell.name} in the Preview Window`}
+              >
+                Rules
+              </button>
+            </div>
           ))
         )}
       </div>

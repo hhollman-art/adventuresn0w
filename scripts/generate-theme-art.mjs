@@ -7,56 +7,32 @@ const ROOT = join(__dirname, "..");
 const OUT_DIR = join(ROOT, "public", "themes");
 
 const THEME_IDS = [
-  "forest",
-  "dragon-den",
-  "thieves-guild",
-  "paladin-citadel",
-  "ice-tower",
-  "pirates",
-  "hades",
-  "astral",
+  "wanderers-journal",
+  "iron-tome",
+  "arcane-library",
+  "royal-keep",
 ];
 
 const PROMPTS = {
-  forest: {
+  "wanderers-journal": {
     banner:
-      "Wide cinematic fantasy art banner, moonlit enchanted dark forest clearing, ancient oaks with moss and hanging vines, fireflies, torch-gold dappled light, deep emerald and brown palette, no text, no people, painterly D&D tabletop aesthetic, horizontal composition",
-    sign: "Fantasy wooden tavern sign plank texture, weathered dark oak with moss at edges, carved frame, empty center for text overlay, torchlit warm gold highlights, top-down flat view of sign board, no letters, no people, illustration",
+      "Wide horizontal banner, leather journal on wooden prep table, warm parchment pages, ink quill, muted gold accents, atmospheric D&D tabletop, no text, no people",
+    sign: "Weathered leather journal cover with brass clasp, warm parchment tones, empty center for title, no letters, illustration",
   },
-  "dragon-den": {
+  "iron-tome": {
     banner:
-      "Wide cinematic fantasy cavern banner, blue dragon lair, sapphire crystal clusters, lightning reflections on wet stone, coin hoard glints, electric cyan and deep navy palette, no text, painterly D&D aesthetic, horizontal",
-    sign: "Fantasy stone tablet sign with dragon scale inlay border, cracked obsidian and sapphire gems, empty flat center panel for title text, cool blue glow, no letters, illustration",
+      "Wide horizontal banner, iron-bound tome on dark stone, deep crimson cloth, muted gold filigree, torch shadows, D&D aesthetic, no text",
+    sign: "Iron-studded book cover with deep red leather and dull gold corners, empty center for title, no letters, illustration",
   },
-  "thieves-guild": {
+  "arcane-library": {
     banner:
-      "Wide cinematic fantasy alley at night, thieves guild hideout, brick walls, warm lantern glow, shadowy rooftops, crimson and charcoal palette, fog, no text, painterly D&D aesthetic, horizontal banner",
-    sign: "Fantasy worn iron sign board with rivets on dark wood, subtle mask silhouette carved in corners, empty center, amber lantern light, no letters, illustration",
+      "Wide horizontal banner, arcane library vault, cool blue-violet glow, floating runes, crystal light on dark shelves, no text",
+    sign: "Crystal-framed sign with glowing arcane runes at border, cool indigo palette, empty center, no letters, illustration",
   },
-  "paladin-citadel": {
+  "royal-keep": {
     banner:
-      "Wide cinematic fantasy paladin citadel at sunrise, white marble battlements, blue sky, holy gold pennants, sun rays, silver and sky-blue palette, no text, painterly D&D aesthetic, horizontal",
-    sign: "Fantasy white marble shield-shaped sign with gold trim and blue enamel, empty center for title, radiant holy light, no letters, illustration",
-  },
-  "ice-tower": {
-    banner:
-      "Wide cinematic fantasy ice wizard tower, aurora borealis, frost spire, swirling snow, arcane cyan sigils in air, pale blue and silver palette, no text, painterly D&D aesthetic, horizontal",
-    sign: "Fantasy frosted crystal sign frame with icicle edges, empty frosted glass center panel, aurora reflections, no letters, illustration",
-  },
-  pirates: {
-    banner:
-      "Wide cinematic fantasy pirate ship deck at moonlit sea, timber rails, rope coils, treasure map corner, ocean navy and weathered gold palette, salt spray, no text, painterly D&D aesthetic, horizontal",
-    sign: "Fantasy weathered ship plank sign with rope border and brass nails, empty center, moonlit teal highlights, no letters, illustration",
-  },
-  hades: {
-    banner:
-      "Wide cinematic fantasy River Styx landscape, obsidian cliffs, ember-orange lava rivers, ash-grey sky, dead trees silhouettes, no text, painterly D&D aesthetic, horizontal banner",
-    sign: "Fantasy charred basalt sign slab with ember cracks glowing orange at edges, empty center, no letters, illustration",
-  },
-  astral: {
-    banner:
-      "Wide cinematic fantasy astral plane vista, silver void, floating rock isles, nebula purple and pink clouds, distant stars, no text, painterly D&D aesthetic, horizontal banner",
-    sign: "Fantasy floating silver rune frame sign, nebula shimmer border, empty dark violet center panel, starlight, no letters, illustration",
+      "Wide horizontal banner, stone keep war room, warm torchlight, hanging banners, carved battlements, muted gold trim, no text",
+    sign: "Stone shield plaque with banner cloth and warm gold trim, empty center for title, no letters, illustration",
   },
 };
 

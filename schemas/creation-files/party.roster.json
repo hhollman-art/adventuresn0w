@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/party.roster.json",
+  "title": "party.roster — Fellowship roster (SavedCharacterRoster)",
+  "type": "object",
+  "required": ["id", "name", "createdAt", "updatedAt", "source", "notes", "markdown", "players"],
+  "properties": {
+    "id": { "$ref": "common.json#/$defs/uuidOrId" },
+    "name": { "$ref": "common.json#/$defs/nonEmptyString" },
+    "createdAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "updatedAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "source": {
+      "type": "string",
+      "enum": ["workshop", "vtt", "import", "dndbeyond", "builder"]
+    },
+    "notes": { "type": "string" },
+    "markdown": { "type": "string" },
+    "players": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/playerCharacter" },
+      "description": "Embedded character.sheet snapshots (same ids as library heroes)"
+    },
+    "cfMetadata": { "$ref": "common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": false
+}

@@ -4,6 +4,8 @@ export const SRD_MANIFEST = {
   version: "5.2.1",
   /** Official English PDF identifier bundled in the Library reference. */
   documentPdfId: "SRD_CC_v5.2.1",
+  /** Target document when Wizards publishes SRD 5.2.2 markdown/PDF — rebuild via scripts/build-srd-document.mjs. */
+  targetDocumentPdfId: "SRD_CC_v5.2.2",
   license: "CC-BY-4.0",
   licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
   srdUrl: "https://www.dndbeyond.com/sources/dnd/srd-5.2.1",

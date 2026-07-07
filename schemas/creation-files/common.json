@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/common.json",
+  "title": "D&D Easy Creation File — shared definitions",
+  "description": "Shared types for all Creation Files (CFs). Optional cfMetadata fields are additive — legacy rows omit them.",
+  "$defs": {
+    "isoDateTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "uuidOrId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable row id (UUID or legacy timestamp-based id)"
+    },
+    "ciClass": {
+      "type": "string",
+      "description": "Creation File class — must match src/lib/ciRegistry.ts CiClass union"
+    },
+    "ciCategory": {
+      "type": "string",
+      "enum": [
+        "seeds",
+        "results",
+        "characters",
+        "items",
+        "parties",
+        "campaigns",
+        "sessions",
+        "rules"
+      ]
+    },
+    "provenance": {
+      "type": "string",
+      "enum": ["user", "srd"]
+    },
+    "cfMetadata": {
+      "type": "object",
+      "description": "Optional extended metadata (planned — not required on persisted rows today)",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["draft", "active", "archived", "complete"],
+          "default": "active"
+        },
+        "owner": {
+          "type": "string",
+          "description": "DM or player name responsible for this CF"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Monotonic edit version for history (future)"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "relationships": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cfRelationship" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "cfRelationship": {
+      "type": "object",
+      "description": "Typed edge to another CF (future graph layer)",
+      "required": ["rel", "targetCiClass", "targetId"],
+      "properties": {
+        "rel": {
+          "type": "string",
+          "description": "Relationship verb, e.g. lives_in, involves, found_in, allied_with"
+        },
+        "targetCiClass": { "$ref": "#/$defs/ciClass" },
+        "targetId": { "$ref": "#/$defs/uuidOrId" },
+        "label": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "abilityScores": {
+      "type": "object",
+      "required": ["str", "dex", "con", "int", "wis", "cha"],
+      "properties": {
+        "str": { "type": "integer" },
+        "dex": { "type": "integer" },
+        "con": { "type": "integer" },
+        "int": { "type": "integer" },
+        "wis": { "type": "integer" },
+        "cha": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "itemBonuses": {
+      "type": "object",
+      "properties": {
+        "ac": { "type": "integer" },
+        "maxHp": { "type": "integer" },
+        "speed": { "type": "integer" },
+        "initiative": { "type": "integer" },
+        "passivePerception": { "type": "integer" },
+        "str": { "type": "integer" },
+        "dex": { "type": "integer" },
+        "con": { "type": "integer" },
+        "int": { "type": "integer" },
+        "wis": { "type": "integer" },
+        "cha": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "characterItem": {
+      "type": "object",
+      "required": ["id", "name", "notes", "bonuses"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuidOrId" },
+        "name": { "type": "string" },
+        "notes": { "type": "string" },
+        "bonuses": { "$ref": "#/$defs/itemBonuses" }
+      },
+      "additionalProperties": false
+    },
+    "playerCharacter": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "playerName",
+        "species",
+        "className",
+        "subclass",
+        "background",
+        "alignment",
+        "level",
+        "abilities",
+        "ac",
+        "maxHp",
+        "speed",
+        "notes",
+        "items",
+        "knownSpellIds"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuidOrId" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "playerName": { "type": "string" },
+        "species": { "type": "string" },
+        "className": { "type": "string" },
+        "subclass": { "type": "string" },
+        "background": { "type": "string" },
+        "alignment": { "type": "string" },
+        "level": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "abilities": { "$ref": "#/$defs/abilityScores" },
+        "ac": { "type": "integer" },
+        "maxHp": { "type": "integer" },
+        "speed": { "type": "integer" },
+        "notes": { "type": "string" },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/characterItem" }
+        },
+        "knownSpellIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Bundled SRD spell catalogue ids"
+        },
+        "currentHp": {
+          "type": ["integer", "null"]
+        },
+        "tokenId": {
+          "type": ["string", "null"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "libraryImage": {
+      "type": "object",
+      "required": ["kind", "imageDataUrl"],
+      "properties": {
+        "kind": { "type": "string" },
+        "label": { "type": "string" },
+        "imageDataUrl": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "srdItemRef": {
+      "type": "object",
+      "required": ["resource", "index", "name"],
+      "properties": {
+        "resource": {
+          "type": "string",
+          "enum": ["equipment", "magic-items"]
+        },
+        "index": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "srdEntityId": {
+      "type": "string",
+      "pattern": "^(spell|magic-item|equipment|monster|class|species|feat|background|condition|rule):.+$",
+      "description": "Bundled SRD corpus entity id, e.g. spell:fireball"
+    }
+  }
+}

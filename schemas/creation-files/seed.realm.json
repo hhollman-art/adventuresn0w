@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/seed.realm.json",
+  "title": "seed.realm — Realm CF",
+  "allOf": [
+    { "$ref": "seed.base.json" },
+    {
+      "properties": {
+        "kind": { "const": "realm" },
+        "realmSize": {
+          "type": "string",
+          "enum": ["world", "continent", "region", "city", "village", "site"]
+        }
+      },
+      "required": ["realmSize"]
+    }
+  ]
+}

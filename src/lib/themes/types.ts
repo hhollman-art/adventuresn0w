@@ -1,13 +1,9 @@
-/** App-wide visual theme identifiers — one scene per theme. */
+/** App-wide visual theme identifiers — D&D-inspired scene palettes. */
 export type AppThemeId =
-  | "forest"
-  | "dragon-den"
-  | "thieves-guild"
-  | "paladin-citadel"
-  | "ice-tower"
-  | "pirates"
-  | "hades"
-  | "astral";
+  | "wanderers-journal"
+  | "iron-tome"
+  | "arcane-library"
+  | "royal-keep";
 
 export type AppTheme = {
   id: AppThemeId;

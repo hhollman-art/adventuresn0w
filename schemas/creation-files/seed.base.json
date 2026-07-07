@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/seed.base.json",
+  "title": "Realm seed CF base (SavedRealmSeed)",
+  "description": "Shared shape for all seed.* classes. kind discriminates the ciClass.",
+  "type": "object",
+  "required": ["id", "createdAt", "kind", "titleHint", "briefDescription", "markdown"],
+  "properties": {
+    "id": { "$ref": "common.json#/$defs/uuidOrId" },
+    "createdAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "kind": {
+      "type": "string",
+      "enum": ["realm", "adventure", "characters", "maps", "props"]
+    },
+    "realmSize": {
+      "type": "string",
+      "enum": ["world", "continent", "region", "city", "village", "site"],
+      "description": "Only for kind=realm"
+    },
+    "seedName": { "type": "string" },
+    "titleHint": { "type": "string" },
+    "briefDescription": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "markdown": { "$ref": "common.json#/$defs/nonEmptyString" },
+    "cfMetadata": { "$ref": "common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": false
+}

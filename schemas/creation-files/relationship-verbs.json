@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "description": "Allowed relationship verbs between Creation File endpoints. Generic linked_to is always permitted between user-owned CFs in the same campaign.",
+  "verbs": [
+    {
+      "rel": "contains",
+      "label": "Contains",
+      "description": "Derived from campaign id lists — do not persist manually; computed at read time.",
+      "derived": true,
+      "from": ["campaign.record"],
+      "to": [
+        "seed.realm",
+        "seed.adventure",
+        "seed.characters",
+        "seed.maps",
+        "seed.props",
+        "result.realm",
+        "result.adventure",
+        "result.characters",
+        "result.maps",
+        "result.props",
+        "party.roster",
+        "character.sheet",
+        "item.equipment",
+        "item.magic"
+      ]
+    },
+    {
+      "rel": "lives_in",
+      "label": "Lives in",
+      "from": ["character.sheet", "npc.record"],
+      "to": ["location.record", "seed.realm", "seed.maps"]
+    },
+    {
+      "rel": "located_in",
+      "label": "Located in",
+      "from": ["location.record", "seed.maps"],
+      "to": ["location.record", "seed.realm"]
+    },
+    {
+      "rel": "member_of",
+      "label": "Member of",
+      "from": ["character.sheet", "npc.record"],
+      "to": ["faction.record"]
+    },
+    {
+      "rel": "leads",
+      "label": "Leads",
+      "from": ["character.sheet", "npc.record"],
+      "to": ["faction.record"]
+    },
+    {
+      "rel": "allied_with",
+      "label": "Allied with",
+      "from": ["faction.record", "character.sheet", "npc.record"],
+      "to": ["faction.record", "character.sheet", "npc.record"]
+    },
+    {
+      "rel": "opposed_to",
+      "label": "Opposed to",
+      "from": ["faction.record", "character.sheet", "npc.record"],
+      "to": ["faction.record", "character.sheet", "npc.record"]
+    },
+    {
+      "rel": "involves",
+      "label": "Involves",
+      "from": ["seed.adventure", "result.adventure", "encounter.record"],
+      "to": [
+        "npc.record",
+        "location.record",
+        "faction.record",
+        "character.sheet",
+        "encounter.record"
+      ]
+    },
+    {
+      "rel": "features",
+      "label": "Features",
+      "from": ["seed.adventure", "result.adventure", "seed.realm", "result.realm"],
+      "to": ["npc.record", "location.record", "encounter.record"]
+    },
+    {
+      "rel": "found_in",
+      "label": "Found in",
+      "from": ["item.equipment", "item.magic", "item.srd-equipment", "item.srd-magic"],
+      "to": [
+        "location.record",
+        "seed.adventure",
+        "result.adventure",
+        "encounter.record"
+      ]
+    },
+    {
+      "rel": "owned_by",
+      "label": "Owned by",
+      "from": ["item.equipment", "item.magic"],
+      "to": ["character.sheet", "npc.record"]
+    },
+    {
+      "rel": "knows",
+      "label": "Knows",
+      "from": ["npc.record", "character.sheet"],
+      "to": ["npc.record", "character.sheet", "faction.record", "location.record"]
+    },
+    {
+      "rel": "references",
+      "label": "References",
+      "description": "Soft link from markdown [[srd:…]] tokens or cross-refs between prep CFs.",
+      "from": [
+        "seed.realm",
+        "seed.adventure",
+        "seed.characters",
+        "seed.maps",
+        "seed.props",
+        "result.realm",
+        "result.adventure",
+        "result.characters",
+        "result.maps",
+        "result.props",
+        "session.record"
+      ],
+      "to": [
+        "rules.srd-entry",
+        "seed.realm",
+        "seed.adventure",
+        "npc.record",
+        "location.record",
+        "faction.record"
+      ],
+      "allowsSrdTarget": true
+    },
+    {
+      "rel": "linked_to",
+      "label": "Linked to",
+      "description": "Generic fallback edge when no specific verb fits. Prefer typed verbs when possible.",
+      "from": ["*"],
+      "to": ["*"],
+      "excludeSrdSource": true
+    },
+    {
+      "rel": "logged_in",
+      "label": "Logged in session",
+      "from": ["session.record"],
+      "to": ["*"]
+    }
+  ]
+}

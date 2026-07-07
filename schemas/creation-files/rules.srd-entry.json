@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/rules.srd-entry.json",
+  "title": "rules.srd-entry — Bundled SRD reference entity",
+  "description": "Virtual read-only row from src/lib/srd/corpus.ts",
+  "type": "object",
+  "required": ["id", "ciClass", "name", "kind", "key"],
+  "properties": {
+    "id": { "$ref": "common.json#/$defs/srdEntityId" },
+    "ciClass": { "const": "rules.srd-entry" },
+    "name": { "type": "string" },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "spell",
+        "magic-item",
+        "equipment",
+        "class",
+        "species",
+        "feat",
+        "background",
+        "condition",
+        "rule"
+      ]
+    },
+    "key": { "type": "string" },
+    "chapter": { "type": "string" },
+    "subtitle": { "type": ["string", "null"] },
+    "provenance": { "const": "srd" }
+  },
+  "additionalProperties": false
+}

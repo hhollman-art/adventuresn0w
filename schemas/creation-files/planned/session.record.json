@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/planned/session.record.json",
+  "title": "session.record — Play session log CF (planned)",
+  "description": "Stub — per-session events, clues, promises, and loot for campaign continuity.",
+  "x-status": "planned",
+  "type": "object",
+  "required": ["id", "campaignId", "sessionNumber", "playedAt", "summary", "events"],
+  "properties": {
+    "id": { "$ref": "../common.json#/$defs/uuidOrId" },
+    "campaignId": { "$ref": "../common.json#/$defs/uuidOrId" },
+    "sessionNumber": { "type": "integer", "minimum": 1 },
+    "playedAt": { "$ref": "../common.json#/$defs/isoDateTime" },
+    "title": { "type": "string" },
+    "summary": { "type": "string" },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["at", "kind", "text"],
+        "properties": {
+          "at": { "type": "string" },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "scene",
+              "npc",
+              "combat",
+              "loot",
+              "clue",
+              "promise",
+              "location",
+              "note"
+            ]
+          },
+          "text": { "type": "string" },
+          "linkedCiClass": { "$ref": "../common.json#/$defs/ciClass" },
+          "linkedId": { "$ref": "../common.json#/$defs/uuidOrId" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "followUpTasks": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "updatedCfIds": {
+      "type": "array",
+      "description": "CF ids touched this session (for change log)",
+      "items": { "$ref": "../common.json#/$defs/uuidOrId" }
+    },
+    "cfMetadata": { "$ref": "../common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": false
+}

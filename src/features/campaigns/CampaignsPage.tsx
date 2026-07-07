@@ -12,6 +12,13 @@ import {
   updateCampaign,
   type SavedCampaign,
 } from "@/lib/campaigns";
+import type { CampaignRelationshipGraph } from "@/lib/ciRelationshipGraph";
+import {
+  deleteCampaignRelationshipGraph,
+  loadCampaignRelationshipGraphs,
+  onCampaignRelationshipsChanged,
+} from "@/lib/campaignRelationships";
+import CampaignRelationshipGraphPanel from "@/features/campaigns/CampaignRelationshipGraphPanel";
 import { activateCampaign } from "@/lib/campaignSwitch";
 import { deleteCampaignTableSnapshot } from "@/lib/tabletop/store";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
@@ -78,18 +85,21 @@ export default function CampaignsPage() {
   const [items, setItems] = useState<SavedGameItem[]>([]);
   const [seeds, setSeeds] = useState<SavedRealmSeed[]>([]);
   const [results, setResults] = useState<LibraryItem[]>([]);
+  const [graphs, setGraphs] = useState<CampaignRelationshipGraph[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [switching, setSwitching] = useState(false);
 
   const refresh = useCallback(async () => {
-    const [list, rosters, charList, itemList, seedList, resultList] = await Promise.all([
+    const [list, rosters, charList, itemList, seedList, resultList, graphList] =
+      await Promise.all([
       loadCampaigns(),
       loadSavedCharacterRosters(),
       loadSavedCharacters(),
       loadSavedGameItems(),
       loadRealmSeeds(),
       loadGenerationLibraryItems(),
+      loadCampaignRelationshipGraphs(),
     ]);
     setCampaigns(list);
     setParties(rosters);
@@ -97,6 +107,7 @@ export default function CampaignsPage() {
     setItems(itemList);
     setSeeds(seedList);
     setResults(resultList);
+    setGraphs(graphList);
     setActiveId(getActiveCampaignId());
   }, []);
 
@@ -104,9 +115,11 @@ export default function CampaignsPage() {
     void refresh();
     const offCampaigns = onCampaignsChanged(() => void refresh());
     const offActive = onActiveCampaignChanged(() => setActiveId(getActiveCampaignId()));
+    const offGraphs = onCampaignRelationshipsChanged(() => void refresh());
     return () => {
       offCampaigns();
       offActive();
+      offGraphs();
     };
   }, [refresh]);
 
@@ -148,13 +161,14 @@ export default function CampaignsPage() {
       await activateCampaign(null);
     }
     await deleteCampaignTableSnapshot(campaign.id);
+    await deleteCampaignRelationshipGraph(campaign.id);
     const list = await deleteCampaign(campaign.id);
     setCampaigns(list);
     setActiveId(getActiveCampaignId());
     scheduleLibrarySnapshot();
     if (expandedId === campaign.id) setExpandedId(null);
     setStatus(
-      `Deleted campaign “${campaign.name}”. Its party, Creation Files (CFs), and results are still in your library.`,
+      `Deleted campaign “${campaign.name}”. Its party, CFs, and results are still in your library.`,
     );
   };
 
@@ -205,8 +219,8 @@ export default function CampaignsPage() {
             {workplace("campaigns").label}
           </h1>
           <p className="mt-1 max-w-xl text-sm leading-relaxed text-[var(--text-soft)]">
-            One campaign per group you run. Each campaign is the structural root of a Creation File (CF) tree:
-            link adventures (Creation Files (CFs)/results), party, characters, and items by id — never copies.
+            One campaign per group you run. Each campaign is the structural root of a CF tree:
+            link adventures (CFs and results), party, characters, and items by id — never copies.
             Campaigns also keep their own Virtual Table — open one and the table comes back
             exactly as that group left it.
           </p>
@@ -250,6 +264,16 @@ export default function CampaignsPage() {
             const party = campaign.partyId
               ? parties.find((p) => p.id === campaign.partyId)
               : undefined;
+            const graph =
+              graphs.find((g) => g.campaignId === campaign.id) ??
+              ({ campaignId: campaign.id, version: 1, updatedAt: campaign.updatedAt, edges: [] } satisfies CampaignRelationshipGraph);
+            const libraryData = {
+              seeds,
+              results,
+              characters,
+              items,
+              parties,
+            };
             return (
               <li
                 key={campaign.id}
@@ -291,8 +315,8 @@ export default function CampaignsPage() {
                     <p className="text-xs text-[var(--text-soft)]">
                       {party ? `Party: ${party.name}` : "No party linked"} ·{" "}
                       {campaign.seedIds.length === 1
-                        ? "1 Creation File (CF)"
-                        : `${campaign.seedIds.length} Creation Files (CFs)`}{" "}
+                        ? "1 CF"
+                        : `${campaign.seedIds.length} CFs`}{" "}
                       ·{" "}
                       {campaign.resultIds.length} result
                       {campaign.resultIds.length === 1 ? "" : "s"} ·{" "}
@@ -399,11 +423,11 @@ export default function CampaignsPage() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
                         <p className="mb-1 text-xs font-bold tracking-wide uppercase text-[var(--text)]">
-                          Linked Creation Files (CFs)
+                          Linked CFs
                         </p>
                         {seeds.length === 0 ? (
                           <p className="text-xs text-[var(--text-soft)]">
-                            No Creation Files (CFs) in your library yet.
+                            No CFs in your library yet.
                           </p>
                         ) : (
                           <div className="flex max-h-56 flex-col gap-1.5 overflow-y-auto pr-1">
@@ -508,12 +532,25 @@ export default function CampaignsPage() {
                     </div>
 
                     <p className="mt-3 text-[11px] leading-relaxed text-[var(--text-soft)]">
-                      Links are id references only — each Creation File (CF) is saved once in the library.
-                      The same Creation File (CF), character, or item can belong to several campaigns.
+                      Links are id references only — each CF is saved once in the library.
+                      The same CF, character, or item can belong to several campaigns.
                       Deleting a campaign never deletes linked content. While this campaign
-                      is open, the Library highlights its Creation Files (CFs) and new creations link to it
+                      is open, the Library highlights its CFs and new creations link to it
                       automatically.
                     </p>
+
+                    <CampaignRelationshipGraphPanel
+                      campaign={campaign}
+                      graph={graph}
+                      data={libraryData}
+                      onGraphChange={(nextGraph) => {
+                        setGraphs((prev) => {
+                          const rest = prev.filter((g) => g.campaignId !== campaign.id);
+                          return [...rest, nextGraph];
+                        });
+                      }}
+                      onStatus={setStatus}
+                    />
                   </div>
                 ) : null}
               </li>

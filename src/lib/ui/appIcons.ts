@@ -9,4 +9,11 @@ export const APP_ICONS = {
   welcome: "\u{1F3E0}",
   scene: "\u{1F3A8}",
   star: "\u2726",
+  /** D&D visual language — combat, magic, exploration, factions, treasure, quests */
+  combat: "\u2694\uFE0F",
+  spellbook: "\u{1F4D6}",
+  map: "\u{1F5FA}\uFE0F",
+  banner: "\u{1F6A9}",
+  chest: "\u{1F4E6}",
+  scroll: "\u{1F4DC}",
 } as const;

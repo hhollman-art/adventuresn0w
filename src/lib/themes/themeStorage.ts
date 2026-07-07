@@ -1,4 +1,4 @@
-import { DEFAULT_APP_THEME, isAppThemeId } from "./registry";
+import { DEFAULT_APP_THEME, resolveThemeId } from "./registry";
 import type { AppThemeId } from "./types";
 
 export const THEME_STORAGE_KEY = "ddeasy-app-theme";
@@ -6,7 +6,7 @@ export const THEME_STORAGE_KEY = "ddeasy-app-theme";
 export function readStoredTheme(): AppThemeId {
   try {
     const raw = localStorage.getItem(THEME_STORAGE_KEY);
-    if (raw && isAppThemeId(raw)) return raw;
+    if (raw) return resolveThemeId(raw);
   } catch {
     /* localStorage unavailable */
   }

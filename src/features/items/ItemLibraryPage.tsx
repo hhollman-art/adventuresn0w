@@ -26,9 +26,7 @@ import {
   srdItemCatalogToLibraryEntries,
   type SrdItemCatalog,
 } from "@/lib/workplace/srdItemCatalog";
-import { fetchDnd5eResource } from "@/lib/srd/dnd5eApi";
-import { dnd5eResourceToMarkdown } from "@/lib/srd/dnd5eApiMarkdown";
-import type { SrdItemRef } from "@/lib/srd/srdItemRef";
+import { openSrdItemPreview } from "@/lib/srd/openSrdPreview";
 import type { LibraryListEntry } from "@/lib/workshop/libraryCatalog";
 import { ciClassLabel } from "@/lib/ciRegistry";
 import WorkshopPageShell from "@/features/workshop/WorkshopPageShell";
@@ -59,9 +57,6 @@ export default function ItemLibraryPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<SavedGameItem | null>(null);
   const [newKind, setNewKind] = useState<GameItemKind>("equipment");
-  const [selectedSrdRef, setSelectedSrdRef] = useState<SrdItemRef | null>(null);
-  const [srdPreview, setSrdPreview] = useState("");
-  const [srdPreviewLoading, setSrdPreviewLoading] = useState(false);
 
   const refresh = useCallback(async () => {
     setItems(await loadSavedGameItems());
@@ -102,32 +97,6 @@ export default function ItemLibraryPage() {
     };
   }, [includeSrdInSearch, searchActive, srdCatalog]);
 
-  useEffect(() => {
-    if (!selectedSrdRef) {
-      setSrdPreview("");
-      return;
-    }
-    let cancelled = false;
-    setSrdPreviewLoading(true);
-    void fetchDnd5eResource(selectedSrdRef.resource, selectedSrdRef.index)
-      .then((data) => {
-        if (!cancelled) setSrdPreview(dnd5eResourceToMarkdown(selectedSrdRef.resource, data));
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setSrdPreview(
-            `# ${selectedSrdRef.name}\n\nCould not load rules text: ${err instanceof Error ? err.message : "Unknown error"}.`,
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setSrdPreviewLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedSrdRef]);
-
   const visibleItems = useMemo(() => {
     const q = query.trim().toLowerCase();
     let filtered = kindFilter === "all" ? items : items.filter((i) => i.kind === kindFilter);
@@ -149,7 +118,6 @@ export default function ItemLibraryPage() {
     setEditingItem(item);
     setNewKind(kind);
     setEditorOpen(true);
-    setSelectedSrdRef(null);
   };
 
   const removeItem = async (item: SavedGameItem) => {
@@ -268,10 +236,7 @@ export default function ItemLibraryPage() {
           <input
             type="checkbox"
             checked={includeSrdInSearch}
-            onChange={(e) => {
-              setIncludeSrdInSearch(e.target.checked);
-              if (!e.target.checked) setSelectedSrdRef(null);
-            }}
+            onChange={(e) => setIncludeSrdInSearch(e.target.checked)}
             className="mt-0.5"
           />
           <span>
@@ -381,20 +346,18 @@ export default function ItemLibraryPage() {
 
             {srdMatches.map((entry) => {
               const ref = entry.srdItemRef!;
-              const selected =
-                selectedSrdRef?.resource === ref.resource && selectedSrdRef?.index === ref.index;
               return (
                 <li key={entry.id}>
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedSrdRef(ref);
-                      setStatus(`Viewing SRD: ${ref.name}`);
+                      openSrdItemPreview(ref);
+                      setStatus(`Opened SRD preview: ${ref.name}`);
                     }}
                     className="w-full rounded-xl border p-3 text-left text-sm transition hover:border-[var(--accent-dim)]"
                     style={{
-                      borderColor: selected ? "var(--accent)" : "var(--border)",
-                      background: selected ? "rgba(201,162,39,0.1)" : "var(--surface)",
+                      borderColor: "var(--border)",
+                      background: "var(--surface)",
                     }}
                   >
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -419,24 +382,6 @@ export default function ItemLibraryPage() {
             })}
           </ul>
         )}
-
-        {selectedSrdRef ? (
-          <div
-            className="mt-4 rounded-xl border p-4"
-            style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-          >
-            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
-              SRD rules preview — {selectedSrdRef.name}
-            </p>
-            {srdPreviewLoading ? (
-              <p className="text-sm text-[var(--muted)]">Loading…</p>
-            ) : (
-              <pre className="whitespace-pre-wrap text-xs leading-relaxed text-[var(--text)]">
-                {srdPreview}
-              </pre>
-            )}
-          </div>
-        ) : null}
       </section>
     </WorkshopPageShell>
   );

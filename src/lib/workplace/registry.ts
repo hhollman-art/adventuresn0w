@@ -2,14 +2,10 @@ import { CI_CLASSES, CI_REGISTRY } from "@/lib/ciRegistry";
 import { LIBRARY_WORKSPACE_HINT, THE_LIBRARY, THE_TAVERN } from "./forgeLexicon";
 import type { WorkplaceDefinition, WorkplaceId } from "./types";
 
-const USER_CI_CLASSES = CI_CLASSES.filter((c) => CI_REGISTRY[c].provenance === "user");
-
-/** SRD item Creation Files (CFs) ship with the app and appear in the Items workplace + Library items tab. */
+/** SRD item CFs ship with the app and appear in the Items workplace + Library items tab. */
 export const SRD_ITEM_CI_CLASSES = ["item.srd-equipment", "item.srd-magic"] as const;
 
-const SEED_AND_RESULT = USER_CI_CLASSES.filter(
-  (c) => CI_REGISTRY[c].category === "seeds" || CI_REGISTRY[c].category === "results",
-);
+const USER_CI_CLASSES = CI_CLASSES.filter((c) => CI_REGISTRY[c].provenance === "user");
 
 export const WORKPLACES: Record<WorkplaceId, WorkplaceDefinition> = {
   welcome: {
@@ -25,7 +21,7 @@ export const WORKPLACES: Record<WorkplaceId, WorkplaceDefinition> = {
     id: "realm",
     label: "Realm",
     route: "/",
-    description: "Forge worlds, regions, and settlements — saves as realm Creation Files (CFs) and scrolls.",
+    description: "Forge worlds, regions, and settlements — saves as realm CFs and scrolls.",
     ciClasses: ["seed.realm", "result.realm"],
     libraryCategory: null,
     ciCategories: ["seeds", "results"],
@@ -34,7 +30,7 @@ export const WORKPLACES: Record<WorkplaceId, WorkplaceDefinition> = {
     id: "adventure",
     label: "Adventure",
     route: "/",
-    description: "Weave a ready-to-run quest — saves as adventure Creation Files (CFs) and scrolls.",
+    description: "Weave a ready-to-run quest — saves as adventure CFs and scrolls.",
     ciClasses: ["seed.adventure", "result.adventure"],
     libraryCategory: null,
     ciCategories: ["seeds", "results"],
@@ -43,7 +39,7 @@ export const WORKPLACES: Record<WorkplaceId, WorkplaceDefinition> = {
     id: "maps",
     label: "Maps",
     route: "/",
-    description: "Chart travel and battle maps — saves as map Creation Files (CFs), scrolls, and images.",
+    description: "Chart travel and battle maps — saves as map CFs, scrolls, and images.",
     ciClasses: ["seed.maps", "result.maps"],
     libraryCategory: null,
     ciCategories: ["seeds", "results"],
@@ -53,7 +49,7 @@ export const WORKPLACES: Record<WorkplaceId, WorkplaceDefinition> = {
     label: THE_TAVERN,
     route: "/tavern",
     description:
-      "Forge heroes with AI, keep every sheet, assemble fellowships, and load them at the Virtual Table.",
+      "Forge heroes with AI, keep every character CF, assemble party CFs, and load them at the Virtual Table.",
     ciClasses: [
       "seed.characters",
       "result.characters",

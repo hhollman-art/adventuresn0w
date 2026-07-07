@@ -3,10 +3,13 @@ import { FANTASY_FORGE, THE_LIBRARY } from "@/lib/workplace/forgeLexicon";
 import { APP_ICONS } from "@/lib/ui/appIcons";
 import WorkflowGuideList from "@/features/workshop/WorkflowGuideList";
 import WorkshopWorkspaceDock from "@/features/workshop/WorkshopWorkspaceDock";
+import DmDashboardPanel from "@/features/home/DmDashboardPanel";
+import type { QuickCreateAction } from "@/lib/workshop/dmDashboard";
 import type { WorkshopCreationId } from "@/lib/workplace/workshopNav";
 
 type WorkshopWelcomeLandingProps = {
   onStartWorkflow: (workflowId: string) => void;
+  onQuickCreate: (action: QuickCreateAction) => void;
   workspace?: "welcome" | WorkshopCreationId;
   onSelectWelcome?: () => void;
   onSelectCreation?: (mode: WorkshopCreationId) => void;
@@ -14,6 +17,7 @@ type WorkshopWelcomeLandingProps = {
 
 export default function WorkshopWelcomeLanding({
   onStartWorkflow,
+  onQuickCreate,
   workspace = "welcome",
   onSelectWelcome,
   onSelectCreation,
@@ -42,6 +46,8 @@ export default function WorkshopWelcomeLanding({
           you step by step, with or without AI.
         </p>
       </header>
+
+      <DmDashboardPanel onQuickCreate={onQuickCreate} />
 
       <WorkshopWorkspaceDock
         workspace={workspace}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/result.base.json",
+  "title": "Prepared scroll base (LibraryItem)",
+  "type": "object",
+  "required": ["id", "createdAt", "kind", "title", "markdown", "textModel", "imageModel", "images"],
+  "properties": {
+    "id": { "$ref": "common.json#/$defs/uuidOrId" },
+    "createdAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "kind": {
+      "type": "string",
+      "enum": ["realm", "adventure", "characters", "maps", "props"]
+    },
+    "title": { "$ref": "common.json#/$defs/nonEmptyString" },
+    "markdown": { "type": "string" },
+    "textModel": { "type": ["string", "null"] },
+    "imageModel": { "type": ["string", "null"] },
+    "images": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/libraryImage" }
+    },
+    "cfMetadata": { "$ref": "common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": false
+}

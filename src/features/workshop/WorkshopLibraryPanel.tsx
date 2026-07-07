@@ -32,11 +32,13 @@ import {
   libraryShelfHint,
   type LibraryBrowseProvenanceFilter,
 } from "@/lib/workshop/libraryBrowseFilters";
+import { ciClassVisual } from "@/lib/ui/ciClassVisuals";
 import LibraryBrowseToolbar from "@/features/workshop/LibraryBrowseToolbar";
 import {
-  loadSrdItemCatalog,
-  srdItemCatalogToLibraryEntries,
-} from "@/lib/workplace";
+  listSrdItemLibraryEntries,
+  listSrdMonstersLibraryEntries,
+  listSrdRulesLibraryEntries,
+} from "@/lib/srd/corpus";
 import {
   buildLibraryBackup,
   describeRestoreCounts,
@@ -67,6 +69,8 @@ import type { CiClass } from "@/lib/ciRegistry";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
 import SrdLibraryBrowser from "@/features/workshop/SrdLibraryBrowser";
 import type { SrdApiResource } from "@/lib/srd/dnd5eApi";
+import type { SrdEntityId } from "@/lib/srd/types";
+import { setSrdEntityDragData } from "@/lib/srd/srdDragDrop";
 import {
   getActiveCampaignId,
   getCampaign,
@@ -83,6 +87,7 @@ export type LibraryViewSelection =
   | { kind: "party"; id: string }
   | { kind: "campaign"; id: string }
   | { kind: "srd"; resource: SrdApiResource; index: string; name: string }
+  | { kind: "srd-entity"; entityId: SrdEntityId; name: string }
   | null;
 
 function shelfEntriesForCategory(
@@ -260,6 +265,9 @@ function DataStorageExplainer({
 
 function isSelected(selection: LibraryViewSelection, entry: LibraryListEntry): boolean {
   if (!selection) return false;
+  if (entry.srdEntityId && selection.kind === "srd-entity") {
+    return selection.entityId === entry.srdEntityId;
+  }
   if (entry.srdItemRef && selection.kind === "srd") {
     return (
       selection.resource === entry.srdItemRef.resource &&
@@ -274,7 +282,9 @@ function isSelected(selection: LibraryViewSelection, entry: LibraryListEntry): b
     parties: "party",
     campaigns: "campaign",
   } as const;
-  return selection.kind === kindMap[entry.category] && selection.id === entry.id;
+  const expectedKind = kindMap[entry.category as keyof typeof kindMap];
+  if (!expectedKind || selection.kind !== expectedKind) return false;
+  return "id" in selection && selection.id === entry.id;
 }
 
 function LibraryEntryRow({
@@ -292,8 +302,21 @@ function LibraryEntryRow({
   onDelete?: () => void;
   editLabel?: string;
 }) {
+  const visual = ciClassVisual(entry.ciClass);
   return (
-    <li>
+    <li
+      draggable={Boolean(entry.srdEntityId)}
+      onDragStart={
+        entry.srdEntityId
+          ? (e) => {
+              setSrdEntityDragData(e.dataTransfer, {
+                entityId: entry.srdEntityId!,
+                name: entry.title,
+              });
+            }
+          : undefined
+      }
+    >
       <div
         role="button"
         tabIndex={0}
@@ -304,19 +327,27 @@ function LibraryEntryRow({
             onView();
           }
         }}
-        className="library-entry-row library-entry-card rounded-lg border p-3 text-sm"
+        className={`library-entry-row library-entry-card rounded-lg border p-3 text-sm${
+          entry.ciClass === "item.magic" || entry.ciClass === "item.srd-magic"
+            ? " library-entry-row--magical"
+            : ""
+        }`}
+        data-ci-class={entry.ciClass}
         style={{
           borderColor: selected ? "var(--accent)" : "var(--border)",
           background: selected ? "rgba(201, 162, 39, 0.1)" : undefined,
+          borderLeftWidth: "3px",
+          borderLeftColor: visual.accent,
         }}
       >
         <div className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span
               className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-              style={{ borderColor: "var(--accent-dim)", color: "var(--accent)" }}
+              style={{ borderColor: visual.accent, color: visual.accent }}
               title={entry.ciClass}
             >
+              <span aria-hidden="true">{visual.icon} </span>
               {fantasyCiLabel(entry.ciClass)}
             </span>
             <ProvenanceBadge provenance={entry.provenance} />
@@ -428,13 +459,10 @@ export default function WorkshopLibraryPanel({
   const [ciClassFilter, setCiClassFilter] = useState<CiClass | "all">("all");
   const [provenanceFilter, setProvenanceFilter] =
     useState<LibraryBrowseProvenanceFilter>("all");
-  const [srdItemEntries, setSrdItemEntries] = useState<LibraryListEntry[]>([]);
 
-  useEffect(() => {
-    void loadSrdItemCatalog().then((catalog) => {
-      setSrdItemEntries(srdItemCatalogToLibraryEntries(catalog));
-    });
-  }, []);
+  const srdItemEntries = useMemo(() => listSrdItemLibraryEntries(), []);
+  const srdRulesEntries = useMemo(() => listSrdRulesLibraryEntries(), []);
+  const srdMonsterEntries = useMemo(() => listSrdMonstersLibraryEntries(), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -506,29 +534,38 @@ export default function WorkshopLibraryPanel({
   );
 
   const includeSrdItems = category === "all" || category === "items";
-  const srdItemsForShelf = includeSrdItems ? srdItemEntries : [];
+  const includeSrdRules = category === "all" || category === "rules";
+  const includeSrdMonsters = category === "all" || category === "monsters";
 
-  const allEntries = useMemo(
-    () =>
-      sortLibraryEntries([
-        ...filteredSeeds.map(seedToLibraryEntry),
-        ...campaignResults.map(resultToLibraryEntry),
-        ...campaignCharacters.map(characterToLibraryEntry),
-        ...campaignItems.map(gameItemToLibraryEntry),
-        ...srdItemsForShelf,
-        ...campaignParties.map(partyToLibraryEntry),
-        ...campaignRecords.map(campaignToLibraryEntry),
-      ]),
-    [
-      filteredSeeds,
-      campaignResults,
-      campaignCharacters,
-      campaignItems,
-      srdItemsForShelf,
-      campaignParties,
-      campaignRecords,
-    ],
-  );
+  const allEntries = useMemo(() => {
+    const srdItemsForShelf = includeSrdItems ? srdItemEntries : [];
+    const srdRulesForShelf = includeSrdRules ? srdRulesEntries : [];
+    const srdMonstersForShelf = includeSrdMonsters ? srdMonsterEntries : [];
+    return sortLibraryEntries([
+      ...filteredSeeds.map(seedToLibraryEntry),
+      ...campaignResults.map(resultToLibraryEntry),
+      ...campaignCharacters.map(characterToLibraryEntry),
+      ...campaignItems.map(gameItemToLibraryEntry),
+      ...srdItemsForShelf,
+      ...srdRulesForShelf,
+      ...srdMonstersForShelf,
+      ...campaignParties.map(partyToLibraryEntry),
+      ...campaignRecords.map(campaignToLibraryEntry),
+    ]);
+  }, [
+    includeSrdItems,
+    includeSrdRules,
+    includeSrdMonsters,
+    srdItemEntries,
+    srdRulesEntries,
+    srdMonsterEntries,
+    filteredSeeds,
+    campaignResults,
+    campaignCharacters,
+    campaignItems,
+    campaignParties,
+    campaignRecords,
+  ]);
 
   const shelfCounts = useMemo(
     (): Record<WorkshopLibraryCategory, number> => ({
@@ -537,6 +574,8 @@ export default function WorkshopLibraryPanel({
       results: shelfEntriesForCategory(allEntries, "results").length,
       characters: shelfEntriesForCategory(allEntries, "characters").length,
       items: shelfEntriesForCategory(allEntries, "items").length,
+      rules: shelfEntriesForCategory(allEntries, "rules").length,
+      monsters: shelfEntriesForCategory(allEntries, "monsters").length,
       parties: shelfEntriesForCategory(allEntries, "parties").length,
       campaigns: shelfEntriesForCategory(allEntries, "campaigns").length,
     }),
@@ -589,7 +628,7 @@ export default function WorkshopLibraryPanel({
     a.click();
     URL.revokeObjectURL(url);
     onStatus(
-      `Backup exported (${backup.seeds.length} Creation Files (CFs), ${backup.results.length} results, ${backup.characters.length} heroes, ${backup.items.length} items, ${backup.parties.length} parties, ${backup.campaigns.length} campaigns). Save it anywhere you like — folder, cloud drive, or repository.`,
+      `Backup exported (${backup.seeds.length} CFs, ${backup.results.length} results, ${backup.characters.length} heroes, ${backup.items.length} items, ${backup.parties.length} parties, ${backup.campaigns.length} campaigns). Save it anywhere you like — folder, cloud drive, or repository.`,
     );
   };
 
@@ -706,7 +745,10 @@ export default function WorkshopLibraryPanel({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => onSrdOpenChange(!srdOpen)}
+            onClick={() => {
+              if (!srdOpen) onCategoryChange("rules");
+              onSrdOpenChange(!srdOpen);
+            }}
             className={`btn btn-sm${srdOpen ? " btn-accent" : ""}`}
             aria-pressed={srdOpen}
             title="Browse the read-only SRD reference that ships with the app"
@@ -738,7 +780,7 @@ export default function WorkshopLibraryPanel({
             </button>
           ) : null}
           <button type="button" onClick={onAddSeed} className="btn btn-sm btn-accent">
-            Plant a Creation File (CF)
+            Plant a CF
           </button>
         </div>
       </div>
@@ -859,6 +901,14 @@ export default function WorkshopLibraryPanel({
           {entries.map((entry) => {
             const selected = isSelected(selection, entry);
             const select = () => {
+              if (entry.srdEntityId) {
+                onSelect({
+                  kind: "srd-entity",
+                  entityId: entry.srdEntityId,
+                  name: entry.title,
+                });
+                return;
+              }
               if (entry.srdItemRef) {
                 onSelect({
                   kind: "srd",
@@ -887,7 +937,7 @@ export default function WorkshopLibraryPanel({
                   onView={select}
                   onEdit={() => onEditSeed(entry.id)}
                   onDelete={() => onDeleteSeed(entry.id)}
-                  editLabel="Revise Creation File (CF)"
+                  editLabel="Revise CF"
                 />
               );
             }
@@ -920,7 +970,7 @@ export default function WorkshopLibraryPanel({
               );
             }
 
-            if (entry.srdItemRef) {
+            if (entry.srdItemRef || entry.srdEntityId) {
               return (
                 <LibraryEntryRow
                   key={entry.id}

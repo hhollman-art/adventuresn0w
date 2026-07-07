@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/item.equipment.json",
+  "title": "item.equipment",
+  "allOf": [
+    { "$ref": "item.base.json" },
+    {
+      "properties": {
+        "kind": { "const": "equipment" },
+        "rarity": { "const": null }
+      }
+    }
+  ]
+}

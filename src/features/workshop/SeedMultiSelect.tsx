@@ -82,7 +82,7 @@ export default function SeedMultiSelect({
           />
           {scopedSeeds.length === 0 ? (
             <p className="text-xs text-[var(--muted)]">
-              No Creation Files (CFs) match these filters. Try another type, scope, or tag.
+              No CFs match these filters. Try another type, scope, or tag.
             </p>
           ) : (
             <ul
@@ -152,7 +152,7 @@ export default function SeedMultiSelect({
               </>
             ) : (
               <p className="text-[11px] text-[var(--muted)]">
-                Select one or more Creation Files (CFs) to attach as source material.
+                Select one or more CFs to attach as source material.
               </p>
             )}
           </div>

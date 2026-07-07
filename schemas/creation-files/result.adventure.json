@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/result.adventure.json",
+  "title": "result.adventure",
+  "allOf": [{ "$ref": "result.base.json" }, { "properties": { "kind": { "const": "adventure" } } }]
+}

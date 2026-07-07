@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/character.sheet.json",
+  "title": "character.sheet — Hero sheet (SavedCharacter)",
+  "type": "object",
+  "required": ["id", "createdAt", "updatedAt", "source", "player"],
+  "properties": {
+    "id": { "$ref": "common.json#/$defs/uuidOrId" },
+    "createdAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "updatedAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "source": {
+      "type": "string",
+      "enum": ["created", "import", "party"]
+    },
+    "player": { "$ref": "common.json#/$defs/playerCharacter" },
+    "cfMetadata": { "$ref": "common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": false
+}

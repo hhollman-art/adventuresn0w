@@ -107,6 +107,54 @@ export async function deleteCampaignTableSnapshot(campaignId: string): Promise<v
   }
 }
 
+export type ShelvedTableSummary = {
+  campaignId: string | null;
+  mapName: string;
+  updatedAt: string;
+  logPreview: string;
+};
+
+/** Summaries for shelved per-campaign tables (`session:<id>` slots). */
+export async function listShelvedTableSummaries(): Promise<ShelvedTableSummary[]> {
+  if (typeof window === "undefined") return [];
+  try {
+    const db = await openDb();
+    return await new Promise<ShelvedTableSummary[]>((resolve, reject) => {
+      const summaries: ShelvedTableSummary[] = [];
+      const tx = db.transaction(IDB_STORE, "readonly");
+      const req = tx.objectStore(IDB_STORE).openCursor();
+      req.onerror = () => reject(req.error ?? new Error("IDB cursor failed"));
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (!cursor) {
+          resolve(summaries);
+          return;
+        }
+        const key = String(cursor.key);
+        if (key.startsWith(CAMPAIGN_SESSION_PREFIX) && key !== IDB_SESSION_KEY) {
+          const slot = key.slice(CAMPAIGN_SESSION_PREFIX.length);
+          const campaignId = slot === NO_CAMPAIGN_SLOT ? null : slot;
+          const session = fixSession(cursor.value);
+          if (session) {
+            summaries.push({
+              campaignId,
+              mapName: session.mapName,
+              updatedAt: session.updatedAt,
+              logPreview:
+                session.log[0]?.detail?.slice(0, 100) ??
+                session.log[0]?.expression ??
+                "",
+            });
+          }
+        }
+        cursor.continue();
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Swap the live Virtual Table between campaigns: shelve the current live
  * session under `fromCampaignId`'s slot, then make `toCampaignId`'s shelved

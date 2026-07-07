@@ -43,7 +43,7 @@ import {
 import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
 import { workplace } from "@/lib/workplace";
-import { THE_TAVERN } from "@/lib/workplace/forgeLexicon";
+import { THE_TAVERN, CHARACTER_CF, PARTY_CF } from "@/lib/workplace/forgeLexicon";
 import { APP_ICONS } from "@/lib/ui/appIcons";
 import WorkshopPageShell from "@/features/workshop/WorkshopPageShell";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
@@ -138,7 +138,7 @@ export default function CharactersAndPartiesPage() {
   const downloadCharacterFile = (c: SavedCharacter) => {
     downloadMarkdownFile(characterFileName(c.player), characterToMarkdownFile(c.player));
     setStatus(
-      `Downloaded ${c.player.name} as a .md file — a portable sheet you can load anywhere heroes are accepted.`,
+      `Downloaded ${c.player.name} as a ${CHARACTER_CF} — a portable sheet you can load anywhere in The Tavern or at the Virtual Table.`,
     );
   };
 
@@ -156,7 +156,7 @@ export default function CharactersAndPartiesPage() {
     e.target.value = "";
     if (parsed.players.length === 0) {
       setStatus(
-        "No heroes recognized in that file. Hero files need a ### heading per hero — download one from a fellowship to see the format.",
+        "No heroes recognized in that file. Character CFs need a ### heading per hero — export one from a fellowship to see the format.",
       );
       return;
     }
@@ -247,30 +247,31 @@ export default function CharactersAndPartiesPage() {
       rosterToMarkdown(roster.name, roster.players),
     );
     setStatus(
-      `Downloaded “${roster.name}” as a .md file — load it back through Add party or the Virtual Table.`,
+      `Downloaded “${roster.name}” as a ${PARTY_CF} — load it back through Add party or the Virtual Table.`,
     );
   };
 
   const downloadRosterCharacter = (player: SavedCharacterRoster["players"][number]) => {
     downloadMarkdownFile(characterFileName(player), characterToMarkdownFile(player));
     setStatus(
-      `Downloaded ${player.name} as a .md file — a portable sheet you can load into any party, adventure, or Virtual Table session.`,
+      `Downloaded ${player.name} as a ${CHARACTER_CF} — load it into any party, adventure, or Virtual Table session.`,
     );
   };
 
   return (
     <WorkshopPageShell>
+      <div className="workshop-page-panel panel-scroll forge-forest-panel fantasy-panel rounded-xl border p-6">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="zone-badge mb-3">{THE_TAVERN}</p>
-          <h1 className="font-display text-2xl font-bold">
+          <h1 className="font-display text-2xl font-bold text-[var(--text)]">
             <span aria-hidden="true">{APP_ICONS.tavern} </span>
             {workplace("tavern").label}
           </h1>
-          <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">
+          <p className="mt-1 max-w-xl text-sm leading-relaxed text-[var(--text-soft)]">
             {workplace("tavern").description} Generate a ready-made party with AI, create
-            sheets by hand, import .md files, then gather heroes into fellowships for campaigns
-            and the Virtual Table.
+            character CFs by hand, import saved sheets, then gather heroes into
+            party CFs for campaigns and the Virtual Table.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -291,9 +292,9 @@ export default function CharactersAndPartiesPage() {
             type="button"
             onClick={() => importInputRef.current?.click()}
             className="btn btn-sm"
-            title="Load a hero .md file saved from this app"
+            title={`Load a saved ${CHARACTER_CF} from this app or your auto-save folder`}
           >
-            Import .md
+            Import character CF
           </button>
           <input
             ref={importInputRef}
@@ -350,17 +351,17 @@ export default function CharactersAndPartiesPage() {
 
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="font-display text-xl font-bold">Heroes</h2>
-          <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">
-            Every hero sheet you keep, import, or generate lives here. Select heroes to add them
-            to a fellowship below.
+          <h2 className="font-display text-xl font-bold text-[var(--text)]">Heroes</h2>
+          <p className="mt-1 max-w-xl text-sm leading-relaxed text-[var(--text-soft)]">
+            Every character CF you keep, import, or generate lives here. Select
+            heroes to add them to a party CF below.
           </p>
         </div>
       </div>
 
       {status ? (
         <p
-          className="mb-4 rounded-lg border px-3 py-2 text-sm"
+          className="mb-4 rounded-lg border px-3 py-2 text-sm text-[var(--text)]"
           style={{
             borderColor: "var(--accent-dim)",
             background: "rgba(201,162,39,0.1)",
@@ -379,17 +380,17 @@ export default function CharactersAndPartiesPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search name, player, class, species…"
-            className="min-w-0 flex-1 rounded-lg border px-3 py-1.5 text-sm"
-            style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+            className="min-w-0 flex-1 rounded-lg border px-3 py-1.5 text-sm text-[var(--text)]"
+            style={{ borderColor: "var(--border)", background: "var(--bg)" }}
             aria-label="Search heroes"
           />
-          <label className="flex items-center gap-1.5 text-xs text-[var(--muted)]">
+          <label className="flex items-center gap-1.5 text-xs text-[var(--text-soft)]">
             Sort
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value as CharacterSortKey)}
               className="rounded-lg border px-2 py-1.5 text-sm text-[var(--text)]"
-              style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+              style={{ borderColor: "var(--border)", background: "var(--bg)" }}
             >
               {(Object.keys(CHARACTER_SORT_LABEL) as CharacterSortKey[]).map((key) => (
                 <option key={key} value={key}>
@@ -406,7 +407,7 @@ export default function CharactersAndPartiesPage() {
           className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm"
           style={{ borderColor: "var(--accent-dim)", background: "rgba(201,162,39,0.08)" }}
         >
-          <span className="font-semibold">
+          <span className="font-semibold text-[var(--text)]">
             {selectedIds.length} selected
           </span>
           <button
@@ -423,8 +424,8 @@ export default function CharactersAndPartiesPage() {
               onChange={(e) => {
                 if (e.target.value) void addSelectionToParty(e.target.value);
               }}
-              className="rounded-md border px-2 py-1.5 text-xs font-semibold"
-              style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+              className="rounded-md border px-2 py-1.5 text-xs font-semibold text-[var(--text)]"
+              style={{ borderColor: "var(--border)", background: "var(--bg)" }}
               aria-label="Add selected heroes to an existing fellowship"
             >
               <option value="">Add to existing party…</option>
@@ -447,19 +448,20 @@ export default function CharactersAndPartiesPage() {
       ) : null}
 
       {characters.length === 0 ? (
-        <div
-          className="rounded-xl border p-8 text-center text-sm text-[var(--muted)]"
-          style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-        >
-          <p className="mb-2">No heroes yet.</p>
+        <div className="workshop-campaign-card rounded-xl border p-8 text-center text-sm text-[var(--text-soft)]">
+          <p className="mb-2 text-[var(--text)]">No heroes yet.</p>
           <p>
             Click <strong className="text-[var(--text)]">New hero</strong> to build one
-            sheet by sheet, <strong className="text-[var(--text)]">Import .md</strong> to load a
-            saved hero file, or open a saved fellowship below and copy its members here.
+            sheet by sheet, <strong className="text-[var(--text)]">Import character CF</strong> to
+            load a saved character CF, or open a fellowship below and copy its
+            members here.
           </p>
         </div>
       ) : visibleCharacters.length === 0 ? (
-        <p className="rounded-xl border p-4 text-sm text-[var(--muted)]" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+        <p
+          className="workshop-campaign-card rounded-xl border p-4 text-sm text-[var(--text-soft)]"
+          style={{ borderColor: "var(--border)" }}
+        >
           No heroes match “{query.trim()}”.
         </p>
       ) : (
@@ -470,10 +472,9 @@ export default function CharactersAndPartiesPage() {
             return (
               <li
                 key={c.id}
-                className="rounded-xl border p-3 text-sm"
+                className="workshop-campaign-card rounded-xl border p-3 text-sm"
                 style={{
                   borderColor: selected ? "var(--accent)" : "var(--border)",
-                  background: "var(--surface)",
                 }}
               >
                 <div className="flex items-start gap-2">
@@ -485,12 +486,12 @@ export default function CharactersAndPartiesPage() {
                     aria-label={`Select ${p.name} for a party`}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold">{p.name}</p>
+                    <p className="font-bold text-[var(--text)]">{p.name}</p>
                     {p.playerName ? (
-                      <p className="text-[11px] text-[var(--muted)]">{p.playerName}</p>
+                      <p className="text-[11px] text-[var(--text-soft)]">{p.playerName}</p>
                     ) : null}
-                    <p className="text-xs text-[var(--muted)]">{characterSummary(p)}</p>
-                    <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+                    <p className="text-xs text-[var(--text-soft)]">{characterSummary(p)}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--text)]">
                       <span>
                         AC <b>{effectiveAc(p)}</b>
                       </span>
@@ -501,7 +502,7 @@ export default function CharactersAndPartiesPage() {
                         Prof <b>{formatMod(proficiencyBonus(p.level))}</b>
                       </span>
                     </div>
-                    <p className="mt-1.5 text-[10px] text-[var(--muted)]">
+                    <p className="mt-1.5 text-[10px] text-[var(--text-soft)]">
                       {CHARACTER_SOURCE_LABEL[c.source]} · Updated {formatPartyUpdated(c.updatedAt)}
                     </p>
                   </div>
@@ -513,7 +514,7 @@ export default function CharactersAndPartiesPage() {
                       setEditingCharacter(c);
                       setEditorOpen(true);
                     }}
-                    className="rounded-md border px-2.5 py-1 text-xs font-semibold"
+                    className="rounded-md border px-2.5 py-1 text-xs font-semibold text-[var(--text)]"
                     style={{ borderColor: "var(--border)" }}
                   >
                     Edit
@@ -521,11 +522,11 @@ export default function CharactersAndPartiesPage() {
                   <button
                     type="button"
                     onClick={() => downloadCharacterFile(c)}
-                    className="rounded-md border px-2.5 py-1 text-xs"
+                    className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]"
                     style={{ borderColor: "var(--border)" }}
-                    title={`Save ${p.name} as a portable .md file`}
+                    title={`Save ${p.name} as a ${CHARACTER_CF}`}
                   >
-                    Download .md
+                    Export character CF
                   </button>
                   <button
                     type="button"
@@ -546,10 +547,10 @@ export default function CharactersAndPartiesPage() {
 
       <div className="mt-10 mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="font-display text-xl font-bold">Fellowships</h2>
-          <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">
-            A fellowship is a group of heroes saved as one unit — link it to a campaign, track
-            its progress, and load it onto the Virtual Table.
+          <h2 className="font-display text-xl font-bold text-[var(--text)]">Fellowships</h2>
+          <p className="mt-1 max-w-xl text-sm leading-relaxed text-[var(--text-soft)]">
+            A fellowship is a party CF — a group of heroes saved as one unit.
+            Link it to a campaign, track its progress, and load it onto the Virtual Table.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -568,11 +569,8 @@ export default function CharactersAndPartiesPage() {
       </div>
 
       {rosters.length === 0 ? (
-        <div
-          className="rounded-xl border p-6 text-center text-sm text-[var(--muted)]"
-          style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-        >
-          <p className="mb-2">No parties yet.</p>
+        <div className="workshop-campaign-card rounded-xl border p-6 text-center text-sm text-[var(--text-soft)]">
+          <p className="mb-2 text-[var(--text)]">No parties yet.</p>
           <p>
             Select heroes above and click{" "}
             <strong className="text-[var(--text)]">Create party</strong>, or click{" "}
@@ -587,8 +585,8 @@ export default function CharactersAndPartiesPage() {
             return (
               <li
                 key={roster.id}
-                className="rounded-xl border"
-                style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+                className="workshop-campaign-card rounded-xl border"
+                style={{ borderColor: "var(--border)" }}
               >
                 <div className="flex flex-wrap items-start gap-2 p-4">
                   <button
@@ -606,11 +604,11 @@ export default function CharactersAndPartiesPage() {
                         );
                       }}
                       onBlur={(e) => void renameParty(roster.id, e.target.value)}
-                      className="mb-1 w-full max-w-md rounded border bg-transparent px-1 py-0.5 font-display text-lg font-bold outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                      className="mb-1 w-full max-w-md rounded border bg-transparent px-1 py-0.5 font-display text-lg font-bold text-[var(--text)] outline-none focus:ring-1 focus:ring-[var(--accent)]"
                       style={{ borderColor: "transparent" }}
                       aria-label="Party name"
                     />
-                    <p className="text-xs text-[var(--muted)]">
+                    <p className="text-xs text-[var(--text-soft)]">
                       {roster.players.length} hero{roster.players.length === 1 ? "" : "es"} ·{" "}
                       {PARTY_SOURCE_LABEL[roster.source]} · Updated{" "}
                       {formatPartyUpdated(roster.updatedAt)}
@@ -651,9 +649,9 @@ export default function CharactersAndPartiesPage() {
                       onClick={() => downloadParty(roster)}
                       className="rounded-md border px-2.5 py-1.5 text-xs font-semibold"
                       style={{ borderColor: "var(--border)" }}
-                      title="Save this party as a .md file you can load anywhere"
+                      title={`Save this fellowship as a ${PARTY_CF} you can load anywhere`}
                     >
-                      Download .md
+                      Export party CF
                     </button>
                     <button
                       type="button"
@@ -682,7 +680,9 @@ export default function CharactersAndPartiesPage() {
                   >
                     <div className="mb-3">
                       <div className="mb-1 flex items-center justify-between gap-2">
-                        <p className="text-xs font-bold tracking-wide uppercase">Campaign notes</p>
+                        <p className="text-xs font-bold tracking-wide uppercase text-[var(--text)]">
+                          Campaign notes
+                        </p>
                         {editingNotesId === roster.id ? (
                           <button
                             type="button"
@@ -712,17 +712,19 @@ export default function CharactersAndPartiesPage() {
                           onChange={(e) => setNotesDraft(e.target.value)}
                           rows={4}
                           placeholder="Plot threads, downtime, treasure found, NPC relationships…"
-                          className="w-full rounded-lg border px-3 py-2 text-sm"
+                          className="w-full rounded-lg border px-3 py-2 text-sm text-[var(--text)]"
                           style={{ borderColor: "var(--border)", background: "var(--bg)" }}
                         />
                       ) : (
-                        <p className="whitespace-pre-wrap text-sm text-[var(--muted)]">
+                        <p className="whitespace-pre-wrap text-sm text-[var(--text-soft)]">
                           {roster.notes.trim() || "No campaign notes yet."}
                         </p>
                       )}
                     </div>
 
-                    <p className="mb-2 text-xs font-bold tracking-wide uppercase">Heroes</p>
+                    <p className="mb-2 text-xs font-bold tracking-wide uppercase text-[var(--text)]">
+                      Heroes
+                    </p>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {roster.players.map((p) => {
                         const maxHp = effectiveMaxHp(p);
@@ -731,26 +733,26 @@ export default function CharactersAndPartiesPage() {
                         return (
                           <div
                             key={p.id}
-                            className="rounded-lg border p-3 text-sm"
-                            style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+                            className="workshop-campaign-check rounded-lg border p-3 text-sm"
+                            style={{ borderColor: "var(--border)" }}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <p className="font-bold">{p.name}</p>
+                              <p className="font-bold text-[var(--text)]">{p.name}</p>
                               <button
                                 type="button"
                                 onClick={() => downloadRosterCharacter(p)}
-                                className="shrink-0 rounded border px-2 py-0.5 text-[10px]"
+                                className="shrink-0 rounded border px-2 py-0.5 text-[10px] text-[var(--text)]"
                                 style={{ borderColor: "var(--border)" }}
-                                title={`Save ${p.name} as their own .md file — load it into any party, adventure, or Virtual Table session`}
+                                title={`Save ${p.name} as a ${CHARACTER_CF}`}
                               >
-                                Download
+                                Export CF
                               </button>
                             </div>
                             {p.playerName ? (
-                              <p className="text-[11px] text-[var(--muted)]">{p.playerName}</p>
+                              <p className="text-[11px] text-[var(--text-soft)]">{p.playerName}</p>
                             ) : null}
-                            <p className="text-xs text-[var(--muted)]">{characterSummary(p)}</p>
-                            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+                            <p className="text-xs text-[var(--text-soft)]">{characterSummary(p)}</p>
+                            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--text)]">
                               <span>
                                 AC <b>{effectiveAc(p)}</b>
                               </span>
@@ -762,7 +764,7 @@ export default function CharactersAndPartiesPage() {
                               </span>
                             </div>
                             {p.items.length > 0 ? (
-                              <ul className="mt-2 space-y-0.5 text-[11px] text-[var(--muted)]">
+                              <ul className="mt-2 space-y-0.5 text-[11px] text-[var(--text-soft)]">
                                 {p.items.map((item) => (
                                   <li key={item.id}>
                                     {item.name}
@@ -772,7 +774,7 @@ export default function CharactersAndPartiesPage() {
                               </ul>
                             ) : null}
                             {p.notes.trim() ? (
-                              <p className="mt-2 line-clamp-3 text-[11px] text-[var(--muted)]">
+                              <p className="mt-2 line-clamp-3 text-[11px] text-[var(--text-soft)]">
                                 {p.notes}
                               </p>
                             ) : null}
@@ -787,6 +789,7 @@ export default function CharactersAndPartiesPage() {
           })}
         </ul>
       )}
+      </div>
     </WorkshopPageShell>
   );
 }

@@ -108,6 +108,22 @@ function sampleBackup(): LibraryBackupFile {
         itemIds: [],
       },
     ],
+    relationshipGraphs: [
+      {
+        campaignId: "c1",
+        version: 1,
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        edges: [
+          {
+            id: "e1",
+            rel: "linked_to",
+            from: { kind: "cf", ciClass: "seed.realm", id: "s1" },
+            to: { kind: "cf", ciClass: "result.adventure", id: "r1" },
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+      },
+    ],
   };
 }
 
@@ -122,6 +138,7 @@ describe("libraryBackup", () => {
     expect(parsed.items).toHaveLength(1);
     expect(parsed.parties).toHaveLength(0);
     expect(parsed.campaigns).toHaveLength(1);
+    expect(parsed.relationshipGraphs).toHaveLength(1);
   });
 
   it("rejects non-JSON files", () => {
@@ -144,6 +161,7 @@ describe("libraryBackup", () => {
       items: [],
       parties: [],
       campaigns: [],
+      relationshipGraphs: [],
     });
   });
 
@@ -162,8 +180,9 @@ describe("libraryBackup", () => {
         items: 2,
         parties: 1,
         campaigns: 1,
+        relationshipGraphs: 0,
       }),
-    ).toBe("Restored 2 Creation Files (CFs), 1 result, 3 characters, 2 items, 1 party, 1 campaign from backup.");
+    ).toBe("Restored 2 CFs, 1 result, 3 characters, 2 items, 1 party, 1 campaign from backup.");
     expect(
       describeRestoreCounts({
         seeds: 0,
@@ -172,6 +191,7 @@ describe("libraryBackup", () => {
         items: 0,
         parties: 0,
         campaigns: 0,
+        relationshipGraphs: 0,
       }),
     ).toBe("Backup read, but everything in it is already in your library.");
   });

@@ -19,6 +19,11 @@ import type { SavedGameItem } from "@/lib/itemLibrary";
 import { importGameItems, loadSavedGameItems } from "@/lib/itemLibrary";
 import type { SavedCampaign } from "@/lib/campaigns";
 import { importCampaigns, loadCampaigns } from "@/lib/campaigns";
+import type { CampaignRelationshipGraph } from "@/lib/ciRelationshipGraph";
+import {
+  importCampaignRelationshipGraphs,
+  loadCampaignRelationshipGraphs,
+} from "@/lib/campaignRelationships";
 
 /**
  * Library backup file — everything the DM owns, in one JSON document they can
@@ -40,6 +45,8 @@ export type LibraryBackupFile = {
   parties: SavedCharacterRoster[];
   /** Campaign records (id links only — table snapshots stay local). */
   campaigns: SavedCampaign[];
+  /** Optional Tier-2 relationship graphs (semantic edges per campaign). */
+  relationshipGraphs?: CampaignRelationshipGraph[];
 };
 
 export const BACKUP_FORMAT = "ddeasy-library-backup";
@@ -52,17 +59,20 @@ export type LibraryBackupCounts = {
   items: number;
   parties: number;
   campaigns: number;
+  relationshipGraphs: number;
 };
 
 /** Gather every locally stored library item into one serializable document. */
 export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
-  const [seeds, results, characters, items, parties, campaigns] = await Promise.all([
+  const [seeds, results, characters, items, parties, campaigns, relationshipGraphs] =
+    await Promise.all([
     loadRealmSeeds(),
     loadGenerationLibraryItems(),
     loadSavedCharacters(),
     loadSavedGameItems(),
     loadSavedCharacterRosters(),
     loadCampaigns(),
+    loadCampaignRelationshipGraphs(),
   ]);
   return {
     format: BACKUP_FORMAT,
@@ -74,6 +84,7 @@ export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
     items,
     parties,
     campaigns,
+    relationshipGraphs,
   };
 }
 
@@ -95,6 +106,7 @@ export type ParsedBackup =
       items: unknown[];
       parties: unknown[];
       campaigns: unknown[];
+      relationshipGraphs: unknown[];
     }
   | { ok: false; error: string };
 
@@ -125,6 +137,7 @@ export function parseLibraryBackup(text: string): ParsedBackup {
     items: Array.isArray(o.items) ? o.items : [],
     parties: Array.isArray(o.parties) ? o.parties : [],
     campaigns: Array.isArray(o.campaigns) ? o.campaigns : [],
+    relationshipGraphs: Array.isArray(o.relationshipGraphs) ? o.relationshipGraphs : [],
   };
 }
 
@@ -136,6 +149,7 @@ export type RestoreOutcome = {
   items: SavedGameItem[];
   parties: SavedCharacterRoster[];
   campaigns: SavedCampaign[];
+  relationshipGraphs: CampaignRelationshipGraph[];
 };
 
 /**
@@ -150,6 +164,7 @@ export async function restoreLibraryBackup(parsed: {
   items: unknown[];
   parties: unknown[];
   campaigns: unknown[];
+  relationshipGraphs?: unknown[];
 }): Promise<RestoreOutcome> {
   const seedResult = await importRealmSeeds(parsed.seeds);
   const resultResult = await importGenerationLibraryItems(parsed.results);
@@ -157,6 +172,7 @@ export async function restoreLibraryBackup(parsed: {
   const itemResult = await importGameItems(parsed.items);
   const partyResult = await importCharacterRosters(parsed.parties);
   const campaignResult = await importCampaigns(parsed.campaigns);
+  const graphResult = await importCampaignRelationshipGraphs(parsed.relationshipGraphs ?? []);
   return {
     counts: {
       seeds: seedResult.added,
@@ -165,6 +181,7 @@ export async function restoreLibraryBackup(parsed: {
       items: itemResult.added,
       parties: partyResult.added,
       campaigns: campaignResult.added,
+      relationshipGraphs: graphResult.added,
     },
     seeds: seedResult.seeds,
     results: resultResult.items,
@@ -172,6 +189,7 @@ export async function restoreLibraryBackup(parsed: {
     items: itemResult.items,
     parties: partyResult.rosters,
     campaigns: campaignResult.campaigns,
+    relationshipGraphs: graphResult.graphs,
   };
 }
 
@@ -180,8 +198,8 @@ export function describeRestoreCounts(counts: LibraryBackupCounts): string {
   if (counts.seeds > 0) {
     parts.push(
       counts.seeds === 1
-        ? "1 Creation File (CF)"
-        : `${counts.seeds} Creation Files (CFs)`,
+        ? "1 CF"
+        : `${counts.seeds} CFs`,
     );
   }
   if (counts.results > 0)
@@ -194,6 +212,10 @@ export function describeRestoreCounts(counts: LibraryBackupCounts): string {
     parts.push(`${counts.parties} part${counts.parties === 1 ? "y" : "ies"}`);
   if (counts.campaigns > 0)
     parts.push(`${counts.campaigns} campaign${counts.campaigns === 1 ? "" : "s"}`);
+  if (counts.relationshipGraphs > 0)
+    parts.push(
+      `${counts.relationshipGraphs} relationship graph${counts.relationshipGraphs === 1 ? "" : "s"}`,
+    );
   if (parts.length === 0) {
     return "Backup read, but everything in it is already in your library.";
   }

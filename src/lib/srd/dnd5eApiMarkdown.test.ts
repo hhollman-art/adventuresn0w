@@ -76,4 +76,19 @@ describe("dnd5eResourceToMarkdown", () => {
     expect(md.match(/^# Combat$/m)?.length).toBe(1);
     expect(md).toContain("The Order of Combat");
   });
+
+  it("formats a magic item with rarity and attunement", () => {
+    const md = dnd5eResourceToMarkdown("magic-items", {
+      name: "Bag of Holding",
+      rarity: { name: "Uncommon" },
+      equipment_category: { name: "Wondrous item" },
+      requires_attunement: false,
+      desc: ["This bag has an interior space considerably larger than its outside dimensions."],
+      url: "/api/2014/magic-items/bag-of-holding",
+    });
+    expect(md).toContain("# Bag of Holding");
+    expect(md).toContain("Uncommon");
+    expect(md).toContain("Wondrous item");
+    expect(md).toContain("interior space");
+  });
 });

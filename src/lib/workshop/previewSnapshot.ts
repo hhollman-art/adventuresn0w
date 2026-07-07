@@ -39,13 +39,19 @@ export type PreviewAction =
   | "save-party-vtt"
   | "load-party-vtt";
 
-export function publishPreviewSnapshot(snapshot: WorkshopPreviewSnapshot): void {
-  if (typeof window === "undefined") return;
+export const PREVIEW_READY_MESSAGE = "ddeasy-preview-ready";
+
+function writePreviewStorage(snapshot: WorkshopPreviewSnapshot): void {
   try {
-    sessionStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(snapshot));
+    localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(snapshot));
   } catch {
     /* ignore quota */
   }
+}
+
+export function publishPreviewSnapshot(snapshot: WorkshopPreviewSnapshot): void {
+  if (typeof window === "undefined") return;
+  writePreviewStorage(snapshot);
   try {
     const channel = new BroadcastChannel(PREVIEW_SYNC_CHANNEL);
     channel.postMessage(snapshot);
@@ -58,12 +64,40 @@ export function publishPreviewSnapshot(snapshot: WorkshopPreviewSnapshot): void 
 export function readPreviewSnapshot(): WorkshopPreviewSnapshot | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(PREVIEW_STORAGE_KEY);
+    const raw = localStorage.getItem(PREVIEW_STORAGE_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as WorkshopPreviewSnapshot;
   } catch {
     return null;
   }
+}
+
+/** Ask the main Fantasy Forge tab to republish the current preview snapshot. */
+export function notifyPreviewWindowReady(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const channel = new BroadcastChannel(PREVIEW_SYNC_CHANNEL);
+    channel.postMessage({ type: PREVIEW_READY_MESSAGE });
+    channel.close();
+  } catch {
+    /* BroadcastChannel unavailable */
+  }
+  if (window.opener && !window.opener.closed) {
+    window.opener.postMessage({ type: PREVIEW_READY_MESSAGE }, window.location.origin);
+  }
+}
+
+export function isPreviewReadyMessage(data: unknown): boolean {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "type" in data &&
+    (data as { type?: string }).type === PREVIEW_READY_MESSAGE
+  );
+}
+
+export function isPreviewSnapshotMessage(data: unknown): data is WorkshopPreviewSnapshot {
+  return typeof data === "object" && data !== null && "markdown" in data;
 }
 
 let previewWindowRef: Window | null = null;
@@ -74,12 +108,8 @@ export function openOrFocusPreviewWindow(): Window | null {
     previewWindowRef.focus();
     return previewWindowRef;
   }
-  // Omit width/height so the browser opens a normal tab (not a blocked popup).
-  previewWindowRef = window.open(
-    "/preview",
-    PREVIEW_WINDOW_NAME,
-    "noopener,noreferrer",
-  );
+  // Omit noopener so the preview tab can request resync and post edit actions.
+  previewWindowRef = window.open("/preview", PREVIEW_WINDOW_NAME);
   return previewWindowRef;
 }
 

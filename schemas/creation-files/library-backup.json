@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/library-backup.json",
+  "title": "Library backup file (LibraryBackupFile)",
+  "description": "Portable export — user-owned CFs only; SRD rows excluded.",
+  "type": "object",
+  "required": [
+    "format",
+    "version",
+    "exportedAt",
+    "seeds",
+    "results",
+    "characters",
+    "items",
+    "parties",
+    "campaigns"
+  ],
+  "properties": {
+    "format": { "const": "ddeasy-library-backup" },
+    "version": { "type": "integer", "minimum": 1 },
+    "exportedAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "seeds": {
+      "type": "array",
+      "items": { "$ref": "seed.base.json" }
+    },
+    "results": {
+      "type": "array",
+      "items": { "$ref": "result.base.json" }
+    },
+    "characters": {
+      "type": "array",
+      "items": { "$ref": "character.sheet.json" }
+    },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "item.base.json" }
+    },
+    "parties": {
+      "type": "array",
+      "items": { "$ref": "party.roster.json" }
+    },
+    "campaigns": {
+      "type": "array",
+      "items": { "$ref": "campaign.record.json" }
+    }
+  },
+  "additionalProperties": false
+}

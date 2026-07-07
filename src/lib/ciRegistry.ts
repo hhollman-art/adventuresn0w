@@ -24,7 +24,8 @@ export type CiCategory =
   | "parties"
   | "campaigns"
   | "sessions"
-  | "rules";
+  | "rules"
+  | "monsters";
 
 /** Most specific type of a Creation File (CF): `category.kind`. */
 export type CiClass =
@@ -47,7 +48,8 @@ export type CiClass =
   | "campaign.record"
   | "session.tabletop"
   | "session.snapshot"
-  | "rules.srd-entry";
+  | "rules.srd-entry"
+  | "monster.srd-entry";
 
 export type CiDefinition = {
   ciClass: CiClass;
@@ -62,22 +64,11 @@ export type CiDefinition = {
   inBackup: boolean;
 };
 
-export const CI_CATEGORY_LABEL: Record<CiCategory, string> = {
-  seeds: "Creation Files (CFs)",
-  results: "Results",
-  characters: "Heroes",
-  items: "Items",
-  parties: "Parties",
-  campaigns: "Campaigns",
-  sessions: "Sessions",
-  rules: "Rules (SRD)",
-};
-
 export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "seed.realm": {
     ciClass: "seed.realm",
     category: "seeds",
-    label: "Realm Creation File (CF)",
+    label: "Realm CF",
     storageModule: "src/lib/realmSeeds.ts",
     provenance: "user",
     inBackup: true,
@@ -85,7 +76,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "seed.adventure": {
     ciClass: "seed.adventure",
     category: "seeds",
-    label: "Adventure Creation File (CF)",
+    label: "Adventure CF",
     storageModule: "src/lib/realmSeeds.ts",
     provenance: "user",
     inBackup: true,
@@ -93,7 +84,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "seed.characters": {
     ciClass: "seed.characters",
     category: "seeds",
-    label: "Heroes Creation File (CF)",
+    label: "Heroes CF",
     storageModule: "src/lib/realmSeeds.ts",
     provenance: "user",
     inBackup: true,
@@ -101,7 +92,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "seed.maps": {
     ciClass: "seed.maps",
     category: "seeds",
-    label: "Maps Creation File (CF)",
+    label: "Maps CF",
     storageModule: "src/lib/realmSeeds.ts",
     provenance: "user",
     inBackup: true,
@@ -109,7 +100,7 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
   "seed.props": {
     ciClass: "seed.props",
     category: "seeds",
-    label: "Item handout Creation File (CF)",
+    label: "Item handout CF",
     storageModule: "src/lib/realmSeeds.ts",
     provenance: "user",
     inBackup: true,
@@ -230,6 +221,14 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
     ciClass: "rules.srd-entry",
     category: "rules",
     label: "SRD reference entry",
+    storageModule: "src/lib/srd/",
+    provenance: "srd",
+    inBackup: false,
+  },
+  "monster.srd-entry": {
+    ciClass: "monster.srd-entry",
+    category: "monsters",
+    label: "SRD monster stat block",
     storageModule: "src/lib/srd/",
     provenance: "srd",
     inBackup: false,

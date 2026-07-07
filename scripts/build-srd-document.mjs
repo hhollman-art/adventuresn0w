@@ -88,3 +88,7 @@ writeFileSync(OUT, out, "utf8");
 console.log(
   `Wrote ${chapters.length} chapters (${body.length.toLocaleString()} chars) to ${OUT}`,
 );
+
+// Keep the heading index in sync for preview lookups.
+await import("./build-srd-document-index.mjs");
+await import("./build-srd-entities.mjs");

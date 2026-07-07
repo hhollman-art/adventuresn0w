@@ -1,28 +1,26 @@
 import type { CiClass } from "@/lib/ciRegistry";
 import { ciClassesForCategory } from "@/lib/ciRegistry";
-import type {
-  LibraryListEntry,
-  LibraryProvenance,
-  WorkshopLibraryCategory,
-} from "@/lib/workshop/libraryCatalog";
+import type { LibraryListEntry, WorkshopLibraryCategory } from "@/lib/workshop/libraryCatalog";
 
 /** Fantasy shelf names for the archive browser (approachable-interface rule). */
 export const LIBRARY_SHELF_LABEL: Record<WorkshopLibraryCategory, string> = {
   all: "All shelves",
-  seeds: "Creation Files (CFs)",
+  seeds: "CFs",
   results: "Prepared scrolls",
   characters: "Heroes",
   items: "Items",
+  rules: "Rule tomes",
+  monsters: "Bestiary",
   parties: "Fellowships",
   campaigns: "Chronicles",
 };
 
 /** User-facing kind labels mapped from Creation File (CF) class — the “subclass” the filters use. */
 export const LIBRARY_CI_FANTASY_LABEL: Record<CiClass, string> = {
-  "seed.realm": "World Creation File (CF)",
+  "seed.realm": "World CF",
   "seed.adventure": "Adventure hook CF",
   "seed.characters": "Hero party ideas CF",
-  "seed.maps": "Map Creation File (CF)",
+  "seed.maps": "Map CF",
   "seed.props": "Item handout CF",
   "result.realm": "Realm write-up",
   "result.adventure": "Adventure scroll",
@@ -39,6 +37,7 @@ export const LIBRARY_CI_FANTASY_LABEL: Record<CiClass, string> = {
   "session.tabletop": "Game table",
   "session.snapshot": "Shelved table",
   "rules.srd-entry": "SRD rule",
+  "monster.srd-entry": "SRD monster",
 };
 
 export type LibraryBrowseProvenanceFilter = "all" | "yours" | "included";
@@ -54,6 +53,8 @@ const SHELF_CI_CLASSES: Record<Exclude<WorkshopLibraryCategory, "all">, CiClass[
   results: ciClassesForCategory("results"),
   characters: ciClassesForCategory("characters"),
   items: ciClassesForCategory("items"),
+  rules: ciClassesForCategory("rules"),
+  monsters: ciClassesForCategory("monsters"),
   parties: ciClassesForCategory("parties"),
   campaigns: ciClassesForCategory("campaigns"),
 };
@@ -173,6 +174,10 @@ export function libraryShelfHint(shelf: WorkshopLibraryCategory): string {
       return "Standalone hero sheets — yours to edit and add to fellowships.";
     case "items":
       return "Gear and magic — your creations plus the included SRD catalogue.";
+    case "rules":
+      return "Spells, classes, and core rules from the bundled SRD — read-only reference.";
+    case "monsters":
+      return "Monster stat blocks from the bundled SRD bestiary — read-only reference.";
     case "parties":
       return "Fellowships assembled for the Virtual Table and campaigns.";
     case "campaigns":
@@ -203,15 +208,19 @@ export function browseEmptyMessage(
   }
   switch (shelf) {
     case "all":
-      return "The shelves are empty. Craft something in the Fantasy Forge, or add a Creation File (CF) to begin.";
+      return "The shelves are empty. Craft something in the Fantasy Forge, or add a CF to begin.";
     case "seeds":
-      return "No Creation Files (CFs) yet — add story notes for the generators to build from.";
+      return "No CFs yet — add story notes for the generators to build from.";
     case "results":
       return "No prepared scrolls yet — generate a realm, adventure, or map in the Fantasy Forge.";
     case "characters":
       return "No heroes on the shelf yet — create one in The Tavern.";
     case "items":
       return "No treasures catalogued yet — the included SRD gear is still here; add your own on the Items page.";
+    case "rules":
+      return "No rule tomes on this shelf — the bundled SRD reference is always available here.";
+    case "monsters":
+      return "No monsters on this shelf — the bundled SRD bestiary is always available here.";
     case "parties":
       return "No fellowships yet — gather heroes into a party in The Tavern.";
     case "campaigns":

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/campaign.record.json",
+  "title": "campaign.record — Campaign chronicle (SavedCampaign)",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "description",
+    "createdAt",
+    "updatedAt",
+    "partyId",
+    "seedIds",
+    "resultIds",
+    "characterIds",
+    "itemIds"
+  ],
+  "properties": {
+    "id": { "$ref": "common.json#/$defs/uuidOrId" },
+    "name": { "$ref": "common.json#/$defs/nonEmptyString" },
+    "description": { "type": "string" },
+    "createdAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "updatedAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "partyId": { "type": ["string", "null"] },
+    "seedIds": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/uuidOrId" }
+    },
+    "resultIds": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/uuidOrId" }
+    },
+    "characterIds": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/uuidOrId" }
+    },
+    "itemIds": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/uuidOrId" }
+    },
+    "cfMetadata": { "$ref": "common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": false
+}

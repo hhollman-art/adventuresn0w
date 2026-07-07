@@ -216,9 +216,10 @@ export default function AddPartyDialog({ onClose, onSaved }: AddPartyDialogProps
 
         {mode === "write" ? (
           <>
-            <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
+            <p className="mt-3 text-xs leading-relaxed text-[var(--text-soft)]">
               Type or paste your heroes below — no file needed. Start from the example and
-              replace the details, or load a saved <code>.md</code> file if you have one.
+              replace the details, or load a saved party or character CF if you
+              have one.
             </p>
 
             <div className="mt-3 flex flex-wrap gap-2">
@@ -230,7 +231,7 @@ export default function AddPartyDialog({ onClose, onSaved }: AddPartyDialogProps
                 onClick={() => fileInputRef.current?.click()}
                 className="btn btn-sm"
               >
-                Load a file…
+                Load character or party CF…
               </button>
               <input
                 ref={fileInputRef}

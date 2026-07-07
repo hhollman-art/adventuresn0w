@@ -42,6 +42,21 @@ export function parseSrdItemRefKey(key: string): SrdItemRef | null {
   };
 }
 
+/** Parse an SRD gear note (`srd-ref:equipment:longsword`) written by character sheets. */
+export function parseSrdItemRefFromNotes(
+  notes: string,
+  displayName?: string,
+): SrdItemRef | null {
+  const m = /^srd-ref:(equipment|magic-items):(.+)$/.exec(notes.trim());
+  if (!m) return null;
+  const ref = parseSrdItemRefKey(`${m[1]}:${m[2]}`);
+  if (!ref) return null;
+  if (displayName?.trim()) {
+    return { ...ref, name: displayName.trim() };
+  }
+  return ref;
+}
+
 /** Label shown in gear lists when an item came from the SRD catalogue. */
 export function formatSrdItemRef(ref: SrdItemRef): string {
   return ref.name;

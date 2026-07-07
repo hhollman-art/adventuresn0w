@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/planned/encounter.record.json",
+  "title": "encounter.record — Encounter CF (planned)",
+  "x-status": "planned",
+  "type": "object",
+  "required": ["id", "createdAt", "updatedAt", "name", "encounterKind", "markdown"],
+  "properties": {
+    "id": { "$ref": "../common.json#/$defs/uuidOrId" },
+    "createdAt": { "$ref": "../common.json#/$defs/isoDateTime" },
+    "updatedAt": { "$ref": "../common.json#/$defs/isoDateTime" },
+    "name": { "$ref": "../common.json#/$defs/nonEmptyString" },
+    "encounterKind": {
+      "type": "string",
+      "enum": ["combat", "social", "exploration", "mixed"]
+    },
+    "locationId": { "type": ["string", "null"] },
+    "adventureSeedId": { "type": ["string", "null"] },
+    "adventureResultId": { "type": ["string", "null"] },
+    "crNotes": { "type": "string" },
+    "outcomeNotes": { "type": "string" },
+    "markdown": { "type": "string" },
+    "cfMetadata": { "$ref": "../common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": false
+}

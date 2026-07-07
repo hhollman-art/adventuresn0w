@@ -38,22 +38,22 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
   {
     id: "one-nighter-manual",
     title: "One-nighter (no AI)",
-    subtitle: "Run tonight with Creation Files (CFs), imports, and the Virtual Table — no API keys required.",
+    subtitle: "Run tonight with CFs, imports, and the Virtual Table — no API keys required.",
     estimatedTime: "~20 min prep",
     aiLabel: "No AI",
     steps: [
       {
         title: "Fast prep for a single session",
         body:
-          "This path uses the Workshop as a control tower without calling Claude or OpenAI. You will anchor the session with a manual Creation File (CF), bring in heroes (player characters), optionally sketch a map, then load everything onto the Virtual Table.",
+          "This path uses the Workshop as a control tower without calling Claude or OpenAI. You will anchor the session with a manual CF, bring in heroes (player characters), optionally sketch a map, then load everything onto the Virtual Table.",
         tip: "Every step has a manual alternative. Skip maps or props if you already have what you need.",
       },
       {
-        title: "Write tonight's hook as a Creation File (CF)",
+        title: "Write tonight's hook as a CF",
         body:
-          "Open the Library tab. Click Add Creation File (CF), choose Adventure (or Realm for location context), and paste a short brief: location, villain, win condition, and one twist. This becomes reusable prep you can edit anytime.",
+          "Open the Library tab. Click Plant a CF, choose Adventure (or Realm for location context), and paste a short brief: location, villain, win condition, and one twist. This becomes reusable prep you can edit anytime.",
         action: { type: "library-category", category: "seeds" },
-        actionLabel: "Open Library → Creation Files (CFs)",
+        actionLabel: "Open Library → CFs",
       },
       {
         title: "Bring a party",
@@ -72,7 +72,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Preview and load to the table",
         body:
-          "Back in Library, select your Creation File (CF) or party and preview on the right. When ready, load the party to the Virtual Table. Tokens and sheets carry over from your saved roster.",
+          "Back in Library, select your CF or party and preview on the right. When ready, load the party to the Virtual Table. Tokens and sheets carry over from your saved roster.",
         action: { type: "mode", mode: "library" },
         actionLabel: "Open Library",
       },
@@ -95,20 +95,20 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Generate a complete one-shot",
         body:
-          "Use AI to draft content fast, then curate in the Library before the session. You will anchor tone with a realm or Creation File (CF), generate an adventure module, a party, and maps, then review everything in one place.",
+          "Use AI to draft content fast, then curate in the Library before the session. You will anchor tone with a realm CF, generate an adventure module, a party, and maps, then review everything in one place.",
         tip: "Edit any generation in the Library preview before the table. AI accelerates; you stay in control.",
       },
       {
         title: "Anchor tone with a realm",
         body:
-          "Open Realm, pick a scale (region or local works well for one-shots), describe the place, and generate. The result auto-saves as a Creation File (CF) you can reuse on Adventure and Maps tabs.",
+          "Open Realm, pick a scale (region or local works well for one-shots), describe the place, and generate. The result auto-saves as a CF you can reuse on Adventure and Maps tabs.",
         action: { type: "mode", mode: "realm" },
         actionLabel: "Open Realm tab",
       },
       {
         title: "Generate the adventure module",
         body:
-          "Open Adventure, choose short session or one-nighter length, and optionally link your realm Creation File (CF) from the dropdown. Generate, then find the saved result under Library → Results.",
+          "Open Adventure, choose short session or one-nighter length, and optionally link your realm CF from the dropdown. Generate, then find the saved result under Library → Results.",
         action: { type: "mode", mode: "adventure" },
         actionLabel: "Open Adventure tab",
       },
@@ -122,14 +122,14 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Add locale and battle maps",
         body:
-          "Open Maps, reference your adventure or Creation File (CF) in the dropdown, and generate locale and/or battle images. Saved maps land in Library → Results alongside your text.",
+          "Open Maps, reference your adventure or CF in the dropdown, and generate locale and/or battle images. Saved maps land in Library → Results alongside your text.",
         action: { type: "mode", mode: "maps" },
         actionLabel: "Open Maps tab",
       },
       {
         title: "Review in the Library",
         body:
-          "Open Library, browse All or filter by Results/Parties/Creation Files (CFs). Click items to preview on the right — copy, export .md, print, or edit Creation Files (CFs) and results before the table.",
+          "Open Library, browse All or filter by Results/Parties/CFs. Click items to preview on the right — copy, export .md, print, or edit CFs and results before the table.",
         action: { type: "mode", mode: "library" },
         actionLabel: "Open Library",
       },
@@ -152,7 +152,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Plan a short arc",
         body:
-          "Use one realm Creation File (CF) as your constant bible, then add a new adventure result per session. Maps and props accumulate in the Library; your party saves back from the VTT with HP and gear.",
+          "Use one realm CF as your constant bible, then add a new adventure result per session. Maps and props accumulate in the Library; your party saves back from the VTT with HP and gear.",
       },
       {
         title: "Make it a campaign",
@@ -162,16 +162,16 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
         actionLabel: "Open Campaigns",
       },
       {
-        title: "Create the realm bible Creation File (CF)",
+        title: "Create the realm bible CF",
         body:
-          "Generate or manually write a region-scale realm. Save it as a named Creation File (CF) in Library → Creation Files (CFs). Every future session should reference this for consistent geography and factions.",
+          "Generate or manually write a region-scale realm. Save it as a named CF in Library → CFs. Every future session should reference this for consistent geography and factions.",
         action: { type: "mode", mode: "realm" },
         actionLabel: "Open Realm tab",
       },
       {
         title: "Session 1 adventure",
         body:
-          "On Adventure, link your realm Creation File (CF), pick length, and generate (or paste your own module and save as a Creation File (CF)). Store the output under Library → Results for session notes and exports.",
+          "On Adventure, link your realm CF, pick length, and generate (or paste your own module and save as a CF). Store the output under Library → Results for session notes and exports.",
         action: { type: "mode", mode: "adventure" },
         actionLabel: "Open Adventure tab",
       },
@@ -190,11 +190,11 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
         actionLabel: "Library → Results",
       },
       {
-        title: "Between sessions: manual Creation Files (CFs)",
+        title: "Between sessions: manual CFs",
         body:
-          "Before session 2+, add a short Adventure Creation File (CF) with bullet hooks — no AI required. Edit existing Results in the Preview Window if you need to patch last session's module.",
+          "Before session 2+, add a short adventure CF with bullet hooks — no AI required. Edit existing Results in the Preview Window if you need to patch last session's module.",
         action: { type: "open-seed-editor" },
-        actionLabel: "Add adventure Creation File (CF)",
+        actionLabel: "Add adventure CF",
       },
       {
         title: "Save progress from the VTT",
@@ -208,14 +208,14 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
   {
     id: "full-campaign",
     title: "Full campaign (control tower)",
-    subtitle: "Long-running prep: SRD pickers, private imports, layered Creation Files (CFs), and a weekly session loop.",
+    subtitle: "Long-running prep: SRD pickers, private imports, layered CFs, and a weekly session loop.",
     estimatedTime: "Ongoing",
     aiLabel: "AI when stuck",
     steps: [
       {
         title: "Workshop as campaign HQ",
         body:
-          "The Library holds two kinds of data: included rules (SRD) that ship with the app, and everything that's yours — imports you bring in and creations made in the app (Creation Files (CFs), generated results, workshop parties), which save once together and are told apart by a Creation tag. Only the SRD is hosted by the app — everything else lives on this device. AI is for bursts; manual curation is the default.",
+          "The Library holds two kinds of data: included rules (SRD) that ship with the app, and everything that's yours — imports you bring in and creations made in the app (CFs, generated results, workshop parties), which save once together and are told apart by a Creation tag. Only the SRD is hosted by the app — everything else lives on this device. AI is for bursts; manual curation is the default.",
         tip: "Non-SRD spells and subclasses from books you own go in hero Notes — never the included SRD catalogue.",
       },
       {
@@ -233,11 +233,11 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
         actionLabel: "Library → Parties",
       },
       {
-        title: "Layer world Creation Files (CFs) by scale",
+        title: "Layer world CFs by scale",
         body:
-          "Maintain separate realm Creation Files (CFs) (world, country, region) as you zoom in. Edit Creation Files (CFs) in place rather than regenerating whole worlds. They live under Library → Creation Files (CFs).",
+          "Maintain separate realm CFs (world, country, region) as you zoom in. Edit CFs in place rather than regenerating whole worlds. They live under Library → CFs.",
         action: { type: "library-category", category: "seeds" },
-        actionLabel: "Library → Creation Files (CFs)",
+        actionLabel: "Library → CFs",
       },
       {
         title: "Catalogue adventures and assets",
@@ -249,7 +249,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "One campaign per group",
         body:
-          "Create a campaign on the Campaigns page for each group you run and link its party, Creation Files (CFs), and results. Open a campaign from the title bar and its Virtual Table comes back exactly as that group left it — switching groups shelves one table and restores the other. New creations link to whichever campaign is open.",
+          "Create a campaign on the Campaigns page for each group you run and link its party, CFs, and results. Open a campaign from the title bar and its Virtual Table comes back exactly as that group left it — switching groups shelves one table and restores the other. New creations link to whichever campaign is open.",
         action: { type: "link", href: "/campaigns" },
         actionLabel: "Open Campaigns",
       },
@@ -263,7 +263,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Weekly session loop",
         body:
-          "Before game night: edit a Creation File (CF) or preview Results → optional generate → export if needed. After: save party from VTT. Repeat without rebuilding from scratch.",
+          "Before game night: edit a CF or preview Results → optional generate → export if needed. After: save party from VTT. Repeat without rebuilding from scratch.",
         action: { type: "mode", mode: "library" },
         actionLabel: "Open Library",
       },
@@ -313,9 +313,9 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Running a published adventure",
         body:
-          "Don't paste chapters of a purchased module. Instead, add an Adventure Creation File (CF) with your own prep summary: scene list, NPC names, page references (\"see p. 74 for the trap\"), and your changes. Your book stays the source at the table; the Creation File (CF) keeps the Workshop and generators grounded in your campaign.",
+          "Don't paste chapters of a purchased module. Instead, add an adventure CF with your own prep summary: scene list, NPC names, page references (\"see p. 74 for the trap\"), and your changes. Your book stays the source at the table; the CF keeps the Workshop and generators grounded in your campaign.",
         action: { type: "open-seed-editor" },
-        actionLabel: "Add adventure Creation File (CF)",
+        actionLabel: "Add adventure CF",
       },
       {
         title: "Keep it private, keep it safe",
@@ -376,7 +376,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Generate only when stuck",
         body:
-          "When you need a quick map or handout, use Maps or Items once, then return to the VTT. Add a manual Creation File (CF) after the session if you want notes for next time — no AI required.",
+          "When you need a quick map or handout, use Maps or Items once, then return to the VTT. Add a manual CF after the session if you want notes for next time — no AI required.",
         action: { type: "mode", mode: "maps" },
         actionLabel: "Open Maps tab",
       },

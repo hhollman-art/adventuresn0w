@@ -188,7 +188,7 @@ export default function WorkshopPreviewPanel({
                 style={{ borderColor: "var(--border)" }}
               >
                 {editKind === "seed"
-                  ? "Edit Creation File (CF)"
+                  ? "Edit CF"
                   : editKind === "library-result"
                     ? "Edit result"
                     : "Edit"}
@@ -334,13 +334,13 @@ export default function WorkshopPreviewPanel({
         />
       ) : null}
 
-      {isLibraryView && srdLoading ? (
+      {isSrdPreview && srdLoading ? (
         <p className="no-print mt-4 text-sm text-[var(--muted)]">Loading SRD entry…</p>
       ) : null}
 
       <MapImageBlock mapImages={previewImages} exportBaseName={exportBaseName} />
 
-      {isLibraryView && !previewMarkdown.trim() && previewImages.length === 0 ? (
+      {isLibraryView && !isSrdPreview && !previewMarkdown.trim() && previewImages.length === 0 ? (
         <div className="library-preview-empty no-print mt-6">
           <p className="text-sm text-[var(--muted)]">
             Choose any entry in{" "}
@@ -348,6 +348,11 @@ export default function WorkshopPreviewPanel({
             read it here — then copy, export, or print.
           </p>
         </div>
+      ) : isSrdPreview && !previewMarkdown.trim() && !srdLoading ? (
+        <p className="no-print mt-6 text-sm text-[var(--muted)]">
+          Could not load this SRD entry. Close the Preview Window, pick the entry again, or check
+          your connection.
+        </p>
       ) : null}
 
       {!loading && !error && !previewMarkdown.trim() && previewImages.length === 0 && !isLibraryView ? (

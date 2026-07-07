@@ -30,7 +30,11 @@ import {
   SrdSpeciesSelect,
 } from "@/features/ui/SrdPickers";
 import { fetchDnd5eList } from "@/lib/srd/dnd5eApi";
+import { openSrdItemPreview } from "@/lib/srd/openSrdPreview";
+import SrdMarkdownTextarea from "@/features/ui/SrdMarkdownTextarea";
+import { allSpellsValid } from "@/lib/srd/spellValidation";
 import {
+  parseSrdItemRefFromNotes,
   srdItemRefFromApi,
   type SrdItemRef,
 } from "@/lib/srd/srdItemRef";
@@ -277,6 +281,10 @@ export default function CharacterEditorDialog({
   const onSave = async () => {
     if (!draft.name.trim()) {
       setError("Give this hero a name first.");
+      return;
+    }
+    if (draft.knownSpellIds.length > 0 && !allSpellsValid(draft.knownSpellIds)) {
+      setError("One or more selected spells are not in the bundled SRD list.");
       return;
     }
     setSaving(true);
@@ -602,7 +610,9 @@ export default function CharacterEditorDialog({
             </p>
           ) : (
             <ul className="flex flex-col gap-2">
-              {draft.items.map((item) => (
+              {draft.items.map((item) => {
+                const srdRef = parseSrdItemRefFromNotes(item.notes, item.name);
+                return (
                 <li key={item.id} className="flex flex-wrap items-center gap-2">
                   <input
                     value={item.name}
@@ -620,6 +630,17 @@ export default function CharacterEditorDialog({
                     style={{ borderColor: "var(--border)", background: "var(--bg)" }}
                     aria-label="Item notes"
                   />
+                  {srdRef ? (
+                    <button
+                      type="button"
+                      onClick={() => openSrdItemPreview(srdRef)}
+                      className="rounded border px-2 py-1 text-xs font-semibold text-[var(--accent)]"
+                      style={{ borderColor: "var(--accent-dim)" }}
+                      title={`Open ${srdRef.name} rules in the Preview Window`}
+                    >
+                      Rules
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => removeItem(item.id)}
@@ -630,7 +651,8 @@ export default function CharacterEditorDialog({
                     Remove
                   </button>
                 </li>
-              ))}
+              );
+              })}
             </ul>
           )}
         </div>
@@ -645,13 +667,14 @@ export default function CharacterEditorDialog({
 
         <label className="mt-4 flex flex-col gap-1 text-xs">
           <span className="font-semibold">Notes</span>
-          <textarea
+          <SrdMarkdownTextarea
             value={draft.notes}
-            onChange={(e) => set("notes", e.target.value)}
+            onChange={(notes) => set("notes", notes)}
             rows={3}
-            placeholder="Features, languages, proficiencies, backstory…"
+            showInsertBar
             className="rounded border px-2 py-1.5 text-sm"
             style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+            placeholder="Features, languages, proficiencies, backstory…"
           />
         </label>
 

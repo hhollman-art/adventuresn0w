@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/item.srd-equipment.json",
+  "title": "item.srd-equipment — Virtual SRD gear row (LibraryListEntry / corpus)",
+  "description": "Read-only catalogue row — not persisted in user backup.",
+  "type": "object",
+  "required": ["id", "ciClass", "title", "srdEntityId"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^srd-entity:" },
+    "ciClass": { "const": "item.srd-equipment" },
+    "title": { "type": "string" },
+    "srdEntityId": { "$ref": "common.json#/$defs/srdEntityId" },
+    "srdItemRef": { "$ref": "common.json#/$defs/srdItemRef" },
+    "provenance": { "const": "srd" }
+  },
+  "additionalProperties": false
+}

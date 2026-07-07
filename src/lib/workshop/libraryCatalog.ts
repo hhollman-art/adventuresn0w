@@ -34,6 +34,7 @@ import {
   type CiClass,
 } from "@/lib/ciRegistry";
 import type { SrdItemRef } from "@/lib/srd/srdItemRef";
+import type { SrdEntityId } from "@/lib/srd/types";
 
 /**
  * Workshop Library — the CMDB browse UI for every Creation File (CF) you own.
@@ -45,6 +46,8 @@ export type WorkshopLibraryCategory =
   | "results"
   | "characters"
   | "items"
+  | "rules"
+  | "monsters"
   | "parties"
   | "campaigns";
 
@@ -58,15 +61,6 @@ export type LibraryProvenance = "srd" | "user";
  * imports (once, same tier, same folder) — the tag is the only difference.
  */
 export type LibraryOrigin = "import" | "creation";
-
-export const WORKSHOP_LIBRARY_CATEGORY_LABEL: Record<LibraryStorageCategory, string> = {
-  seeds: "Creation Files (CFs)",
-  results: "Results",
-  characters: "Heroes",
-  items: "Items",
-  parties: "Parties",
-  campaigns: "Campaigns",
-};
 
 export const LIBRARY_PROVENANCE_LABEL: Record<LibraryProvenance, string> = {
   srd: "Included (SRD)",
@@ -86,7 +80,7 @@ export const LIBRARY_PROVENANCE_STORAGE: Record<LibraryProvenance, string> = {
 
 export const LIBRARY_PROVENANCE_DESCRIPTION: Record<LibraryProvenance, string> = {
   srd: "Free rules bundled with D&D Easy (classes, spells, ancestries, equipment, CC BY 4.0). Read-only — you can't edit or delete these, and they never need saving.",
-  user: "Everything you bring in or make — party files and notes from books you own, Creation Files (CFs) you write, and results the generators produce. Things made in the app carry a Creation tag. All of it saves once, automatically, to your chosen folder (local or cloud-synced); never uploaded to a server.",
+  user: "Everything you bring in or make — party files and notes from books you own, CFs you write, and results the generators produce. Things made in the app carry a Creation tag. All of it saves once, automatically, to your chosen folder (local or cloud-synced); never uploaded to a server.",
 };
 
 export const LIBRARY_PROVENANCE_TIERS: LibraryProvenance[] = ["srd", "user"];
@@ -106,6 +100,8 @@ export type LibraryListEntry = {
   tags?: string[];
   /** Set for bundled SRD equipment / magic item rows (read-only catalogue Creation Files (CFs)). */
   srdItemRef?: SrdItemRef;
+  /** Stable bundled SRD entity id (`spell:fireball`, `monster:goblin-warrior`, …). */
+  srdEntityId?: SrdEntityId;
 };
 
 export function seedToLibraryEntry(seed: SavedRealmSeed): LibraryListEntry {

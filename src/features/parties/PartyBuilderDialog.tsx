@@ -109,9 +109,9 @@ export default function PartyBuilderDialog({
         <h2 id="party-builder-title" className="font-display text-lg font-bold text-[var(--text)]">
           Build a party
         </h2>
-        <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-          Pick heroes, existing fellowships, or both — members are combined into one new fellowship
-          (each hero appears once). The originals are never changed.
+        <p className="mt-1 text-xs leading-relaxed text-[var(--text-soft)]">
+          Pick heroes, existing fellowships, or both — members are combined into one new party
+          CF (each hero appears once). The originals are never changed.
         </p>
 
         <label className="mt-4 flex flex-col gap-1 text-xs">
@@ -129,7 +129,7 @@ export default function PartyBuilderDialog({
         <div className="mt-4">
           <p className="mb-1 text-xs font-bold tracking-wide uppercase">Your heroes</p>
           {characters.length === 0 ? (
-            <p className="text-xs text-[var(--muted)]">
+            <p className="text-xs text-[var(--text-soft)]">
               No heroes in your library yet — you can still build from existing fellowships
               below.
             </p>
@@ -151,7 +151,7 @@ export default function PartyBuilderDialog({
                   />
                   <span>
                     <span className="font-semibold">{c.player.name}</span>{" "}
-                    <span className="text-[var(--muted)]">({characterSummary(c.player)})</span>
+                    <span className="text-[var(--text-soft)]">({characterSummary(c.player)})</span>
                   </span>
                 </label>
               ))}
@@ -164,7 +164,7 @@ export default function PartyBuilderDialog({
             Include members of existing parties
           </p>
           {rosters.length === 0 ? (
-            <p className="text-xs text-[var(--muted)]">
+            <p className="text-xs text-[var(--text-soft)]">
               No saved parties yet — parties you generate in the workshop, import, or save from
               the Virtual Table will show up here.
             </p>
@@ -186,7 +186,7 @@ export default function PartyBuilderDialog({
                   />
                   <span>
                     <span className="font-semibold">{r.name}</span>{" "}
-                    <span className="text-[var(--muted)]">
+                    <span className="text-[var(--text-soft)]">
                       ({r.players.length} hero{r.players.length === 1 ? "" : "es"})
                     </span>
                   </span>
@@ -196,7 +196,7 @@ export default function PartyBuilderDialog({
           )}
         </div>
 
-        <p className="mt-3 text-xs text-[var(--muted)]">
+        <p className="mt-3 text-xs text-[var(--text-soft)]">
           {members.length === 0
             ? "Nothing selected yet."
             : `New fellowship will have ${members.length} hero${members.length === 1 ? "" : "es"}: ${members

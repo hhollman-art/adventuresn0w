@@ -24,9 +24,14 @@ describe("themeStorage", () => {
   });
 
   it("round-trips a valid theme id", () => {
-    writeStoredTheme("pirates");
-    expect(storage[THEME_STORAGE_KEY]).toBe("pirates");
-    expect(readStoredTheme()).toBe("pirates");
+    writeStoredTheme("arcane-library");
+    expect(storage[THEME_STORAGE_KEY]).toBe("arcane-library");
+    expect(readStoredTheme()).toBe("arcane-library");
+  });
+
+  it("maps retired theme ids on read", () => {
+    storage[THEME_STORAGE_KEY] = "pirates";
+    expect(readStoredTheme()).toBe("wanderers-journal");
   });
 
   it("ignores invalid stored values", () => {

@@ -1,0 +1,60 @@
+---
+description: AI instruction set — campaigns, characters, CFs, relationships, sessions, DM tools
+alwaysApply: true
+---
+
+# Campaign & Creation File management (AI instructions)
+
+Complements `preserve-and-expand` and `cmdb-configuration-items`. Expand the CMDB; do not replace it.
+
+## Core principles
+
+- Every stored row is a **Creation File (CF)** with one `ciClass` and one category (`src/lib/ciRegistry.ts`).
+- **Campaign** (`campaign.record`) is the structural root: id links to party, seeds, results, characters, items.
+- Relationships are **id references owned by the container**; reverse lookup via `src/lib/ciRelationships.ts`.
+- **Manual-first** (`dm-control-tower`): every AI feature needs a non-AI path.
+- **SRD compliance**: bundled rules are read-only; user-owned content stays in imports/creations.
+
+## Library (“The Library”) — preserve all shelves
+
+Existing shelves stay: All, CFs, Prepared scrolls, Heroes, Items, **Rule tomes**, Fellowships, Chronicles. Add views (graph, timeline, session log) as **new** panels — never remove a shelf.
+
+## Domain responsibilities (additive)
+
+| Domain | Store today | AI may add |
+|--------|-------------|------------|
+| Campaigns | name, description, id links | arcs, quests, unresolved threads, continuity hints |
+| Characters | `character.sheet`, party snapshots | level-up hints, rule flags, backstory hooks |
+| World assets | often in `seed.*` / `result.*` markdown | future `location.*`, `npc.*`, `faction.*` CF classes |
+| Adventures | `seed.adventure`, `result.adventure` | auto-link referenced assets, quest state |
+| Encounters | VTT + markdown | future `encounter.*` CF; CR hints |
+| Sessions | `session.tabletop`, `session.snapshot` | future `session.record` log CF |
+
+## Metadata (extend, don’t break rows)
+
+Optional fields for new/planned CFs (see `schemas/creation-files/`):
+
+- `tags`, `status`, `relationships[]`, `owner`, `version` — add as optional; never require on legacy rows.
+
+## Relationship graph (future)
+
+Typed edges, e.g. `npc → lives_in → location`, `quest → involves → npc`. Implement **beside** campaign id lists; do not remove `seedIds` / `resultIds`.
+
+## Session management (future)
+
+Track events, NPC touchpoints, loot, locations, promises, clues. Summaries and “update affected CFs” — manual edit always available.
+
+## DM tools to build toward
+
+- Quick retrieval (“NPCs linked to faction X”)
+- Auto-generation (optional AI) for NPCs, towns, hooks
+- Consistency checks (lore, timeline, SRD, forgotten threads)
+- Smart suggestions (non-spoiler by default)
+
+## AI reasoning
+
+- Interpret DM intent; preserve DM authority.
+- No spoilers unless requested.
+- Suggest — do not silently rewrite user CF markdown.
+
+Schema reference: `schemas/creation-files/manifest.json`, `relationship-graph.json`.

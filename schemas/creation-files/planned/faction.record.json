@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/planned/faction.record.json",
+  "title": "faction.record — Faction CF (planned)",
+  "x-status": "planned",
+  "type": "object",
+  "required": ["id", "createdAt", "updatedAt", "name", "markdown"],
+  "properties": {
+    "id": { "$ref": "../common.json#/$defs/uuidOrId" },
+    "createdAt": { "$ref": "../common.json#/$defs/isoDateTime" },
+    "updatedAt": { "$ref": "../common.json#/$defs/isoDateTime" },
+    "name": { "$ref": "../common.json#/$defs/nonEmptyString" },
+    "goals": { "type": "string" },
+    "resources": { "type": "string" },
+    "allies": { "type": "array", "items": { "type": "string" } },
+    "enemies": { "type": "array", "items": { "type": "string" } },
+    "influenceNotes": { "type": "string" },
+    "memberNpcIds": {
+      "type": "array",
+      "items": { "$ref": "../common.json#/$defs/uuidOrId" }
+    },
+    "markdown": { "type": "string" },
+    "cfMetadata": { "$ref": "../common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": false
+}

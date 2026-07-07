@@ -1,0 +1,36 @@
+import type { CiClass } from "@/lib/ciRegistry";
+import { APP_ICONS } from "@/lib/ui/appIcons";
+
+export type CiClassVisual = {
+  icon: string;
+  accent: string;
+};
+
+/** Lightweight visual language for Creation File cards in the Library. */
+export const CI_CLASS_VISUAL: Record<CiClass, CiClassVisual> = {
+  "seed.realm": { icon: APP_ICONS.map, accent: "#6b8f4e" },
+  "seed.adventure": { icon: APP_ICONS.scroll, accent: "#8b4518" },
+  "seed.characters": { icon: APP_ICONS.combat, accent: "#7a2828" },
+  "seed.maps": { icon: APP_ICONS.map, accent: "#4a7a9a" },
+  "seed.props": { icon: APP_ICONS.chest, accent: "#9a7416" },
+  "result.realm": { icon: APP_ICONS.map, accent: "#6b8f4e" },
+  "result.adventure": { icon: APP_ICONS.scroll, accent: "#8b4518" },
+  "result.characters": { icon: APP_ICONS.combat, accent: "#7a2828" },
+  "result.maps": { icon: APP_ICONS.map, accent: "#4a7a9a" },
+  "result.props": { icon: APP_ICONS.chest, accent: "#9a7416" },
+  "character.sheet": { icon: APP_ICONS.combat, accent: "#7a2828" },
+  "item.equipment": { icon: APP_ICONS.chest, accent: "#8a6a2a" },
+  "item.magic": { icon: APP_ICONS.spellbook, accent: "#7048b8" },
+  "item.srd-equipment": { icon: APP_ICONS.chest, accent: "#6a6a6a" },
+  "item.srd-magic": { icon: APP_ICONS.spellbook, accent: "#7048b8" },
+  "party.roster": { icon: APP_ICONS.banner, accent: "#4a68b8" },
+  "campaign.record": { icon: APP_ICONS.scroll, accent: "#8b2635" },
+  "session.tabletop": { icon: APP_ICONS.combat, accent: "#5c4a2e" },
+  "session.snapshot": { icon: APP_ICONS.map, accent: "#5c4a2e" },
+  "rules.srd-entry": { icon: APP_ICONS.spellbook, accent: "#4a68b8" },
+  "monster.srd-entry": { icon: APP_ICONS.combat, accent: "#7a2828" },
+};
+
+export function ciClassVisual(ciClass: CiClass): CiClassVisual {
+  return CI_CLASS_VISUAL[ciClass];
+}

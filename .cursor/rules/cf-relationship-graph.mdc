@@ -1,0 +1,78 @@
+---
+description: CF relationship graph — typed edges beside campaign id lists; preserve-and-expand
+alwaysApply: false
+---
+
+# Creation File relationship graph (spec v1)
+
+Complements `preserve-and-expand`, `campaign-cf-management`, and `cmdb-configuration-items`.
+
+## Two tiers (never collapse)
+
+| Tier | What | Storage | Mutability |
+|------|------|---------|------------|
+| **1 — Membership** | Campaign owns party, seeds, results, characters, items | `SavedCampaign` fields (`partyId`, `*Ids[]`) | Existing UI on Campaigns page — **unchanged** |
+| **2 — Typed edges** | Semantic links (NPC lives in city, quest involves faction) | `CampaignRelationshipGraph` per campaign | New graph store — **additive** |
+
+Tier-1 links are **authoritative for campaign scope**. Tier-2 edges **never remove** Tier-1 ids; they add meaning for graph view, retrieval, and AI suggestions.
+
+## Storage (planned module)
+
+- **Module:** `src/lib/campaignRelationships.ts` (not yet shipped)
+- **Shape:** `schemas/creation-files/relationship-graph.json`
+- **Key:** one graph document per `campaignId` in IndexedDB + localStorage mirror (same pattern as `campaigns.ts`)
+- **Backup:** include in `LibraryBackupFile` as optional `relationshipGraphs[]` when implemented — Tier-1 campaign rows always backup first
+
+## Edge model
+
+```typescript
+// Endpoints
+{ kind: "cf", ciClass: CiClass, id: string }
+{ kind: "srd", entityId: SrdEntityId, name?: string }
+
+// Edge
+{ id, rel, from, to, label?, createdAt, source?: "user"|"auto"|"import" }
+```
+
+**Verbs:** `schemas/creation-files/relationship-verbs.json` — use typed verbs first; `linked_to` is the generic fallback.
+
+## Derived edges (read-only, not persisted)
+
+At graph build time, synthesize `contains` edges from existing campaign fields:
+
+- `partyId` → `party.roster`
+- each `seedIds` / `resultIds` / `characterIds` / `itemIds` entry
+
+Mark these `derivedFrom: "seedIds"` etc. Do **not** write them to `edges[]`.
+
+## Reverse lookup
+
+Given any CF id:
+
+1. Tier-1: `campaignsLinkingCi()` (existing in `ciRelationships.ts`)
+2. Tier-2: scan all graphs where `from.id === id || to.id === id`
+
+Orphan detection: CF in library but no Tier-1 campaign link **and** no Tier-2 edge → suggest linking.
+
+## UI (future — new panels only)
+
+- **Graph view** — campaign-scoped force/tree layout; Tier-1 + Tier-2 + derived
+- **Quick retrieval** — filter edges by `rel` + endpoint class
+- Do **not** remove Library shelves or Campaigns page link UI
+
+## Implementation order
+
+1. Types + verb validator (`ciRelationshipGraph.ts`) ✅ spec
+2. Persist/load graph per campaign
+3. Derive `contains` + merge for graph UI
+4. Auto-suggest edges from `[[srd:…]]` tokens (`references` rel)
+5. Session log edges (`logged_in`) when `session.record` ships
+
+## Validation rules
+
+- Both endpoints must resolve (CF row exists, or SRD entity in corpus)
+- Verb must match `relationship-verbs.json` from/to classes (or `linked_to` / `*`)
+- SRD endpoints read-only; never as `from` on user-authored edges except `references`
+- No edge may imply deleting a Tier-1 membership link
+
+Types: `src/lib/ciRelationshipGraph.ts`. Tests: `src/lib/ciRelationshipGraph.test.ts`.

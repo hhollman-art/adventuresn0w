@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/relationship-graph.json",
+  "title": "Campaign relationship graph",
+  "description": "Typed edges between Creation Files, scoped to one campaign. Stored beside SavedCampaign id lists — never replaces partyId, seedIds, resultIds, characterIds, or itemIds.",
+  "type": "object",
+  "required": ["campaignId", "version", "updatedAt", "edges"],
+  "properties": {
+    "campaignId": { "$ref": "common.json#/$defs/uuidOrId" },
+    "version": { "type": "integer", "minimum": 1 },
+    "updatedAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/cfRelationshipEdge" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "cfRelationshipVerb": {
+      "type": "string",
+      "description": "See relationship-verbs.json for allowed from/to pairs"
+    },
+    "cfEndpoint": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["cf", "srd"] }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "kind": { "const": "cf" },
+            "ciClass": { "$ref": "common.json#/$defs/ciClass" },
+            "id": { "$ref": "common.json#/$defs/uuidOrId" }
+          },
+          "required": ["kind", "ciClass", "id"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "srd" },
+            "entityId": { "$ref": "common.json#/$defs/srdEntityId" },
+            "name": { "type": "string" }
+          },
+          "required": ["kind", "entityId"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "cfRelationshipEdge": {
+      "type": "object",
+      "required": ["id", "rel", "from", "to", "createdAt"],
+      "properties": {
+        "id": { "$ref": "common.json#/$defs/uuidOrId" },
+        "rel": { "$ref": "#/$defs/cfRelationshipVerb" },
+        "from": { "$ref": "#/$defs/cfEndpoint" },
+        "to": { "$ref": "#/$defs/cfEndpoint" },
+        "label": {
+          "type": "string",
+          "description": "Optional DM-facing note on this link"
+        },
+        "createdAt": { "$ref": "common.json#/$defs/isoDateTime" },
+        "source": {
+          "type": "string",
+          "enum": ["user", "auto", "import"],
+          "default": "user"
+        },
+        "bidirectional": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, UI may traverse the edge in either direction"
+        }
+      },
+      "additionalProperties": false
+    },
+    "derivedMembershipEdge": {
+      "type": "object",
+      "description": "Computed at read time from SavedCampaign link fields — not persisted in edges[]",
+      "required": ["rel", "from", "to", "derivedFrom"],
+      "properties": {
+        "rel": { "const": "contains" },
+        "from": {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "cf" },
+            "ciClass": { "const": "campaign.record" },
+            "id": { "$ref": "common.json#/$defs/uuidOrId" }
+          }
+        },
+        "to": { "$ref": "#/$defs/cfEndpoint" },
+        "derivedFrom": {
+          "type": "string",
+          "enum": ["partyId", "seedIds", "resultIds", "characterIds", "itemIds"]
+        }
+      }
+    }
+  }
+}

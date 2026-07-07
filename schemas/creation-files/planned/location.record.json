@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/planned/location.record.json",
+  "title": "location.record — Location CF (planned)",
+  "description": "Stub — cities, dungeons, regions, planes.",
+  "x-status": "planned",
+  "type": "object",
+  "required": ["id", "createdAt", "updatedAt", "name", "locationKind", "markdown"],
+  "properties": {
+    "id": { "$ref": "../common.json#/$defs/uuidOrId" },
+    "createdAt": { "$ref": "../common.json#/$defs/isoDateTime" },
+    "updatedAt": { "$ref": "../common.json#/$defs/isoDateTime" },
+    "name": { "$ref": "../common.json#/$defs/nonEmptyString" },
+    "locationKind": {
+      "type": "string",
+      "enum": ["city", "dungeon", "region", "wilderness", "site", "plane", "other"]
+    },
+    "parentLocationId": { "type": ["string", "null"] },
+    "inhabitantNpcIds": {
+      "type": "array",
+      "items": { "$ref": "../common.json#/$defs/uuidOrId" }
+    },
+    "factionIds": {
+      "type": "array",
+      "items": { "$ref": "../common.json#/$defs/uuidOrId" }
+    },
+    "timelineNotes": { "type": "string" },
+    "markdown": { "type": "string" },
+    "cfMetadata": { "$ref": "../common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": false
+}

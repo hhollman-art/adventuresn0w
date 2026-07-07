@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/item.base.json",
+  "title": "User item base (SavedGameItem)",
+  "type": "object",
+  "required": [
+    "id",
+    "createdAt",
+    "updatedAt",
+    "kind",
+    "name",
+    "itemType",
+    "rarity",
+    "requiresAttunement",
+    "description",
+    "bonuses",
+    "source"
+  ],
+  "properties": {
+    "id": { "$ref": "common.json#/$defs/uuidOrId" },
+    "createdAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "updatedAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "kind": { "type": "string", "enum": ["equipment", "magic"] },
+    "name": { "$ref": "common.json#/$defs/nonEmptyString" },
+    "itemType": { "type": "string" },
+    "rarity": {
+      "type": ["string", "null"],
+      "enum": [
+        "common",
+        "uncommon",
+        "rare",
+        "very-rare",
+        "legendary",
+        "artifact",
+        null
+      ]
+    },
+    "requiresAttunement": { "type": "boolean" },
+    "description": { "type": "string" },
+    "bonuses": { "$ref": "common.json#/$defs/itemBonuses" },
+    "source": { "type": "string", "enum": ["created", "import"] },
+    "cfMetadata": { "$ref": "common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": false
+}

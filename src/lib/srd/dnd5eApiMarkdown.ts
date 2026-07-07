@@ -245,6 +245,31 @@ function formatRace(data: Record<string, unknown>): string {
   );
 }
 
+function formatMagicItem(data: Record<string, unknown>): string {
+  const name = String(data.name ?? "Magic Item");
+  const rarity =
+    data.rarity && typeof data.rarity === "object"
+      ? String((data.rarity as NamedRef).name ?? "")
+      : typeof data.rarity === "string"
+        ? data.rarity
+        : "";
+  const category =
+    data.equipment_category && typeof data.equipment_category === "object"
+      ? String((data.equipment_category as NamedRef).name ?? "")
+      : "";
+  const subtitle = [rarity, category].filter(Boolean).join(" · ");
+
+  return lines(
+    `# ${name}`,
+    subtitle ? `*${subtitle}*` : "",
+    "",
+    data.requires_attunement ? "**Requires attunement**" : "",
+    joinDesc(data.desc),
+    joinDesc(data.special) ? `\n${joinDesc(data.special)}` : "",
+    attributionFooter(String(data.url ?? "")),
+  );
+}
+
 function formatEquipment(data: Record<string, unknown>): string {
   const name = String(data.name ?? "Equipment");
   const category =
@@ -338,13 +363,14 @@ export function dnd5eResourceToMarkdown(
       return formatRace(data);
     case "equipment":
       return formatEquipment(data);
+    case "magic-items":
+      return formatMagicItem(data);
     case "rules":
       return formatRulesIndex(data);
     case "rule-sections":
     case "conditions":
     case "feats":
     case "backgrounds":
-    case "magic-items":
     case "subclasses":
       return formatGeneric(data);
     default:
@@ -354,10 +380,10 @@ export function dnd5eResourceToMarkdown(
 
 export const SRD_LIBRARY_INTRO_MARKDOWN = `# SRD reference
 
-Browse **spells**, **monsters**, **classes**, **equipment**, **magic items**, and **rules** from the [D&D 5e SRD API](https://www.dnd5eapi.co/) (${DND5E_API_VERSION} System Reference Document).
+Browse **spells**, **monsters**, **classes**, **equipment**, **magic items**, and **rules** from the bundled **SRD_CC_v5.2.1** document (${DND5E_API_VERSION} API used for browse lists where needed).
 
-Pick a category and entry in **Browse repository** — the full text opens here in the Preview Window. This material is read-only, ships under **CC BY 4.0**, and never needs backing up.
+Pick a category and entry in **Browse repository** — full **SRD 5.2.1** text opens in the Preview Window when available. This material is read-only, ships under **CC BY 4.0**, and never needs backing up.
 
-Character pickers elsewhere in the app use the bundled SRD spell/class index (${DND5E_API_VERSION} API for reference browse).
+Character pickers elsewhere in the app use the bundled SRD spell/class index.
 
 ${SRD_ATTRIBUTION_SHORT}`;

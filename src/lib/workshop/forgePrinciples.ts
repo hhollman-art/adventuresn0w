@@ -43,7 +43,7 @@ export const FORGE_PRINCIPLES: readonly ForgePrinciple[] = [
     icon: "\u{1F501}",
     title: "Curate once, run many nights",
     body:
-      "Creation Files (CFs), scrolls, hero sheets, and campaign links are meant to be reused and edited — not one-off outputs you throw away after session zero.",
+      "CFs, scrolls, hero sheets, and campaign links are meant to be reused and edited — not one-off outputs you throw away after session zero.",
   },
   {
     id: "scale",

@@ -119,7 +119,7 @@ export function buildCampaignTree(
       .map((s) => ({
         ciClass: `seed.${s.kind}` as CiClass,
         id: s.id,
-        label: s.seedName || s.titleHint || "Adventure Creation File (CF)",
+        label: s.seedName || s.titleHint || "Adventure CF",
       })),
     ...campaign.resultIds
       .map((id) => resultById.get(id))
@@ -186,7 +186,7 @@ export function buildCampaignTree(
       ? [{ ciClass: "item.equipment" as CiClass, id: `${campaign.id}-items`, label: "Items", children: itemNodes }]
       : []),
     ...(otherSeedNodes.length
-      ? [{ ciClass: "seed.realm" as CiClass, id: `${campaign.id}-seeds`, label: "Other Creation Files (CFs)", children: otherSeedNodes }]
+      ? [{ ciClass: "seed.realm" as CiClass, id: `${campaign.id}-seeds`, label: "Other CFs", children: otherSeedNodes }]
       : []),
     ...(otherResultNodes.length
       ? [{ ciClass: "result.realm" as CiClass, id: `${campaign.id}-results`, label: "Other results", children: otherResultNodes }]

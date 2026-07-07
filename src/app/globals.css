@@ -88,14 +88,10 @@ body {
 }
 
 .panel-scroll,
-.workshop-workspace-nav-scroll,
 .workshop-welcome-main,
 .workshop-workspace-main,
 .workshop-page-main,
 .library-workshop-browse .library-browse-panel > ul,
-.forge-content-body--creating .print-generation-root,
-.forge-content-body--library .library-workshop-preview,
-.workshop-page-preview,
 .preview-window-panel,
 .vtt-control-sidebar-body,
 article.adventure-md.output-document-view .output-document-panel {
@@ -109,14 +105,10 @@ article.adventure-md.output-document-view .output-document-panel {
 }
 
 .panel-scroll::-webkit-scrollbar,
-.workshop-workspace-nav-scroll::-webkit-scrollbar,
 .workshop-welcome-main::-webkit-scrollbar,
 .workshop-workspace-main::-webkit-scrollbar,
 .workshop-page-main::-webkit-scrollbar,
 .library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar,
-.forge-content-body--creating .print-generation-root::-webkit-scrollbar,
-.forge-content-body--library .library-workshop-preview::-webkit-scrollbar,
-.workshop-page-preview::-webkit-scrollbar,
 .preview-window-panel::-webkit-scrollbar,
 .vtt-control-sidebar-body::-webkit-scrollbar,
 article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar {
@@ -125,14 +117,10 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 }
 
 .panel-scroll::-webkit-scrollbar-track,
-.workshop-workspace-nav-scroll::-webkit-scrollbar-track,
 .workshop-welcome-main::-webkit-scrollbar-track,
 .workshop-workspace-main::-webkit-scrollbar-track,
 .workshop-page-main::-webkit-scrollbar-track,
 .library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar-track,
-.forge-content-body--creating .print-generation-root::-webkit-scrollbar-track,
-.forge-content-body--library .library-workshop-preview::-webkit-scrollbar-track,
-.workshop-page-preview::-webkit-scrollbar-track,
 .preview-window-panel::-webkit-scrollbar-track,
 .vtt-control-sidebar-body::-webkit-scrollbar-track,
 article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-track {
@@ -142,14 +130,10 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 }
 
 .panel-scroll::-webkit-scrollbar-thumb,
-.workshop-workspace-nav-scroll::-webkit-scrollbar-thumb,
 .workshop-welcome-main::-webkit-scrollbar-thumb,
 .workshop-workspace-main::-webkit-scrollbar-thumb,
 .workshop-page-main::-webkit-scrollbar-thumb,
 .library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar-thumb,
-.forge-content-body--creating .print-generation-root::-webkit-scrollbar-thumb,
-.forge-content-body--library .library-workshop-preview::-webkit-scrollbar-thumb,
-.workshop-page-preview::-webkit-scrollbar-thumb,
 .preview-window-panel::-webkit-scrollbar-thumb,
 .vtt-control-sidebar-body::-webkit-scrollbar-thumb,
 article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-thumb {
@@ -164,14 +148,10 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 }
 
 .panel-scroll::-webkit-scrollbar-thumb:hover,
-.workshop-workspace-nav-scroll::-webkit-scrollbar-thumb:hover,
 .workshop-welcome-main::-webkit-scrollbar-thumb:hover,
 .workshop-workspace-main::-webkit-scrollbar-thumb:hover,
 .workshop-page-main::-webkit-scrollbar-thumb:hover,
 .library-workshop-browse .library-browse-panel > ul::-webkit-scrollbar-thumb:hover,
-.forge-content-body--creating .print-generation-root::-webkit-scrollbar-thumb:hover,
-.forge-content-body--library .library-workshop-preview::-webkit-scrollbar-thumb:hover,
-.workshop-page-preview::-webkit-scrollbar-thumb:hover,
 .preview-window-panel::-webkit-scrollbar-thumb:hover,
 .vtt-control-sidebar-body::-webkit-scrollbar-thumb:hover,
 article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-thumb:hover {
@@ -180,14 +160,12 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 
 .panel-scroll--parchment,
 .preview-window-panel,
-.workshop-page-preview,
 article.adventure-md.output-document-view .output-document-panel {
   scrollbar-color: #8a5a18 #e8dcc4;
 }
 
 .panel-scroll--parchment::-webkit-scrollbar-track,
 .preview-window-panel::-webkit-scrollbar-track,
-.workshop-page-preview::-webkit-scrollbar-track,
 article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-track {
   background: #e8dcc4;
   border-color: rgba(122, 92, 40, 0.35);
@@ -195,7 +173,6 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 
 .panel-scroll--parchment::-webkit-scrollbar-thumb,
 .preview-window-panel::-webkit-scrollbar-thumb,
-.workshop-page-preview::-webkit-scrollbar-thumb,
 article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #a06a20, #7a4c10);
   border-color: #e8dcc4;
@@ -204,7 +181,6 @@ article.adventure-md.output-document-view .output-document-panel::-webkit-scroll
 
 .panel-scroll--parchment::-webkit-scrollbar-thumb:hover,
 .preview-window-panel::-webkit-scrollbar-thumb:hover,
-.workshop-page-preview::-webkit-scrollbar-thumb:hover,
 article.adventure-md.output-document-view .output-document-panel::-webkit-scrollbar-thumb:hover {
   background: #8a5a18;
 }
@@ -591,54 +567,6 @@ html[data-preview-window="standalone"] .app-content {
   color: var(--text);
 }
 
-.forge-forest-canopy {
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.forge-forest-canopy-svg {
-  display: block;
-  width: 100%;
-  height: 4.5rem;
-}
-
-.workshop-welcome-panel .forge-forest-canopy-svg {
-  height: 5.5rem;
-}
-
-.forge-forest-texture {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  opacity: 0.22;
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cpath d='M0 180 Q50 170 100 180 Q150 190 200 175' stroke='%235c3d22' stroke-width='0.6' fill='none' opacity='0.4'/%3E%3Cpath d='M0 120 Q40 110 80 118 Q120 126 160 112 Q180 106 200 114' stroke='%233d2814' stroke-width='0.5' fill='none' opacity='0.35'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-  mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.4) 30%, rgba(0, 0, 0, 0.25) 100%);
-}
-
-.forge-forest-vines {
-  pointer-events: none;
-  position: absolute;
-  top: 4.5rem;
-  bottom: 0;
-  width: 2.5rem;
-  opacity: 0.35;
-  background-repeat: repeat-y;
-  background-size: 100% auto;
-}
-
-.forge-forest-vines--left {
-  left: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='120' viewBox='0 0 40 120'%3E%3Cpath d='M20 0 Q18 30 22 60 Q16 90 20 120' stroke='%233d5c2e' stroke-width='1.5' fill='none'/%3E%3Cellipse cx='14' cy='24' rx='8' ry='5' fill='%234a7a38' opacity='0.7' transform='rotate(-30 14 24)'/%3E%3Cellipse cx='26' cy='52' rx='7' ry='4' fill='%232d4a22' opacity='0.65' transform='rotate(20 26 52)'/%3E%3Cellipse cx='12' cy='82' rx='9' ry='5' fill='%233d5c2e' opacity='0.6' transform='rotate(-15 12 82)'/%3E%3C/svg%3E");
-}
-
-.forge-forest-vines--right {
-  right: 0;
-  transform: scaleX(-1);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='120' viewBox='0 0 40 120'%3E%3Cpath d='M20 0 Q22 28 18 58 Q24 88 20 120' stroke='%233d5c2e' stroke-width='1.5' fill='none'/%3E%3Cellipse cx='26' cy='30' rx='8' ry='5' fill='%234a7a38' opacity='0.7' transform='rotate(25 26 30)'/%3E%3Cellipse cx='14' cy='68' rx='7' ry='4' fill='%232d4a22' opacity='0.65'/%3E%3C/svg%3E");
-}
-
 .forge-forest-card {
   position: relative;
   z-index: 1;
@@ -656,242 +584,6 @@ html[data-preview-window="standalone"] .app-content {
   .forge-forest-card {
     padding: 1.25rem 1.35rem;
   }
-}
-
-.forge-forest-panel .workshop-nav-title-icon {
-  margin-right: 0.35rem;
-}
-
-.forge-forest-panel .workshop-nav-header {
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid rgba(201, 162, 39, 0.28);
-}
-
-.forge-forest-panel .workshop-nav-title {
-  margin: 0;
-  font-family: var(--font-display, Georgia, serif);
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: 0.04em;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
-}
-
-.forge-forest-panel .workshop-nav-intro {
-  margin: 0.35rem 0 0;
-  font-size: 0.6875rem;
-  line-height: 1.45;
-  color: var(--muted);
-}
-
-.forge-forest-panel .workshop-nav-section-label {
-  margin: 0 0 0.4rem;
-  font-family: var(--font-display, Georgia, serif);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--accent-dim);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
-}
-
-.forge-forest-panel .workshop-nav-section--library .workshop-nav-section-label,
-.forge-forest-panel .workshop-nav-library-star {
-  color: var(--accent-dim);
-}
-
-.workshop-nav-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.workshop-nav-row-start {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.workshop-nav-row-start > .workshop-nav-section-label {
-  margin-bottom: 0;
-}
-
-.workshop-nav-cell {
-  min-width: 0;
-}
-
-.workshop-nav-item-inner {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.workshop-nav-item-icon {
-  font-size: 1.15rem;
-  line-height: 1;
-  flex-shrink: 0;
-  margin-top: 0.05rem;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
-}
-
-.forge-forest-panel .workshop-nav-item-label {
-  display: block;
-  font-family: var(--font-display, Georgia, serif);
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.25;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.forge-forest-panel .workshop-nav-item-hint {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.625rem;
-  line-height: 1.4;
-  color: var(--muted);
-}
-
-.workshop-nav-footer {
-  flex-shrink: 0;
-  padding: 0.65rem 0.75rem 0.85rem;
-  border-top: 1px dashed rgba(201, 162, 39, 0.3);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.22));
-}
-
-.forge-forest-panel .workshop-workspace-link {
-  display: block;
-  width: 100%;
-  border-radius: 0.625rem;
-  border: 1px solid color-mix(in srgb, var(--accent-dim) 38%, transparent);
-  background:
-    linear-gradient(165deg, color-mix(in srgb, var(--surface) 78%, var(--accent)) 0%, color-mix(in srgb, var(--surface) 88%, black) 100%);
-  padding: 0.5rem 0.6rem;
-  text-align: left;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 2px 6px rgba(0, 0, 0, 0.25);
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.12s ease;
-}
-
-.forge-forest-panel .workshop-workspace-link--library {
-  position: relative;
-  border: 2px solid color-mix(in srgb, var(--accent-dim) 72%, transparent);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface) 94%, white) 0%,
-      color-mix(in srgb, var(--surface) 90%, black) 100%
-    );
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent-dim) 22%, transparent) inset,
-    0 0 18px color-mix(in srgb, var(--accent-dim) 16%, transparent),
-    0 2px 8px rgba(0, 0, 0, 0.28);
-  padding: 0.72rem 0.85rem 0.72rem 1rem;
-}
-
-/* Gold spine — marks importance without tinting the label text */
-.forge-forest-panel .workshop-workspace-link--library::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.5rem;
-  bottom: 0.5rem;
-  width: 4px;
-  border-radius: 0 3px 3px 0;
-  background: linear-gradient(
-    180deg,
-    var(--accent-dim) 0%,
-    color-mix(in srgb, var(--accent-dim) 55%, var(--accent)) 100%
-  );
-  box-shadow: 0 0 10px color-mix(in srgb, var(--accent-dim) 45%, transparent);
-}
-
-.forge-forest-panel .workshop-workspace-link--library .workshop-nav-item-label {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
-  text-shadow: none;
-  letter-spacing: 0.02em;
-}
-
-.forge-forest-panel .workshop-workspace-link--library .workshop-nav-library-star {
-  color: var(--accent-dim);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--accent-dim) 60%, transparent);
-}
-
-.forge-forest-panel .workshop-workspace-link--library .workshop-nav-item-hint {
-  font-family: inherit;
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1.5;
-  color: var(--text-soft);
-}
-
-.forge-forest-panel .workshop-workspace-link--library .workshop-nav-item-icon {
-  font-size: 1.25rem;
-}
-
-.forge-forest-panel .workshop-workspace-link--library:hover {
-  border-color: var(--accent-dim);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface) 90%, white) 0%,
-      color-mix(in srgb, var(--surface) 86%, black) 100%
-    );
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent-dim) 32%, transparent) inset,
-    0 0 24px color-mix(in srgb, var(--accent-dim) 26%, transparent),
-    0 3px 10px rgba(0, 0, 0, 0.3);
-}
-
-.forge-forest-panel .workshop-workspace-link--library.workshop-workspace-link-active {
-  border-color: var(--accent-dim) !important;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface) 78%, var(--accent)) 0%,
-      color-mix(in srgb, var(--bg) 82%, var(--accent)) 100%
-    ) !important;
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--accent-dim) 48%, transparent),
-    0 0 22px color-mix(in srgb, var(--accent-dim) 30%, transparent) !important;
-}
-
-.forge-forest-panel .workshop-workspace-link--library.workshop-workspace-link-active .workshop-nav-item-label {
-  color: #ffffff;
-}
-
-.forge-forest-panel .workshop-workspace-link--library.workshop-workspace-link-active .workshop-nav-item-hint {
-  color: color-mix(in srgb, var(--text) 90%, var(--text-soft));
-}
-
-.forge-forest-panel .workshop-workspace-link:hover {
-  border-color: color-mix(in srgb, var(--accent-dim) 75%, transparent);
-  background:
-    linear-gradient(165deg, color-mix(in srgb, var(--surface) 68%, var(--accent)) 0%, color-mix(in srgb, var(--surface) 84%, black) 100%);
-  transform: translateY(-1px);
-  box-shadow:
-    0 0 14px color-mix(in srgb, var(--accent-dim) 26%, transparent),
-    0 1px 0 rgba(255, 255, 255, 0.1) inset,
-    0 4px 12px rgba(0, 0, 0, 0.32);
-}
-
-.forge-forest-panel .workshop-workspace-link-active {
-  border-color: var(--accent-dim) !important;
-  background:
-    linear-gradient(165deg, color-mix(in srgb, var(--accent) 55%, var(--surface)) 0%, color-mix(in srgb, var(--accent) 30%, var(--bg)) 100%) !important;
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--accent-dim) 40%, transparent),
-    0 0 10px color-mix(in srgb, var(--accent-dim) 24%, transparent) !important;
 }
 
 .forge-content-shell {
@@ -927,8 +619,7 @@ html[data-preview-window="standalone"] .app-content {
 }
 
 .forge-content-body--creating,
-.forge-content-body--library,
-.forge-content-body--split {
+.forge-content-body--library {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -1105,12 +796,6 @@ html[data-preview-window="standalone"] .app-content {
 .workshop-campaign-check {
   background: color-mix(in srgb, var(--surface) 88%, var(--bg));
   color: var(--text);
-}
-
-.forge-content-body--creating .print-generation-root,
-.forge-content-body--library .library-workshop-preview,
-.workshop-page-preview {
-  display: none;
 }
 
 .library-workshop-browse {
@@ -1299,10 +984,6 @@ html[data-preview-window="standalone"] .app-content {
     padding: 1rem 1.5rem 2rem;
     gap: 1.5rem;
   }
-}
-
-.workshop-welcome-panel .forge-forest-canopy {
-  margin: 0 -1px;
 }
 
 .workshop-welcome-intro {
@@ -2260,8 +1941,7 @@ html[data-preview-window="standalone"] .app-content {
    Variables are re-scoped to parchment/ink inside these containers so all
    inner content (markdown pages, tables, carousel controls) reads as crisp
    dark text on paper regardless of the active scene theme. */
-.preview-window-panel,
-.workshop-page-preview {
+.preview-window-panel {
   --bg: #f1e9d8;
   --surface: #fdfaf1;
   --border: rgba(122, 92, 40, 0.45);
@@ -2292,19 +1972,6 @@ html[data-preview-window="standalone"] .app-content {
     0 4px 26px rgba(0, 0, 0, 0.4);
 }
 
-.workshop-page-preview {
-  border: 1px solid #9c7a3c;
-  border-radius: 0.75rem;
-  padding: 1rem 1.15rem;
-  background:
-    radial-gradient(ellipse 120% 100% at 50% 50%, transparent 62%, rgba(150, 112, 50, 0.14) 100%),
-    linear-gradient(180deg, #fdfaf1 0%, #f8f2e2 100%);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.9) inset,
-    0 0 0 4px rgba(154, 116, 22, 0.09) inset,
-    0 4px 22px rgba(0, 0, 0, 0.35);
-}
-
 .preview-window-panel > .flex:first-child h2 {
   color: var(--accent-dim);
   text-shadow: none;
@@ -2313,17 +1980,13 @@ html[data-preview-window="standalone"] .app-content {
 /* Fields inside the paper stay light with dark ink */
 .preview-window-panel input:not([type="checkbox"]):not([type="radio"]),
 .preview-window-panel select,
-.preview-window-panel textarea,
-.workshop-page-preview input:not([type="checkbox"]):not([type="radio"]),
-.workshop-page-preview select,
-.workshop-page-preview textarea {
+.preview-window-panel textarea {
   background: #fffdf6;
   color: var(--text);
   border-color: var(--border);
 }
 
-.preview-window-panel .btn,
-.workshop-page-preview .btn {
+.preview-window-panel .btn {
   background: linear-gradient(180deg, #fffdf6 0%, #f3ecda 100%);
   color: var(--text);
   border-color: var(--border);
@@ -2331,14 +1994,12 @@ html[data-preview-window="standalone"] .app-content {
   box-shadow: var(--shadow-btn);
 }
 
-.preview-window-panel .btn:hover:not(:disabled),
-.workshop-page-preview .btn:hover:not(:disabled) {
+.preview-window-panel .btn:hover:not(:disabled) {
   border-color: var(--accent);
   box-shadow: 0 0 8px rgba(154, 116, 22, 0.25);
 }
 
-.preview-window-panel .btn-primary,
-.workshop-page-preview .btn-primary {
+.preview-window-panel .btn-primary {
   background: linear-gradient(180deg, #a06a20 0%, var(--accent) 100%);
   color: #fffdf6;
   border-color: var(--accent-dim);
@@ -2940,5 +2601,207 @@ article.adventure-md .module-read-aloud p {
     max-width: none !important;
     gap: 0 !important;
     padding: 0 !important;
+  }
+}
+
+/* ---- D&D UI polish — micro-interactions, tooltips ------------------------- */
+
+.fantasy-panel {
+  animation: panel-page-turn 0.28s ease-out;
+}
+
+@keyframes panel-page-turn {
+  from {
+    opacity: 0.94;
+    transform: perspective(800px) rotateX(2deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes arcane-shimmer {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-dim) 20%, transparent);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 12px color-mix(in srgb, var(--accent-dim) 18%, transparent),
+      0 0 8px color-mix(in srgb, var(--accent-dim) 12%, transparent);
+  }
+}
+
+.library-entry-row--magical:hover {
+  animation: arcane-shimmer 1.8s ease-in-out infinite;
+}
+
+.library-entry-row:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-dim) 24%, transparent);
+}
+
+.fantasy-tooltip {
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.65rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  box-shadow: var(--shadow-soft);
+}
+
+.fantasy-tooltip-dm-tip {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px dashed color-mix(in srgb, var(--accent-dim) 35%, transparent);
+  font-size: 0.68rem;
+  color: var(--text-soft);
+}
+
+.btn,
+.library-shelf-tab,
+.workshop-workspace-icon {
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+[data-theme]:not([data-theme="wanderers-journal"]) .forge-forest-panel {
+  overflow: hidden;
+}
+
+/* ---- DM dashboard + workspace navigation ----------------------------------- */
+
+.dm-dashboard-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.dm-dashboard-card {
+  border: 1px solid color-mix(in srgb, var(--accent-dim) 28%, transparent);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  padding: 0.85rem 0.95rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.dm-dashboard-link-row {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dm-dashboard-link-row:hover {
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-dim) 22%, transparent);
+}
+
+.forge-layout-with-sidebar {
+  display: flex;
+  gap: 0.75rem;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.forge-layout-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.workshop-breadcrumbs {
+  padding: 0.15rem 0.1rem 0;
+}
+
+.collapsible-workshop-sidebar {
+  width: 13.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0.55rem;
+  transition: width 0.2s ease;
+}
+
+.collapsible-workshop-sidebar--collapsed {
+  width: 3.75rem;
+}
+
+.collapsible-workshop-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  margin-bottom: 0.45rem;
+}
+
+.collapsible-workshop-sidebar-toggle {
+  min-width: 2rem;
+  padding-inline: 0.45rem;
+}
+
+.collapsible-workshop-sidebar-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-right: 0.1rem;
+}
+
+.collapsible-workshop-sidebar-group + .collapsible-workshop-sidebar-group {
+  margin-top: 0.65rem;
+}
+
+.collapsible-workshop-sidebar-group-label {
+  margin-bottom: 0.35rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.collapsible-workshop-sidebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.collapsible-workshop-sidebar-list > li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.collapsible-workshop-sidebar-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-soft);
+  line-height: 1.2;
+}
+
+@media (max-width: 900px) {
+  .forge-layout-with-sidebar {
+    flex-direction: column;
+  }
+
+  .collapsible-workshop-sidebar,
+  .collapsible-workshop-sidebar--collapsed {
+    width: 100%;
+  }
+
+  .collapsible-workshop-sidebar-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .collapsible-workshop-sidebar-list > li {
+    flex-direction: column;
+    align-items: center;
+    width: 3.5rem;
+  }
+
+  .collapsible-workshop-sidebar-label {
+    display: none;
   }
 }

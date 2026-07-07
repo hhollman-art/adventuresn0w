@@ -1,0 +1,214 @@
+{
+  "version": 1,
+  "registryModule": "src/lib/ciRegistry.ts",
+  "schemas": {
+    "seed.realm": {
+      "file": "seed.realm.json",
+      "category": "seeds",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/realmSeeds.ts",
+      "status": "shipped"
+    },
+    "seed.adventure": {
+      "file": "seed.adventure.json",
+      "category": "seeds",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/realmSeeds.ts",
+      "status": "shipped"
+    },
+    "seed.characters": {
+      "file": "seed.characters.json",
+      "category": "seeds",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/realmSeeds.ts",
+      "status": "shipped"
+    },
+    "seed.maps": {
+      "file": "seed.maps.json",
+      "category": "seeds",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/realmSeeds.ts",
+      "status": "shipped"
+    },
+    "seed.props": {
+      "file": "seed.props.json",
+      "category": "seeds",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/realmSeeds.ts",
+      "status": "shipped"
+    },
+    "result.realm": {
+      "file": "result.realm.json",
+      "category": "results",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/generationLibrary.ts",
+      "status": "shipped"
+    },
+    "result.adventure": {
+      "file": "result.adventure.json",
+      "category": "results",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/generationLibrary.ts",
+      "status": "shipped"
+    },
+    "result.characters": {
+      "file": "result.characters.json",
+      "category": "results",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/generationLibrary.ts",
+      "status": "shipped"
+    },
+    "result.maps": {
+      "file": "result.maps.json",
+      "category": "results",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/generationLibrary.ts",
+      "status": "shipped"
+    },
+    "result.props": {
+      "file": "result.props.json",
+      "category": "results",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/generationLibrary.ts",
+      "status": "shipped"
+    },
+    "character.sheet": {
+      "file": "character.sheet.json",
+      "category": "characters",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/tabletop/characterLibrary.ts",
+      "status": "shipped"
+    },
+    "item.equipment": {
+      "file": "item.equipment.json",
+      "category": "items",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/itemLibrary.ts",
+      "status": "shipped"
+    },
+    "item.magic": {
+      "file": "item.magic.json",
+      "category": "items",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/itemLibrary.ts",
+      "status": "shipped"
+    },
+    "item.srd-equipment": {
+      "file": "item.srd-equipment.json",
+      "category": "items",
+      "provenance": "srd",
+      "inBackup": false,
+      "storageModule": "src/lib/srd/dnd5eApi.ts",
+      "status": "shipped"
+    },
+    "item.srd-magic": {
+      "file": "item.srd-magic.json",
+      "category": "items",
+      "provenance": "srd",
+      "inBackup": false,
+      "storageModule": "src/lib/srd/dnd5eApi.ts",
+      "status": "shipped"
+    },
+    "party.roster": {
+      "file": "party.roster.json",
+      "category": "parties",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/tabletop/characterRoster.ts",
+      "status": "shipped"
+    },
+    "campaign.record": {
+      "file": "campaign.record.json",
+      "category": "campaigns",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/campaigns.ts",
+      "status": "shipped"
+    },
+    "session.tabletop": {
+      "file": "session.tabletop.json",
+      "category": "sessions",
+      "provenance": "user",
+      "inBackup": false,
+      "storageModule": "src/lib/tabletop/store.ts",
+      "status": "shipped"
+    },
+    "session.snapshot": {
+      "file": "session.snapshot.json",
+      "category": "sessions",
+      "provenance": "user",
+      "inBackup": false,
+      "storageModule": "src/lib/tabletop/store.ts",
+      "status": "shipped"
+    },
+    "rules.srd-entry": {
+      "file": "rules.srd-entry.json",
+      "category": "rules",
+      "provenance": "srd",
+      "inBackup": false,
+      "storageModule": "src/lib/srd/",
+      "status": "shipped"
+    },
+    "monster.srd-entry": {
+      "file": "monster.srd-entry.json",
+      "category": "monsters",
+      "provenance": "srd",
+      "inBackup": false,
+      "storageModule": "src/lib/srd/",
+      "status": "shipped"
+    },
+    "npc.record": {
+      "file": "planned/npc.record.json",
+      "category": "seeds",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/worldAssets/npc.ts",
+      "status": "planned"
+    },
+    "location.record": {
+      "file": "planned/location.record.json",
+      "category": "seeds",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/worldAssets/location.ts",
+      "status": "planned"
+    },
+    "faction.record": {
+      "file": "planned/faction.record.json",
+      "category": "seeds",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/worldAssets/faction.ts",
+      "status": "planned"
+    },
+    "encounter.record": {
+      "file": "planned/encounter.record.json",
+      "category": "seeds",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/worldAssets/encounter.ts",
+      "status": "planned"
+    },
+    "session.record": {
+      "file": "planned/session.record.json",
+      "category": "sessions",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/sessions/record.ts",
+      "status": "planned"
+    }
+  }
+}

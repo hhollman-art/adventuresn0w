@@ -34,3 +34,34 @@ export type SrdCatalogue = {
   spells: readonly SrdSpellEntry[];
   ancestries: readonly SrdAncestryEntry[];
 };
+
+/** Entity kinds extracted from the bundled SRD document (SRD_CC_v5.2.x). */
+export type SrdEntityKind =
+  | "spell"
+  | "magic-item"
+  | "equipment"
+  | "monster"
+  | "class"
+  | "species"
+  | "feat"
+  | "background"
+  | "condition"
+  | "rule";
+
+/** Stable id for one read-only SRD Creation File (CF), e.g. `spell:fireball`. */
+export type SrdEntityId = `${SrdEntityKind}:${string}`;
+
+/** Lightweight catalogue row — full text loaded on demand from the document body. */
+export type SrdEntitySummary = {
+  id: SrdEntityId;
+  kind: SrdEntityKind;
+  name: string;
+  /** Normalized lookup key (matches document index). */
+  key: string;
+  chapter: string;
+  /** First metadata line when present (level/school, rarity, CR, etc.). */
+  subtitle: string | null;
+  /** Byte range in `SRD_DOCUMENT_BODY`. */
+  start: number;
+  end: number;
+};

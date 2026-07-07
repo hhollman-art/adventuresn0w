@@ -9,6 +9,7 @@ import {
 } from "@/lib/workplace/srdItemCatalog";
 import type { LibraryListEntry } from "@/lib/workshop/libraryCatalog";
 import type { SrdItemRef } from "@/lib/srd/srdItemRef";
+import { openSrdItemPreview } from "@/lib/srd/openSrdPreview";
 import { ciClassLabel } from "@/lib/ciRegistry";
 
 type SrdItemCatalogSectionProps = {
@@ -72,7 +73,7 @@ export default function SrdItemCatalogSection({
             Included SRD items
           </h2>
           <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-            Every entry is a read-only Creation File (CF) (<code>item.srd-equipment</code> or{" "}
+            Every entry is a read-only CF (<code>item.srd-equipment</code> or{" "}
             <code>item.srd-magic</code>) from the bundled catalogue — add them to character
             gear or preview rules text here and in the Library.
           </p>
@@ -122,7 +123,10 @@ export default function SrdItemCatalogSection({
               <li key={entry.id}>
                 <button
                   type="button"
-                  onClick={() => onSelect?.(ref)}
+                  onClick={() => {
+                    openSrdItemPreview(ref);
+                    onSelect?.(ref);
+                  }}
                   className="w-full rounded-xl border p-3 text-left text-sm transition hover:border-[var(--accent-dim)]"
                   style={{
                     borderColor: selected ? "var(--accent)" : "var(--border)",

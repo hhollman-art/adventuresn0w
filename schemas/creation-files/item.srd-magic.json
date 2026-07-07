@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/item.srd-magic.json",
+  "title": "item.srd-magic — Virtual SRD magic treasure row",
+  "type": "object",
+  "required": ["id", "ciClass", "title", "srdEntityId"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^srd-entity:" },
+    "ciClass": { "const": "item.srd-magic" },
+    "title": { "type": "string" },
+    "srdEntityId": { "$ref": "common.json#/$defs/srdEntityId" },
+    "srdItemRef": {
+      "allOf": [
+        { "$ref": "common.json#/$defs/srdItemRef" },
+        { "properties": { "resource": { "const": "magic-items" } } }
+      ]
+    },
+    "provenance": { "const": "srd" }
+  },
+  "additionalProperties": false
+}

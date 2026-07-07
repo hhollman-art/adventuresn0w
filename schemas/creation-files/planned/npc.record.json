@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/planned/npc.record.json",
+  "title": "npc.record — NPC CF (planned)",
+  "description": "Stub — not yet registered in ciRegistry. Additive future class for named NPCs with stat blocks, motives, and secrets.",
+  "x-status": "planned",
+  "type": "object",
+  "required": ["id", "createdAt", "updatedAt", "name", "markdown"],
+  "properties": {
+    "id": { "$ref": "../common.json#/$defs/uuidOrId" },
+    "createdAt": { "$ref": "../common.json#/$defs/isoDateTime" },
+    "updatedAt": { "$ref": "../common.json#/$defs/isoDateTime" },
+    "name": { "$ref": "../common.json#/$defs/nonEmptyString" },
+    "briefDescription": { "type": "string" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "motivation": { "type": "string" },
+    "secrets": { "type": "string" },
+    "statBlockRef": {
+      "type": ["string", "null"],
+      "description": "Optional link to rules.srd-entry monster id or freeform markdown ref"
+    },
+    "locationId": {
+      "type": ["string", "null"],
+      "description": "Future link to location.record"
+    },
+    "factionIds": {
+      "type": "array",
+      "items": { "$ref": "../common.json#/$defs/uuidOrId" }
+    },
+    "markdown": { "type": "string" },
+    "cfMetadata": { "$ref": "../common.json#/$defs/cfMetadata" }
+  },
+  "additionalProperties": false
+}
