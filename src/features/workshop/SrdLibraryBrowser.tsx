@@ -40,7 +40,12 @@ const BROWSER_KINDS: {
   {
     kind: "class",
     label: "Classes",
-    description: "Character classes and their SRD features.",
+    description: "Character classes from the bundled SRD.",
+  },
+  {
+    kind: "class-feature",
+    label: "Class features",
+    description: "Subclass features, invocations, and other class abilities.",
   },
   {
     kind: "species",
@@ -60,12 +65,32 @@ const BROWSER_KINDS: {
   {
     kind: "condition",
     label: "Conditions",
-    description: "Combat and exploration conditions.",
+    description: "Combat conditions such as Blinded, Grappled, and Prone.",
+  },
+  {
+    kind: "skill",
+    label: "Skills",
+    description: "Skill definitions from the rules glossary.",
+  },
+  {
+    kind: "glossary-term",
+    label: "Glossary",
+    description: "General rules terms from the SRD glossary.",
+  },
+  {
+    kind: "weapon",
+    label: "Weapons",
+    description: "Weapon entries with damage dice and properties.",
+  },
+  {
+    kind: "armor",
+    label: "Armor",
+    description: "Armor entries with AC and requirements.",
   },
   {
     kind: "equipment",
     label: "Equipment",
-    description: "Weapons, armor, and adventuring gear.",
+    description: "Adventuring gear, tools, packs, and services.",
   },
   {
     kind: "magic-item",

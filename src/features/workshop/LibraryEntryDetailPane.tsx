@@ -122,7 +122,7 @@ export default function LibraryEntryDetailPane(props: LibraryEntryDetailPaneProp
       >
         <h3 className="font-display text-base font-bold text-[var(--text)]">{selection.name}</h3>
         <p className="mt-2 text-[var(--muted)]">
-          SRD reference — open the {PREVIEW_WINDOW} tab for the full read-only page.
+          SRD reference — open the {PREVIEW_WINDOW} popup for the full read-only page.
         </p>
       </div>
     );

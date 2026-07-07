@@ -12,7 +12,7 @@ type SrdRefChipProps = {
   className?: string;
 };
 
-/** Inline chip that opens bundled SRD text in the Scy Window. */
+/** Inline chip that opens bundled SRD text in the Scrying Glass. */
 export default function SrdRefChip({ entityId, name, className = "" }: SrdRefChipProps) {
   const entity = getSrdEntity(entityId);
   const label = name ?? entity?.name ?? entityId;

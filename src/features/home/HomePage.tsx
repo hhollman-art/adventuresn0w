@@ -191,7 +191,7 @@ export default function Home(props: PageProps<"/">) {
   const [characterSlots, setCharacterSlots] = useState<CharacterSlotSpec[]>(() =>
     defaultCharacterSlots(),
   );
-  /** Library tab: selected asset shown in the Scy Window. */
+  /** Library tab: selected asset shown in the Scrying Glass. */
   const [librarySelection, setLibrarySelection] = useState<LibraryViewSelection>(null);
   const [libraryResults, setLibraryResults] = useState<LibraryItem[]>([]);
   const [libraryCharacters, setLibraryCharacters] = useState<SavedCharacter[]>([]);

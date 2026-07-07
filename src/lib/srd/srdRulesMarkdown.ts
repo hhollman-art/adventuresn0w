@@ -21,7 +21,7 @@ function buildCoverIntro(catalogue: SrdCatalogue): string {
   return [
     `Full **System Reference Document** English text (**${SRD_DOCUMENT_PDF_ID}**) bundled for read-only browse in D&D Easy.`,
     "",
-    "Use **Contents** in the Scy Window, then page through each section — major chapters match the official PDF, with subsections (spells, monsters, magic items, and similar) on their own pages where the source uses headings.",
+    "Use **Contents** in the Scrying Glass, then page through each section — major chapters match the official PDF, with subsections (spells, monsters, magic items, and similar) on their own pages where the source uses headings.",
     "",
     "**Included chapters:** " + chapterList + ".",
     "",

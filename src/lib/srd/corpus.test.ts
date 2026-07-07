@@ -44,6 +44,13 @@ describe("SRD corpus", () => {
     expect(entry.srdEntityId).toBe("spell:fireball");
   });
 
+  it("indexes bundled class entities after taxonomy rebuild", () => {
+    expect(SRD_ENTITY_COUNTS.class).toBe(12);
+    const wizard = getSrdEntity("class:wizard");
+    expect(wizard?.kind).toBe("class");
+    expect(wizard?.taxonomyCategory).toBe("classes");
+  });
+
   it("maps monster entities to the monsters shelf", () => {
     const entity = getSrdEntity("monster:goblin-warrior");
     expect(entity).toBeDefined();

@@ -1,5 +1,5 @@
-import WorkshopPreviewPage from "@/features/workshop/WorkshopPreviewPage";
+import WorkshopPreviewRedirect from "@/features/workshop/WorkshopPreviewRedirect";
 
 export default function PreviewRoutePage() {
-  return <WorkshopPreviewPage />;
+  return <WorkshopPreviewRedirect />;
 }

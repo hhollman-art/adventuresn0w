@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildChapterMarkers, chapterForOffset } from "./srd-chapter-order.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_INDEX = join(__dirname, "..", "src", "lib", "srd", "srdDocumentIndex.data.ts");
@@ -17,29 +18,7 @@ function normalizeKey(name) {
     .replace(/^-+|-+$/g, "");
 }
 
-function chapterForIndex(index) {
-  const markers = [
-    { id: "playing-the-game", title: "Playing the Game", start: body.indexOf("## Playing the Game\n") },
-    { id: "character-creation", title: "Character Creation", start: body.indexOf("## Character Creation\n") },
-    { id: "character-origins", title: "Character Origins", start: body.indexOf("## Character Origins\n") },
-    { id: "classes", title: "Character Classes", start: body.indexOf("## Character Classes\n") },
-    { id: "feats", title: "Feats", start: body.indexOf("## Feats\n") },
-    { id: "equipment", title: "Equipment", start: body.indexOf("## Equipment\n") },
-    { id: "spells", title: "Spells", start: body.indexOf("## Spells\n") },
-    { id: "rules-glossary", title: "Rules Glossary", start: body.indexOf("## Rules Glossary\n") },
-    { id: "gameplay-toolbox", title: "Gameplay Toolbox", start: body.indexOf("## Gameplay Toolbox\n") },
-    { id: "magic-items", title: "Magic Items", start: body.lastIndexOf("## Magic Items\n") },
-    { id: "monsters", title: "Monsters", start: body.indexOf("## Monsters\n") },
-    { id: "monsters-a-z", title: "Monsters A–Z", start: body.indexOf("## Monsters A") },
-    { id: "animals", title: "Animals", start: body.indexOf("## Animals\n") },
-  ].filter((m) => m.start >= 0);
-
-  let chapter = markers[0]?.id ?? "unknown";
-  for (const m of markers) {
-    if (m.start <= index) chapter = m.id;
-  }
-  return chapter;
-}
+const chapterMarkers = buildChapterMarkers(body);
 
 const headings = [];
 const re = /^(#{3,5}) (.+)$/gm;
@@ -65,7 +44,7 @@ for (let i = 0; i < headings.length; i++) {
   }
   const key = normalizeKey(h.title);
   if (!key) continue;
-  const chapter = chapterForIndex(h.start);
+  const chapter = chapterForOffset(chapterMarkers, h.start);
   const next = { key, title: h.title, start: h.start, end, level: h.level, chapter };
   if (!entries[key]) {
     entries[key] = next;
@@ -76,11 +55,13 @@ for (let i = 0; i < headings.length; i++) {
     let s = 0;
     if (entry.chapter === "spells" && entry.level === 5) s += 10;
     if (entry.chapter === "magic-items" && entry.level === 5) s += 10;
-    if (entry.chapter === "monsters-a-z") s += 8;
+    if (entry.chapter === "monsters-a-z" && entry.level >= 4) s += 8;
     if (entry.chapter === "classes" && entry.level === 3) s += 10;
     if (entry.chapter === "feats" && entry.level === 5) s += 8;
     if (entry.chapter === "character-origins" && entry.level === 3) s += 8;
+    if (entry.chapter === "character-origins" && entry.level === 5) s += 6;
     if (entry.chapter === "rules-glossary" && entry.level === 5) s += 6;
+    if (entry.chapter === "equipment" && entry.level === 5) s += 5;
     s += Math.max(0, 6 - entry.level);
     return s;
   };
@@ -108,4 +89,8 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = ${JSON.strin
   "utf8",
 );
 
-console.log(`Wrote ${list.length} index entries`);
+const chapterCounts = list.reduce((acc, e) => {
+  acc[e.chapter] = (acc[e.chapter] ?? 0) + 1;
+  return acc;
+}, {});
+console.log(`Wrote ${list.length} index entries`, chapterCounts);

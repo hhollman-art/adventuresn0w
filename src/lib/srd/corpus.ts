@@ -12,12 +12,17 @@ const ENTITY_KIND_LABEL: Record<SrdEntityKind, string> = {
   spell: "SRD spell",
   "magic-item": "SRD magic item",
   equipment: "SRD equipment",
+  weapon: "SRD weapon",
+  armor: "SRD armor",
   monster: "SRD monster",
   class: "SRD class",
+  "class-feature": "SRD class feature",
   species: "SRD species",
   feat: "SRD feat",
   background: "SRD background",
   condition: "SRD condition",
+  skill: "SRD skill",
+  "glossary-term": "SRD glossary term",
   rule: "SRD rule",
 };
 
@@ -25,12 +30,17 @@ const KIND_TO_API_RESOURCE: Partial<Record<SrdEntityKind, SrdApiResource>> = {
   spell: "spells",
   "magic-item": "magic-items",
   equipment: "equipment",
+  weapon: "equipment",
+  armor: "equipment",
   monster: "monsters",
   class: "classes",
+  "class-feature": "classes",
   species: "races",
   feat: "feats",
   background: "backgrounds",
   condition: "conditions",
+  skill: "rules",
+  "glossary-term": "rule-sections",
   rule: "rule-sections",
 };
 
@@ -50,7 +60,7 @@ export function srdEntityKindLabel(kind: SrdEntityKind): string {
 }
 
 export function ciClassForSrdEntity(kind: SrdEntityKind): CiClass {
-  if (kind === "equipment") return "item.srd-equipment";
+  if (kind === "equipment" || kind === "weapon" || kind === "armor") return "item.srd-equipment";
   if (kind === "magic-item") return "item.srd-magic";
   if (kind === "monster") return "monster.srd-entry";
   return "rules.srd-entry";
@@ -111,7 +121,7 @@ export function srdEntityToPreviewMarkdown(entity: SrdEntitySummary): string | n
 
 /** Map item-like entities to the existing SRD item ref shape. */
 export function srdEntityToItemRef(entity: SrdEntitySummary): SrdItemRef | null {
-  if (entity.kind === "equipment") {
+  if (entity.kind === "equipment" || entity.kind === "weapon" || entity.kind === "armor") {
     return { resource: "equipment", index: entity.key, name: entity.name };
   }
   if (entity.kind === "magic-item") {
@@ -120,7 +130,12 @@ export function srdEntityToItemRef(entity: SrdEntitySummary): SrdItemRef | null 
   return null;
 }
 
-const ITEM_ENTITY_KINDS: readonly SrdEntityKind[] = ["equipment", "magic-item"];
+const ITEM_ENTITY_KINDS: readonly SrdEntityKind[] = [
+  "equipment",
+  "weapon",
+  "armor",
+  "magic-item",
+];
 
 /** All bundled SRD equipment and magic item rows for the Items shelf. */
 export function listSrdItemLibraryEntries(): LibraryListEntry[] {
@@ -137,7 +152,8 @@ export function listSrdMonstersLibraryEntries(): LibraryListEntry[] {
 /** Spells, classes, rules, and other non-item, non-monster SRD rows for the Rules shelf. */
 export function listSrdRulesLibraryEntries(): LibraryListEntry[] {
   return SRD_ENTITIES.filter(
-    (entity) => entity.kind !== "equipment" && entity.kind !== "magic-item" && entity.kind !== "monster",
+    (entity) =>
+      !ITEM_ENTITY_KINDS.includes(entity.kind) && entity.kind !== "monster",
   ).map(srdEntityToLibraryEntry);
 }
 
@@ -149,7 +165,10 @@ export function srdEntityToLibraryEntry(entity: SrdEntitySummary): LibraryListEn
     id: `srd-entity:${entity.id}`,
     ciClass,
     category:
-      entity.kind === "equipment" || entity.kind === "magic-item"
+      entity.kind === "equipment" ||
+      entity.kind === "weapon" ||
+      entity.kind === "armor" ||
+      entity.kind === "magic-item"
         ? "items"
         : entity.kind === "monster"
           ? "monsters"
@@ -165,9 +184,10 @@ export function srdEntityToLibraryEntry(entity: SrdEntitySummary): LibraryListEn
 }
 
 export function parseSrdEntityId(raw: string): SrdEntityId | null {
-  const m = /^(spell|magic-item|equipment|monster|class|species|feat|background|condition|rule):(.+)$/.exec(
-    raw.trim(),
-  );
+  const m =
+    /^(spell|magic-item|equipment|weapon|armor|monster|class|class-feature|species|feat|background|condition|skill|glossary-term|rule):(.+)$/.exec(
+      raw.trim(),
+    );
   if (!m) return null;
   return `${m[1]}:${m[2]}` as SrdEntityId;
 }

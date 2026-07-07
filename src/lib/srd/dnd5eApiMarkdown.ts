@@ -382,7 +382,7 @@ export const SRD_LIBRARY_INTRO_MARKDOWN = `# SRD reference
 
 Browse **spells**, **monsters**, **classes**, **equipment**, **magic items**, and **rules** from the bundled **SRD_CC_v5.2.1** document (${DND5E_API_VERSION} API used for browse lists where needed).
 
-Pick a category and entry in **Browse repository** — full **SRD 5.2.1** text opens in the Scy Window when available. This material is read-only, ships under **CC BY 4.0**, and never needs backing up.
+Pick a category and entry in **Browse repository** — full **SRD 5.2.1** text opens in the Scrying Glass when available. This material is read-only, ships under **CC BY 4.0**, and never needs backing up.
 
 Character pickers elsewhere in the app use the bundled SRD spell/class index.
 

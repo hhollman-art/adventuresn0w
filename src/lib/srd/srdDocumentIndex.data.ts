@@ -29,14 +29,6 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "chapter": "playing-the-game"
   },
   {
-    "key": "ability-scores",
-    "title": "Ability Scores",
-    "start": 2581,
-    "end": 3701,
-    "level": 4,
-    "chapter": "playing-the-game"
-  },
-  {
     "key": "ability-modifiers",
     "title": "Ability Modifiers",
     "start": 3701,
@@ -113,14 +105,6 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "title": "The Bonus Doesn't Stack",
     "start": 18859,
     "end": 19512,
-    "level": 4,
-    "chapter": "playing-the-game"
-  },
-  {
-    "key": "skill-proficiencies",
-    "title": "Skill Proficiencies",
-    "start": 19512,
-    "end": 23647,
     "level": 4,
     "chapter": "playing-the-game"
   },
@@ -917,10 +901,34 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "chapter": "character-origins"
   },
   {
+    "key": "ability-scores",
+    "title": "Ability Scores",
+    "start": 116961,
+    "end": 117165,
+    "level": 5,
+    "chapter": "character-origins"
+  },
+  {
     "key": "feat",
     "title": "Feat",
     "start": 117165,
     "end": 117260,
+    "level": 5,
+    "chapter": "character-origins"
+  },
+  {
+    "key": "skill-proficiencies",
+    "title": "Skill Proficiencies",
+    "start": 117260,
+    "end": 117359,
+    "level": 5,
+    "chapter": "character-origins"
+  },
+  {
+    "key": "tool-proficiency",
+    "title": "Tool Proficiency",
+    "start": 117359,
+    "end": 117551,
     "level": 5,
     "chapter": "character-origins"
   },
@@ -938,7 +946,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 117643,
     "end": 119068,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "acolyte",
@@ -946,7 +954,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 117673,
     "end": 118018,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "criminal",
@@ -954,7 +962,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 118018,
     "end": 118336,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "sage",
@@ -962,7 +970,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 118336,
     "end": 118680,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "soldier",
@@ -970,7 +978,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 118680,
     "end": 119068,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "character-species",
@@ -978,7 +986,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 119068,
     "end": 133959,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "parts-of-a-species",
@@ -986,7 +994,31 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 120036,
     "end": 120938,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "character-origins"
+  },
+  {
+    "key": "creature-type",
+    "title": "Creature Type",
+    "start": 120102,
+    "end": 120331,
+    "level": 5,
+    "chapter": "character-origins"
+  },
+  {
+    "key": "size",
+    "title": "Size",
+    "start": 120331,
+    "end": 120573,
+    "level": 5,
+    "chapter": "character-origins"
+  },
+  {
+    "key": "speed",
+    "title": "Speed",
+    "start": 120573,
+    "end": 120646,
+    "level": 5,
+    "chapter": "character-origins"
   },
   {
     "key": "special-traits",
@@ -994,7 +1026,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 120646,
     "end": 120938,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "species-descriptions",
@@ -1002,7 +1034,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 120938,
     "end": 133959,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "dragonborn",
@@ -1010,7 +1042,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 120965,
     "end": 123486,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "dwarf",
@@ -1018,7 +1050,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 123486,
     "end": 124319,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "elf",
@@ -1026,7 +1058,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 124319,
     "end": 126424,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "gnome",
@@ -1034,7 +1066,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 126424,
     "end": 128229,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "goliath",
@@ -1042,7 +1074,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 128229,
     "end": 130212,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "halfling",
@@ -1050,7 +1082,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 130212,
     "end": 130848,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "human",
@@ -1058,7 +1090,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 130848,
     "end": 131292,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "orc",
@@ -1066,7 +1098,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 131292,
     "end": 132000,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "tiefling",
@@ -1074,7 +1106,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 132000,
     "end": 133959,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "character-origins"
   },
   {
     "key": "barbarian",
@@ -1082,7 +1114,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 133959,
     "end": 147706,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "becoming-a-barbarian",
@@ -1090,7 +1122,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 134802,
     "end": 135279,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "as-a-level-1-character",
@@ -1098,7 +1130,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 134831,
     "end": 135012,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "as-a-multiclass-character",
@@ -1106,7 +1138,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 135012,
     "end": 135279,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "barbarian-class-features",
@@ -1114,7 +1146,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 135279,
     "end": 145950,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-rage",
@@ -1122,7 +1154,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 138628,
     "end": 140188,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-unarmored-defense",
@@ -1130,7 +1162,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 140188,
     "end": 140389,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-weapon-mastery",
@@ -1138,7 +1170,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 140389,
     "end": 140879,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-danger-sense",
@@ -1146,7 +1178,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 140879,
     "end": 141109,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-reckless-attack",
@@ -1154,7 +1186,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 141109,
     "end": 141466,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-barbarian-subclass",
@@ -1162,7 +1194,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 141466,
     "end": 141826,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-primal-knowledge",
@@ -1170,7 +1202,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 141826,
     "end": 142412,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-4-ability-score-improvement",
@@ -1178,7 +1210,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 142412,
     "end": 142630,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-extra-attack",
@@ -1186,7 +1218,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 142630,
     "end": 142747,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-fast-movement",
@@ -1194,7 +1226,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 142747,
     "end": 142848,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-feral-instinct",
@@ -1202,7 +1234,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 142848,
     "end": 142953,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-instinctive-pounce",
@@ -1210,7 +1242,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 142953,
     "end": 143082,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-brutal-strike",
@@ -1218,7 +1250,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 143082,
     "end": 143860,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-11-relentless-rage",
@@ -1226,7 +1258,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 143860,
     "end": 144304,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-13-improved-brutal-strike",
@@ -1234,7 +1266,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 144304,
     "end": 144815,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-15-persistent-rage",
@@ -1242,7 +1274,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 144815,
     "end": 145269,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-17-improved-brutal-strike",
@@ -1250,7 +1282,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 145269,
     "end": 145474,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-18-indomitable-might",
@@ -1258,7 +1290,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 145474,
     "end": 145650,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-19-epic-boon",
@@ -1266,7 +1298,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 145650,
     "end": 145818,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-20-primal-champion",
@@ -1274,7 +1306,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 145818,
     "end": 145950,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "barbarian-subclass-path-of-the-berserker",
@@ -1282,7 +1314,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 145950,
     "end": 147706,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-frenzy",
@@ -1290,7 +1322,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 146254,
     "end": 146615,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-mindless-rage",
@@ -1298,7 +1330,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 146615,
     "end": 146817,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-10-retaliation",
@@ -1306,7 +1338,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 146817,
     "end": 147023,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-14-intimidating-presence",
@@ -1314,7 +1346,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 147023,
     "end": 147706,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "bard",
@@ -1322,7 +1354,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 147706,
     "end": 178220,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "becoming-a-bard",
@@ -1330,7 +1362,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 148609,
     "end": 149211,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "bard-class-features",
@@ -1338,7 +1370,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 149211,
     "end": 162580,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-bardic-inspiration",
@@ -1346,7 +1378,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 156323,
     "end": 157434,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-spellcasting",
@@ -1354,7 +1386,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 157434,
     "end": 159637,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-expertise",
@@ -1362,7 +1394,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 159637,
     "end": 159926,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-jack-of-all-trades",
@@ -1370,7 +1402,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 159926,
     "end": 160280,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-bard-subclass",
@@ -1378,7 +1410,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 160280,
     "end": 160614,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-font-of-inspiration",
@@ -1386,7 +1418,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 160827,
     "end": 161075,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-countercharm",
@@ -1394,7 +1426,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 161075,
     "end": 161408,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-10-magical-secrets",
@@ -1402,7 +1434,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 161408,
     "end": 161935,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-18-superior-inspiration",
@@ -1410,7 +1442,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 161935,
     "end": 162095,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-20-words-of-creation",
@@ -1418,7 +1450,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 162255,
     "end": 162580,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "bard-spell-list",
@@ -1426,7 +1458,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 162580,
     "end": 176352,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "cantrips-level-0-bard-spells",
@@ -1434,7 +1466,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 162902,
     "end": 163979,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-bard-spells",
@@ -1442,7 +1474,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 163979,
     "end": 166236,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-bard-spells",
@@ -1450,7 +1482,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 166236,
     "end": 168413,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-bard-spells",
@@ -1458,7 +1490,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 168413,
     "end": 170113,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-4-bard-spells",
@@ -1466,7 +1498,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 170113,
     "end": 171213,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-bard-spells",
@@ -1474,7 +1506,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 171213,
     "end": 172915,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-bard-spells",
@@ -1482,7 +1514,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 172915,
     "end": 173827,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-bard-spells",
@@ -1490,7 +1522,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 173827,
     "end": 174994,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-8-bard-spells",
@@ -1498,7 +1530,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 174994,
     "end": 175718,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-bard-spells",
@@ -1506,7 +1538,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 175718,
     "end": 176352,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "bard-subclass-college-of-lore",
@@ -1514,7 +1546,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 176352,
     "end": 178220,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-bonus-proficiencies",
@@ -1522,7 +1554,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 176816,
     "end": 176908,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-cutting-words",
@@ -1530,7 +1562,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 176908,
     "end": 177421,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-magical-discoveries",
@@ -1538,7 +1570,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 177421,
     "end": 177915,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-14-peerless-skill",
@@ -1546,7 +1578,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 177915,
     "end": 178220,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "cleric",
@@ -1554,7 +1586,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 178220,
     "end": 208100,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "becoming-a-cleric",
@@ -1562,7 +1594,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 179027,
     "end": 179567,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "cleric-class-features",
@@ -1570,7 +1602,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 179567,
     "end": 193468,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-divine-order",
@@ -1578,7 +1610,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 188468,
     "end": 188932,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-channel-divinity",
@@ -1586,7 +1618,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 188932,
     "end": 190808,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-cleric-subclass",
@@ -1594,7 +1626,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 190808,
     "end": 191146,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-sear-undead",
@@ -1602,7 +1634,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 191361,
     "end": 191685,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-blessed-strikes",
@@ -1610,7 +1642,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 191685,
     "end": 192214,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-10-divine-intervention",
@@ -1618,7 +1650,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 192214,
     "end": 192598,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-14-improved-blessed-strikes",
@@ -1626,7 +1658,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 192598,
     "end": 193033,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-20-greater-divine-intervention",
@@ -1634,7 +1666,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 193185,
     "end": 193468,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "cleric-spell-list",
@@ -1642,7 +1674,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 193468,
     "end": 205477,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "cantrips-level-0-cleric-spells",
@@ -1650,7 +1682,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 193794,
     "end": 194597,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-cleric-spells",
@@ -1658,7 +1690,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 194597,
     "end": 196180,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-cleric-spells",
@@ -1666,7 +1698,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 196180,
     "end": 197916,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-cleric-spells",
@@ -1674,7 +1706,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 197916,
     "end": 199830,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-4-cleric-spells",
@@ -1682,7 +1714,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 199830,
     "end": 200833,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-cleric-spells",
@@ -1690,7 +1722,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 200833,
     "end": 202173,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-cleric-spells",
@@ -1698,7 +1730,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 202173,
     "end": 203326,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-cleric-spells",
@@ -1706,7 +1738,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 203326,
     "end": 204217,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-8-cleric-spells",
@@ -1714,7 +1746,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 204217,
     "end": 204846,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-cleric-spells",
@@ -1722,7 +1754,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 204846,
     "end": 205477,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "cleric-subclass-life-domain",
@@ -1730,7 +1762,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 205477,
     "end": 208100,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-disciple-of-life",
@@ -1738,7 +1770,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 206071,
     "end": 206319,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-life-domain-spells",
@@ -1746,7 +1778,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 206319,
     "end": 207068,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-preserve-life",
@@ -1754,7 +1786,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 207068,
     "end": 207490,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-blessed-healer",
@@ -1762,7 +1794,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 207490,
     "end": 207764,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-17-supreme-healing",
@@ -1770,7 +1802,15 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 207764,
     "end": 208100,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
+  },
+  {
+    "key": "druid",
+    "title": "Druid",
+    "start": 208100,
+    "end": 244817,
+    "level": 3,
+    "chapter": "classes"
   },
   {
     "key": "becoming-a-druid",
@@ -1778,7 +1818,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 209050,
     "end": 209572,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "druid-class-features",
@@ -1786,7 +1826,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 209572,
     "end": 226520,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-druidic",
@@ -1794,7 +1834,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 218914,
     "end": 219385,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-primal-order",
@@ -1802,7 +1842,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 219385,
     "end": 219843,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-wild-shape",
@@ -1810,7 +1850,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 219843,
     "end": 223320,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-wild-companion",
@@ -1818,7 +1858,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 223320,
     "end": 223658,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-druid-subclass",
@@ -1826,7 +1866,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 223658,
     "end": 223999,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-wild-resurgence",
@@ -1834,7 +1874,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 224213,
     "end": 224559,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-elemental-fury",
@@ -1842,7 +1882,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 224559,
     "end": 225040,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-15-improved-elemental-fury",
@@ -1850,7 +1890,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 225040,
     "end": 225368,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-18-beast-spells",
@@ -1858,7 +1898,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 225368,
     "end": 225572,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-20-archdruid",
@@ -1866,7 +1906,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 225738,
     "end": 226520,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "druid-spell-list",
@@ -1874,7 +1914,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 226520,
     "end": 239960,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "cantrips-level-0-druid-spells",
@@ -1882,7 +1922,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 226844,
     "end": 228016,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-druid-spells",
@@ -1890,7 +1930,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 228016,
     "end": 229870,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-druid-spells",
@@ -1898,7 +1938,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 229870,
     "end": 231969,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-druid-spells",
@@ -1906,7 +1946,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 231969,
     "end": 233340,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-4-druid-spells",
@@ -1914,7 +1954,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 233340,
     "end": 235176,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-druid-spells",
@@ -1922,7 +1962,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 235176,
     "end": 236712,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-druid-spells",
@@ -1930,7 +1970,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 236712,
     "end": 237795,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-druid-spells",
@@ -1938,7 +1978,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 237795,
     "end": 238505,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-8-druid-spells",
@@ -1946,7 +1986,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 238505,
     "end": 239413,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-druid-spells",
@@ -1954,7 +1994,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 239413,
     "end": 239960,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "druid-subclass-circle-of-the-land",
@@ -1962,7 +2002,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 239960,
     "end": 244817,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-circle-of-the-land-spells",
@@ -1970,7 +2010,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 240326,
     "end": 242306,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-lands-aid",
@@ -1978,7 +2018,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 242306,
     "end": 242913,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-natural-recovery",
@@ -1986,7 +2026,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 242913,
     "end": 243664,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-10-natures-ward",
@@ -1994,7 +2034,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 243664,
     "end": 244302,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-14-natures-sanctuary",
@@ -2002,7 +2042,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 244302,
     "end": 244817,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "fighter",
@@ -2010,7 +2050,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 244817,
     "end": 254984,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "becoming-a-fighter",
@@ -2018,7 +2058,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 245843,
     "end": 246332,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "fighter-class-features",
@@ -2026,7 +2066,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 246332,
     "end": 253338,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-fighting-style",
@@ -2034,7 +2074,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 249358,
     "end": 249620,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-second-wind",
@@ -2042,7 +2082,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 249620,
     "end": 250115,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-action-surge",
@@ -2050,7 +2090,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 250565,
     "end": 250903,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-tactical-mind",
@@ -2058,7 +2098,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 250903,
     "end": 251297,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-fighter-subclass",
@@ -2066,7 +2106,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 251297,
     "end": 251636,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-tactical-shift",
@@ -2074,7 +2114,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 251976,
     "end": 252142,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-indomitable",
@@ -2082,7 +2122,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 252142,
     "end": 252482,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-tactical-master",
@@ -2090,7 +2130,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 252482,
     "end": 252665,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-11-two-extra-attacks",
@@ -2098,7 +2138,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 252665,
     "end": 252794,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-13-studied-attacks",
@@ -2106,7 +2146,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 252794,
     "end": 253046,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-20-three-extra-attacks",
@@ -2114,7 +2154,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 253208,
     "end": 253338,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "fighter-subclass-champion",
@@ -2122,7 +2162,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 253338,
     "end": 254984,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-improved-critical",
@@ -2130,7 +2170,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 253721,
     "end": 253866,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-remarkable-athlete",
@@ -2138,7 +2178,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 253866,
     "end": 254134,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-additional-fighting-style",
@@ -2146,7 +2186,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 254134,
     "end": 254230,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-10-heroic-warrior",
@@ -2154,7 +2194,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 254230,
     "end": 254408,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-15-superior-critical",
@@ -2162,7 +2202,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 254408,
     "end": 254555,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-18-survivor",
@@ -2170,7 +2210,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 254555,
     "end": 254984,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "monk",
@@ -2178,7 +2218,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 254984,
     "end": 269932,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "becoming-a-monk",
@@ -2186,7 +2226,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 256029,
     "end": 256397,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "monk-class-features",
@@ -2194,7 +2234,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 256397,
     "end": 267823,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-martial-arts",
@@ -2202,7 +2242,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 259911,
     "end": 260920,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-monks-focus",
@@ -2210,7 +2250,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 261082,
     "end": 262392,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-unarmored-movement",
@@ -2218,7 +2258,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 262392,
     "end": 262607,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-uncanny-metabolism",
@@ -2226,7 +2266,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 262607,
     "end": 262919,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-deflect-attacks",
@@ -2234,7 +2274,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 262919,
     "end": 263707,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-monk-subclass",
@@ -2242,7 +2282,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 263707,
     "end": 264050,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-4-slow-fall",
@@ -2250,7 +2290,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 264263,
     "end": 264422,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-stunning-strike",
@@ -2258,7 +2298,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 264539,
     "end": 265012,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-empowered-strikes",
@@ -2266,7 +2306,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 265012,
     "end": 265165,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-evasion",
@@ -2274,7 +2314,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 265165,
     "end": 265474,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-acrobatic-movement",
@@ -2282,7 +2322,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 265474,
     "end": 265685,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-10-heightened-focus",
@@ -2290,7 +2330,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 265685,
     "end": 266391,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-10-self-restoration",
@@ -2298,7 +2338,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 266391,
     "end": 266661,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-13-deflect-energy",
@@ -2306,7 +2346,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 266661,
     "end": 266827,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-14-disciplined-survivor",
@@ -2314,7 +2354,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 266827,
     "end": 267078,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-15-perfect-focus",
@@ -2322,7 +2362,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 267078,
     "end": 267243,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-18-superior-defense",
@@ -2330,7 +2370,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 267243,
     "end": 267501,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-20-body-and-mind",
@@ -2338,7 +2378,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 267669,
     "end": 267823,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "monk-subclass-warrior-of-the-open-hand",
@@ -2346,7 +2386,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 267823,
     "end": 269932,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-open-hand-technique",
@@ -2354,7 +2394,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 268083,
     "end": 268542,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-wholeness-of-body",
@@ -2362,7 +2402,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 268542,
     "end": 268948,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-11-fleet-step",
@@ -2370,7 +2410,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 268948,
     "end": 269106,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-17-quivering-palm",
@@ -2378,7 +2418,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 269106,
     "end": 269932,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "paladin",
@@ -2386,7 +2426,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 269932,
     "end": 292659,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "becoming-a-paladin",
@@ -2394,7 +2434,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 270810,
     "end": 271394,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "paladin-class-features",
@@ -2402,7 +2442,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 271394,
     "end": 284589,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-lay-on-hands",
@@ -2410,7 +2450,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 276287,
     "end": 276921,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-fighting-style",
@@ -2418,7 +2458,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 279055,
     "end": 279614,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-paladins-smite",
@@ -2426,7 +2466,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 279614,
     "end": 279833,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-channel-divinity",
@@ -2434,7 +2474,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 279833,
     "end": 281561,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-paladin-subclass",
@@ -2442,7 +2482,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 281561,
     "end": 281908,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-faithful-steed",
@@ -2450,7 +2490,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 282241,
     "end": 282503,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-aura-of-protection",
@@ -2458,7 +2498,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 282503,
     "end": 282958,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-abjure-foes",
@@ -2466,7 +2506,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 282958,
     "end": 283531,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-10-aura-of-courage",
@@ -2474,7 +2514,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 283531,
     "end": 283754,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-11-radiant-strikes",
@@ -2482,7 +2522,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 283754,
     "end": 283962,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-14-restoring-touch",
@@ -2490,7 +2530,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 283962,
     "end": 284347,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-18-aura-expansion",
@@ -2498,7 +2538,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 284347,
     "end": 284432,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "paladin-spell-list",
@@ -2506,7 +2546,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 284589,
     "end": 289295,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-paladin-spells",
@@ -2514,7 +2554,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 284917,
     "end": 286314,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-paladin-spells",
@@ -2522,7 +2562,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 286314,
     "end": 287504,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-paladin-spells",
@@ -2530,7 +2570,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 287504,
     "end": 288220,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-4-paladin-spells",
@@ -2538,7 +2578,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 288220,
     "end": 288754,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-paladin-spells",
@@ -2546,7 +2586,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 288754,
     "end": 289295,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "paladin-subclass-oath-of-devotion",
@@ -2554,7 +2594,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 289295,
     "end": 292659,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-oath-of-devotion-spells",
@@ -2562,7 +2602,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 290054,
     "end": 290870,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-sacred-weapon",
@@ -2570,7 +2610,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 290870,
     "end": 291494,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-aura-of-devotion",
@@ -2578,7 +2618,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 291494,
     "end": 291711,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-15-smite-of-protection",
@@ -2586,7 +2626,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 291711,
     "end": 291965,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-20-holy-nimbus",
@@ -2594,7 +2634,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 291965,
     "end": 292659,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "ranger",
@@ -2602,7 +2642,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 292659,
     "end": 312690,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "becoming-a-ranger",
@@ -2610,7 +2650,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 293608,
     "end": 294253,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "ranger-class-features",
@@ -2618,7 +2658,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 294253,
     "end": 304911,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-favored-enemy",
@@ -2626,7 +2666,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 300856,
     "end": 301251,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-deft-explorer",
@@ -2634,7 +2674,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 301629,
     "end": 301937,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-ranger-subclass",
@@ -2642,7 +2682,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 302475,
     "end": 302808,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-roving",
@@ -2650,7 +2690,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 303140,
     "end": 303300,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-expertise",
@@ -2658,7 +2698,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 303300,
     "end": 303433,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-10-tireless",
@@ -2666,7 +2706,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 303433,
     "end": 303959,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-13-relentless-hunter",
@@ -2674,7 +2714,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 303959,
     "end": 304060,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-14-natures-veil",
@@ -2682,7 +2722,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 304060,
     "end": 304401,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-17-precise-hunter",
@@ -2690,7 +2730,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 304401,
     "end": 304532,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-18-feral-senses",
@@ -2698,7 +2738,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 304532,
     "end": 304650,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-20-foe-slayer",
@@ -2706,7 +2746,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 304816,
     "end": 304911,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "ranger-spell-list",
@@ -2714,7 +2754,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 304911,
     "end": 310549,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-ranger-spells",
@@ -2722,7 +2762,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 305237,
     "end": 306600,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-ranger-spells",
@@ -2730,7 +2770,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 306600,
     "end": 308160,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-ranger-spells",
@@ -2738,7 +2778,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 308160,
     "end": 309439,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-4-ranger-spells",
@@ -2746,7 +2786,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 309439,
     "end": 310091,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-ranger-spells",
@@ -2754,7 +2794,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 310091,
     "end": 310549,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "ranger-subclass-hunter",
@@ -2762,7 +2802,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 310549,
     "end": 312690,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-hunters-lore",
@@ -2770,7 +2810,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 310779,
     "end": 311093,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-hunters-prey",
@@ -2778,7 +2818,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 311093,
     "end": 311824,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-defensive-tactics",
@@ -2786,7 +2826,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 311824,
     "end": 312239,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-11-superior-hunters-prey",
@@ -2794,7 +2834,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 312239,
     "end": 312484,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-15-superior-hunters-defense",
@@ -2802,7 +2842,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 312484,
     "end": 312690,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "rogue",
@@ -2810,7 +2850,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 312690,
     "end": 325208,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "becoming-a-rogue",
@@ -2818,7 +2858,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 313740,
     "end": 314260,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "rogue-class-features",
@@ -2826,7 +2866,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 314260,
     "end": 322993,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-expertise",
@@ -2834,7 +2874,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 316850,
     "end": 317118,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-sneak-attack",
@@ -2842,7 +2882,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 317118,
     "end": 317774,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-thieves-cant",
@@ -2850,7 +2890,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 317774,
     "end": 318023,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-cunning-action",
@@ -2858,7 +2898,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 318399,
     "end": 318599,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-rogue-subclass",
@@ -2866,7 +2906,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 318599,
     "end": 318927,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-steady-aim",
@@ -2874,7 +2914,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 318927,
     "end": 319190,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-cunning-strike",
@@ -2882,7 +2922,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 319408,
     "end": 320641,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-uncanny-dodge",
@@ -2890,7 +2930,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 320641,
     "end": 320815,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-reliable-talent",
@@ -2898,7 +2938,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 321170,
     "end": 321337,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-11-improved-cunning-strike",
@@ -2906,7 +2946,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 321337,
     "end": 321496,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-14-devious-strikes",
@@ -2914,7 +2954,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 321496,
     "end": 322251,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-15-slippery-mind",
@@ -2922,7 +2962,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 322251,
     "end": 322399,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-18-elusive",
@@ -2930,7 +2970,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 322399,
     "end": 322589,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-20-stroke-of-luck",
@@ -2938,7 +2978,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 322753,
     "end": 322993,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "rogue-subclass-thief",
@@ -2946,7 +2986,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 322993,
     "end": 325208,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-fast-hands",
@@ -2954,7 +2994,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 323319,
     "end": 323648,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-second-story-work",
@@ -2962,7 +3002,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 323648,
     "end": 323924,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-supreme-sneak",
@@ -2970,7 +3010,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 323924,
     "end": 324193,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-13-use-magic-device",
@@ -2978,7 +3018,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 324193,
     "end": 324949,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-17-thiefs-reflexes",
@@ -2986,7 +3026,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 324949,
     "end": 325208,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "sorcerer",
@@ -2994,7 +3034,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 325208,
     "end": 360053,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "becoming-a-sorcerer",
@@ -3002,7 +3042,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 326019,
     "end": 326502,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "sorcerer-class-features",
@@ -3010,7 +3050,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 326502,
     "end": 339690,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-innate-sorcery",
@@ -3018,7 +3058,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 335358,
     "end": 335815,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-font-of-magic",
@@ -3026,7 +3066,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 335815,
     "end": 337552,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-metamagic",
@@ -3034,7 +3074,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 337552,
     "end": 338217,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-sorcerer-subclass",
@@ -3042,7 +3082,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 338217,
     "end": 338568,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-sorcerous-restoration",
@@ -3050,7 +3090,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 338785,
     "end": 339047,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-sorcery-incarnate",
@@ -3058,7 +3098,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 339047,
     "end": 339349,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-20-arcane-apotheosis",
@@ -3066,7 +3106,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 339515,
     "end": 339690,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "metamagic-options",
@@ -3074,7 +3114,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 339690,
     "end": 342948,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "careful-spell",
@@ -3082,7 +3122,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 339827,
     "end": 340307,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "distant-spell",
@@ -3090,7 +3130,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 340307,
     "end": 340589,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "empowered-spell",
@@ -3098,7 +3138,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 340589,
     "end": 340938,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "extended-spell",
@@ -3106,7 +3146,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 340938,
     "end": 341266,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "heightened-spell",
@@ -3114,7 +3154,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 341266,
     "end": 341490,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "quickened-spell",
@@ -3122,7 +3162,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 341490,
     "end": 341876,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "seeking-spell",
@@ -3130,7 +3170,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 341876,
     "end": 342169,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "subtle-spell",
@@ -3138,7 +3178,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 342169,
     "end": 342434,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "transmuted-spell",
@@ -3146,7 +3186,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 342434,
     "end": 342696,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "twinned-spell",
@@ -3154,7 +3194,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 342696,
     "end": 342948,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "sorcerer-spell-list",
@@ -3162,7 +3202,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 342948,
     "end": 357476,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "cantrips-level-0-sorcerer-spells",
@@ -3170,7 +3210,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 343278,
     "end": 344895,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-sorcerer-spells",
@@ -3178,7 +3218,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 344895,
     "end": 346951,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-sorcerer-spells",
@@ -3186,7 +3226,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 346951,
     "end": 349376,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-sorcerer-spells",
@@ -3194,7 +3234,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 349376,
     "end": 351426,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-4-sorcerer-spells",
@@ -3202,7 +3242,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 351426,
     "end": 352775,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-sorcerer-spells",
@@ -3210,7 +3250,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 352775,
     "end": 354037,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-sorcerer-spells",
@@ -3218,7 +3258,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 354037,
     "end": 355223,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-sorcerer-spells",
@@ -3226,7 +3266,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 355223,
     "end": 356134,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-8-sorcerer-spells",
@@ -3234,7 +3274,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 356134,
     "end": 356858,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-sorcerer-spells",
@@ -3242,7 +3282,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 356858,
     "end": 357476,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "sorcerer-subclass-draconic-sorcery",
@@ -3250,7 +3290,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 357476,
     "end": 360053,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-draconic-resilience",
@@ -3258,7 +3298,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 357916,
     "end": 358290,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-draconic-spells",
@@ -3266,7 +3306,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 358290,
     "end": 358921,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-elemental-affinity",
@@ -3274,7 +3314,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 358921,
     "end": 359273,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-14-dragon-wings",
@@ -3282,7 +3322,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 359273,
     "end": 359663,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-18-dragon-companion",
@@ -3290,7 +3330,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 359663,
     "end": 360053,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "warlock",
@@ -3298,7 +3338,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 360053,
     "end": 392002,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "becoming-a-warlock",
@@ -3306,7 +3346,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 360903,
     "end": 361427,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "warlock-class-features",
@@ -3314,7 +3354,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 361427,
     "end": 371367,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-eldritch-invocations",
@@ -3322,7 +3362,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 365438,
     "end": 366496,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-pact-magic",
@@ -3330,7 +3370,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 366496,
     "end": 369089,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-magical-cunning",
@@ -3338,7 +3378,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 369089,
     "end": 369374,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-warlock-subclass",
@@ -3346,7 +3386,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 369374,
     "end": 369717,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-contact-patron",
@@ -3354,7 +3394,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 369933,
     "end": 370392,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-11-mystic-arcanum",
@@ -3362,7 +3402,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 370392,
     "end": 371085,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-20-eldritch-master",
@@ -3370,7 +3410,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 371237,
     "end": 371367,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "eldritch-invocation-options",
@@ -3378,7 +3418,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 371367,
     "end": 380586,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "agonizing-blast",
@@ -3386,7 +3426,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 371460,
     "end": 371799,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "armor-of-shadows",
@@ -3394,7 +3434,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 371799,
     "end": 371894,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "ascendant-step",
@@ -3402,7 +3442,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 371894,
     "end": 372019,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "devils-sight",
@@ -3410,7 +3450,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 372019,
     "end": 372179,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "devouring-blade",
@@ -3418,7 +3458,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 372179,
     "end": 372361,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "eldritch-mind",
@@ -3426,7 +3466,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 372361,
     "end": 372473,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "eldritch-smite",
@@ -3434,7 +3474,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 372473,
     "end": 372829,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "eldritch-spear",
@@ -3442,7 +3482,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 372829,
     "end": 373234,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "fiendish-vigor",
@@ -3450,7 +3490,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 373234,
     "end": 373510,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "gaze-of-two-minds",
@@ -3458,7 +3498,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 373510,
     "end": 374201,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "gift-of-the-depths",
@@ -3466,7 +3506,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 374201,
     "end": 374492,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "gift-of-the-protectors",
@@ -3474,7 +3514,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 374492,
     "end": 375138,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "investment-of-the-chain-master",
@@ -3482,7 +3522,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 375138,
     "end": 375961,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "lessons-of-the-first-ones",
@@ -3490,7 +3530,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 375961,
     "end": 376277,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "lifedrinker",
@@ -3498,7 +3538,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 376277,
     "end": 376683,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "mask-of-many-faces",
@@ -3506,7 +3546,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 376683,
     "end": 376805,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "master-of-myriad-forms",
@@ -3514,7 +3554,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 376805,
     "end": 376928,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "misty-visions",
@@ -3522,7 +3562,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 376928,
     "end": 377044,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "one-with-shadows",
@@ -3530,7 +3570,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 377044,
     "end": 377225,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "otherworldly-leap",
@@ -3538,7 +3578,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 377225,
     "end": 377349,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "pact-of-the-blade",
@@ -3546,7 +3586,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 377349,
     "end": 378227,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "pact-of-the-chain",
@@ -3554,7 +3594,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 378227,
     "end": 378768,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "pact-of-the-tome",
@@ -3562,7 +3602,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 378768,
     "end": 379539,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "repelling-blast",
@@ -3570,7 +3610,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 379539,
     "end": 379967,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "thirsting-blade",
@@ -3578,7 +3618,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 379967,
     "end": 380234,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "visions-of-distant-realms",
@@ -3586,7 +3626,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 380234,
     "end": 380360,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "whispers-of-the-grave",
@@ -3594,7 +3634,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 380360,
     "end": 380487,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "witch-sight",
@@ -3602,7 +3642,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 380487,
     "end": 380586,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "warlock-spell-list",
@@ -3610,7 +3650,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 380586,
     "end": 389191,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "cantrips-level-0-warlock-spells",
@@ -3618,7 +3658,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 380914,
     "end": 381734,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-warlock-spells",
@@ -3626,7 +3666,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 381734,
     "end": 383035,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-warlock-spells",
@@ -3634,7 +3674,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 383035,
     "end": 384104,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-warlock-spells",
@@ -3642,7 +3682,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 384104,
     "end": 385252,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-4-warlock-spells",
@@ -3650,7 +3690,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 385252,
     "end": 385881,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-warlock-spells",
@@ -3658,7 +3698,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 385881,
     "end": 386687,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-warlock-spells",
@@ -3666,7 +3706,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 386687,
     "end": 387220,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-warlock-spells",
@@ -3674,7 +3714,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 387220,
     "end": 387758,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-8-warlock-spells",
@@ -3682,7 +3722,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 387758,
     "end": 388388,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-warlock-spells",
@@ -3690,7 +3730,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 388388,
     "end": 389191,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "warlock-subclass-fiend-patron",
@@ -3698,7 +3738,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 389191,
     "end": 392002,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-dark-ones-blessing",
@@ -3706,7 +3746,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 389608,
     "end": 389908,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-fiend-spells",
@@ -3714,7 +3754,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 389908,
     "end": 390605,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-dark-ones-own-luck",
@@ -3722,7 +3762,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 390605,
     "end": 391089,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-10-fiendish-resilience",
@@ -3730,7 +3770,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 391089,
     "end": 391303,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-14-hurl-through-hell",
@@ -3738,7 +3778,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 391303,
     "end": 392002,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "wizard",
@@ -3746,7 +3786,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 392002,
     "end": 430790,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "becoming-a-wizard",
@@ -3754,7 +3794,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 392825,
     "end": 393294,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "wizard-class-features",
@@ -3762,7 +3802,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 393294,
     "end": 406700,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-ritual-adept",
@@ -3770,7 +3810,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 402545,
     "end": 402777,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-arcane-recovery",
@@ -3778,7 +3818,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 402777,
     "end": 403351,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-scholar",
@@ -3786,7 +3826,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 403351,
     "end": 403615,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-wizard-subclass",
@@ -3794,7 +3834,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 403615,
     "end": 405163,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-memorize-spell",
@@ -3802,7 +3842,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 405378,
     "end": 405610,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-18-spell-mastery",
@@ -3810,7 +3850,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 405610,
     "end": 406155,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-20-signature-spells",
@@ -3818,7 +3858,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 406315,
     "end": 406700,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "wizard-spell-list",
@@ -3826,7 +3866,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 406700,
     "end": 428419,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "cantrips-level-0-wizard-spells",
@@ -3834,7 +3874,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 407020,
     "end": 408543,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-1-wizard-spells",
@@ -3842,7 +3882,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 408543,
     "end": 411440,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-2-wizard-spells",
@@ -3850,7 +3890,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 411440,
     "end": 414778,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-wizard-spells",
@@ -3858,7 +3898,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 414778,
     "end": 417546,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-4-wizard-spells",
@@ -3866,7 +3906,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 417546,
     "end": 420106,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-5-wizard-spells",
@@ -3874,7 +3914,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 420106,
     "end": 422442,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-wizard-spells",
@@ -3882,7 +3922,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 422442,
     "end": 424364,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-7-wizard-spells",
@@ -3890,7 +3930,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 424364,
     "end": 425906,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-8-wizard-spells",
@@ -3898,7 +3938,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 425906,
     "end": 427168,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-9-wizard-spells",
@@ -3906,7 +3946,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 427168,
     "end": 428419,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "wizard-subclass-evoker",
@@ -3914,7 +3954,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 428419,
     "end": 430790,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-evocation-savant",
@@ -3922,7 +3962,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 428819,
     "end": 429227,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-3-potent-cantrip",
@@ -3930,7 +3970,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 429227,
     "end": 429577,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-6-sculpt-spells",
@@ -3938,7 +3978,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 429577,
     "end": 430007,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-10-empowered-evocation",
@@ -3946,7 +3986,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 430007,
     "end": 430178,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "level-14-overchannel",
@@ -3954,7 +3994,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 430178,
     "end": 430790,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "classes"
   },
   {
     "key": "feat-descriptions",
@@ -3962,7 +4002,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 430790,
     "end": 438436,
     "level": 3,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "parts-of-a-feat",
@@ -3970,7 +4010,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 430943,
     "end": 431879,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "origin-feats",
@@ -3978,7 +4018,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 431879,
     "end": 433575,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "alert",
@@ -3986,7 +4026,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 431898,
     "end": 432286,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "magic-initiate",
@@ -3994,7 +4034,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 432286,
     "end": 433181,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "savage-attacker",
@@ -4002,7 +4042,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 433181,
     "end": 433409,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "skilled",
@@ -4010,7 +4050,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 433409,
     "end": 433575,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "general-feats",
@@ -4018,7 +4058,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 433575,
     "end": 434520,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "ability-score-improvement",
@@ -4026,7 +4066,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 433595,
     "end": 433876,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "grappler",
@@ -4034,7 +4074,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 433876,
     "end": 434520,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "fighting-style-feats",
@@ -4042,7 +4082,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 434520,
     "end": 435468,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "archery",
@@ -4050,7 +4090,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 434547,
     "end": 434691,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "defense",
@@ -4058,7 +4098,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 434691,
     "end": 434857,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "great-weapon-fighting",
@@ -4066,7 +4106,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 434857,
     "end": 435179,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "two-weapon-fighting",
@@ -4074,7 +4114,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 435179,
     "end": 435468,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "epic-boon-feats",
@@ -4082,7 +4122,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 435468,
     "end": 438436,
     "level": 4,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "boon-of-combat-prowess",
@@ -4090,7 +4130,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 435490,
     "end": 435851,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "boon-of-dimensional-travel",
@@ -4098,7 +4138,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 435851,
     "end": 436207,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "boon-of-fate",
@@ -4106,7 +4146,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 436207,
     "end": 436692,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "boon-of-irresistible-offense",
@@ -4114,7 +4154,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 436692,
     "end": 437229,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "boon-of-spell-recall",
@@ -4122,7 +4162,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 437229,
     "end": 437627,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "boon-of-the-night-spirit",
@@ -4130,7 +4170,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 437627,
     "end": 438166,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "boon-of-truesight",
@@ -4138,7 +4178,7 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 438166,
     "end": 438436,
     "level": 5,
-    "chapter": "equipment"
+    "chapter": "feats"
   },
   {
     "key": "coins",
@@ -4202,14 +4242,6 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "start": 457621,
     "end": 464118,
     "level": 3,
-    "chapter": "equipment"
-  },
-  {
-    "key": "tool-proficiency",
-    "title": "Tool Proficiency",
-    "start": 458433,
-    "end": 464118,
-    "level": 4,
     "chapter": "equipment"
   },
   {
@@ -8429,14 +8461,6 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "chapter": "rules-glossary"
   },
   {
-    "key": "creature-type",
-    "title": "Creature Type",
-    "start": 855500,
-    "end": 856314,
-    "level": 5,
-    "chapter": "rules-glossary"
-  },
-  {
     "key": "critical-hit",
     "title": "Critical Hit",
     "start": 856314,
@@ -9133,26 +9157,10 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
     "chapter": "rules-glossary"
   },
   {
-    "key": "size",
-    "title": "Size",
-    "start": 894577,
-    "end": 894874,
-    "level": 5,
-    "chapter": "rules-glossary"
-  },
-  {
     "key": "skill",
     "title": "Skill",
     "start": 894874,
     "end": 895136,
-    "level": 5,
-    "chapter": "rules-glossary"
-  },
-  {
-    "key": "speed",
-    "title": "Speed",
-    "start": 895136,
-    "end": 896374,
     "level": 5,
     "chapter": "rules-glossary"
   },
@@ -12431,9 +12439,9 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "aboleth",
     "title": "Aboleth",
-    "start": 1223206,
+    "start": 1223219,
     "end": 1227358,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -12447,9 +12455,9 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "air-elemental",
     "title": "Air Elemental",
-    "start": 1227358,
+    "start": 1227377,
     "end": 1229375,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -12487,17 +12495,17 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "ankheg",
     "title": "Ankheg",
-    "start": 1233990,
+    "start": 1234002,
     "end": 1235751,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "assassin",
     "title": "Assassin",
-    "start": 1235751,
+    "start": 1235765,
     "end": 1237914,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -12527,9 +12535,9 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "axe-beak",
     "title": "Axe Beak",
-    "start": 1240486,
+    "start": 1240500,
     "end": 1241696,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -12551,9 +12559,9 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "balor",
     "title": "Balor",
-    "start": 1243354,
+    "start": 1243365,
     "end": 1246171,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -12591,41 +12599,41 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "barbed-devil",
     "title": "Barbed Devil",
-    "start": 1249277,
+    "start": 1249295,
     "end": 1251698,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "basilisk",
     "title": "Basilisk",
-    "start": 1251698,
+    "start": 1251712,
     "end": 1253438,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "bearded-devil",
     "title": "Bearded Devil",
-    "start": 1253438,
+    "start": 1253457,
     "end": 1255792,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "behir",
     "title": "Behir",
-    "start": 1255792,
+    "start": 1255803,
     "end": 1258578,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "berserker",
     "title": "Berserker",
-    "start": 1258578,
+    "start": 1258593,
     "end": 1259958,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -12671,17 +12679,17 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "black-pudding",
     "title": "Black Pudding",
-    "start": 1269632,
+    "start": 1269651,
     "end": 1272480,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "blink-dog",
     "title": "Blink Dog",
-    "start": 1272480,
+    "start": 1272495,
     "end": 1273931,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -12727,9 +12735,9 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "bone-devil",
     "title": "Bone Devil",
-    "start": 1282950,
+    "start": 1282966,
     "end": 1285055,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -12839,9 +12847,9 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "bulette",
     "title": "Bulette",
-    "start": 1310604,
+    "start": 1310617,
     "end": 1312459,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -12863,65 +12871,65 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "chain-devil",
     "title": "Chain Devil",
-    "start": 1314360,
+    "start": 1314377,
     "end": 1317189,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "chimera",
     "title": "Chimera",
-    "start": 1317189,
+    "start": 1317202,
     "end": 1319151,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "chuul",
     "title": "Chuul",
-    "start": 1319151,
+    "start": 1319162,
     "end": 1321274,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "clay-golem",
     "title": "Clay Golem",
-    "start": 1321274,
+    "start": 1321290,
     "end": 1323755,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "cloaker",
     "title": "Cloaker",
-    "start": 1323755,
+    "start": 1323768,
     "end": 1326476,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "cloud-giant",
     "title": "Cloud Giant",
-    "start": 1326476,
+    "start": 1326493,
     "end": 1328606,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "cockatrice",
     "title": "Cockatrice",
-    "start": 1328606,
+    "start": 1328622,
     "end": 1330288,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "commoner",
     "title": "Commoner",
-    "start": 1330288,
+    "start": 1330302,
     "end": 1331685,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -12967,9 +12975,9 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "couatl",
     "title": "Couatl",
-    "start": 1342659,
+    "start": 1342671,
     "end": 1345253,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -13015,153 +13023,145 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "darkmantle",
     "title": "Darkmantle",
-    "start": 1350246,
+    "start": 1350262,
     "end": 1352484,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "death-dog",
     "title": "Death Dog",
-    "start": 1352484,
+    "start": 1352499,
     "end": 1354340,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "deva",
     "title": "Deva",
-    "start": 1354340,
+    "start": 1354350,
     "end": 1356755,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "djinni",
     "title": "Djinni",
-    "start": 1356755,
+    "start": 1356767,
     "end": 1360436,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "doppelganger",
     "title": "Doppelganger",
-    "start": 1360436,
+    "start": 1360454,
     "end": 1362721,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "dragon-turtle",
     "title": "Dragon Turtle",
-    "start": 1362721,
+    "start": 1362740,
     "end": 1364717,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "dretch",
     "title": "Dretch",
-    "start": 1364717,
+    "start": 1364729,
     "end": 1366431,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "drider",
     "title": "Drider",
-    "start": 1366431,
+    "start": 1366443,
     "end": 1368592,
-    "level": 3,
-    "chapter": "monsters-a-z"
-  },
-  {
-    "key": "druid",
-    "title": "Druid",
-    "start": 1368592,
-    "end": 1370451,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "dryad",
     "title": "Dryad",
-    "start": 1370451,
+    "start": 1370462,
     "end": 1372770,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "earth-elemental",
     "title": "Earth Elemental",
-    "start": 1372770,
+    "start": 1372791,
     "end": 1374723,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "efreeti",
     "title": "Efreeti",
-    "start": 1374723,
+    "start": 1374736,
     "end": 1377356,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "erinyes",
     "title": "Erinyes",
-    "start": 1377356,
+    "start": 1377369,
     "end": 1380186,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "ettercap",
     "title": "Ettercap",
-    "start": 1380186,
+    "start": 1380200,
     "end": 1382561,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "ettin",
     "title": "Ettin",
-    "start": 1382561,
+    "start": 1382572,
     "end": 1384285,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "fire-elemental",
     "title": "Fire Elemental",
-    "start": 1384285,
+    "start": 1384305,
     "end": 1386621,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "fire-giant",
     "title": "Fire Giant",
-    "start": 1386621,
+    "start": 1386637,
     "end": 1388330,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "flesh-golem",
     "title": "Flesh Golem",
-    "start": 1388330,
+    "start": 1388347,
     "end": 1391025,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "frost-giant",
     "title": "Frost Giant",
-    "start": 1391025,
+    "start": 1391042,
     "end": 1392880,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -13191,65 +13191,65 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "gargoyle",
     "title": "Gargoyle",
-    "start": 1395616,
+    "start": 1395630,
     "end": 1397139,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "gelatinous-cube",
     "title": "Gelatinous Cube",
-    "start": 1397139,
+    "start": 1397160,
     "end": 1400239,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "ghast",
     "title": "Ghast",
-    "start": 1400239,
+    "start": 1400250,
     "end": 1402166,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "ghost",
     "title": "Ghost",
-    "start": 1402166,
+    "start": 1402177,
     "end": 1405621,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "ghoul",
     "title": "Ghoul",
-    "start": 1405621,
+    "start": 1405632,
     "end": 1407281,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "gibbering-mouther",
     "title": "Gibbering Mouther",
-    "start": 1407281,
+    "start": 1407304,
     "end": 1409797,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "glabrezu",
     "title": "Glabrezu",
-    "start": 1409797,
+    "start": 1409811,
     "end": 1412167,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "gladiator",
     "title": "Gladiator",
-    "start": 1412167,
+    "start": 1412182,
     "end": 1414070,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -13343,17 +13343,17 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "gorgon",
     "title": "Gorgon",
-    "start": 1432418,
+    "start": 1432430,
     "end": 1434456,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "gray-ooze",
     "title": "Gray Ooze",
-    "start": 1434456,
+    "start": 1434471,
     "end": 1436672,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -13399,41 +13399,41 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "green-hag",
     "title": "Green Hag",
-    "start": 1446182,
+    "start": 1446197,
     "end": 1448672,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "grick",
     "title": "Grick",
-    "start": 1448672,
+    "start": 1448683,
     "end": 1450217,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "griffon",
     "title": "Griffon",
-    "start": 1450217,
+    "start": 1450230,
     "end": 1451673,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "grimlock",
     "title": "Grimlock",
-    "start": 1451673,
+    "start": 1451687,
     "end": 1453010,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "guardian-naga",
     "title": "Guardian Naga",
-    "start": 1453010,
+    "start": 1453029,
     "end": 1455343,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -13463,49 +13463,49 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "half-dragon",
     "title": "Half-Dragon",
-    "start": 1458191,
+    "start": 1458208,
     "end": 1460280,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "harpy",
     "title": "Harpy",
-    "start": 1460280,
+    "start": 1460291,
     "end": 1462403,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "hell-hound",
     "title": "Hell Hound",
-    "start": 1462403,
+    "start": 1462419,
     "end": 1464182,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "hezrou",
     "title": "Hezrou",
-    "start": 1464182,
+    "start": 1464194,
     "end": 1466244,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "hill-giant",
     "title": "Hill Giant",
-    "start": 1466244,
+    "start": 1466260,
     "end": 1467844,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "hippogriff",
     "title": "Hippogriff",
-    "start": 1467844,
+    "start": 1467860,
     "end": 1469283,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -13535,73 +13535,73 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "homunculus",
     "title": "Homunculus",
-    "start": 1472766,
+    "start": 1472782,
     "end": 1474635,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "horned-devil",
     "title": "Horned Devil",
-    "start": 1474635,
+    "start": 1474653,
     "end": 1477261,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "hydra",
     "title": "Hydra",
-    "start": 1477261,
+    "start": 1477272,
     "end": 1479338,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "ice-devil",
     "title": "Ice Devil",
-    "start": 1479338,
+    "start": 1479353,
     "end": 1481785,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "imp",
     "title": "Imp",
-    "start": 1481785,
+    "start": 1481794,
     "end": 1483777,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "incubus",
     "title": "Incubus",
-    "start": 1483777,
+    "start": 1483790,
     "end": 1486282,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "invisible-stalker",
     "title": "Invisible Stalker",
-    "start": 1486282,
+    "start": 1486305,
     "end": 1488496,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "iron-golem",
     "title": "Iron Golem",
-    "start": 1488496,
+    "start": 1488512,
     "end": 1490602,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "knight",
     "title": "Knight",
-    "start": 1490602,
+    "start": 1490614,
     "end": 1492395,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -13623,33 +13623,33 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "kraken",
     "title": "Kraken",
-    "start": 1494025,
+    "start": 1494037,
     "end": 1498172,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "lamia",
     "title": "Lamia",
-    "start": 1498172,
+    "start": 1498183,
     "end": 1500274,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "lemure",
     "title": "Lemure",
-    "start": 1500274,
+    "start": 1500286,
     "end": 1501897,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "lich",
     "title": "Lich",
-    "start": 1501897,
+    "start": 1501907,
     "end": 1505585,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -13679,33 +13679,33 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "magmin",
     "title": "Magmin",
-    "start": 1510099,
+    "start": 1510111,
     "end": 1511914,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "manticore",
     "title": "Manticore",
-    "start": 1511914,
+    "start": 1511929,
     "end": 1513360,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "marilith",
     "title": "Marilith",
-    "start": 1513360,
+    "start": 1513374,
     "end": 1515883,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "medusa",
     "title": "Medusa",
-    "start": 1515883,
+    "start": 1515895,
     "end": 1517988,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -13767,25 +13767,25 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "merrow",
     "title": "Merrow",
-    "start": 1527273,
+    "start": 1527285,
     "end": 1529117,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "mimic",
     "title": "Mimic",
-    "start": 1529117,
+    "start": 1529128,
     "end": 1531322,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "minotaur-of-baphomet",
     "title": "Minotaur of Baphomet",
-    "start": 1531322,
+    "start": 1531348,
     "end": 1532973,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -13815,89 +13815,89 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "nalfeshnee",
     "title": "Nalfeshnee",
-    "start": 1539261,
+    "start": 1539277,
     "end": 1541827,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "night-hag",
     "title": "Night Hag",
-    "start": 1541827,
+    "start": 1541842,
     "end": 1545480,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "nightmare",
     "title": "Nightmare",
-    "start": 1545480,
+    "start": 1545495,
     "end": 1547239,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "noble",
     "title": "Noble",
-    "start": 1547239,
+    "start": 1547250,
     "end": 1548762,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "ochre-jelly",
     "title": "Ochre Jelly",
-    "start": 1548762,
+    "start": 1548779,
     "end": 1550815,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "ogre",
     "title": "Ogre",
-    "start": 1550815,
+    "start": 1550825,
     "end": 1552204,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "oni",
     "title": "Oni",
-    "start": 1552204,
+    "start": 1552213,
     "end": 1554691,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "otyugh",
     "title": "Otyugh",
-    "start": 1554691,
+    "start": 1554703,
     "end": 1556901,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "owlbear",
     "title": "Owlbear",
-    "start": 1556901,
+    "start": 1556914,
     "end": 1558228,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "pegasus",
     "title": "Pegasus",
-    "start": 1558228,
+    "start": 1558241,
     "end": 1559574,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "phase-spider",
     "title": "Phase Spider",
-    "start": 1559574,
+    "start": 1559592,
     "end": 1561680,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -13927,17 +13927,17 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "pit-fiend",
     "title": "Pit Fiend",
-    "start": 1565416,
+    "start": 1565431,
     "end": 1568654,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "planetar",
     "title": "Planetar",
-    "start": 1568654,
+    "start": 1568668,
     "end": 1571284,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -13967,33 +13967,33 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "pseudodragon",
     "title": "Pseudodragon",
-    "start": 1574996,
+    "start": 1575014,
     "end": 1576925,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "purple-worm",
     "title": "Purple Worm",
-    "start": 1576925,
+    "start": 1576942,
     "end": 1579638,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "quasit",
     "title": "Quasit",
-    "start": 1579638,
+    "start": 1579650,
     "end": 1581933,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "rakshasa",
     "title": "Rakshasa",
-    "start": 1581933,
+    "start": 1581947,
     "end": 1584760,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -14039,33 +14039,33 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "remorhaz",
     "title": "Remorhaz",
-    "start": 1593751,
+    "start": 1593765,
     "end": 1596426,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "roc",
     "title": "Roc",
-    "start": 1596426,
+    "start": 1596435,
     "end": 1598234,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "roper",
     "title": "Roper",
-    "start": 1598234,
+    "start": 1598245,
     "end": 1600332,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "rust-monster",
     "title": "Rust Monster",
-    "start": 1600332,
+    "start": 1600350,
     "end": 1602600,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -14087,57 +14087,57 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "salamander",
     "title": "Salamander",
-    "start": 1604520,
+    "start": 1604536,
     "end": 1606630,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "satyr",
     "title": "Satyr",
-    "start": 1606630,
+    "start": 1606641,
     "end": 1608287,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "scout",
     "title": "Scout",
-    "start": 1608287,
+    "start": 1608298,
     "end": 1609837,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "sea-hag",
     "title": "Sea Hag",
-    "start": 1609837,
+    "start": 1609850,
     "end": 1612329,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "shadow",
     "title": "Shadow",
-    "start": 1612329,
+    "start": 1612341,
     "end": 1614341,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "shambling-mound",
     "title": "Shambling Mound",
-    "start": 1614341,
+    "start": 1614362,
     "end": 1616705,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "shield-guardian",
     "title": "Shield Guardian",
-    "start": 1616705,
+    "start": 1616726,
     "end": 1619604,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -14215,17 +14215,17 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "solar",
     "title": "Solar",
-    "start": 1635564,
+    "start": 1635575,
     "end": 1639277,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "specter",
     "title": "Specter",
-    "start": 1639277,
+    "start": 1639290,
     "end": 1641219,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -14263,73 +14263,73 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "spirit-naga",
     "title": "Spirit Naga",
-    "start": 1649896,
+    "start": 1649913,
     "end": 1652001,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "sprite",
     "title": "Sprite",
-    "start": 1652001,
+    "start": 1652013,
     "end": 1653819,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "spy",
     "title": "Spy",
-    "start": 1653819,
+    "start": 1653828,
     "end": 1655482,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "stirge",
     "title": "Stirge",
-    "start": 1655482,
+    "start": 1655494,
     "end": 1657056,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "stone-giant",
     "title": "Stone Giant",
-    "start": 1657056,
+    "start": 1657073,
     "end": 1659091,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "stone-golem",
     "title": "Stone Golem",
-    "start": 1659091,
+    "start": 1659108,
     "end": 1661070,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "storm-giant",
     "title": "Storm Giant",
-    "start": 1661070,
+    "start": 1661087,
     "end": 1663420,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "succubus",
     "title": "Succubus",
-    "start": 1663420,
+    "start": 1663434,
     "end": 1665844,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "tarrasque",
     "title": "Tarrasque",
-    "start": 1665844,
+    "start": 1665859,
     "end": 1670426,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -14359,17 +14359,17 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "treant",
     "title": "Treant",
-    "start": 1673869,
+    "start": 1673881,
     "end": 1675939,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "troll",
     "title": "Troll",
-    "start": 1675939,
-    "end": 1679734,
-    "level": 3,
+    "start": 1675950,
+    "end": 1678036,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -14383,9 +14383,9 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "unicorn",
     "title": "Unicorn",
-    "start": 1679734,
+    "start": 1679747,
     "end": 1682746,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -14423,9 +14423,9 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "vrock",
     "title": "Vrock",
-    "start": 1692970,
+    "start": 1692981,
     "end": 1695431,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -14455,49 +14455,49 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "water-elemental",
     "title": "Water Elemental",
-    "start": 1698674,
+    "start": 1698695,
     "end": 1701231,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "werebear",
     "title": "Werebear",
-    "start": 1701231,
+    "start": 1701245,
     "end": 1703696,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "wereboar",
     "title": "Wereboar",
-    "start": 1703696,
+    "start": 1703710,
     "end": 1706310,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "wererat",
     "title": "Wererat",
-    "start": 1706310,
+    "start": 1706323,
     "end": 1708692,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "weretiger",
     "title": "Weretiger",
-    "start": 1708692,
+    "start": 1708707,
     "end": 1711277,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "werewolf",
     "title": "Werewolf",
-    "start": 1711277,
+    "start": 1711291,
     "end": 1713902,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
@@ -14543,57 +14543,57 @@ export const SRD_DOCUMENT_INDEX: readonly SrdDocumentIndexEntry[] = [
   {
     "key": "wight",
     "title": "Wight",
-    "start": 1723402,
+    "start": 1723413,
     "end": 1725720,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "will-o-wisp",
     "title": "Will-o'-Wisp",
-    "start": 1725720,
+    "start": 1725738,
     "end": 1728016,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "winter-wolf",
     "title": "Winter Wolf",
-    "start": 1728016,
+    "start": 1728033,
     "end": 1729776,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "worg",
     "title": "Worg",
-    "start": 1729776,
+    "start": 1729786,
     "end": 1731138,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "wraith",
     "title": "Wraith",
-    "start": 1731138,
+    "start": 1731150,
     "end": 1733412,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "wyvern",
     "title": "Wyvern",
-    "start": 1733412,
+    "start": 1733424,
     "end": 1734956,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {
     "key": "xorn",
     "title": "Xorn",
-    "start": 1734956,
+    "start": 1734966,
     "end": 1736909,
-    "level": 3,
+    "level": 4,
     "chapter": "monsters-a-z"
   },
   {

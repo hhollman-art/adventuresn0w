@@ -50,7 +50,7 @@ function srdPreviewSnapshot(
   };
 }
 
-/** Fetch SRD rules text from the API and open it in the Scy Window. */
+/** Fetch SRD rules text from the API and open it in the Scrying Glass. */
 export function openSrdPreview(ref: SrdPreviewRef): void {
   if (typeof window === "undefined") return;
 

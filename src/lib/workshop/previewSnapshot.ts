@@ -100,20 +100,44 @@ export function isPreviewSnapshotMessage(data: unknown): data is WorkshopPreview
   return typeof data === "object" && data !== null && "markdown" in data;
 }
 
-let previewWindowRef: Window | null = null;
+type ScryingGlassOpenListener = () => void;
+const scryingGlassOpenListeners = new Set<ScryingGlassOpenListener>();
 
-export function openOrFocusPreviewWindow(): Window | null {
-  if (typeof window === "undefined") return null;
-  if (previewWindowRef && !previewWindowRef.closed) {
-    previewWindowRef.focus();
-    return previewWindowRef;
+/** Subscribe to Scrying Glass open requests (in-app popup). */
+export function subscribeScryingGlassOpen(listener: ScryingGlassOpenListener): () => void {
+  scryingGlassOpenListeners.add(listener);
+  return () => {
+    scryingGlassOpenListeners.delete(listener);
+  };
+}
+
+function requestScryingGlassRepublish(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const channel = new BroadcastChannel(PREVIEW_SYNC_CHANNEL);
+    channel.postMessage({ type: PREVIEW_READY_MESSAGE });
+    channel.close();
+  } catch {
+    /* BroadcastChannel unavailable */
   }
-  // Omit noopener so the preview tab can request resync and post edit actions.
-  previewWindowRef = window.open("/preview", PREVIEW_WINDOW_NAME);
-  return previewWindowRef;
+  window.postMessage({ type: PREVIEW_READY_MESSAGE }, window.location.origin);
+}
+
+/** Open or focus the in-app Scrying Glass popup. */
+export function openOrFocusPreviewWindow(): null {
+  if (typeof window === "undefined") return null;
+  requestScryingGlassRepublish();
+  scryingGlassOpenListeners.forEach((listener) => listener());
+  return null;
 }
 
 export function postPreviewAction(action: PreviewAction, payload?: unknown): void {
-  if (typeof window === "undefined" || !window.opener) return;
-  window.opener.postMessage({ type: "ddeasy-preview-action", action, payload }, window.location.origin);
+  if (typeof window === "undefined") return;
+  const msg = { type: "ddeasy-preview-action", action, payload };
+  if (window.opener && !window.opener.closed) {
+    window.opener.postMessage(msg, window.location.origin);
+    return;
+  }
+  // In-app Scrying Glass popup — route actions to the main Fantasy Forge tab.
+  window.postMessage(msg, window.location.origin);
 }

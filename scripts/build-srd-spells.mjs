@@ -88,3 +88,5 @@ ${lines.join("\n")}
 const spells = await fetchAllSpells();
 writeFileSync(OUT, emitTsFixed(spells), "utf8");
 console.log(`Wrote ${spells.length} SRD spells to ${OUT}`);
+
+await import("./build-srd-spell-index.mjs");
