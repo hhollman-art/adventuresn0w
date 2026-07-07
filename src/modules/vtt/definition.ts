@@ -24,6 +24,7 @@ export const VTT_LIBRARY_READ_CI_CLASSES = [
 export const VTT_SESSION_CI_CLASSES = [
   "session.tabletop",
   "session.snapshot",
+  "session.room",
 ] as const satisfies readonly CiClass[];
 
 export const VTT_MODULE = {
@@ -31,8 +32,10 @@ export const VTT_MODULE = {
   label: VIRTUAL_TABLE,
   route: "/table",
   playerRoute: "/table/player",
+  joinRoute: "/join",
+  dmLoginRoute: "/login",
   description:
-    "Run sessions at the table — tokens, fog, initiative, and dice. Loads parties, maps, and sheets from The Library.",
+    "Run sessions at the table — tokens, fog, initiative, and dice. Loads parties, maps, and sheets from The Library. Licensed DMs host session rooms; players join via room code.",
   libraryReadCiClasses: VTT_LIBRARY_READ_CI_CLASSES,
   sessionCiClasses: VTT_SESSION_CI_CLASSES,
 } as const;

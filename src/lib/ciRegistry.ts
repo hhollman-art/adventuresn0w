@@ -52,6 +52,7 @@ export type CiClass =
   | "session.record"
   | "session.tabletop"
   | "session.snapshot"
+  | "session.room"
   | "rules.srd-entry"
   | "spell.srd-entry"
   | "monster.srd-entry";
@@ -243,6 +244,14 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
     category: "sessions",
     label: "Shelved campaign table",
     storageModule: "src/lib/tabletop/store.ts",
+    provenance: "user",
+    inBackup: false,
+  },
+  "session.room": {
+    ciClass: "session.room",
+    category: "sessions",
+    label: "Session room",
+    storageModule: "src/lib/session-room/serverStore.ts",
     provenance: "user",
     inBackup: false,
   },

@@ -30,6 +30,7 @@ export const CI_CLASS_VISUAL: Record<CiClass, CiClassVisual> = {
   "session.record": { icon: APP_ICONS.scroll, accent: "#5a4a6a" },
   "session.tabletop": { icon: APP_ICONS.combat, accent: "#5c4a2e" },
   "session.snapshot": { icon: APP_ICONS.map, accent: "#5c4a2e" },
+  "session.room": { icon: APP_ICONS.combat, accent: "#3d8fd4" },
   "rules.srd-entry": { icon: APP_ICONS.spellbook, accent: "#4a68b8" },
   "spell.srd-entry": { icon: APP_ICONS.spellbook, accent: "#5eb8ff" },
   "monster.srd-entry": { icon: APP_ICONS.combat, accent: "#7a2828" },
