@@ -11,7 +11,7 @@ import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 function AuthCardContent({ preset }: { preset?: { email: string; password: string } | null }) {
   const searchParams = useSearchParams();
   const returnTo = searchParams.get("returnTo");
-  const { refresh } = useAuth();
+  const { refresh, authEnabled, loading: authLoading } = useAuth();
 
   const {
     mode,
@@ -119,6 +119,13 @@ function AuthCardContent({ preset }: { preset?: { email: string; password: strin
           </div>
         ) : null}
 
+        {!authLoading && !authEnabled ? (
+          <p className="auth-card-form-error" role="alert">
+            DM sign-in is not enabled on this server yet. The operator must set{" "}
+            <code className="dev-quick-login-code">AUTH_SECRET</code> in the deployment environment.
+          </p>
+        ) : null}
+
         {formError ? (
           <p className="auth-card-form-error" role="alert">
             {formError}
@@ -134,7 +141,7 @@ function AuthCardContent({ preset }: { preset?: { email: string; password: strin
           }
           block
         >
-          <button type="submit" className="btn btn-accent auth-card-submit" disabled={loading}>
+          <button type="submit" className="btn btn-accent auth-card-submit" disabled={loading || !authEnabled}>
             {loading
               ? mode === "sign-in"
                 ? "Signing in…"

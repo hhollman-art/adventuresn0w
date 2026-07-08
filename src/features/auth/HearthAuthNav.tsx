@@ -19,8 +19,6 @@ export default function HearthAuthNav({ variant = "header", className = "" }: He
   const pathname = usePathname() ?? "/";
   const { loading, authEnabled, isAuthenticated, session, tier } = useAuth();
 
-  if (!authEnabled) return null;
-
   const returnTo = pathname.startsWith("/login") ? "/" : pathname;
   const loginHref = `/login?returnTo=${encodeURIComponent(returnTo)}`;
 
@@ -33,7 +31,7 @@ export default function HearthAuthNav({ variant = "header", className = "" }: He
     );
   }
 
-  if (isAuthenticated && session) {
+  if (authEnabled && isAuthenticated && session) {
     return (
       <Link
         href="/dashboard"
@@ -52,6 +50,7 @@ export default function HearthAuthNav({ variant = "header", className = "" }: He
     <Link
       href={loginHref}
       className={`hearth-auth-nav hearth-auth-nav--${variant} hearth-auth-nav--sign-in ${className}`.trim()}
+      aria-label={authEnabled ? "Sign in" : "Sign in (authentication not configured on this server)"}
     >
       <span className="hearth-auth-nav-icon" aria-hidden="true">
         {APP_ICONS.signIn}
