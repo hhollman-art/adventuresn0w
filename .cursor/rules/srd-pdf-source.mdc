@@ -1,0 +1,51 @@
+---
+description: SRD_CC_v5.2.1 PDF is the authoritative local source for parser and taxonomy work
+globs: scripts/**/parse*.ts,scripts/**/srd*.ts,scripts/**/consolidate-srd*.ts,scripts/srd-pdf/**,scripts/srd-macro/**,data/srd/**
+alwaysApply: false
+---
+
+# SRD PDF source (SRD_CC_v5.2.1)
+
+When building or changing SRD parsers, consolidation scripts, or `data/srd/` assets:
+
+## Local source file
+
+- **Path:** `data/srd-source/SRD_CC_v5.2.1.pdf`
+- Treat this PDF as ground truth for **section structure**, page counts, and heading boundaries.
+- Attach in chat with `@data/srd-source/SRD_CC_v5.2.1.pdf` when scoping parser work.
+
+## Required workflow before changing taxonomy
+
+1. Run dry-run extraction and read counts/logs:
+   ```bash
+   npm run build:macro-srd -- --dry-run
+   npm run parse:srd-pdf -- --dry-run
+   ```
+2. Compare PDF-derived boundaries to bundled index (`srdDocumentIndex.data.ts`).
+3. Prefer **header-based** boundaries (`#` / `##` titles), not page breaks.
+
+## Source priority
+
+| Priority | Source | Use for |
+|----------|--------|---------|
+| 1 | PDF stream | Structure validation, streaming parser logic, page metadata |
+| 2 | Bundled markdown (`srdDocument.data.ts`) | Full-fidelity text, tables, nested headings when PDF columns garble text |
+| 3 | Hybrid (`parse:srd-pdf` default) | PDF scan + markdown backfill when yields are low |
+
+## Output constraints
+
+- Do **not** truncate descriptions, tables, or glossary text in JSON outputs.
+- Retain metadata on every record: `_source_file`, `start`/`end`, `pagePrefix` (or `<!-- page:N -->` from PDF stream).
+- Macro-scoped outputs live in `data/srd/macro/`; unified DB in `data/srd/srd_database.json`.
+
+## Commands
+
+```bash
+npm run build:macro-srd -- --dry-run
+npm run build:macro-srd
+npm run parse:srd-pdf -- --dry-run
+npm run parse:srd-pdf
+npm run consolidate:srd-macro -- --dry-run
+```
+
+Default `--pdf` path is `data/srd-source/SRD_CC_v5.2.1.pdf` — no path override needed when the file is present.

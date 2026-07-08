@@ -31,3 +31,9 @@ yarn-error.log*
 # env files
 .env
 .env*.local
+
+# SRD source PDF (local only — place file per data/srd-source/README.md)
+/data/srd-source/*.pdf
+
+# Purge backup staging (outside data/srd tree)
+/_srd_clutter_backup/

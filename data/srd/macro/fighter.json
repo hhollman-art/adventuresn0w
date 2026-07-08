@@ -1,0 +1,274 @@
+{
+  "macroId": "player_class",
+  "classKey": "fighter",
+  "name": "Fighter",
+  "outputFile": "fighter.json",
+  "pagePrefix": "## Character Classes",
+  "markdown": "### Fighter\n\n**Core Fighter Traits**\n\n<table>\n  <tbody>\n    <tr>\n      <td>Primary Ability</td>\n      <td>Strength or Dexterity</td>\n    </tr>\n    <tr>\n      <td>Hit Point Die</td>\n      <td>D10 per Fighter level</td>\n    </tr>\n    <tr>\n      <td>Saving Throw Proficiencies</td>\n      <td>Strength and Constitution</td>\n    </tr>\n    <tr>\n      <td>Skill Proficiencies</td>\n      <td>Choose 2: Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Persuasion, Perception, or Survival</td>\n    </tr>\n    <tr>\n      <td>Weapon Proficiencies</td>\n      <td>Simple and Martial weapons</td>\n    </tr>\n    <tr>\n      <td>Armor Training</td>\n      <td>Light, Medium, and Heavy armor and Shields</td>\n    </tr>\n    <tr>\n      <td>Starting Equipment</td>\n      <td>Choose A, B, or C: (A) Chain Mail, Greatsword, Flail, 8 Javelins, Dungeoneer's Pack, and 4 GP; (B) Studded Leather Armor, Scimitar, Shortsword, Longbow, 20 Arrows, Quiver, Dungeoneer's Pack, and 11 GP; or (C) 155 GP</td>\n    </tr>\n  </tbody>\n</table>\n\n#### Becoming a Fighter …\n\n##### As a Level 1 Character\n\n- Gain all the traits in the Core Fighter Traits table.\n- Gain the Fighter's level 1 features, which are listed in the Fighter Features table.\n\n##### As a Multiclass Character\n\n- Gain the following traits from the Core Fighter Traits table: Hit Point Die, proficiency with Martial weapons, and training with Light and Medium armor and Shields.\n- Gain the Fighter's level 1 features, which are listed in the Fighter Features table.\n\n#### Fighter Class Features\n\nAs a Fighter, you gain the following class features when you reach the specified Fighter levels. These features are listed on the Fighter Features table.\n\n**Fighter Features**\n\n<table>\n  <thead>\n    <tr>\n      <th>Level</th>\n      <th>Proficiency Bonus</th>\n      <th>Class Features</th>\n      <th>Second Wind</th>\n      <th>Weapon Mastery</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>1</td>\n      <td>+2</td>\n      <td>Fighting Style, Second Wind, Weapon Mastery</td>\n      <td>2</td>\n      <td>3</td>\n    </tr>\n    <tr>\n      <td>2</td>\n      <td>+2</td>\n      <td>Action Surge (one use), Tactical Mind</td>\n      <td>2</td>\n      <td>3</td>\n    </tr>\n    <tr>\n      <td>3</td>\n      <td>+2</td>\n      <td>Fighter Subclass</td>\n      <td>2</td>\n      <td>3</td>\n    </tr>\n    <tr>\n      <td>4</td>\n      <td>+2</td>\n      <td>Ability Score Improvement</td>\n      <td>3</td>\n      <td>4</td>\n    </tr>\n    <tr>\n      <td>5</td>\n      <td>+3</td>\n      <td>Extra Attack, Tactical Shift</td>\n      <td>3</td>\n      <td>4</td>\n    </tr>\n    <tr>\n      <td>6</td>\n      <td>+3</td>\n      <td>Ability Score Improvement</td>\n      <td>3</td>\n      <td>4</td>\n    </tr>\n    <tr>\n      <td>7</td>\n      <td>+3</td>\n      <td>Subclass feature</td>\n      <td>3</td>\n      <td>4</td>\n    </tr>\n    <tr>\n      <td>8</td>\n      <td>+3</td>\n      <td>Ability Score Improvement</td>\n      <td>3</td>\n      <td>4</td>\n    </tr>\n    <tr>\n      <td>9</td>\n      <td>+4</td>\n      <td>Indomitable (one use), Tactical Master</td>\n      <td>3</td>\n      <td>4</td>\n    </tr>\n    <tr>\n      <td>10</td>\n      <td>+4</td>\n      <td>Subclass feature</td>\n      <td>4</td>\n      <td>5</td>\n    </tr>\n    <tr>\n      <td>11</td>\n      <td>+4</td>\n      <td>Two Extra Attacks</td>\n      <td>4</td>\n      <td>5</td>\n    </tr>\n    <tr>\n      <td>12</td>\n      <td>+4</td>\n      <td>Ability Score Improvement</td>\n      <td>4</td>\n      <td>5</td>\n    </tr>\n    <tr>\n      <td>13</td>\n      <td>+5</td>\n      <td>Indomitable (two uses), Studied Attacks</td>\n      <td>4</td>\n      <td>5</td>\n    </tr>\n    <tr>\n      <td>14</td>\n      <td>+5</td>\n      <td>Ability Score Improvement</td>\n      <td>4</td>\n      <td>5</td>\n    </tr>\n    <tr>\n      <td>15</td>\n      <td>+5</td>\n      <td>Subclass feature</td>\n      <td>4</td>\n      <td>5</td>\n    </tr>\n    <tr>\n      <td>16</td>\n      <td>+5</td>\n      <td>Ability Score Improvement</td>\n      <td>4</td>\n      <td>6</td>\n    </tr>\n    <tr>\n      <td>17</td>\n      <td>+6</td>\n      <td>Action Surge (two uses), Indomitable (three uses)</td>\n      <td>4</td>\n      <td>6</td>\n    </tr>\n    <tr>\n      <td>18</td>\n      <td>+6</td>\n      <td>Subclass feature</td>\n      <td>4</td>\n      <td>6</td>\n    </tr>\n    <tr>\n      <td>19</td>\n      <td>+6</td>\n      <td>Epic Boon</td>\n      <td>4</td>\n      <td>6</td>\n    </tr>\n    <tr>\n      <td>20</td>\n      <td>+6</td>\n      <td>Three Extra Attacks</td>\n      <td>4</td>\n      <td>6</td>\n    </tr>\n  </tbody>\n</table>\n\n##### Level 1: Fighting Style\n\nYou have honed your martial prowess and gain a Fighting Style feat of your choice (see \"Feats\"). Defense is recommended.\n\nWhenever you gain a Fighter level, you can replace the feat you chose with a different Fighting Style feat.\n\n##### Level 1: Second Wind\n\nYou have a limited well of physical and mental stamina that you can draw on. As a Bonus Action, you can use it to regain Hit Points equal to 1d10 plus your Fighter level.\n\nYou can use this feature twice. You regain one expended use when you finish a Short Rest, and you regain all expended uses when you finish a Long Rest.\n\nWhen you reach certain Fighter levels, you gain more uses of this feature, as shown in the Second Wind column of the Fighter Features table.\n\n##### Level 1: Weapon Mastery\n\nYour training with weapons allows you to use the mastery properties of three kinds of Simple or Martial weapons of your choice. Whenever you finish a Long Rest, you can practice weapon drills and change one of those weapon choices.\n\nWhen you reach certain Fighter levels, you gain the ability to use the mastery properties of more kinds of weapons, as shown in the Weapon Mastery column of the Fighter Features table.\n\n##### Level 2: Action Surge\n\nYou can push yourself beyond your normal limits for a moment. On your turn, you can take one additional action, except the Magic action.\n\nOnce you use this feature, you can't do so again until you finish a Short or Long Rest. Starting at level 17, you can use it twice before a rest but only once on a turn.\n\n##### Level 2: Tactical Mind\n\nYou have a mind for tactics on and off the battlefield. When you fail an ability check, you can expend a use of your Second Wind to push yourself toward success. Rather than regaining Hit Points, you roll 1d10 and add the number rolled to the ability check, potentially turning it into a success. If the check still fails, this use of Second Wind isn't expended.\n\n##### Level 3: Fighter Subclass\n\nYou gain a Fighter subclass of your choice. The Champion subclass is detailed after this class's description. A subclass is a specialization that grants you features at certain Fighter levels. For the rest of your career, you gain each of your subclass's features that are of your Fighter level or lower.\n\n##### Level 4: Ability Score Improvement\n\nYou gain the Ability Score Improvement feat (see \"Feats\") or another feat of your choice for which you qualify. You gain this feature again at Fighter levels 6, 8, 12, 14, and 16.\n\n##### Level 5: Extra Attack\n\nYou can attack twice instead of once whenever you take the Attack action on your turn.\n\n##### Level 5: Tactical Shift\n\nWhenever you activate your Second Wind with a Bonus Action, you can move up to half your Speed without provoking Opportunity Attacks.\n\n##### Level 9: Indomitable\n\nIf you fail a saving throw, you can reroll it with a bonus equal to your Fighter level. You must use the new roll, and you can't use this feature again until you finish a Long Rest.\n\nYou can use this feature twice before a Long Rest starting at level 13 and three times before a Long Rest starting at level 17.\n\n##### Level 9: Tactical Master\n\nWhen you attack with a weapon whose mastery property you can use, you can replace that property with the Push, Sap, or Slow property for that attack.\n\n##### Level 11: Two Extra Attacks\n\nYou can attack three times instead of once whenever you take the Attack action on your turn.\n\n##### Level 13: Studied Attacks\n\nYou study your opponents and learn from each attack you make. If you make an attack roll against a creature and miss, you have Advantage on your next attack roll against that creature before the end of your next turn.\n\n##### Level 19: Epic Boon\n\nYou gain an Epic Boon feat (see \"Feats\") or another feat of your choice for which you qualify. Boon of Combat Prowess is recommended.\n\n##### Level 20: Three Extra Attacks\n\nYou can attack four times instead of once whenever you take the Attack action on your turn.\n\n#### Fighter Subclass: Champion\n\n_Pursue Physical Excellence in Combat_\n\nA Champion focuses on the development of martial prowess in a relentless pursuit of victory. Champions combine rigorous training with physical excellence to deal devastating blows, withstand peril, and garner glory. Whether in athletic contests or bloody battle, Champions strive for the crown of the victor.\n\n##### Level 3: Improved Critical\n\nYour attack rolls with weapons and Unarmed Strikes can score a Critical Hit on a roll of 19 or 20 on the d20.\n\n##### Level 3: Remarkable Athlete\n\nThanks to your athleticism, you have Advantage on Initiative rolls and Strength (Athletics) checks.\n\nIn addition, immediately after you score a Critical Hit, you can move up to half your Speed without provoking Opportunity Attacks.\n\n##### Level 7: Additional Fighting Style\n\nYou gain another Fighting Style feat of your choice.\n\n##### Level 10: Heroic Warrior\n\nThe thrill of battle drives you toward victory. During combat, you can give yourself Heroic Inspiration whenever you start your turn without it.\n\n##### Level 15: Superior Critical\n\nYour attack rolls with weapons and Unarmed Strikes can now score a Critical Hit on a roll of 18–20 on the d20.\n\n##### Level 18: Survivor\n\nYou attain the pinnacle of resilience in battle, giving you these benefits.\n\n_Defy Death._ You have Advantage on Death Saving Throws. Moreover, when you roll 18–20 on a Death Saving Throw, you gain the benefit of rolling a 20 on it.\n\n_Heroic Rally._ At the start of each of your turns, you regain Hit Points equal to 5 plus your Constitution modifier if you are Bloodied and have at least 1 Hit Point.",
+  "sections": [
+    {
+      "key": "fighter-class-features",
+      "title": "Fighter Class Features",
+      "markdown": "#### Fighter Class Features\n\nAs a Fighter, you gain the following class features when you reach the specified Fighter levels. These features are listed on the Fighter Features table.\n\n**Fighter Features**\n\n<table>\n  <thead>\n    <tr>\n      <th>Level</th>\n      <th>Proficiency Bonus</th>\n      <th>Class Features</th>\n      <th>Second Wind</th>\n      <th>Weapon Mastery</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>1</td>\n      <td>+2</td>\n      <td>Fighting Style, Second Wind, Weapon Mastery</td>\n      <td>2</td>\n      <td>3</td>\n    </tr>\n    <tr>\n      <td>2</td>\n      <td>+2</td>\n      <td>Action Surge (one use), Tactical Mind</td>\n      <td>2</td>\n      <td>3</td>\n    </tr>\n    <tr>\n      <td>3</td>\n      <td>+2</td>\n      <td>Fighter Subclass</td>\n      <td>2</td>\n      <td>3</td>\n    </tr>\n    <tr>\n      <td>4</td>\n      <td>+2</td>\n      <td>Ability Score Improvement</td>\n      <td>3</td>\n      <td>4</td>\n    </tr>\n    <tr>\n      <td>5</td>\n      <td>+3</td>\n      <td>Extra Attack, Tactical Shift</td>\n      <td>3</td>\n      <td>4</td>\n    </tr>\n    <tr>\n      <td>6</td>\n      <td>+3</td>\n      <td>Ability Score Improvement</td>\n      <td>3</td>\n      <td>4</td>\n    </tr>\n    <tr>\n      <td>7</td>\n      <td>+3</td>\n      <td>Subclass feature</td>\n      <td>3</td>\n      <td>4</td>\n    </tr>\n    <tr>\n      <td>8</td>\n      <td>+3</td>\n      <td>Ability Score Improvement</td>\n      <td>3</td>\n      <td>4</td>\n    </tr>\n    <tr>\n      <td>9</td>\n      <td>+4</td>\n      <td>Indomitable (one use), Tactical Master</td>\n      <td>3</td>\n      <td>4</td>\n    </tr>\n    <tr>\n      <td>10</td>\n      <td>+4</td>\n      <td>Subclass feature</td>\n      <td>4</td>\n      <td>5</td>\n    </tr>\n    <tr>\n      <td>11</td>\n      <td>+4</td>\n      <td>Two Extra Attacks</td>\n      <td>4</td>\n      <td>5</td>\n    </tr>\n    <tr>\n      <td>12</td>\n      <td>+4</td>\n      <td>Ability Score Improvement</td>\n      <td>4</td>\n      <td>5</td>\n    </tr>\n    <tr>\n      <td>13</td>\n      <td>+5</td>\n      <td>Indomitable (two uses), Studied Attacks</td>\n      <td>4</td>\n      <td>5</td>\n    </tr>\n    <tr>\n      <td>14</td>\n      <td>+5</td>\n      <td>Ability Score Improvement</td>\n      <td>4</td>\n      <td>5</td>\n    </tr>\n    <tr>\n      <td>15</td>\n      <td>+5</td>\n      <td>Subclass feature</td>\n      <td>4</td>\n      <td>5</td>\n    </tr>\n    <tr>\n      <td>16</td>\n      <td>+5</td>\n      <td>Ability Score Improvement</td>\n      <td>4</td>\n      <td>6</td>\n    </tr>\n    <tr>\n      <td>17</td>\n      <td>+6</td>\n      <td>Action Surge (two uses), Indomitable (three uses)</td>\n      <td>4</td>\n      <td>6</td>\n    </tr>\n    <tr>\n      <td>18</td>\n      <td>+6</td>\n      <td>Subclass feature</td>\n      <td>4</td>\n      <td>6</td>\n    </tr>\n    <tr>\n      <td>19</td>\n      <td>+6</td>\n      <td>Epic Boon</td>\n      <td>4</td>\n      <td>6</td>\n    </tr>\n    <tr>\n      <td>20</td>\n      <td>+6</td>\n      <td>Three Extra Attacks</td>\n      <td>4</td>\n      <td>6</td>\n    </tr>\n  </tbody>\n</table>\n\n##### Level 1: Fighting Style\n\nYou have honed your martial prowess and gain a Fighting Style feat of your choice (see \"Feats\"). Defense is recommended.\n\nWhenever you gain a Fighter level, you can replace the feat you chose with a different Fighting Style feat.\n\n##### Level 1: Second Wind\n\nYou have a limited well of physical and mental stamina that you can draw on. As a Bonus Action, you can use it to regain Hit Points equal to 1d10 plus your Fighter level.\n\nYou can use this feature twice. You regain one expended use when you finish a Short Rest, and you regain all expended uses when you finish a Long Rest.\n\nWhen you reach certain Fighter levels, you gain more uses of this feature, as shown in the Second Wind column of the Fighter Features table.\n\n##### Level 1: Weapon Mastery\n\nYour training with weapons allows you to use the mastery properties of three kinds of Simple or Martial weapons of your choice. Whenever you finish a Long Rest, you can practice weapon drills and change one of those weapon choices.\n\nWhen you reach certain Fighter levels, you gain the ability to use the mastery properties of more kinds of weapons, as shown in the Weapon Mastery column of the Fighter Features table.\n\n##### Level 2: Action Surge\n\nYou can push yourself beyond your normal limits for a moment. On your turn, you can take one additional action, except the Magic action.\n\nOnce you use this feature, you can't do so again until you finish a Short or Long Rest. Starting at level 17, you can use it twice before a rest but only once on a turn.\n\n##### Level 2: Tactical Mind\n\nYou have a mind for tactics on and off the battlefield. When you fail an ability check, you can expend a use of your Second Wind to push yourself toward success. Rather than regaining Hit Points, you roll 1d10 and add the number rolled to the ability check, potentially turning it into a success. If the check still fails, this use of Second Wind isn't expended.\n\n##### Level 3: Fighter Subclass\n\nYou gain a Fighter subclass of your choice. The Champion subclass is detailed after this class's description. A subclass is a specialization that grants you features at certain Fighter levels. For the rest of your career, you gain each of your subclass's features that are of your Fighter level or lower.\n\n##### Level 4: Ability Score Improvement\n\nYou gain the Ability Score Improvement feat (see \"Feats\") or another feat of your choice for which you qualify. You gain this feature again at Fighter levels 6, 8, 12, 14, and 16.\n\n##### Level 5: Extra Attack\n\nYou can attack twice instead of once whenever you take the Attack action on your turn.\n\n##### Level 5: Tactical Shift\n\nWhenever you activate your Second Wind with a Bonus Action, you can move up to half your Speed without provoking Opportunity Attacks.\n\n##### Level 9: Indomitable\n\nIf you fail a saving throw, you can reroll it with a bonus equal to your Fighter level. You must use the new roll, and you can't use this feature again until you finish a Long Rest.\n\nYou can use this feature twice before a Long Rest starting at level 13 and three times before a Long Rest starting at level 17.\n\n##### Level 9: Tactical Master\n\nWhen you attack with a weapon whose mastery property you can use, you can replace that property with the Push, Sap, or Slow property for that attack.\n\n##### Level 11: Two Extra Attacks\n\nYou can attack three times instead of once whenever you take the Attack action on your turn.\n\n##### Level 13: Studied Attacks\n\nYou study your opponents and learn from each attack you make. If you make an attack roll against a creature and miss, you have Advantage on your next attack roll against that creature before the end of your next turn.\n\n##### Level 19: Epic Boon\n\nYou gain an Epic Boon feat (see \"Feats\") or another feat of your choice for which you qualify. Boon of Combat Prowess is recommended.\n\n##### Level 20: Three Extra Attacks\n\nYou can attack four times instead of once whenever you take the Attack action on your turn.",
+      "_source_file": "srdDocumentIndex:classes/fighter-class-features",
+      "chapter": "classes",
+      "start": 246332,
+      "end": 253338,
+      "pagePrefix": "## Character Classes",
+      "level": 4,
+      "children": [
+        {
+          "key": "level-1-fighting-style",
+          "title": "Level 1: Fighting Style",
+          "markdown": "##### Level 1: Fighting Style\n\nYou have honed your martial prowess and gain a Fighting Style feat of your choice (see \"Feats\"). Defense is recommended.\n\nWhenever you gain a Fighter level, you can replace the feat you chose with a different Fighting Style feat.",
+          "_source_file": "srdDocumentIndex:classes/level-1-fighting-style",
+          "chapter": "classes",
+          "start": 249358,
+          "end": 249620,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-1-second-wind",
+          "title": "Level 1: Second Wind",
+          "markdown": "##### Level 1: Second Wind\n\nYou have a limited well of physical and mental stamina that you can draw on. As a Bonus Action, you can use it to regain Hit Points equal to 1d10 plus your Fighter level.\n\nYou can use this feature twice. You regain one expended use when you finish a Short Rest, and you regain all expended uses when you finish a Long Rest.\n\nWhen you reach certain Fighter levels, you gain more uses of this feature, as shown in the Second Wind column of the Fighter Features table.",
+          "_source_file": "srdDocumentIndex:classes/level-1-second-wind",
+          "chapter": "classes",
+          "start": 249620,
+          "end": 250115,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-2-action-surge",
+          "title": "Level 2: Action Surge",
+          "markdown": "##### Level 2: Action Surge\n\nYou can push yourself beyond your normal limits for a moment. On your turn, you can take one additional action, except the Magic action.\n\nOnce you use this feature, you can't do so again until you finish a Short or Long Rest. Starting at level 17, you can use it twice before a rest but only once on a turn.",
+          "_source_file": "srdDocumentIndex:classes/level-2-action-surge",
+          "chapter": "classes",
+          "start": 250565,
+          "end": 250903,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-2-tactical-mind",
+          "title": "Level 2: Tactical Mind",
+          "markdown": "##### Level 2: Tactical Mind\n\nYou have a mind for tactics on and off the battlefield. When you fail an ability check, you can expend a use of your Second Wind to push yourself toward success. Rather than regaining Hit Points, you roll 1d10 and add the number rolled to the ability check, potentially turning it into a success. If the check still fails, this use of Second Wind isn't expended.",
+          "_source_file": "srdDocumentIndex:classes/level-2-tactical-mind",
+          "chapter": "classes",
+          "start": 250903,
+          "end": 251297,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-3-fighter-subclass",
+          "title": "Level 3: Fighter Subclass",
+          "markdown": "##### Level 3: Fighter Subclass\n\nYou gain a Fighter subclass of your choice. The Champion subclass is detailed after this class's description. A subclass is a specialization that grants you features at certain Fighter levels. For the rest of your career, you gain each of your subclass's features that are of your Fighter level or lower.",
+          "_source_file": "srdDocumentIndex:classes/level-3-fighter-subclass",
+          "chapter": "classes",
+          "start": 251297,
+          "end": 251636,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-5-tactical-shift",
+          "title": "Level 5: Tactical Shift",
+          "markdown": "##### Level 5: Tactical Shift\n\nWhenever you activate your Second Wind with a Bonus Action, you can move up to half your Speed without provoking Opportunity Attacks.",
+          "_source_file": "srdDocumentIndex:classes/level-5-tactical-shift",
+          "chapter": "classes",
+          "start": 251976,
+          "end": 252142,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-9-indomitable",
+          "title": "Level 9: Indomitable",
+          "markdown": "##### Level 9: Indomitable\n\nIf you fail a saving throw, you can reroll it with a bonus equal to your Fighter level. You must use the new roll, and you can't use this feature again until you finish a Long Rest.\n\nYou can use this feature twice before a Long Rest starting at level 13 and three times before a Long Rest starting at level 17.",
+          "_source_file": "srdDocumentIndex:classes/level-9-indomitable",
+          "chapter": "classes",
+          "start": 252142,
+          "end": 252482,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-9-tactical-master",
+          "title": "Level 9: Tactical Master",
+          "markdown": "##### Level 9: Tactical Master\n\nWhen you attack with a weapon whose mastery property you can use, you can replace that property with the Push, Sap, or Slow property for that attack.",
+          "_source_file": "srdDocumentIndex:classes/level-9-tactical-master",
+          "chapter": "classes",
+          "start": 252482,
+          "end": 252665,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-11-two-extra-attacks",
+          "title": "Level 11: Two Extra Attacks",
+          "markdown": "##### Level 11: Two Extra Attacks\n\nYou can attack three times instead of once whenever you take the Attack action on your turn.",
+          "_source_file": "srdDocumentIndex:classes/level-11-two-extra-attacks",
+          "chapter": "classes",
+          "start": 252665,
+          "end": 252794,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-13-studied-attacks",
+          "title": "Level 13: Studied Attacks",
+          "markdown": "##### Level 13: Studied Attacks\n\nYou study your opponents and learn from each attack you make. If you make an attack roll against a creature and miss, you have Advantage on your next attack roll against that creature before the end of your next turn.",
+          "_source_file": "srdDocumentIndex:classes/level-13-studied-attacks",
+          "chapter": "classes",
+          "start": 252794,
+          "end": 253046,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-20-three-extra-attacks",
+          "title": "Level 20: Three Extra Attacks",
+          "markdown": "##### Level 20: Three Extra Attacks\n\nYou can attack four times instead of once whenever you take the Attack action on your turn.",
+          "_source_file": "srdDocumentIndex:classes/level-20-three-extra-attacks",
+          "chapter": "classes",
+          "start": 253208,
+          "end": 253338,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        }
+      ]
+    }
+  ],
+  "subclasses": [
+    {
+      "key": "fighter-subclass-champion",
+      "title": "Fighter Subclass: Champion",
+      "markdown": "#### Fighter Subclass: Champion\n\n_Pursue Physical Excellence in Combat_\n\nA Champion focuses on the development of martial prowess in a relentless pursuit of victory. Champions combine rigorous training with physical excellence to deal devastating blows, withstand peril, and garner glory. Whether in athletic contests or bloody battle, Champions strive for the crown of the victor.\n\n##### Level 3: Improved Critical\n\nYour attack rolls with weapons and Unarmed Strikes can score a Critical Hit on a roll of 19 or 20 on the d20.\n\n##### Level 3: Remarkable Athlete\n\nThanks to your athleticism, you have Advantage on Initiative rolls and Strength (Athletics) checks.\n\nIn addition, immediately after you score a Critical Hit, you can move up to half your Speed without provoking Opportunity Attacks.\n\n##### Level 7: Additional Fighting Style\n\nYou gain another Fighting Style feat of your choice.\n\n##### Level 10: Heroic Warrior\n\nThe thrill of battle drives you toward victory. During combat, you can give yourself Heroic Inspiration whenever you start your turn without it.\n\n##### Level 15: Superior Critical\n\nYour attack rolls with weapons and Unarmed Strikes can now score a Critical Hit on a roll of 18–20 on the d20.\n\n##### Level 18: Survivor\n\nYou attain the pinnacle of resilience in battle, giving you these benefits.\n\n_Defy Death._ You have Advantage on Death Saving Throws. Moreover, when you roll 18–20 on a Death Saving Throw, you gain the benefit of rolling a 20 on it.\n\n_Heroic Rally._ At the start of each of your turns, you regain Hit Points equal to 5 plus your Constitution modifier if you are Bloodied and have at least 1 Hit Point.",
+      "_source_file": "srdDocumentIndex:classes/fighter-subclass-champion",
+      "chapter": "classes",
+      "start": 253338,
+      "end": 254984,
+      "pagePrefix": "## Character Classes",
+      "level": 4,
+      "children": [
+        {
+          "key": "level-3-improved-critical",
+          "title": "Level 3: Improved Critical",
+          "markdown": "##### Level 3: Improved Critical\n\nYour attack rolls with weapons and Unarmed Strikes can score a Critical Hit on a roll of 19 or 20 on the d20.",
+          "_source_file": "srdDocumentIndex:classes/level-3-improved-critical",
+          "chapter": "classes",
+          "start": 253721,
+          "end": 253866,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-3-remarkable-athlete",
+          "title": "Level 3: Remarkable Athlete",
+          "markdown": "##### Level 3: Remarkable Athlete\n\nThanks to your athleticism, you have Advantage on Initiative rolls and Strength (Athletics) checks.\n\nIn addition, immediately after you score a Critical Hit, you can move up to half your Speed without provoking Opportunity Attacks.",
+          "_source_file": "srdDocumentIndex:classes/level-3-remarkable-athlete",
+          "chapter": "classes",
+          "start": 253866,
+          "end": 254134,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-7-additional-fighting-style",
+          "title": "Level 7: Additional Fighting Style",
+          "markdown": "##### Level 7: Additional Fighting Style\n\nYou gain another Fighting Style feat of your choice.",
+          "_source_file": "srdDocumentIndex:classes/level-7-additional-fighting-style",
+          "chapter": "classes",
+          "start": 254134,
+          "end": 254230,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-10-heroic-warrior",
+          "title": "Level 10: Heroic Warrior",
+          "markdown": "##### Level 10: Heroic Warrior\n\nThe thrill of battle drives you toward victory. During combat, you can give yourself Heroic Inspiration whenever you start your turn without it.",
+          "_source_file": "srdDocumentIndex:classes/level-10-heroic-warrior",
+          "chapter": "classes",
+          "start": 254230,
+          "end": 254408,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-15-superior-critical",
+          "title": "Level 15: Superior Critical",
+          "markdown": "##### Level 15: Superior Critical\n\nYour attack rolls with weapons and Unarmed Strikes can now score a Critical Hit on a roll of 18–20 on the d20.",
+          "_source_file": "srdDocumentIndex:classes/level-15-superior-critical",
+          "chapter": "classes",
+          "start": 254408,
+          "end": 254555,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        },
+        {
+          "key": "level-18-survivor",
+          "title": "Level 18: Survivor",
+          "markdown": "##### Level 18: Survivor\n\nYou attain the pinnacle of resilience in battle, giving you these benefits.\n\n_Defy Death._ You have Advantage on Death Saving Throws. Moreover, when you roll 18–20 on a Death Saving Throw, you gain the benefit of rolling a 20 on it.\n\n_Heroic Rally._ At the start of each of your turns, you regain Hit Points equal to 5 plus your Constitution modifier if you are Bloodied and have at least 1 Hit Point.",
+          "_source_file": "srdDocumentIndex:classes/level-18-survivor",
+          "chapter": "classes",
+          "start": 254555,
+          "end": 254984,
+          "pagePrefix": "## Character Classes",
+          "level": 5,
+          "children": []
+        }
+      ]
+    }
+  ],
+  "multiclassing": [
+    {
+      "key": "becoming-a-fighter",
+      "title": "Becoming a Fighter …",
+      "markdown": "#### Becoming a Fighter …\n\n##### As a Level 1 Character\n\n- Gain all the traits in the Core Fighter Traits table.\n- Gain the Fighter's level 1 features, which are listed in the Fighter Features table.\n\n##### As a Multiclass Character\n\n- Gain the following traits from the Core Fighter Traits table: Hit Point Die, proficiency with Martial weapons, and training with Light and Medium armor and Shields.\n- Gain the Fighter's level 1 features, which are listed in the Fighter Features table.",
+      "_source_file": "srdDocumentIndex:classes/becoming-a-fighter",
+      "chapter": "classes",
+      "start": 245843,
+      "end": 246332,
+      "pagePrefix": "## Character Classes",
+      "level": 4,
+      "children": []
+    }
+  ],
+  "sourceSpan": {
+    "start": 244817,
+    "end": 254984
+  },
+  "sectionCount": 20,
+  "parsedAt": "2026-07-08T15:33:00.437Z",
+  "pdfBoundary": {
+    "id": "fighter",
+    "title": "Fighter",
+    "startPhrase": "Becoming a Fighter",
+    "endPhrase": "Core Monk Traits",
+    "startIndex": 162099,
+    "endIndex": 168432,
+    "charCount": 6333,
+    "startPage": 47,
+    "endPage": 49,
+    "approximatePageHint": 47
+  }
+}
