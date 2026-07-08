@@ -32,6 +32,7 @@ import {
 import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
 import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
 import { THE_TAVERN } from "@/lib/workplace/forgeLexicon";
+import { buildSrdRuleBundleMarkdown } from "@/lib/srd/srdRuleBundles";
 import { buildLibraryPreviewSnapshot } from "@/lib/workshop/libraryPreviewSnapshot";
 import {
   isPreviewReadyMessage,
@@ -147,8 +148,16 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
   useEffect(() => {
     if (
       !isLibraryView ||
-      (librarySelection?.kind !== "srd" && librarySelection?.kind !== "srd-entity")
+      (librarySelection?.kind !== "srd" &&
+        librarySelection?.kind !== "srd-entity" &&
+        librarySelection?.kind !== "srd-bundle")
     ) {
+      setSrdPreviewMarkdown("");
+      setSrdPreviewLoading(false);
+      return;
+    }
+
+    if (librarySelection?.kind === "srd-bundle") {
       setSrdPreviewMarkdown("");
       setSrdPreviewLoading(false);
       return;
@@ -248,8 +257,10 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
   ]);
 
   const previewMarkdown = isLibraryView
-    ? librarySelection?.kind === "srd" || librarySelection?.kind === "srd-entity"
-      ? srdPreviewMarkdown
+    ? librarySelection?.kind === "srd-bundle"
+      ? buildSrdRuleBundleMarkdown(librarySelection.bundleId)
+      : librarySelection?.kind === "srd" || librarySelection?.kind === "srd-entity"
+        ? srdPreviewMarkdown
       : viewingCharacter
         ? characterToMarkdownFile(viewingCharacter.player)
         : viewingItem

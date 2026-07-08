@@ -4,6 +4,7 @@ import {
   getSrdEntity,
   srdEntityToPreviewMarkdown,
 } from "@/lib/srd/corpus";
+import { buildSrdRuleBundleMarkdown } from "@/lib/srd/srdRuleBundles";
 import {
   LIBRARY_KIND_LABEL,
   type LibraryItem,
@@ -52,6 +53,10 @@ function libraryPreviewMarkdown(params: BuildLibraryPreviewSnapshotParams): stri
     if (params.srdPreviewMarkdown !== undefined) return params.srdPreviewMarkdown;
     const entity = getSrdEntity(selection.entityId);
     return entity ? (srdEntityToPreviewMarkdown(entity) ?? "") : "";
+  }
+
+  if (selection.kind === "srd-bundle") {
+    return buildSrdRuleBundleMarkdown(selection.bundleId);
   }
 
   if (selection.kind === "custom-srd") {
@@ -148,7 +153,10 @@ export function buildLibraryPreviewSnapshot(
 
   const previewMarkdown = libraryPreviewMarkdown(params);
   const previewImages = viewingResult?.images ?? [];
-  const isSrd = selection.kind === "srd" || selection.kind === "srd-entity";
+  const isSrd =
+    selection.kind === "srd" ||
+    selection.kind === "srd-entity" ||
+    selection.kind === "srd-bundle";
   const srdLoading =
     params.srdPreviewLoading ??
     ((selection.kind === "srd" || selection.kind === "srd-entity") &&
@@ -182,6 +190,9 @@ export function buildLibraryPreviewSnapshot(
   } else if (viewingCustomSrd) {
     viewingLabel = `Editing: ${viewingCustomSrd.name}`;
     viewingSubline = "Your workspace copy — editable";
+  } else if (selection.kind === "srd-bundle") {
+    viewingLabel = `Viewing SRD bundle: ${selection.name}`;
+    viewingSubline = "read-only · consolidated rule sections";
   } else if (isSrd) {
     viewingLabel = `Viewing SRD: ${selection.name}`;
     viewingSubline = "read-only";

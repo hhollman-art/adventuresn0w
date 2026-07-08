@@ -64,6 +64,7 @@ export function resolvePreviewCiClass(params: ResolvePreviewCiClassParams): CiCl
   if (params.viewingParty) return CI_CLASS_FOR_PARTY;
   if (params.viewingCustomSrd) return "rules.custom-entry";
 
+  if (params.selection?.kind === "srd-bundle") return "rules.srd-bundle";
   if (params.selection?.kind === "custom-srd") return "rules.custom-entry";
   if (params.selection?.kind === "srd-entity") {
     const entity = getSrdEntity(params.selection.entityId);

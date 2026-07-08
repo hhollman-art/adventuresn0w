@@ -92,3 +92,4 @@ console.log(
 // Keep the heading index in sync for preview lookups.
 await import("./build-srd-document-index.mjs");
 await import("./build-srd-entities.mjs");
+await import("./consolidate-srd-rules.mjs");

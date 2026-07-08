@@ -10,6 +10,7 @@ import type { LibraryListEntry } from "@/lib/workshop/libraryCatalog";
 import { ciClassLabel } from "@/lib/ciRegistry";
 import type { SrdEntityId, SrdEntityKind, SrdEntitySummary } from "@/lib/srd/types";
 import { normalizeSrdDocumentKey, lookupSrdDocumentMarkdown } from "@/lib/srd/srdDocumentLookup";
+import { isBundledSrdSectionKey } from "@/lib/srd/srdRuleBundles";
 import type { SrdItemRef } from "@/lib/srd/srdItemRef";
 
 const ENTITY_KIND_LABEL: Record<SrdEntityKind, string> = {
@@ -163,7 +164,8 @@ export function listSrdRulesLibraryEntries(): LibraryListEntry[] {
     (entity) =>
       !ITEM_ENTITY_KINDS.includes(entity.kind) &&
       entity.kind !== "monster" &&
-      entity.kind !== "spell",
+      entity.kind !== "spell" &&
+      !isBundledSrdSectionKey(entity.key),
   ).map(srdEntityToLibraryEntry);
 }
 
@@ -217,4 +219,5 @@ export function findSrdEntityByName(kind: SrdEntityKind, name: string): SrdEntit
   return (byKind.get(kind) ?? []).find((e) => e.key === key || normalizeSrdDocumentKey(e.name) === key);
 }
 
+export { listSrdRuleBundleLibraryEntries, isBundledSrdSectionKey } from "@/lib/srd/srdRuleBundles";
 export { SRD_ENTITIES, ENTITY_KIND_LABEL, KIND_TO_API_RESOURCE };

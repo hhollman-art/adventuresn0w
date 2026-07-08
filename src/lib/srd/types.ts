@@ -81,6 +81,9 @@ export type SrdEntityKind =
 /** Stable id for one read-only SRD Creation File (CF), e.g. `spell:fireball`. */
 export type SrdEntityId = `${SrdEntityKind}:${string}`;
 
+/** Consolidated high-level SRD rule groupings for Library browse. */
+export type SrdRuleBundleId = "create_a_character" | "combat_rules" | "adventuring_rules";
+
 /** Lightweight catalogue row — full text loaded on demand from the document body. */
 export type SrdEntitySummary = {
   id: SrdEntityId;

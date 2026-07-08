@@ -44,7 +44,7 @@ import {
   type SavedLocation,
 } from "@/lib/worldAssets/location";
 import type { SrdItemRef } from "@/lib/srd/srdItemRef";
-import type { SrdEntityId } from "@/lib/srd/types";
+import type { SrdEntityId, SrdRuleBundleId } from "@/lib/srd/types";
 import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
 import { srdEntityKindLabel } from "@/lib/srd/corpus";
 
@@ -116,6 +116,8 @@ export type LibraryListEntry = {
   srdItemRef?: SrdItemRef;
   /** Stable bundled SRD entity id (`spell:fireball`, `monster:goblin-warrior`, …). */
   srdEntityId?: SrdEntityId;
+  /** Consolidated SRD rule bundle (`create_a_character`, `combat_rules`, …). */
+  srdBundleId?: SrdRuleBundleId;
 };
 
 export function seedToLibraryEntry(seed: SavedRealmSeed): LibraryListEntry {

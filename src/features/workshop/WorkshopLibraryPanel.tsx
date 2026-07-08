@@ -45,6 +45,7 @@ import {
   listSrdItemLibraryEntries,
   listSrdMonstersLibraryEntries,
   listSrdRulesLibraryEntries,
+  listSrdRuleBundleLibraryEntries,
   listSrdSpellsLibraryEntries,
 } from "@/lib/srd/corpus";
 import {
@@ -80,7 +81,7 @@ import type { CiClass } from "@/lib/ciRegistry";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
 import SrdLibraryBrowser from "@/features/workshop/SrdLibraryBrowser";
 import type { SrdApiResource } from "@/lib/srd/dnd5eApi";
-import type { SrdEntityId } from "@/lib/srd/types";
+import type { SrdEntityId, SrdRuleBundleId } from "@/lib/srd/types";
 import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
 import type { CloneSrdResult } from "@/lib/srd/cloneSrdEntity";
 import { setSrdEntityDragData } from "@/lib/srd/srdDragDrop";
@@ -104,6 +105,7 @@ export type LibraryViewSelection =
   | { kind: "session"; id: string }
   | { kind: "srd"; resource: SrdApiResource; index: string; name: string }
   | { kind: "srd-entity"; entityId: SrdEntityId; name: string }
+  | { kind: "srd-bundle"; bundleId: SrdRuleBundleId; name: string }
   | { kind: "custom-srd"; id: string }
   | null;
 
@@ -300,6 +302,9 @@ function isSelected(selection: LibraryViewSelection, entry: LibraryListEntry): b
   if (!selection) return false;
   if (entry.ciClass === "rules.custom-entry" && selection.kind === "custom-srd") {
     return selection.id === entry.id;
+  }
+  if (entry.srdBundleId && selection.kind === "srd-bundle") {
+    return selection.bundleId === entry.srdBundleId;
   }
   if (entry.srdEntityId && selection.kind === "srd-entity") {
     return selection.entityId === entry.srdEntityId;
@@ -519,6 +524,7 @@ export default function WorkshopLibraryPanel({
 
   const srdItemEntries = useMemo(() => listSrdItemLibraryEntries(), []);
   const srdSpellEntries = useMemo(() => listSrdSpellsLibraryEntries(), []);
+  const srdRuleBundleEntries = useMemo(() => listSrdRuleBundleLibraryEntries(), []);
   const srdRulesEntries = useMemo(() => listSrdRulesLibraryEntries(), []);
   const srdMonsterEntries = useMemo(() => listSrdMonstersLibraryEntries(), []);
 
@@ -617,7 +623,9 @@ export default function WorkshopLibraryPanel({
   const allEntries = useMemo(() => {
     const srdItemsForShelf = includeSrdItems ? srdItemEntries : [];
     const srdSpellsForShelf = includeSrdRules ? srdSpellEntries : [];
-    const srdRulesForShelf = includeSrdRules ? srdRulesEntries : [];
+    const srdRulesForShelf = includeSrdRules
+      ? [...srdRuleBundleEntries, ...srdRulesEntries]
+      : [];
     const srdMonstersForShelf = includeSrdMonsters ? srdMonsterEntries : [];
     return sortLibraryEntries([
       ...filteredSeeds.map(seedToLibraryEntry),
@@ -641,6 +649,7 @@ export default function WorkshopLibraryPanel({
     includeSrdMonsters,
     srdItemEntries,
     srdSpellEntries,
+    srdRuleBundleEntries,
     srdRulesEntries,
     srdMonsterEntries,
     filteredSeeds,
@@ -1066,6 +1075,14 @@ export default function WorkshopLibraryPanel({
                   {entries.map((entry) => {
                     const selected = isSelected(selection, entry);
                     const select = () => {
+                      if (entry.srdBundleId) {
+                        onSelect({
+                          kind: "srd-bundle",
+                          bundleId: entry.srdBundleId,
+                          name: entry.title,
+                        });
+                        return;
+                      }
                       if (entry.srdEntityId) {
                         onSelect({
                           kind: "srd-entity",
@@ -1309,6 +1326,14 @@ export default function WorkshopLibraryPanel({
                   {entries.map((entry) => {
                     const selected = isSelected(selection, entry);
                     const select = () => {
+                      if (entry.srdBundleId) {
+                        onSelect({
+                          kind: "srd-bundle",
+                          bundleId: entry.srdBundleId,
+                          name: entry.title,
+                        });
+                        return;
+                      }
                       if (entry.srdEntityId) {
                         onSelect({
                           kind: "srd-entity",
@@ -1533,6 +1558,14 @@ export default function WorkshopLibraryPanel({
           {entries.map((entry) => {
             const selected = isSelected(selection, entry);
             const select = () => {
+              if (entry.srdBundleId) {
+                onSelect({
+                  kind: "srd-bundle",
+                  bundleId: entry.srdBundleId,
+                  name: entry.title,
+                });
+                return;
+              }
               if (entry.srdEntityId) {
                 onSelect({
                   kind: "srd-entity",

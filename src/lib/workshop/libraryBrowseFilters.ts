@@ -43,6 +43,7 @@ export const LIBRARY_CI_FANTASY_LABEL: Record<CiClass, string> = {
   "session.snapshot": "Shelved table",
   "session.room": "Session room",
   "rules.srd-entry": "SRD rule",
+  "rules.srd-bundle": "Rule bundle",
   "rules.custom-entry": "Your rule copy",
   "spell.srd-entry": "SRD spell",
   "monster.srd-entry": "SRD monster",
@@ -187,7 +188,7 @@ export function libraryShelfHint(shelf: WorkshopLibraryCategory): string {
     case "world":
       return "Named NPCs and places — motives, secrets, and locations for your table.";
     case "rules":
-      return "Spells, classes, and core rules from the bundled SRD — read-only reference.";
+      return "Spells, classes, and consolidated rule bundles from the bundled SRD — read-only reference.";
     case "monsters":
       return "Monster stat blocks from the bundled SRD bestiary — read-only reference.";
     case "parties":

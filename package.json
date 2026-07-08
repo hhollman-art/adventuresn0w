@@ -13,6 +13,7 @@
     "build:srd-spell-index": "node scripts/build-srd-spell-index.mjs",
     "build:srd-document": "node scripts/build-srd-document.mjs",
     "build:srd": "node scripts/build-srd-spells.mjs && node scripts/build-srd-document.mjs",
+    "consolidate:srd-rules": "node scripts/consolidate-srd-rules.mjs",
     "generate:theme-art": "node scripts/generate-theme-art.mjs"
   },
   "dependencies": {
