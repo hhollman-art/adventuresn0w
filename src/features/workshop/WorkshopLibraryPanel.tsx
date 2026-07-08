@@ -39,6 +39,7 @@ import {
 import { ciClassVisual } from "@/lib/ui/ciClassVisuals";
 import LibraryBrowseToolbar from "@/features/workshop/LibraryBrowseToolbar";
 import LibraryEntryDetailPane from "@/features/workshop/LibraryEntryDetailPane";
+import LibraryTwoPaneBrowse from "@/features/workshop/LibraryTwoPaneBrowse";
 import LibraryThreePaneBrowse from "@/features/workshop/LibraryThreePaneBrowse";
 import {
   listSrdItemLibraryEntries,
@@ -155,6 +156,8 @@ type WorkshopLibraryPanelProps = {
   onStatus: (message: string | null) => void;
   /** Fills the browse column in the wide library layout. */
   wideLayout?: boolean;
+  /** Split-pane Library: nav + dense list only; Scrying panel lives outside this panel. */
+  inlineScryingLayout?: boolean;
 };
 
 function ProvenanceBadge({ provenance }: { provenance: LibraryProvenance }) {
@@ -392,17 +395,17 @@ function LibraryEntryRow({
             {entry.origin === "creation" ? <CreationTag /> : null}
             <span className="font-display font-semibold text-[var(--text)]">{entry.title}</span>
           </span>
-          <span className="mt-1 block text-xs text-[var(--muted)]">
+          <span className="library-entry-shelf mt-1 block text-xs text-[var(--muted)]">
             {formatEntryShelfLine(entry)}
             {entry.provenance === "user" ? (
               <> · {new Date(entry.createdAt).toLocaleDateString()}</>
             ) : null}
           </span>
           {entry.detail ? (
-            <span className="mt-1 block text-xs text-[var(--muted)] line-clamp-2">{entry.detail}</span>
+            <span className="library-entry-detail mt-1 block text-xs text-[var(--muted)] line-clamp-2">{entry.detail}</span>
           ) : null}
           {entry.tags?.length ? (
-            <span className="mt-1.5 flex flex-wrap gap-1">
+            <span className="library-entry-tags mt-1.5 flex flex-wrap gap-1">
               {entry.tags.map((tag) => (
                 <span
                   key={tag}
@@ -485,7 +488,9 @@ export default function WorkshopLibraryPanel({
   onRestore,
   onStatus,
   wideLayout = false,
+  inlineScryingLayout = false,
 }: WorkshopLibraryPanelProps) {
+  const splitScrying = wideLayout && inlineScryingLayout;
   const [showStorageInfo, setShowStorageInfo] = useState(false);
   const [syncStatus, setSyncStatus] = useState<LibrarySyncStatus>({ state: "off" });
 
@@ -800,12 +805,12 @@ export default function WorkshopLibraryPanel({
     <div
       className={
         wideLayout
-          ? "library-browse-panel"
+          ? `library-browse-panel${splitScrying ? " library-browse-panel--dense" : ""}`
           : "mt-6 flex flex-col gap-3 rounded-lg border p-4"
       }
       style={wideLayout ? undefined : { borderColor: "var(--border)" }}
     >
-      <div className="flex flex-wrap items-start justify-between gap-2 shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-1.5 shrink-0">
         <div className="min-w-0">
           {!wideLayout ? (
             <h2 className="font-display text-base font-bold text-[var(--text)]">
@@ -813,27 +818,33 @@ export default function WorkshopLibraryPanel({
               {THE_LIBRARY}
             </h2>
           ) : null}
-          <p className={`text-xs leading-relaxed text-[var(--muted)]${wideLayout ? "" : " mt-1"}`}>
-            {libraryShelfHint(category)}{" "}
-            {syncStatus.state === "on" ? (
-              <>
-                Your collection auto-saves to{" "}
-                <strong className="text-[var(--text)]">“{syncStatus.folderName}”</strong>.
-              </>
-            ) : syncStatus.state === "needs-permission" ? (
-              <>Auto-save is paused — re-allow folder access when you can.</>
-            ) : (
-              <>Choose an auto-save folder so your archives survive beyond this browser.</>
-            )}{" "}
-            <button
-              type="button"
-              onClick={() => setShowStorageInfo((v) => !v)}
-              className="font-semibold text-[var(--accent)] underline"
-              aria-expanded={showStorageInfo}
-            >
-              {showStorageInfo ? "Hide vault notes" : "Where is my data?"}
-            </button>
-          </p>
+          {!splitScrying ? (
+            <p className={`text-xs leading-relaxed text-[var(--muted)]${wideLayout ? "" : " mt-1"}`}>
+              {libraryShelfHint(category)}{" "}
+              {syncStatus.state === "on" ? (
+                <>
+                  Your collection auto-saves to{" "}
+                  <strong className="text-[var(--text)]">“{syncStatus.folderName}”</strong>.
+                </>
+              ) : syncStatus.state === "needs-permission" ? (
+                <>Auto-save is paused — re-allow folder access when you can.</>
+              ) : (
+                <>Choose an auto-save folder so your archives survive beyond this browser.</>
+              )}{" "}
+              <button
+                type="button"
+                onClick={() => setShowStorageInfo((v) => !v)}
+                className="font-semibold text-[var(--accent)] underline"
+                aria-expanded={showStorageInfo}
+              >
+                {showStorageInfo ? "Hide vault notes" : "Where is my data?"}
+              </button>
+            </p>
+          ) : syncStatus.state === "on" ? (
+            <p className="text-[11px] text-[var(--muted)]">
+              Auto-save: <strong className="text-[var(--text)]">{syncStatus.folderName}</strong>
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -993,6 +1004,250 @@ export default function WorkshopLibraryPanel({
           onStatus={onStatus}
         />
       ) : wideLayout ? (
+        splitScrying ? (
+        <LibraryTwoPaneBrowse
+          navPane={
+            <LibraryBrowseToolbar
+              variant="shelves-only"
+              search={searchQuery}
+              onSearchChange={setSearchQuery}
+              shelf={category}
+              onShelfChange={(next) => {
+                onSrdOpenChange(false);
+                setCiClassFilter("all");
+                onCategoryChange(next);
+              }}
+              shelfCounts={shelfCounts}
+              ciClassFilter={ciClassFilter}
+              onCiClassFilterChange={setCiClassFilter}
+              ciClassOptions={ciClassOptions}
+              provenanceFilter={provenanceFilter}
+              onProvenanceFilterChange={setProvenanceFilter}
+            />
+          }
+          listPane={
+            <>
+              <LibraryBrowseToolbar
+                variant="filters-only"
+                search={searchQuery}
+                onSearchChange={setSearchQuery}
+                shelf={category}
+                onShelfChange={(next) => {
+                  onSrdOpenChange(false);
+                  setCiClassFilter("all");
+                  onCategoryChange(next);
+                }}
+                shelfCounts={shelfCounts}
+                ciClassFilter={ciClassFilter}
+                onCiClassFilterChange={setCiClassFilter}
+                ciClassOptions={ciClassOptions}
+                provenanceFilter={provenanceFilter}
+                onProvenanceFilterChange={setProvenanceFilter}
+                showSeedRefine={category === "seeds" || category === "all"}
+                seedKindFilter={seedKindFilter}
+                onSeedKindFilterChange={setSeedKindFilter}
+                seedTagFilter={seedTagFilter}
+                onSeedTagFilterChange={setSeedTagFilter}
+                seedScopeFilter={seedScopeFilter}
+                onSeedScopeFilterChange={setSeedScopeFilter}
+                seedTagOptions={seedTagOptions}
+              />
+              {entries.length === 0 ? (
+                <p className="text-sm leading-relaxed text-[var(--muted)]">
+                  {searchQuery.trim() || ciClassFilter !== "all" || provenanceFilter !== "all"
+                    ? "No entries match your search or filters — try clearing a filter or widening your query."
+                    : browseEmptyMessage(
+                        category,
+                        scopedToCampaign ? activeCampaign?.name : undefined,
+                      )}
+                </p>
+              ) : (
+                <ul className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-1">
+                  {entries.map((entry) => {
+                    const selected = isSelected(selection, entry);
+                    const select = () => {
+                      if (entry.srdEntityId) {
+                        onSelect({
+                          kind: "srd-entity",
+                          entityId: entry.srdEntityId,
+                          name: entry.title,
+                        });
+                        return;
+                      }
+                      if (entry.srdItemRef) {
+                        onSelect({
+                          kind: "srd",
+                          resource: entry.srdItemRef.resource,
+                          index: entry.srdItemRef.index,
+                          name: entry.title,
+                        });
+                        return;
+                      }
+                      if (entry.category === "seeds") onSelect({ kind: "seed", id: entry.id });
+                      else if (entry.category === "results")
+                        onSelect({ kind: "result", id: entry.id });
+                      else if (entry.category === "characters")
+                        onSelect({ kind: "character", id: entry.id });
+                      else if (entry.category === "items")
+                        onSelect({ kind: "item", id: entry.id });
+                      else if (entry.category === "world") {
+                        if (entry.ciClass === "location.record") {
+                          onSelect({ kind: "location", id: entry.id });
+                        } else {
+                          onSelect({ kind: "npc", id: entry.id });
+                        }
+                      } else if (entry.category === "sessions")
+                        onSelect({ kind: "session", id: entry.id });
+                      else if (entry.category === "campaigns")
+                        onSelect({ kind: "campaign", id: entry.id });
+                      else onSelect({ kind: "party", id: entry.id });
+                    };
+
+                    if (entry.ciClass === "rules.custom-entry") {
+                      return (
+                        <LibraryEntryRow
+                          key={`custom-srd-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={() => onSelect({ kind: "custom-srd", id: entry.id })}
+                          onEdit={
+                            onEditCustomSrd ? () => onEditCustomSrd(entry.id) : undefined
+                          }
+                          onDelete={
+                            onDeleteCustomSrd ? () => onDeleteCustomSrd(entry.id) : undefined
+                          }
+                          editLabel="Edit copy"
+                        />
+                      );
+                    }
+
+                    if (entry.category === "seeds") {
+                      return (
+                        <LibraryEntryRow
+                          key={`seed-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          onEdit={() => onEditSeed(entry.id)}
+                          onDelete={() => onDeleteSeed(entry.id)}
+                          editLabel="Revise CF"
+                        />
+                      );
+                    }
+
+                    if (entry.category === "results") {
+                      return (
+                        <LibraryEntryRow
+                          key={`result-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          onDelete={() => onDeleteResult(entry.id)}
+                        />
+                      );
+                    }
+
+                    if (entry.category === "characters") {
+                      return (
+                        <LibraryEntryRow
+                          key={`character-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          onDelete={() => onDeleteCharacter(entry.id)}
+                          editLabel="Manage heroes"
+                          onEdit={() => {
+                            window.location.href = "/tavern";
+                          }}
+                        />
+                      );
+                    }
+
+                    if (entry.srdItemRef || entry.srdEntityId) {
+                      return (
+                        <LibraryEntryRow
+                          key={entry.id}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                        />
+                      );
+                    }
+
+                    if (entry.category === "items") {
+                      return (
+                        <LibraryEntryRow
+                          key={`item-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          onDelete={() => onDeleteItem(entry.id)}
+                        />
+                      );
+                    }
+
+                    if (entry.category === "world") {
+                      const isNpc = entry.ciClass === "npc.record";
+                      return (
+                        <LibraryEntryRow
+                          key={`world-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          onDelete={() =>
+                            isNpc ? onDeleteNpc(entry.id) : onDeleteLocation(entry.id)
+                          }
+                        />
+                      );
+                    }
+
+                    if (entry.category === "sessions") {
+                      return (
+                        <LibraryEntryRow
+                          key={`session-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          onDelete={() => onDeleteSession(entry.id)}
+                        />
+                      );
+                    }
+
+                    if (entry.category === "campaigns") {
+                      return (
+                        <LibraryEntryRow
+                          key={`campaign-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={select}
+                          editLabel="Tend chronicle"
+                          onEdit={() => {
+                            window.location.href = "/campaigns";
+                          }}
+                        />
+                      );
+                    }
+
+                    return (
+                      <LibraryEntryRow
+                        key={`party-${entry.id}`}
+                        entry={entry}
+                        selected={selected}
+                        onView={select}
+                        onDelete={() => onDeleteParty(entry.id)}
+                        editLabel="Gather fellowship"
+                        onEdit={() => {
+                          window.location.href = "/tavern";
+                        }}
+                      />
+                    );
+                  })}
+                </ul>
+              )}
+            </>
+          }
+        />
+        ) : (
         <LibraryThreePaneBrowse
           navPane={
             <LibraryBrowseToolbar
@@ -1257,6 +1512,7 @@ export default function WorkshopLibraryPanel({
             />
           }
         />
+        )
       ) : entries.length === 0 ? (
         <p className="text-sm leading-relaxed text-[var(--muted)]">
           {searchQuery.trim() || ciClassFilter !== "all" || provenanceFilter !== "all"

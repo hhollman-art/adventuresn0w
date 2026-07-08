@@ -662,6 +662,41 @@ html[data-preview-window="standalone"] .app-content {
   margin: 0;
 }
 
+.scrying-glass-popup-shell {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: min(72rem, 100%);
+  max-height: min(92dvh, 100%);
+  min-height: min(68dvh, 100%);
+  margin: 0;
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.scrying-glass-popup-shell.is-open {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.scrying-glass-popup-shell.is-closing {
+  opacity: 0;
+  transform: scale(0.96);
+  transition-duration: 140ms;
+}
+
+.scrying-glass-popup-shell .scrying-glass-popup-frame {
+  flex: 1 1 auto;
+  width: 100%;
+  max-height: none;
+  min-height: 0;
+  opacity: 1;
+  transform: none;
+}
+
 .scrying-glass-titlebar {
   display: flex;
   align-items: center;
@@ -1424,6 +1459,13 @@ html[data-preview-window="standalone"] .app-content {
   overflow: hidden;
 }
 
+.library-inline-scrying-frame.scrying-glass-frame {
+  opacity: 1;
+  transform: none;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
 @media (min-width: 1024px) {
   .library-three-pane {
     display: grid;
@@ -1433,10 +1475,71 @@ html[data-preview-window="standalone"] .app-content {
     overflow: hidden;
   }
 
+  .library-two-pane {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, 9.5rem) minmax(0, 1fr);
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+  }
+
   .library-three-pane__nav,
   .library-three-pane__list,
-  .library-three-pane__detail {
+  .library-three-pane__detail,
+  .library-two-pane__nav,
+  .library-two-pane__list {
     min-height: 0;
+  }
+
+  .library-browse-panel--dense .library-entry-row {
+    padding: 0.5rem 0.625rem;
+  }
+
+  .library-browse-panel--dense .library-entry-detail,
+  .library-browse-panel--dense .library-entry-tags {
+    display: none;
+  }
+
+  .library-browse-panel--dense .library-entry-shelf {
+    margin-top: 0.125rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .library-browse-panel--dense .library-entry-card {
+    gap: 0.35rem;
+  }
+
+  .library-split-workspace {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  .library-split-workspace__grid {
+    min-height: clamp(18rem, 72dvh, 100%);
+  }
+
+  .library-split-workspace__results,
+  .library-split-workspace__scrying {
+    min-height: 0;
+  }
+
+  .library-inline-scrying-frame {
+    min-height: 0;
+    flex: 1 1 auto;
+    border-radius: 0.75rem;
+    max-height: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .library-inline-scrying-frame .preview-window-panel {
+    padding: 1rem 1.25rem;
+  }
+
+  .library-inline-scrying-empty {
+    min-height: clamp(12rem, 40dvh, 100%);
   }
 
   .library-browse-toolbar--shelves {

@@ -97,10 +97,9 @@ import {
   saveSessionRecord,
   type SavedSessionRecord,
 } from "@/lib/sessions/record";
-import { openOrFocusPreviewWindow, publishPreviewSnapshot } from "@/lib/workshop/previewSnapshot";
-import { buildLibraryPreviewSnapshot } from "@/lib/workshop/libraryPreviewSnapshot";
-import { getSrdEntity, srdEntityToPreviewMarkdown } from "@/lib/srd/corpus";
-import { lookupSrdDocumentMarkdown } from "@/lib/srd/srdDocumentLookup";
+import { openOrFocusPreviewWindow } from "@/lib/workshop/previewSnapshot";
+import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
+import LibraryInlineScryingPanel from "@/features/workshop/LibraryInlineScryingPanel";
 import type { CloneSrdResult } from "@/lib/srd/cloneSrdEntity";
 import { openCustomSrdPreview } from "@/lib/srd/openCustomSrdPreview";
 import {
@@ -698,8 +697,8 @@ export default function Home(props: PageProps<"/">) {
         setLibrarySelection({ kind: "seed", id: seedEditor.id });
       } else {
         setMarkdown(markdown);
+        openOrFocusPreviewWindow();
       }
-      openOrFocusPreviewWindow();
     } else {
       const next = await appendRealmSeed({
         kind: seedEditor.kind,
@@ -718,8 +717,8 @@ export default function Home(props: PageProps<"/">) {
           setLibrarySelection({ kind: "seed", id: saved.id });
         } else {
           setMarkdown(markdown);
+          openOrFocusPreviewWindow();
         }
-        openOrFocusPreviewWindow();
       }
     }
     setSeedEditor(null);
@@ -1381,7 +1380,11 @@ export default function Home(props: PageProps<"/">) {
       ? workshopNavItem("tavern")
       : workshopNavItem(workspace)
     : null;
-useHomePreviewSnapshot({
+  const {
+    libraryPreviewSnapshot,
+    savePartyForVtt,
+    viewingSeed: libraryViewingSeed,
+  } = useHomePreviewSnapshot({
     isLibraryView,
     isWelcomeView,
     workspace,
@@ -1423,6 +1426,7 @@ useHomePreviewSnapshot({
     const libraryPanel = (
     <WorkshopLibraryPanel
       wideLayout
+      inlineScryingLayout
       seeds={ddeasySeeds}
       results={libraryResults}
       characters={libraryCharacters}
@@ -1449,45 +1453,6 @@ useHomePreviewSnapshot({
       onCategoryChange={setLibraryCategory}
       onSelect={(selection) => {
         setLibrarySelection(selection);
-        let bundledSrdMarkdown: string | null = null;
-        let srdPreviewLoading = false;
-        if (selection?.kind === "srd") {
-          bundledSrdMarkdown = lookupSrdDocumentMarkdown({
-            resource: selection.resource,
-            index: selection.index,
-            name: selection.name,
-          });
-          srdPreviewLoading = !bundledSrdMarkdown;
-        } else if (selection?.kind === "srd-entity") {
-          const entity = getSrdEntity(selection.entityId);
-          bundledSrdMarkdown = entity ? srdEntityToPreviewMarkdown(entity) : null;
-          srdPreviewLoading = !bundledSrdMarkdown?.trim();
-        }
-        if (bundledSrdMarkdown) {
-          setSrdPreviewMarkdown(bundledSrdMarkdown);
-          setSrdPreviewLoading(false);
-        } else if (selection?.kind === "srd" || selection?.kind === "srd-entity") {
-          setSrdPreviewMarkdown("");
-          setSrdPreviewLoading(srdPreviewLoading);
-        }
-        const snapshot = buildLibraryPreviewSnapshot({
-          selection,
-          seeds: ddeasySeeds,
-          results: libraryResults,
-          characters: libraryCharacters,
-          items: libraryItems,
-          parties: libraryParties,
-          campaigns: libraryCampaigns,
-          npcs: libraryNpcs,
-          locations: libraryLocations,
-          sessionRecords: librarySessionRecords,
-          customSrdEntries: libraryCustomSrd,
-          srdPreviewMarkdown: bundledSrdMarkdown ?? undefined,
-          srdPreviewLoading,
-          workspace,
-        });
-        if (snapshot) publishPreviewSnapshot(snapshot);
-        openOrFocusPreviewWindow();
       }}
       onAddSeed={openNewSeedEditor}
       onEditSeed={openEditSeedEditor}
@@ -1708,7 +1673,36 @@ useHomePreviewSnapshot({
         }}
       >
       {isLibraryView ? (
-        <LibraryWorkspaceSection libraryPanel={libraryPanel} />
+        <LibraryWorkspaceSection
+          resultsPanel={libraryPanel}
+          scryingPanel={
+            <LibraryInlineScryingPanel
+              snapshot={libraryPreviewSnapshot}
+              hasSelection={Boolean(librarySelection)}
+              onClose={() => setLibrarySelection(null)}
+              onEdit={() => {
+                const id = libraryPreviewSnapshot?.customSrdId;
+                if (id) openCustomSrdEditor(id);
+              }}
+              onEditSeed={() => {
+                if (libraryViewingSeed) openEditSeedEditor(libraryViewingSeed.id);
+              }}
+              onEditResult={openLibraryResultEditor}
+              onSavePartyVtt={() => void savePartyForVtt()}
+              onLoadPartyVtt={() => {
+                const partyId = libraryPreviewSnapshot?.viewingPartyId;
+                if (!partyId) return;
+                queuePartyImport({
+                  rosterId: partyId,
+                  placeTokens: true,
+                  linkCampaign: true,
+                  replaceExisting: true,
+                });
+                window.location.href = "/table";
+              }}
+            />
+          }
+        />
       ) : null}
 
       {isWelcomeView ? (

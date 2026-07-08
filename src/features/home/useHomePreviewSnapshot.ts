@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { LibraryViewSelection } from "@/features/workshop/WorkshopLibraryPanel";
 import { autoLinkToActiveCampaign } from "@/lib/campaigns";
 import type { SavedCampaign } from "@/lib/campaigns";
@@ -316,6 +316,42 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
               ? "adventure"
               : (workspace as LibraryKind);
 
+  const libraryPreviewSnapshot = useMemo(() => {
+    if (!isLibraryView || !librarySelection) return null;
+    return buildLibraryPreviewSnapshot({
+      selection: librarySelection,
+      seeds: ddeasySeeds,
+      results: libraryResults,
+      characters: libraryCharacters,
+      items: libraryItems,
+      parties: libraryParties,
+      campaigns: libraryCampaigns,
+      npcs: libraryNpcs,
+      locations: libraryLocations,
+      sessionRecords: librarySessionRecords,
+      customSrdEntries: libraryCustomSrd,
+      srdPreviewMarkdown,
+      srdPreviewLoading,
+      workspace,
+    });
+  }, [
+    isLibraryView,
+    librarySelection,
+    ddeasySeeds,
+    libraryResults,
+    libraryCharacters,
+    libraryItems,
+    libraryParties,
+    libraryCampaigns,
+    libraryNpcs,
+    libraryLocations,
+    librarySessionRecords,
+    libraryCustomSrd,
+    srdPreviewMarkdown,
+    srdPreviewLoading,
+    workspace,
+  ]);
+
   const republishRef = useRef<(() => void) | null>(null);
 
   republishRef.current = () => {
@@ -542,5 +578,6 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
     viewingSeed,
     viewingResult,
     viewingParty,
+    libraryPreviewSnapshot,
   };
 }

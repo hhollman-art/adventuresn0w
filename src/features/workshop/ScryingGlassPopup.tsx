@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import WorkshopPreviewPanel from "@/features/workshop/WorkshopPreviewPanel";
-import ScryingGlassIcon from "@/features/ui/ScryingGlassIcon";
+import ScryingContentPanel from "@/features/workshop/ScryingContentPanel";
 import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 import {
   isPreviewSnapshotMessage,
@@ -137,34 +136,12 @@ export default function ScryingGlassPopup() {
       }}
     >
       <div
-        className={`preview-window-frame scrying-glass-frame scrying-glass-popup-frame ${motionClass}`.trim()}
+        className={`scrying-glass-popup-shell ${motionClass}`.trim()}
         role="dialog"
         aria-modal="true"
         aria-label={PREVIEW_WINDOW}
       >
-        <header className="preview-window-titlebar scrying-glass-titlebar" aria-label={`${PREVIEW_WINDOW} title bar`}>
-          <ScryingGlassIcon size={24} className="scrying-glass-titlebar-icon" />
-          <p className="preview-window-titlebar-label">
-            D&amp;D EASY — {PREVIEW_WINDOW}
-          </p>
-          <button
-            type="button"
-            className="scrying-glass-dismiss-btn"
-            aria-label={`Close ${PREVIEW_WINDOW}`}
-            onClick={close}
-          >
-            <span aria-hidden="true">✕</span>
-          </button>
-        </header>
-        <div className="preview-window-body scrying-glass-body flex min-h-0 flex-1 flex-col">
-          <p className="scrying-glass-hint no-print shrink-0">
-            Review output here. Edit and save actions run in the main Fantasy Forge tab behind this
-            popup.
-          </p>
-          <div className="scrying-glass-content-wrap flex min-h-0 flex-1 flex-col">
-            <WorkshopPreviewPanel snapshot={snapshot} popupMode />
-          </div>
-        </div>
+        <ScryingContentPanel snapshot={snapshot} variant="popup" onClose={close} />
       </div>
     </div>,
     document.body,
