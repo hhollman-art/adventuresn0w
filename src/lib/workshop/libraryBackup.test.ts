@@ -165,6 +165,7 @@ describe("libraryBackup", () => {
       locations: [],
       sessionRecords: [],
       relationshipGraphs: [],
+      customSrd: [],
     });
   });
 

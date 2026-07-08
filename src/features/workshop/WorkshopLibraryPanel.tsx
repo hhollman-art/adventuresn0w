@@ -21,6 +21,7 @@ import {
   resultToLibraryEntry,
   seedToLibraryEntry,
   sessionRecordToLibraryEntry,
+  customSrdToLibraryEntry,
   sortLibraryEntries,
   type LibraryListEntry,
   type LibraryProvenance,
@@ -79,6 +80,8 @@ import AddPartyDialog from "@/features/workshop/AddPartyDialog";
 import SrdLibraryBrowser from "@/features/workshop/SrdLibraryBrowser";
 import type { SrdApiResource } from "@/lib/srd/dnd5eApi";
 import type { SrdEntityId } from "@/lib/srd/types";
+import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
+import type { CloneSrdResult } from "@/lib/srd/cloneSrdEntity";
 import { setSrdEntityDragData } from "@/lib/srd/srdDragDrop";
 import {
   getActiveCampaignId,
@@ -100,6 +103,7 @@ export type LibraryViewSelection =
   | { kind: "session"; id: string }
   | { kind: "srd"; resource: SrdApiResource; index: string; name: string }
   | { kind: "srd-entity"; entityId: SrdEntityId; name: string }
+  | { kind: "custom-srd"; id: string }
   | null;
 
 function shelfEntriesForCategory(
@@ -119,6 +123,7 @@ type WorkshopLibraryPanelProps = {
   npcs: SavedNpc[];
   locations: SavedLocation[];
   sessionRecords: SavedSessionRecord[];
+  customSrdEntries: SavedCustomSrdEntry[];
   category: WorkshopLibraryCategory;
   selection: LibraryViewSelection;
   statusMessage: string | null;
@@ -137,6 +142,10 @@ type WorkshopLibraryPanelProps = {
   onDeleteNpc: (id: string) => void;
   onDeleteLocation: (id: string) => void;
   onDeleteSession: (id: string) => void;
+  onEditCustomSrd?: (id: string) => void;
+  onDeleteCustomSrd?: (id: string) => void;
+  onCustomSrdCloned?: (result: CloneSrdResult) => void;
+  onCustomSrdBulkCloned?: (results: CloneSrdResult[]) => void;
   onAddNpc?: () => void;
   onAddLocation?: () => void;
   onAddSession?: () => void;
@@ -286,6 +295,9 @@ function DataStorageExplainer({
 
 function isSelected(selection: LibraryViewSelection, entry: LibraryListEntry): boolean {
   if (!selection) return false;
+  if (entry.ciClass === "rules.custom-entry" && selection.kind === "custom-srd") {
+    return selection.id === entry.id;
+  }
   if (entry.srdEntityId && selection.kind === "srd-entity") {
     return selection.entityId === entry.srdEntityId;
   }
@@ -444,6 +456,7 @@ export default function WorkshopLibraryPanel({
   npcs = [],
   locations = [],
   sessionRecords = [],
+  customSrdEntries = [],
   category,
   selection,
   statusMessage,
@@ -461,6 +474,10 @@ export default function WorkshopLibraryPanel({
   onDeleteNpc,
   onDeleteLocation,
   onDeleteSession,
+  onEditCustomSrd,
+  onDeleteCustomSrd,
+  onCustomSrdCloned,
+  onCustomSrdBulkCloned,
   onAddNpc,
   onAddLocation,
   onAddSession,
@@ -602,6 +619,7 @@ export default function WorkshopLibraryPanel({
       ...campaignResults.map(resultToLibraryEntry),
       ...campaignCharacters.map(characterToLibraryEntry),
       ...campaignItems.map(gameItemToLibraryEntry),
+      ...customSrdEntries.map(customSrdToLibraryEntry),
       ...campaignNpcs.map(npcToLibraryEntry),
       ...campaignLocations.map(locationToLibraryEntry),
       ...campaignSessionRecords.map(sessionRecordToLibraryEntry),
@@ -624,6 +642,7 @@ export default function WorkshopLibraryPanel({
     campaignResults,
     campaignCharacters,
     campaignItems,
+    customSrdEntries,
     campaignNpcs,
     campaignLocations,
     campaignSessionRecords,
@@ -969,6 +988,9 @@ export default function WorkshopLibraryPanel({
           wideLayout={wideLayout}
           selection={selection}
           onSelect={onSelect}
+          onCloned={onCustomSrdCloned}
+          onBulkCloned={onCustomSrdBulkCloned}
+          onStatus={onStatus}
         />
       ) : wideLayout ? (
         <LibraryThreePaneBrowse
@@ -1068,6 +1090,24 @@ export default function WorkshopLibraryPanel({
                         onSelect({ kind: "campaign", id: entry.id });
                       else onSelect({ kind: "party", id: entry.id });
                     };
+
+                    if (entry.ciClass === "rules.custom-entry") {
+                      return (
+                        <LibraryEntryRow
+                          key={`custom-srd-${entry.id}`}
+                          entry={entry}
+                          selected={selected}
+                          onView={() => onSelect({ kind: "custom-srd", id: entry.id })}
+                          onEdit={
+                            onEditCustomSrd ? () => onEditCustomSrd(entry.id) : undefined
+                          }
+                          onDelete={
+                            onDeleteCustomSrd ? () => onDeleteCustomSrd(entry.id) : undefined
+                          }
+                          editLabel="Edit copy"
+                        />
+                      );
+                    }
 
                     if (entry.category === "seeds") {
                       return (
@@ -1211,6 +1251,9 @@ export default function WorkshopLibraryPanel({
               npcs={npcs}
               locations={locations}
               sessionRecords={sessionRecords}
+              customSrdEntries={customSrdEntries}
+              onCustomSrdCloned={onCustomSrdCloned}
+              onStatus={onStatus}
             />
           }
         />
@@ -1268,6 +1311,24 @@ export default function WorkshopLibraryPanel({
                 onSelect({ kind: "campaign", id: entry.id });
               else onSelect({ kind: "party", id: entry.id });
             };
+
+            if (entry.ciClass === "rules.custom-entry") {
+              return (
+                <LibraryEntryRow
+                  key={`custom-srd-${entry.id}`}
+                  entry={entry}
+                  selected={selected}
+                  onView={() => onSelect({ kind: "custom-srd", id: entry.id })}
+                  onEdit={
+                    onEditCustomSrd ? () => onEditCustomSrd(entry.id) : undefined
+                  }
+                  onDelete={
+                    onDeleteCustomSrd ? () => onDeleteCustomSrd(entry.id) : undefined
+                  }
+                  editLabel="Edit copy"
+                />
+              );
+            }
 
             if (entry.category === "seeds") {
               return (

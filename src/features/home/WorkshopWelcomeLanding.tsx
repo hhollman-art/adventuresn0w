@@ -5,6 +5,7 @@ import WorkflowGuideList from "@/features/workshop/WorkflowGuideList";
 import WorkshopWorkspaceDock from "@/features/workshop/WorkshopWorkspaceDock";
 import DmDashboardPanel from "@/features/home/DmDashboardPanel";
 import AdminAnnouncementBanner from "@/features/admin/AdminAnnouncementBanner";
+import HearthAuthNav from "@/features/auth/HearthAuthNav";
 import type { QuickCreateAction } from "@/lib/workshop/dmDashboard";
 import type { WorkshopCreationId } from "@/lib/workplace/workshopNav";
 
@@ -27,7 +28,10 @@ export default function WorkshopWelcomeLanding({
     <div className="workshop-welcome">
       <AdminAnnouncementBanner className="mb-4" />
       <header className="forge-forest-card workshop-welcome-intro">
-        <p className="zone-badge mb-3">The {FANTASY_FORGE}</p>
+        <div className="workshop-welcome-intro-top">
+          <p className="zone-badge mb-0">The {FANTASY_FORGE}</p>
+          <HearthAuthNav variant="hero" />
+        </div>
         <h1 className="font-display text-2xl font-bold sm:text-3xl">
           <span aria-hidden="true">{APP_ICONS.welcome} </span>
           Welcome to your DM Management System

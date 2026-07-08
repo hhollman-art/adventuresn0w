@@ -54,6 +54,7 @@ export type CiClass =
   | "session.snapshot"
   | "session.room"
   | "rules.srd-entry"
+  | "rules.custom-entry"
   | "spell.srd-entry"
   | "monster.srd-entry";
 
@@ -262,6 +263,14 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
     storageModule: "src/lib/srd/",
     provenance: "srd",
     inBackup: false,
+  },
+  "rules.custom-entry": {
+    ciClass: "rules.custom-entry",
+    category: "rules",
+    label: "Custom SRD clone",
+    storageModule: "src/lib/srd/srdCustomLibrary.ts",
+    provenance: "user",
+    inBackup: true,
   },
   "spell.srd-entry": {
     ciClass: "spell.srd-entry",

@@ -19,6 +19,7 @@ import type { SavedSessionRecord } from "@/lib/sessions/record";
 import { sessionRecordToMarkdown } from "@/lib/workshop/libraryCatalog";
 import type { SavedNpc } from "@/lib/worldAssets/npc";
 import type { SavedLocation } from "@/lib/worldAssets/location";
+import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
 import type { WorkshopPreviewSnapshot } from "@/lib/workshop/previewSnapshot";
 import { resolvePreviewCiClass } from "@/lib/workshop/previewCiClass";
 
@@ -33,6 +34,7 @@ export type BuildLibraryPreviewSnapshotParams = {
   npcs: SavedNpc[];
   locations: SavedLocation[];
   sessionRecords: SavedSessionRecord[];
+  customSrdEntries?: SavedCustomSrdEntry[];
   srdPreviewMarkdown?: string;
   srdPreviewLoading?: boolean;
   workspace?: string;
@@ -50,6 +52,10 @@ function libraryPreviewMarkdown(params: BuildLibraryPreviewSnapshotParams): stri
     if (params.srdPreviewMarkdown !== undefined) return params.srdPreviewMarkdown;
     const entity = getSrdEntity(selection.entityId);
     return entity ? (srdEntityToPreviewMarkdown(entity) ?? "") : "";
+  }
+
+  if (selection.kind === "custom-srd") {
+    return params.customSrdEntries?.find((row) => row.id === selection.id)?.markdown ?? "";
   }
 
   if (selection.kind === "character") {
@@ -133,6 +139,10 @@ export function buildLibraryPreviewSnapshot(
     selection.kind === "session"
       ? params.sessionRecords.find((r) => r.id === selection.id)
       : undefined;
+  const viewingCustomSrd =
+    selection.kind === "custom-srd"
+      ? params.customSrdEntries?.find((row) => row.id === selection.id)
+      : undefined;
   const viewingParty =
     selection.kind === "party" ? params.parties.find((p) => p.id === selection.id) : undefined;
 
@@ -169,6 +179,9 @@ export function buildLibraryPreviewSnapshot(
   } else if (viewingParty) {
     viewingLabel = `Viewing party: ${viewingParty.name}`;
     viewingSubline = `${viewingParty.players.length} heroes`;
+  } else if (viewingCustomSrd) {
+    viewingLabel = `Editing: ${viewingCustomSrd.name}`;
+    viewingSubline = "Your workspace copy — editable";
   } else if (isSrd) {
     viewingLabel = `Viewing SRD: ${selection.name}`;
     viewingSubline = "read-only";
@@ -184,9 +197,12 @@ export function buildLibraryPreviewSnapshot(
           ? "characters"
           : "adventure";
 
-  let editKind: "none" | "result" | "seed" | "library-result" = "none";
+  let editKind: "none" | "result" | "seed" | "library-result" | "custom-srd" = "none";
   let canEdit = false;
-  if (viewingSeed) {
+  if (viewingCustomSrd) {
+    canEdit = true;
+    editKind = "custom-srd";
+  } else if (viewingSeed) {
     canEdit = true;
     editKind = "seed";
   } else if (viewingResult) {
@@ -215,6 +231,7 @@ export function buildLibraryPreviewSnapshot(
       viewingLocation,
       viewingSession,
       viewingParty,
+      viewingCustomSrd,
       isSrdPreview: isSrd,
     }),
     progressStage: "idle",
@@ -229,6 +246,7 @@ export function buildLibraryPreviewSnapshot(
     isSrdPreview: isSrd,
     canEdit,
     editKind,
+    customSrdId: viewingCustomSrd?.id ?? null,
     showSavePartyVtt: false,
     showLoadPartyVtt: Boolean(viewingParty),
     viewingPartyId: viewingParty?.id ?? null,

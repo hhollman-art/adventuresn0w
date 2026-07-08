@@ -2,12 +2,10 @@ import { z } from "zod";
 import { NextResponse } from "next/server";
 import {
   authenticateCredentials,
-  createDmSessionToken,
-  getPostLoginRedirect,
   isAuthEnabled,
-  setSessionCookie,
   validateAuthFields,
 } from "@/lib/auth";
+import { issueAuthenticatedResponse } from "@/lib/auth/issueSession";
 
 const loginSchema = z.object({
   email: z.string().min(1),
@@ -47,15 +45,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
 
-  const token = createDmSessionToken(account);
-  const session = {
-    dm: account,
-    issuedAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
-  };
-  const redirectTo = getPostLoginRedirect(account);
-
-  const response = NextResponse.json({ token, session, redirectTo });
-  setSessionCookie(response, token);
-  return response;
+  return issueAuthenticatedResponse(account);
 }

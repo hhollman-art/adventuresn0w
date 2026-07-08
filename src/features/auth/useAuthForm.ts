@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { validateAuthFields, type FieldErrors } from "@/lib/auth/validation";
+import type { DmAuthSession, DmLoginResponse, UserTier } from "@/lib/auth/types";
 
 export type AuthMode = "sign-in" | "sign-up";
 
 type AuthSuccessPayload = {
   redirectTo: string;
+  session: DmAuthSession;
+  tier: UserTier;
 };
 
 type UseAuthFormOptions = {
@@ -14,6 +17,8 @@ type UseAuthFormOptions = {
   returnTo?: string | null;
   /** Called after a successful login or registration before redirect. */
   onSuccess?: (payload: AuthSuccessPayload) => void;
+  /** Dev/testing — pre-fill the sign-in form when quick-login "Fill form" is used. */
+  preset?: { email: string; password: string } | null;
 };
 
 /**
@@ -23,7 +28,7 @@ type UseAuthFormOptions = {
  * and redirect to `/pricing` when `tier === "free"` and the user attempted
  * a premium-only destination.
  */
-export function useAuthForm({ returnTo, onSuccess }: UseAuthFormOptions = {}) {
+export function useAuthForm({ returnTo, onSuccess, preset }: UseAuthFormOptions = {}) {
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,6 +46,16 @@ export function useAuthForm({ returnTo, onSuccess }: UseAuthFormOptions = {}) {
     setFormError(null);
     setTouched({ email: false, password: false });
   }, []);
+
+  useEffect(() => {
+    if (!preset) return;
+    setMode("sign-in");
+    setEmail(preset.email);
+    setPassword(preset.password);
+    setFieldErrors({});
+    setFormError(null);
+    setTouched({ email: false, password: false });
+  }, [preset]);
 
   const validateClient = useCallback(() => {
     const errors = validateAuthFields(email, password, mode);
@@ -62,10 +77,9 @@ export function useAuthForm({ returnTo, onSuccess }: UseAuthFormOptions = {}) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = (await res.json()) as {
+      const data = (await res.json()) as Partial<DmLoginResponse> & {
         error?: string;
         fieldErrors?: FieldErrors;
-        redirectTo?: string;
       };
 
       if (!res.ok) {
@@ -74,9 +88,18 @@ export function useAuthForm({ returnTo, onSuccess }: UseAuthFormOptions = {}) {
         return;
       }
 
+      if (!data.session || !data.redirectTo) {
+        setFormError("Unexpected response from the server.");
+        return;
+      }
+
       const redirectTo =
-        returnTo && returnTo.startsWith("/") ? returnTo : (data.redirectTo ?? "/dashboard");
-      onSuccess?.({ redirectTo });
+        returnTo && returnTo.startsWith("/") ? returnTo : data.redirectTo;
+      onSuccess?.({
+        redirectTo,
+        session: data.session,
+        tier: data.session.dm.tier,
+      });
       window.location.href = redirectTo;
     } catch {
       setFormError("Network error — check your connection and try again.");

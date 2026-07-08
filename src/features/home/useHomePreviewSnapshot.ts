@@ -7,6 +7,7 @@ import type { SavedCampaign } from "@/lib/campaigns";
 import type { SavedSessionRecord } from "@/lib/sessions/record";
 import type { SavedNpc } from "@/lib/worldAssets/npc";
 import type { SavedLocation } from "@/lib/worldAssets/location";
+import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
 import {
   LIBRARY_KIND_LABEL,
   type LibraryItem,
@@ -59,6 +60,7 @@ export type UseHomePreviewSnapshotParams = {
   libraryNpcs: SavedNpc[];
   libraryLocations: SavedLocation[];
   librarySessionRecords: SavedSessionRecord[];
+  libraryCustomSrd: SavedCustomSrdEntry[];
   progressStage: ProgressStage;
   loading: boolean;
   imageLoading: boolean;
@@ -75,6 +77,7 @@ export type UseHomePreviewSnapshotParams = {
   openResultEditor: () => void;
   openEditSeedEditor: (id: string) => void;
   openLibraryResultEditor: () => void;
+  openCustomSrdEditor: (id: string) => void;
 };
 
 export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
@@ -96,6 +99,7 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
     libraryNpcs,
     libraryLocations,
     librarySessionRecords,
+    libraryCustomSrd,
     progressStage,
     loading,
     imageLoading,
@@ -112,6 +116,7 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
     openResultEditor,
     openEditSeedEditor,
     openLibraryResultEditor,
+    openCustomSrdEditor,
   } = params;
 
   const viewingSeed =
@@ -329,6 +334,7 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
         npcs: libraryNpcs,
         locations: libraryLocations,
         sessionRecords: librarySessionRecords,
+        customSrdEntries: libraryCustomSrd,
         srdPreviewMarkdown,
         srdPreviewLoading,
         workspace,
@@ -502,6 +508,11 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
         case "edit-result":
           openLibraryResultEditor();
           break;
+        case "edit-custom-srd":
+          if (librarySelection?.kind === "custom-srd") {
+            openCustomSrdEditor(librarySelection.id);
+          }
+          break;
         case "save-party-vtt":
           void savePartyForVtt();
           break;
@@ -522,7 +533,7 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, [viewingSeed, viewingParty, openResultEditor, openEditSeedEditor, openLibraryResultEditor]);
+  }, [viewingSeed, viewingParty, librarySelection, openResultEditor, openEditSeedEditor, openLibraryResultEditor, openCustomSrdEditor]);
 
   return {
     previewMarkdown,

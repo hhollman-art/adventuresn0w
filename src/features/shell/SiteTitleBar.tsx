@@ -7,6 +7,7 @@ import AppZoneToggle from "@/features/shell/AppZoneToggle";
 import SiteBannerScene from "@/features/shell/SiteBannerScene";
 import ThemePicker from "@/features/shell/ThemePicker";
 import ThemeSignArt from "@/features/shell/ThemeSignArt";
+import HearthAuthNav from "@/features/auth/HearthAuthNav";
 import { APP_ICONS } from "@/lib/ui/appIcons";
 import { useAppTheme } from "@/lib/themes/useAppTheme";
 import {
@@ -48,12 +49,13 @@ export default function SiteTitleBar() {
   const { themeId, setThemeId } = useAppTheme();
   const bannerMode = useForgeBannerMode(pathname);
   const isWelcomeBanner = bannerMode === "welcome";
+  const isLoginRoute = pathname === "/login";
 
   return (
     <header
-      className={`site-title-bar no-print shrink-0${isWelcomeBanner ? "" : " site-title-bar--compact"}`}
+      className={`site-title-bar no-print shrink-0${isWelcomeBanner && !isLoginRoute ? "" : " site-title-bar--compact"}`}
     >
-      {isWelcomeBanner ? (
+      {isWelcomeBanner && !isLoginRoute ? (
         <div className="site-title-bar-banner">
           <SiteBannerScene themeId={themeId} />
           <div className="site-title-bar-banner-shade" aria-hidden="true" />
@@ -63,8 +65,13 @@ export default function SiteTitleBar() {
             <ThemePicker themeId={themeId} onThemeChange={setThemeId} />
           </div>
 
-          <div className="site-title-bar-zone-toggle">
-            <AppZoneToggle compact />
+          <div className="site-title-bar-banner-actions">
+            <div className="site-title-bar-auth">
+              <HearthAuthNav />
+            </div>
+            <div className="site-title-bar-zone-toggle">
+              <AppZoneToggle compact />
+            </div>
           </div>
 
           <div className="site-title-bar-hero">
@@ -117,6 +124,7 @@ export default function SiteTitleBar() {
             </span>
           </Link>
           <div className="site-title-bar-compact-zones">
+            <HearthAuthNav />
             <AppZoneToggle compact />
           </div>
         </div>

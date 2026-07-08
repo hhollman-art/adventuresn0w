@@ -1,17 +1,15 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import {
-  createDmSessionToken,
   createFreeAccount,
   emailAlreadyRegistered,
-  getPostLoginRedirect,
   isAuthEnabled,
   isRegistrationOpen,
   registerAccount,
-  setSessionCookie,
   storedAccountToDmAccount,
   validateAuthFields,
 } from "@/lib/auth";
+import { issueAuthenticatedResponse } from "@/lib/auth/issueSession";
 
 const registerSchema = z.object({
   email: z.string().min(1),
@@ -66,15 +64,5 @@ export async function POST(request: Request) {
     email: stored.email,
   });
 
-  const token = createDmSessionToken(account);
-  const session = {
-    dm: account,
-    issuedAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
-  };
-  const redirectTo = getPostLoginRedirect(account);
-
-  const response = NextResponse.json({ token, session, redirectTo });
-  setSessionCookie(response, token);
-  return response;
+  return issueAuthenticatedResponse(account);
 }

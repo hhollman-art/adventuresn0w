@@ -22,6 +22,7 @@ import type { SavedCharacter } from "@/lib/tabletop/characterLibrary";
 import type { SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
 import type { SavedNpc } from "@/lib/worldAssets/npc";
 import type { SavedLocation } from "@/lib/worldAssets/location";
+import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
 
 export function ciClassForSrdResource(resource: SrdApiResource): CiClass {
   if (resource === "spells") return "spell.srd-entry";
@@ -42,8 +43,9 @@ export type ResolvePreviewCiClassParams = {
   viewingLocation?: SavedLocation;
   viewingSession?: SavedSessionRecord;
   viewingParty?: SavedCharacterRoster;
+  viewingCustomSrd?: SavedCustomSrdEntry;
   outputLayoutKind?: string;
-  editKind?: "none" | "result" | "seed" | "library-result";
+  editKind?: "none" | "result" | "seed" | "library-result" | "custom-srd";
   isSrdPreview?: boolean;
   srdResource?: SrdApiResource;
   srdEntityId?: SrdEntityId;
@@ -60,7 +62,9 @@ export function resolvePreviewCiClass(params: ResolvePreviewCiClassParams): CiCl
   if (params.viewingLocation) return CI_CLASS_FOR_LOCATION;
   if (params.viewingSession) return CI_CLASS_FOR_SESSION_RECORD;
   if (params.viewingParty) return CI_CLASS_FOR_PARTY;
+  if (params.viewingCustomSrd) return "rules.custom-entry";
 
+  if (params.selection?.kind === "custom-srd") return "rules.custom-entry";
   if (params.selection?.kind === "srd-entity") {
     const entity = getSrdEntity(params.selection.entityId);
     return entity ? ciClassForSrdEntity(entity.kind) : "rules.srd-entry";

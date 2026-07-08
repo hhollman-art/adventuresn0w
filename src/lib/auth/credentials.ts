@@ -1,5 +1,6 @@
 import type { DmAccount } from "./types";
 import { findAccountByEmail, verifyAccountPassword } from "./accountStore";
+import { authenticateSandboxCredentials, isSandboxEmail } from "./sandboxAccounts";
 import { normalizeEmail } from "./validation";
 import { createFreeAccount, tierToLicenseTier } from "./tiers";
 
@@ -39,6 +40,9 @@ export function authenticateCredentials(email: string, password: string): DmAcco
   const stored = verifyAccountPassword(normalized, password);
   if (stored) return storedAccountToDmAccount(stored);
 
+  const sandbox = authenticateSandboxCredentials(normalized, password);
+  if (sandbox) return sandbox;
+
   const expectedUser = process.env.DM_AUTH_USERNAME?.trim();
   const expectedPassword = process.env.DM_AUTH_PASSWORD?.trim();
   if (!expectedUser || !expectedPassword) return null;
@@ -59,6 +63,7 @@ export function authenticateCredentials(email: string, password: string): DmAcco
 }
 
 export function emailAlreadyRegistered(email: string): boolean {
+  if (isSandboxEmail(email)) return true;
   return findAccountByEmail(email) !== null;
 }
 

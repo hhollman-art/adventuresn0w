@@ -6,3 +6,13 @@ export { getAuthSecret, isAuthEnabled, isRegistrationOpen, hasEnvAdminCredential
 export { normalizeEmail, validateEmail, validatePassword, validateAuthFields, type FieldErrors } from "./validation";
 export { getPostLoginRedirect, canAccessPremiumFeature, isAdmin, createFreeAccount, tierToLicenseTier } from "./tiers";
 export { registerAccount, findAccountByEmail } from "./accountStore";
+export {
+  isSandboxAuthEnabled,
+  listSandboxAccountSummaries,
+  authenticateSandboxCredentials,
+  authenticateSandboxEmail,
+  isSandboxEmail,
+  getSandboxPassword,
+  type SandboxAccountSummary,
+} from "./sandboxAccounts";
+export { issueAuthenticatedResponse } from "./issueSession";

@@ -45,6 +45,8 @@ import {
 } from "@/lib/worldAssets/location";
 import type { SrdItemRef } from "@/lib/srd/srdItemRef";
 import type { SrdEntityId } from "@/lib/srd/types";
+import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
+import { srdEntityKindLabel } from "@/lib/srd/corpus";
 
 /**
  * Workshop Library — the CMDB browse UI for every Creation File (CF) you own.
@@ -175,6 +177,31 @@ export function gameItemToLibraryEntry(item: SavedGameItem): LibraryListEntry {
     title: item.name,
     detail: [item.itemType, rarity].filter(Boolean).join(" · ") || item.description.slice(0, 80),
     createdAt: item.updatedAt,
+  };
+}
+
+export function customSrdCategoryForKind(kind: SavedCustomSrdEntry["kind"]): LibraryStorageCategory {
+  if (kind === "monster") return "monsters";
+  if (kind === "equipment" || kind === "weapon" || kind === "armor" || kind === "magic-item") {
+    return "items";
+  }
+  return "rules";
+}
+
+export function customSrdToLibraryEntry(entry: SavedCustomSrdEntry): LibraryListEntry {
+  return {
+    id: entry.id,
+    ciClass: "rules.custom-entry",
+    category: customSrdCategoryForKind(entry.kind),
+    provenance: "user",
+    origin: "creation",
+    kindLabel: `Custom ${srdEntityKindLabel(entry.kind)}`,
+    title: entry.name,
+    detail:
+      entry.subtitle?.trim() ||
+      entry.markdown.trim().slice(0, 100) ||
+      `Cloned from ${entry.sourceSrdEntityId}`,
+    createdAt: entry.updatedAt,
   };
 }
 

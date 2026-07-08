@@ -16,4 +16,6 @@ export const APP_ICONS = {
   banner: "\u{1F6A9}",
   chest: "\u{1F4E6}",
   scroll: "\u{1F4DC}",
+  signIn: "\u{1F511}",
+  account: "\u{1F464}",
 } as const;

@@ -5,11 +5,13 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import AuthField from "@/features/auth/AuthField";
 import { useAuthForm } from "@/features/auth/useAuthForm";
+import { useAuth } from "@/contexts/AuthContext";
 import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 
-function AuthCardContent() {
+function AuthCardContent({ preset }: { preset?: { email: string; password: string } | null }) {
   const searchParams = useSearchParams();
   const returnTo = searchParams.get("returnTo");
+  const { refresh } = useAuth();
 
   const {
     mode,
@@ -25,7 +27,13 @@ function AuthCardContent() {
     submit,
     onBlurEmail,
     onBlurPassword,
-  } = useAuthForm({ returnTo });
+  } = useAuthForm({
+    returnTo,
+    preset,
+    onSuccess: () => {
+      void refresh();
+    },
+  });
 
   return (
     <div className="auth-card">
@@ -161,14 +169,18 @@ function AuthCardContent() {
  * 3. Wire Stripe Customer Portal webhooks to update `account.tier` server-side before
  *    issuing the session cookie on next login.
  */
-export default function AuthCard() {
+export default function AuthCard({
+  preset = null,
+}: {
+  preset?: { email: string; password: string } | null;
+}) {
   return (
     <Suspense
       fallback={
         <div className="auth-card p-8 text-center text-sm text-[var(--muted)]">Loading…</div>
       }
     >
-      <AuthCardContent />
+      <AuthCardContent preset={preset} />
     </Suspense>
   );
 }

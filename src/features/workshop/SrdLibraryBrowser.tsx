@@ -10,11 +10,16 @@ import { SRD_MANIFEST } from "@/lib/srd/manifest";
 import type { SrdEntityKind } from "@/lib/srd/types";
 import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 import type { LibraryViewSelection } from "@/features/workshop/WorkshopLibraryPanel";
+import SrdCloneButton, { SrdCloneCategoryButton } from "@/features/srd/SrdCloneButton";
+import type { CloneSrdResult } from "@/lib/srd/cloneSrdEntity";
 
 type SrdLibraryBrowserProps = {
   selection: LibraryViewSelection;
   onSelect: (selection: LibraryViewSelection) => void;
   wideLayout?: boolean;
+  onCloned?: (result: CloneSrdResult) => void;
+  onBulkCloned?: (results: CloneSrdResult[]) => void;
+  onStatus?: (message: string | null) => void;
 };
 
 const BROWSER_KINDS: {
@@ -110,6 +115,9 @@ export default function SrdLibraryBrowser({
   selection,
   onSelect,
   wideLayout = false,
+  onCloned,
+  onBulkCloned,
+  onStatus,
 }: SrdLibraryBrowserProps) {
   const [kind, setKind] = useState<SrdEntityKind>("rule");
   const [query, setQuery] = useState("");
@@ -127,6 +135,12 @@ export default function SrdLibraryBrowser({
   }, [kind, query]);
 
   const kindMeta = BROWSER_KINDS.find((row) => row.kind === kind);
+  const selectedEntityId =
+    selection?.kind === "srd-entity" ? selection.entityId : null;
+  const selectedEntity = selectedEntityId
+    ? filtered.find((entity) => entity.id === selectedEntityId) ??
+      listSrdEntities(kind).find((entity) => entity.id === selectedEntityId)
+    : null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -138,14 +152,42 @@ export default function SrdLibraryBrowser({
           <strong className="text-[var(--text)]">Included rules (SRD)</strong> — browse spells,
           monsters, classes, equipment, and rules. Full descriptions open in the {PREVIEW_WINDOW}{" "}
           from the bundled <strong className="text-[var(--text)]">{SRD_MANIFEST.documentPdfId}</strong>{" "}
-          ({SRD_MANIFEST.license}, read-only). This browser uses the bundled SRD corpus — instant
-          search with no network calls. Character pickers use the structured index. Material from
-          books you own stays in your imports — never here. See{" "}
+          ({SRD_MANIFEST.license}, read-only). Clone any entry to your editable workspace with{" "}
+          <strong className="text-[var(--text)]">Copy &amp; Edit</strong>. Material from books you
+          own stays in your imports — never here. See{" "}
           <Link href="/legal" className="font-semibold text-[var(--accent)] underline">
             Licenses &amp; content
           </Link>
           .
         </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {kindMeta ? (
+          <SrdCloneCategoryButton
+            kind={kind}
+            categoryLabel={kindMeta.label}
+            entryCount={listSrdEntities(kind).length}
+            onCloned={(results) => {
+              onBulkCloned?.(results);
+              onStatus?.(
+                `Cloned ${results.length} ${kindMeta.label.toLowerCase()} entr${results.length === 1 ? "y" : "ies"} to your workspace.`,
+              );
+            }}
+            onError={(message) => onStatus?.(message)}
+          />
+        ) : null}
+        {selectedEntity ? (
+          <SrdCloneButton
+            entityId={selectedEntity.id}
+            entityName={selectedEntity.name}
+            onCloned={(result) => {
+              onCloned?.(result);
+              onStatus?.(`Copied “${selectedEntity.name}” to your workspace — opening editor…`);
+            }}
+            onError={(message) => onStatus?.(message)}
+          />
+        ) : null}
       </div>
 
       <div className="srd-button-grid srd-category-grid" role="tablist" aria-label="SRD categories">
@@ -224,7 +266,8 @@ export default function SrdLibraryBrowser({
       {filtered.length > 0 ? (
         <p className="text-[11px] text-[var(--muted)]">
           {filtered.length} {kindMeta?.label.toLowerCase() ?? "entries"}
-          {query.trim() ? " matching search" : ""}. Select one to open in the {PREVIEW_WINDOW}.
+          {query.trim() ? " matching search" : ""}. Select one, then use Copy &amp; Edit to clone it
+          into your workspace.
         </p>
       ) : null}
     </div>

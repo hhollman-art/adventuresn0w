@@ -23,6 +23,10 @@ import type { SavedNpc } from "@/lib/worldAssets/npc";
 import type { SavedLocation } from "@/lib/worldAssets/location";
 import { ciClassVisual } from "@/lib/ui/ciClassVisuals";
 import { PREVIEW_WINDOW } from "@/lib/ui/labels";
+import { getSrdEntity, srdEntityKindLabel } from "@/lib/srd/corpus";
+import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
+import SrdCloneButton from "@/features/srd/SrdCloneButton";
+import type { CloneSrdResult } from "@/lib/srd/cloneSrdEntity";
 
 export type LibraryEntryDetailPaneProps = {
   selection: LibraryViewSelection;
@@ -36,11 +40,20 @@ export type LibraryEntryDetailPaneProps = {
   npcs: SavedNpc[];
   locations: SavedLocation[];
   sessionRecords: SavedSessionRecord[];
+  customSrdEntries?: SavedCustomSrdEntry[];
+  onCustomSrdCloned?: (result: CloneSrdResult) => void;
+  onStatus?: (message: string | null) => void;
 };
 
 function detailMarkdown(props: LibraryEntryDetailPaneProps): string {
   const { selection } = props;
   if (!selection) return "";
+
+  if (selection.kind === "custom-srd") {
+    return (
+      props.customSrdEntries?.find((row) => row.id === selection.id)?.markdown ?? ""
+    );
+  }
 
   if (selection.kind === "npc") {
     const npc = props.npcs.find((n) => n.id === selection.id);
@@ -90,6 +103,12 @@ function detailMarkdown(props: LibraryEntryDetailPaneProps): string {
 function detailSubline(props: LibraryEntryDetailPaneProps): string | null {
   const { selection } = props;
   if (!selection || selection.kind === "srd" || selection.kind === "srd-entity") return null;
+  if (selection.kind === "custom-srd") {
+    const row = props.customSrdEntries?.find((entry) => entry.id === selection.id);
+    return row
+      ? `Editable clone of ${row.sourceSrdEntityId}`
+      : "Your workspace copy";
+  }
   if (selection.kind === "character") {
     const character = props.characters.find((c) => c.id === selection.id);
     return character ? characterSummary(character.player) : null;
@@ -99,7 +118,7 @@ function detailSubline(props: LibraryEntryDetailPaneProps): string | null {
 }
 
 export default function LibraryEntryDetailPane(props: LibraryEntryDetailPaneProps) {
-  const { selection, entry } = props;
+  const { selection, entry, onCustomSrdCloned, onStatus } = props;
   const markdown = detailMarkdown(props);
   const subline = detailSubline(props);
   const visual = entry ? ciClassVisual(entry.ciClass) : null;
@@ -115,15 +134,64 @@ export default function LibraryEntryDetailPane(props: LibraryEntryDetailPaneProp
   }
 
   if (selection.kind === "srd" || selection.kind === "srd-entity") {
+    const entity =
+      selection.kind === "srd-entity" ? getSrdEntity(selection.entityId) : null;
     return (
       <div
-        className="library-detail-pane flex min-h-0 flex-1 flex-col rounded-lg border p-4 text-sm"
+        className="library-detail-pane flex min-h-0 flex-1 flex-col gap-3 rounded-lg border p-4 text-sm"
         style={{ borderColor: "var(--border)", background: "var(--bg)" }}
       >
         <h3 className="font-display text-base font-bold text-[var(--text)]">{selection.name}</h3>
-        <p className="mt-2 text-[var(--muted)]">
-          SRD reference — open the {PREVIEW_WINDOW} popup for the full read-only page.
+        <p className="text-[var(--muted)]">
+          SRD reference — open the {PREVIEW_WINDOW} popup for the full read-only page, or clone this
+          entry into your editable workspace.
         </p>
+        {entity ? (
+          <SrdCloneButton
+            entityId={entity.id}
+            entityName={entity.name}
+            onCloned={(result) => {
+              onCustomSrdCloned?.(result);
+              onStatus?.(`Copied “${entity.name}” to your workspace.`);
+            }}
+            onError={(message) => onStatus?.(message)}
+          />
+        ) : null}
+        {entity ? (
+          <p className="text-[11px] text-[var(--muted)]">
+            {srdEntityKindLabel(entity.kind)} · bundled SRD
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (selection.kind === "custom-srd") {
+    const custom = props.customSrdEntries?.find((row) => row.id === selection.id);
+    return (
+      <div
+        className="library-detail-pane flex min-h-0 flex-1 flex-col gap-2 overflow-hidden rounded-lg border"
+        style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+      >
+        <div className="shrink-0 border-b px-4 py-3" style={{ borderColor: "var(--border)" }}>
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+              style={{ borderColor: "var(--accent-dim)", color: "var(--accent)" }}
+            >
+              {fantasyCiLabel("rules.custom-entry")}
+            </span>
+            <h3 className="font-display text-base font-bold text-[var(--text)]">
+              {custom?.name ?? "Workspace copy"}
+            </h3>
+          </div>
+          {subline ? <p className="mt-1 text-xs text-[var(--muted)]">{subline}</p> : null}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+          <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-[var(--text)]">
+            {markdown.trim() || "Empty — open the Scrying Glass to edit this copy."}
+          </pre>
+        </div>
       </div>
     );
   }
@@ -150,24 +218,17 @@ export default function LibraryEntryDetailPane(props: LibraryEntryDetailPaneProp
               className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
               style={{ borderColor: visual.accent, color: visual.accent }}
             >
-              <span aria-hidden="true">{visual.icon} </span>
-              {entry ? fantasyCiLabel(entry.ciClass) : "CF"}
+              {fantasyCiLabel(entry!.ciClass)}
             </span>
           ) : null}
-          <h3 className="min-w-0 flex-1 font-display text-base font-bold text-[var(--text)]">
-            {title}
-          </h3>
+          <h3 className="font-display text-base font-bold text-[var(--text)]">{title}</h3>
         </div>
         {subline ? <p className="mt-1 text-xs text-[var(--muted)]">{subline}</p> : null}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-        {markdown.trim() ? (
-          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-[var(--text)]">
-            {markdown}
-          </pre>
-        ) : (
-          <p className="text-sm text-[var(--muted)]">No notes yet for this entry.</p>
-        )}
+        <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-[var(--text)]">
+          {markdown.trim() || "No content yet."}
+        </pre>
       </div>
     </div>
   );

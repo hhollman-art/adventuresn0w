@@ -96,6 +96,17 @@ import { openOrFocusPreviewWindow, publishPreviewSnapshot } from "@/lib/workshop
 import { buildLibraryPreviewSnapshot } from "@/lib/workshop/libraryPreviewSnapshot";
 import { getSrdEntity, srdEntityToPreviewMarkdown } from "@/lib/srd/corpus";
 import { lookupSrdDocumentMarkdown } from "@/lib/srd/srdDocumentLookup";
+import type { CloneSrdResult } from "@/lib/srd/cloneSrdEntity";
+import { openCustomSrdPreview } from "@/lib/srd/openCustomSrdPreview";
+import {
+  deleteCustomSrdEntry,
+  loadSavedCustomSrdEntries,
+  onCustomSrdChanged,
+  updateCustomSrdEntry,
+  type SavedCustomSrdEntry,
+} from "@/lib/srd/srdCustomLibrary";
+import { customSrdCategoryForKind } from "@/lib/workshop/libraryCatalog";
+import CustomSrdEditorDialog from "@/features/srd/CustomSrdEditorDialog";
 import { workshopNavItem } from "@/lib/workplace/workshopNav";
 import {
   extractAdventureScenes,
@@ -201,6 +212,13 @@ export default function Home(props: PageProps<"/">) {
   const [libraryNpcs, setLibraryNpcs] = useState<SavedNpc[]>([]);
   const [libraryLocations, setLibraryLocations] = useState<SavedLocation[]>([]);
   const [librarySessionRecords, setLibrarySessionRecords] = useState<SavedSessionRecord[]>([]);
+  const [libraryCustomSrd, setLibraryCustomSrd] = useState<SavedCustomSrdEntry[]>([]);
+  const [customSrdEditor, setCustomSrdEditor] = useState<{
+    id: string;
+    name: string;
+    markdown: string;
+  } | null>(null);
+  const [customSrdEditorError, setCustomSrdEditorError] = useState("");
   const [libraryCategory, setLibraryCategory] = useState<WorkshopLibraryCategory>("all");
   /** Library feature: the read-only SRD reference browser, opened over the list. */
   const [srdBrowserOpen, setSrdBrowserOpen] = useState(false);
@@ -326,6 +344,7 @@ export default function Home(props: PageProps<"/">) {
     libraryNpcs,
     libraryLocations,
     librarySessionRecords,
+    libraryCustomSrd,
   ]);
 
   useEffect(() => {
@@ -381,6 +400,12 @@ export default function Home(props: PageProps<"/">) {
     ) {
       setLibrarySelection(null);
     }
+    if (
+      librarySelection.kind === "custom-srd" &&
+      !libraryCustomSrd.some((row) => row.id === librarySelection.id)
+    ) {
+      setLibrarySelection(null);
+    }
   }, [
     ddeasySeeds,
     libraryResults,
@@ -391,6 +416,7 @@ export default function Home(props: PageProps<"/">) {
     libraryNpcs,
     libraryLocations,
     librarySessionRecords,
+    libraryCustomSrd,
     librarySelection,
   ]);
 
@@ -404,6 +430,63 @@ export default function Home(props: PageProps<"/">) {
     void loadSavedNpcs().then(setLibraryNpcs);
     void loadSavedLocations().then(setLibraryLocations);
     void loadSavedSessionRecords().then(setLibrarySessionRecords);
+    void loadSavedCustomSrdEntries().then(setLibraryCustomSrd);
+  }
+
+  async function handleCustomSrdCloned(result: CloneSrdResult) {
+    scheduleLibrarySnapshot();
+    if (result.storage === "item") {
+      const items = await loadSavedGameItems();
+      setLibraryItems(items);
+      setLibrarySelection({ kind: "item", id: result.item.id });
+      setLibraryCategory("items");
+      setSrdBrowserOpen(false);
+      setLibraryStatus(`Copied “${result.item.name}” to your item treasury — edit it on the Items page.`);
+      window.location.href = "/items";
+      return;
+    }
+    const entries = await loadSavedCustomSrdEntries();
+    setLibraryCustomSrd(entries);
+    setLibrarySelection({ kind: "custom-srd", id: result.entry.id });
+    setLibraryCategory(customSrdCategoryForKind(result.entry.kind));
+    setSrdBrowserOpen(false);
+    openCustomSrdPreview(result.entry);
+    setCustomSrdEditor({
+      id: result.entry.id,
+      name: result.entry.name,
+      markdown: result.entry.markdown,
+    });
+    setCustomSrdEditorError("");
+  }
+
+  function openCustomSrdEditor(id: string) {
+    const row = libraryCustomSrd.find((entry) => entry.id === id);
+    if (!row) return;
+    setCustomSrdEditor({
+      id: row.id,
+      name: row.name,
+      markdown: row.markdown,
+    });
+    setCustomSrdEditorError("");
+    openCustomSrdPreview(row);
+  }
+
+  async function saveCustomSrdEditor() {
+    if (!customSrdEditor) return;
+    if (!customSrdEditor.name.trim()) {
+      setCustomSrdEditorError("Give this copy a name.");
+      return;
+    }
+    const list = await updateCustomSrdEntry(customSrdEditor.id, {
+      name: customSrdEditor.name,
+      markdown: customSrdEditor.markdown,
+    });
+    setLibraryCustomSrd(list);
+    scheduleLibrarySnapshot();
+    const saved = list.find((row) => row.id === customSrdEditor.id);
+    if (saved) openCustomSrdPreview(saved);
+    setCustomSrdEditor(null);
+    setLibraryStatus(`Saved your workspace copy of “${customSrdEditor.name.trim()}”.`);
   }
 
   useEffect(() => {
@@ -430,6 +513,9 @@ export default function Home(props: PageProps<"/">) {
     const offSessions = onSessionRecordsChanged(() => {
       void loadSavedSessionRecords().then(setLibrarySessionRecords);
     });
+    const offCustomSrd = onCustomSrdChanged(() => {
+      void loadSavedCustomSrdEntries().then(setLibraryCustomSrd);
+    });
     return () => {
       offRosters();
       offCharacters();
@@ -438,6 +524,7 @@ export default function Home(props: PageProps<"/">) {
       offNpcs();
       offLocations();
       offSessions();
+      offCustomSrd();
     };
   }, [isLibraryView]);
 
@@ -1250,6 +1337,7 @@ useHomePreviewSnapshot({
     libraryNpcs,
     libraryLocations,
     librarySessionRecords,
+    libraryCustomSrd,
     progressStage,
     loading,
     imageLoading,
@@ -1266,6 +1354,7 @@ useHomePreviewSnapshot({
     openResultEditor,
     openEditSeedEditor,
     openLibraryResultEditor,
+    openCustomSrdEditor,
   });
 
 
@@ -1281,6 +1370,7 @@ useHomePreviewSnapshot({
       npcs={libraryNpcs}
       locations={libraryLocations}
       sessionRecords={librarySessionRecords}
+      customSrdEntries={libraryCustomSrd}
       category={libraryCategory}
       selection={librarySelection}
       statusMessage={libraryStatus}
@@ -1329,6 +1419,7 @@ useHomePreviewSnapshot({
           npcs: libraryNpcs,
           locations: libraryLocations,
           sessionRecords: librarySessionRecords,
+          customSrdEntries: libraryCustomSrd,
           srdPreviewMarkdown: bundledSrdMarkdown ?? undefined,
           srdPreviewLoading,
           workspace,
@@ -1440,6 +1531,25 @@ useHomePreviewSnapshot({
         setLibrarySelection({ kind: "session", id: created.id });
         setLibraryStatus(`Logged session #${created.sessionNumber}.`);
       }}
+      onEditCustomSrd={openCustomSrdEditor}
+      onDeleteCustomSrd={async (id) => {
+        const list = await deleteCustomSrdEntry(id);
+        setLibraryCustomSrd(list);
+        scheduleLibrarySnapshot();
+        if (librarySelection?.kind === "custom-srd" && librarySelection.id === id) {
+          setLibrarySelection(null);
+        }
+        setLibraryStatus("Removed workspace copy.");
+      }}
+      onCustomSrdCloned={(result) => void handleCustomSrdCloned(result)}
+      onCustomSrdBulkCloned={(results) => {
+        void loadSavedCustomSrdEntries().then(setLibraryCustomSrd);
+        void loadSavedGameItems().then(setLibraryItems);
+        scheduleLibrarySnapshot();
+        if (results.length === 1 && results[0]?.storage === "custom-srd") {
+          void handleCustomSrdCloned(results[0]);
+        }
+      }}
       onPartiesChange={setLibraryParties}
       onRestore={(outcome) => {
         setDdeasySeeds(outcome.seeds);
@@ -1451,6 +1561,7 @@ useHomePreviewSnapshot({
         setLibraryNpcs(outcome.npcs);
         setLibraryLocations(outcome.locations);
         setLibrarySessionRecords(outcome.sessionRecords);
+        setLibraryCustomSrd(outcome.customSrd);
       }}
       onStatus={setLibraryStatus}
     />
@@ -1489,6 +1600,26 @@ useHomePreviewSnapshot({
           onCancel={() => {
             setResultEditorError("");
             setResultEditor(null);
+          }}
+        />
+      ) : null}
+      {customSrdEditor ? (
+        <CustomSrdEditorDialog
+          name={customSrdEditor.name}
+          markdown={customSrdEditor.markdown}
+          error={customSrdEditorError}
+          onNameChange={(name) => {
+            setCustomSrdEditorError("");
+            setCustomSrdEditor((current) => (current ? { ...current, name } : current));
+          }}
+          onMarkdownChange={(markdown) => {
+            setCustomSrdEditorError("");
+            setCustomSrdEditor((current) => (current ? { ...current, markdown } : current));
+          }}
+          onSave={() => void saveCustomSrdEditor()}
+          onCancel={() => {
+            setCustomSrdEditorError("");
+            setCustomSrdEditor(null);
           }}
         />
       ) : null}

@@ -162,6 +162,14 @@
       "storageModule": "src/lib/srd/",
       "status": "shipped"
     },
+    "rules.custom-entry": {
+      "file": "rules.custom-entry.json",
+      "category": "rules",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/srd/srdCustomLibrary.ts",
+      "status": "shipped"
+    },
     "monster.srd-entry": {
       "file": "monster.srd-entry.json",
       "category": "monsters",

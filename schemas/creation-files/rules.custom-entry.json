@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/rules.custom-entry.json",
+  "title": "rules.custom-entry — User-owned SRD clone",
+  "description": "Editable workspace copy of a bundled SRD entity, stored in src/lib/srd/srdCustomLibrary.ts",
+  "type": "object",
+  "required": [
+    "id",
+    "ciClass",
+    "name",
+    "kind",
+    "sourceSrdEntityId",
+    "markdown",
+    "provenance",
+    "isReadOnly"
+  ],
+  "properties": {
+    "id": { "$ref": "common.json#/$defs/uuidOrId" },
+    "ciClass": { "const": "rules.custom-entry" },
+    "userId": {
+      "type": ["string", "null"],
+      "description": "Owning DM account id when cloned while signed in; null for local-only prep"
+    },
+    "isReadOnly": { "const": false },
+    "provenance": { "const": "user" },
+    "source": { "const": "srd-clone" },
+    "sourceSrdEntityId": { "$ref": "common.json#/$defs/srdEntityId" },
+    "kind": { "type": "string" },
+    "name": { "type": "string" },
+    "subtitle": { "type": ["string", "null"] },
+    "markdown": { "type": "string" },
+    "createdAt": { "$ref": "common.json#/$defs/isoDateTime" },
+    "updatedAt": { "$ref": "common.json#/$defs/isoDateTime" }
+  },
+  "additionalProperties": false
+}

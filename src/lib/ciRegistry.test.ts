@@ -74,7 +74,11 @@ describe("ciRegistry", () => {
       "session.tabletop",
       "session.snapshot",
     ]);
-    expect(ciClassesForCategory("rules")).toEqual(["rules.srd-entry", "spell.srd-entry"]);
+    expect(ciClassesForCategory("rules")).toEqual([
+      "rules.srd-entry",
+      "rules.custom-entry",
+      "spell.srd-entry",
+    ]);
   });
 
   it("registers standalone characters as backed-up user sheets", () => {

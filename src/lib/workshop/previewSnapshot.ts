@@ -28,7 +28,9 @@ export type WorkshopPreviewSnapshot = {
   autoPropsEnabled: boolean;
   isSrdPreview: boolean;
   canEdit: boolean;
-  editKind: "none" | "result" | "seed" | "library-result";
+  editKind: "none" | "result" | "seed" | "library-result" | "custom-srd";
+  /** When editing a custom SRD clone, the workspace row id. */
+  customSrdId?: string | null;
   showSavePartyVtt: boolean;
   showLoadPartyVtt: boolean;
   viewingPartyId: string | null;
@@ -39,6 +41,7 @@ export type PreviewAction =
   | "edit"
   | "edit-seed"
   | "edit-result"
+  | "edit-custom-srd"
   | "save-party-vtt"
   | "load-party-vtt";
 

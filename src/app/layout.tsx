@@ -51,12 +51,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body className="app-shell flex min-h-dvh flex-col antialiased">
-        <SiteTitleBar />
-        <AppChrome>
-          <Providers>
+        <Providers>
+          <SiteTitleBar />
+          <AppChrome>
             <div className="app-content">{children}</div>
-          </Providers>
-        </AppChrome>
+          </AppChrome>
+        </Providers>
         <p
           className="site-footnote shrink-0 px-4 py-3 text-center text-xs text-[var(--muted)]"
           aria-label={`Application version ${pkg.version}`}

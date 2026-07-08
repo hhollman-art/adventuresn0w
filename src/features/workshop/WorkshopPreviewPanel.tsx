@@ -143,11 +143,13 @@ export default function WorkshopPreviewPanel({
     if (popupMode) {
       if (editKind === "seed") postPreviewAction("edit-seed");
       else if (editKind === "library-result") postPreviewAction("edit-result");
+      else if (editKind === "custom-srd") postPreviewAction("edit-custom-srd");
       else postPreviewAction("edit");
       return;
     }
     if (editKind === "seed") onEditSeed?.();
     else if (editKind === "library-result") onEditResult?.();
+    else if (editKind === "custom-srd") onEdit?.();
     else onEdit?.();
   }
 
@@ -208,6 +210,8 @@ export default function WorkshopPreviewPanel({
                   ? "Edit CF"
                   : editKind === "library-result"
                     ? "Edit result"
+                    : editKind === "custom-srd"
+                      ? "Edit workspace copy"
                     : "Edit"}
               </button>
             ) : null}
