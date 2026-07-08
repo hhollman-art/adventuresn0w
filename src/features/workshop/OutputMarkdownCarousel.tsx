@@ -2,9 +2,14 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PREVIEW_WINDOW } from "@/lib/ui/labels";
+import { mountSpellLaunchersInElement } from "@/lib/srd/spellMarkdownEnrichment";
+import { useWorkspaceRouterOptional } from "@/contexts/WorkspaceContextRouter";
+import { openSrdSpellPreview } from "@/lib/srd/openSrdPreview";
 
 type OutputMarkdownCarouselProps = {
   html: string;
+  /** Add Scrying Glass quick-launch icons beside bundled SRD spell names. */
+  enableSpellLinks?: boolean;
 };
 
 const ACTIVE_PANEL_CLASS = "output-document-panel-active";
@@ -49,13 +54,17 @@ function syncVisiblePage(root: HTMLElement, target: number): HTMLElement[] {
  * Paginated output: page 1 = Contents, then one page per ## section.
  * innerHTML is updated only when `html` changes so page navigation does not wipe panel state.
  */
-export default function OutputMarkdownCarousel({ html }: OutputMarkdownCarouselProps) {
+export default function OutputMarkdownCarousel({
+  html,
+  enableSpellLinks = false,
+}: OutputMarkdownCarouselProps) {
   const rootRef = useRef<HTMLElement>(null);
   const mountedHtmlRef = useRef("");
   const pageIndexRef = useRef(0);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageCount, setPageCount] = useState(0);
   const [pageLabel, setPageLabel] = useState("Contents");
+  const router = useWorkspaceRouterOptional();
 
   const goToPage = useCallback((index: number) => {
     pageIndexRef.current = Math.max(0, index);
@@ -82,6 +91,18 @@ export default function OutputMarkdownCarousel({ html }: OutputMarkdownCarouselP
     setPageLabel(panelLabel(panels[target]!, target));
     setPageIndex((prev) => (prev === target ? prev : target));
   }, [html, pageIndex]);
+
+  useEffect(() => {
+    if (!enableSpellLinks) return;
+    const root = rootRef.current;
+    if (!root) return;
+    const openSpell =
+      router?.openScryingSpell ??
+      ((spell: { id: string; name: string }) => {
+        openSrdSpellPreview(spell);
+      });
+    mountSpellLaunchersInElement(root, openSpell);
+  }, [enableSpellLinks, html, pageIndex, router]);
 
   useEffect(() => {
     const root = rootRef.current;

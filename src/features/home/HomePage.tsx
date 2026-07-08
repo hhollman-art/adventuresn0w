@@ -13,6 +13,11 @@ import WorkshopWelcomeLanding from "@/features/home/WorkshopWelcomeLanding";
 import ForgeLayoutWithSidebar from "@/features/workshop/ForgeLayoutWithSidebar";
 import { buildWorkshopBreadcrumbs } from "@/lib/workshop/workshopBreadcrumbs";
 import type { QuickCreateAction } from "@/lib/workshop/dmDashboard";
+import {
+  clearPendingLibrarySelection,
+  parseQuickCreateParam,
+  readPendingLibrarySelection,
+} from "@/lib/commandPalette/commandPaletteEvents";
 import WorkflowTutorialOverlay from "@/features/workshop/WorkflowTutorialOverlay";
 import { isWorkflowTutorialId } from "@/lib/workshop/workflowTutorials";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
@@ -168,6 +173,7 @@ export default function Home(props: PageProps<"/">) {
   /** Skip the next welcome reset when the user picked a specific forge workspace. */
   const skipWelcomeOnNextHomeRef = useRef(false);
   const prevPathnameRef = useRef<string | null>(null);
+  const quickCreateHandledRef = useRef(false);
   const [form, setForm] = useState<FormState>(initialForm);
   const [realmForm, setRealmForm] = useState<RealmFormState>(initialRealmForm);
   const [mapForm, setMapForm] = useState<MapFormState>(initialMapForm);
@@ -307,6 +313,62 @@ export default function Home(props: PageProps<"/">) {
       router.replace("/", { scroll: false });
     }
   }, [searchParams, router]);
+
+  // Dashboard deep link: /library?quickCreate=npc|item|location|quest
+  useEffect(() => {
+    if (!isLibraryView || quickCreateHandledRef.current) return;
+    const action = parseQuickCreateParam(searchParams.get("quickCreate"));
+    if (!action) return;
+    quickCreateHandledRef.current = true;
+    router.replace("/library", { scroll: false });
+
+    void (async () => {
+      switch (action) {
+        case "npc": {
+          const name = window.prompt("What is this NPC called?");
+          if (!name?.trim()) return;
+          const list = await saveNpc({ name: name.trim() });
+          setLibraryNpcs(list);
+          const created = list[0];
+          if (!created) return;
+          await autoLinkToActiveCampaign({ npcId: created.id });
+          setLibrarySelection({ kind: "npc", id: created.id });
+          setLibraryStatus(`Added NPC “${created.name}”.`);
+          break;
+        }
+        case "location": {
+          const name = window.prompt("What is this place called?");
+          if (!name?.trim()) return;
+          const list = await saveLocation({ name: name.trim() });
+          setLibraryLocations(list);
+          const created = list[0];
+          if (!created) return;
+          await autoLinkToActiveCampaign({ locationId: created.id });
+          setLibrarySelection({ kind: "location", id: created.id });
+          setLibraryStatus(`Added location “${created.name}”.`);
+          break;
+        }
+        case "item":
+          router.push("/items");
+          break;
+        case "quest":
+          router.push("/?mode=adventure");
+          break;
+      }
+    })();
+  }, [isLibraryView, router, searchParams]);
+
+  // Command palette: open a specific library row after cross-workspace creation.
+  useEffect(() => {
+    if (!isLibraryView) return;
+    const pending = readPendingLibrarySelection();
+    if (!pending || pending.kind !== "npc") return;
+    const npc = libraryNpcs.find((row) => row.id === pending.id);
+    if (!npc) return;
+    clearPendingLibrarySelection();
+    setLibrarySelection({ kind: "npc", id: npc.id });
+    setLibraryStatus(`Opened “${npc.name}”.`);
+  }, [isLibraryView, libraryNpcs]);
 
   // On mobile, default the slow auto image generation off for reliability.
   useEffect(() => {

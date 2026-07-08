@@ -26,6 +26,7 @@ import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 import { getSrdEntity, srdEntityKindLabel } from "@/lib/srd/corpus";
 import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
 import SrdCloneButton from "@/features/srd/SrdCloneButton";
+import SpellLinkedMarkdownView from "@/features/srd/SpellLinkedMarkdownView";
 import type { CloneSrdResult } from "@/lib/srd/cloneSrdEntity";
 
 export type LibraryEntryDetailPaneProps = {
@@ -188,9 +189,13 @@ export default function LibraryEntryDetailPane(props: LibraryEntryDetailPaneProp
           {subline ? <p className="mt-1 text-xs text-[var(--muted)]">{subline}</p> : null}
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-          <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-[var(--text)]">
-            {markdown.trim() || "Empty — open the Scrying Glass to edit this copy."}
-          </pre>
+          {markdown.trim() ? (
+            <SpellLinkedMarkdownView markdown={markdown} isSrd />
+          ) : (
+            <p className="text-xs text-[var(--muted)]">
+              Empty — open the Scrying Glass to edit this copy.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -205,6 +210,8 @@ export default function LibraryEntryDetailPane(props: LibraryEntryDetailPaneProp
         : selection.kind === "session"
           ? props.sessionRecords.find((r) => r.id === selection.id)?.title
           : "Selected entry");
+
+  const spellLinkedDetail = selection.kind === "npc" || selection.kind === "character";
 
   return (
     <div
@@ -226,9 +233,17 @@ export default function LibraryEntryDetailPane(props: LibraryEntryDetailPaneProp
         {subline ? <p className="mt-1 text-xs text-[var(--muted)]">{subline}</p> : null}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-        <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-[var(--text)]">
-          {markdown.trim() || "No content yet."}
-        </pre>
+        {markdown.trim() ? (
+          spellLinkedDetail ? (
+            <SpellLinkedMarkdownView markdown={markdown} />
+          ) : (
+            <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-[var(--text)]">
+              {markdown}
+            </pre>
+          )
+        ) : (
+          <p className="text-xs text-[var(--muted)]">No content yet.</p>
+        )}
       </div>
     </div>
   );

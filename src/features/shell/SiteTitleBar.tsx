@@ -8,6 +8,7 @@ import SiteBannerScene from "@/features/shell/SiteBannerScene";
 import ThemePicker from "@/features/shell/ThemePicker";
 import ThemeSignArt from "@/features/shell/ThemeSignArt";
 import HearthAuthNav from "@/features/auth/HearthAuthNav";
+import CommandPaletteTrigger from "@/features/commandPalette/CommandPaletteTrigger";
 import { APP_ICONS } from "@/lib/ui/appIcons";
 import { useAppTheme } from "@/lib/themes/useAppTheme";
 import {
@@ -66,6 +67,9 @@ export default function SiteTitleBar() {
           </div>
 
           <div className="site-title-bar-banner-actions">
+            <div className="site-title-bar-command-palette">
+              <CommandPaletteTrigger />
+            </div>
             <div className="site-title-bar-auth">
               <HearthAuthNav />
             </div>
@@ -124,6 +128,7 @@ export default function SiteTitleBar() {
             </span>
           </Link>
           <div className="site-title-bar-compact-zones">
+            <CommandPaletteTrigger />
             <HearthAuthNav />
             <AppZoneToggle compact />
           </div>

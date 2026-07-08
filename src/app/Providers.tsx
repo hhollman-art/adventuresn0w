@@ -3,11 +3,17 @@
 import type { ReactNode } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminAnnouncementProvider } from "@/contexts/AdminAnnouncementContext";
+import { VaultDrawerProvider } from "@/contexts/VaultDrawerContext";
+import { WorkspaceContextRouterProvider } from "@/contexts/WorkspaceContextRouter";
 
 export default function Providers({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
-      <AdminAnnouncementProvider>{children}</AdminAnnouncementProvider>
+      <AdminAnnouncementProvider>
+        <WorkspaceContextRouterProvider>
+          <VaultDrawerProvider>{children}</VaultDrawerProvider>
+        </WorkspaceContextRouterProvider>
+      </AdminAnnouncementProvider>
     </AuthProvider>
   );
 }

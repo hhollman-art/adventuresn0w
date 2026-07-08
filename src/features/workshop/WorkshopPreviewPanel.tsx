@@ -338,6 +338,7 @@ export default function WorkshopPreviewPanel({
       {previewMarkdown.trim() ? (
         <OutputMarkdownCarousel
           html={previewMarkdownToHtml(previewMarkdown, isSrdPreview)}
+          enableSpellLinks={isSrdPreview || ciClass === "npc.record" || ciClass === "rules.custom-entry"}
         />
       ) : null}
 

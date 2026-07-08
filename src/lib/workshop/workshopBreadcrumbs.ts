@@ -54,6 +54,11 @@ export function buildWorkshopBreadcrumbs(options: {
     return trail;
   }
 
+  if (pathname === "/encounters" || pathname.startsWith("/encounters/")) {
+    trail.push({ label: "Encounter Prep" });
+    return trail;
+  }
+
   if (pathname.startsWith("/table")) {
     trail.push({ label: "Virtual Table" });
     return trail;
@@ -81,6 +86,7 @@ export function breadcrumbNavId(pathname: string, workspace: "welcome" | Worksho
   if (pathname.startsWith("/campaigns")) return "campaigns";
   if (pathname.startsWith("/tavern") || pathname.startsWith("/parties")) return "tavern";
   if (pathname.startsWith("/items")) return "items";
+  if (pathname.startsWith("/encounters")) return "encounters";
   if (pathname === "/" && workspace !== "welcome") return workspace;
   if (workspace === "welcome") return "welcome";
   return null;

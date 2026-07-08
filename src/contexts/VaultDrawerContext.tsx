@@ -1,0 +1,202 @@
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import type { CiClass } from "@/lib/ciRegistry";
+import type { VaultDragPayload } from "@/lib/vault/cfDragDrop";
+import {
+  filterVaultEntries,
+  loadVaultCardEntries,
+  type VaultCardEntry,
+  type VaultShelf,
+} from "@/lib/vault/loadVaultEntries";
+import { CUSTOM_SRD_CHANGED_EVENT } from "@/lib/srd/srdCustomLibrary";
+import { CHARACTERS_CHANGED_EVENT } from "@/lib/tabletop/characterLibrary";
+import { NPCS_CHANGED_EVENT } from "@/lib/worldAssets/npc";
+import { ITEMS_CHANGED_EVENT } from "@/lib/itemLibrary";
+
+const VAULT_OPEN_KEY = "ddeasy-vault-drawer-open";
+
+export type VaultDropHandler = (
+  payload: VaultDragPayload,
+  zoneId: string,
+) => Promise<{ ok: boolean; message?: string } | void> | { ok: boolean; message?: string } | void;
+
+export type VaultDropRegistration = {
+  zoneId: string;
+  label: string;
+  accepts?: CiClass[];
+  handler: VaultDropHandler;
+};
+
+type VaultDrawerContextValue = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  toggleOpen: () => void;
+  entries: VaultCardEntry[];
+  refreshEntries: () => Promise<void>;
+  shelf: VaultShelf;
+  setShelf: (shelf: VaultShelf) => void;
+  query: string;
+  setQuery: (query: string) => void;
+  filteredEntries: VaultCardEntry[];
+  dragging: VaultDragPayload | null;
+  setDragging: (payload: VaultDragPayload | null) => void;
+  registerDropZone: (registration: VaultDropRegistration) => void;
+  unregisterDropZone: (zoneId: string) => void;
+  dropZones: VaultDropRegistration[];
+  handleDrop: (zoneId: string, payload: VaultDragPayload) => Promise<{ ok: boolean; message?: string }>;
+};
+
+const VaultDrawerContext = createContext<VaultDrawerContextValue | null>(null);
+
+export function VaultDrawerProvider({ children }: { children: ReactNode }) {
+  const [open, setOpenState] = useState(false);
+  const [entries, setEntries] = useState<VaultCardEntry[]>([]);
+  const [shelf, setShelf] = useState<VaultShelf>("all");
+  const [query, setQuery] = useState("");
+  const [dragging, setDragging] = useState<VaultDragPayload | null>(null);
+  const dropZonesRef = useRef<Map<string, VaultDropRegistration>>(new Map());
+  const [dropZones, setDropZones] = useState<VaultDropRegistration[]>([]);
+
+  useEffect(() => {
+    try {
+      setOpenState(localStorage.getItem(VAULT_OPEN_KEY) === "1");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const setOpen = useCallback((next: boolean) => {
+    setOpenState(next);
+    try {
+      localStorage.setItem(VAULT_OPEN_KEY, next ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const toggleOpen = useCallback(() => {
+    setOpenState((current) => {
+      const next = !current;
+      try {
+        localStorage.setItem(VAULT_OPEN_KEY, next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
+
+  const refreshEntries = useCallback(async () => {
+    const rows = await loadVaultCardEntries();
+    setEntries(rows);
+  }, []);
+
+  useEffect(() => {
+    void refreshEntries();
+    const reload = () => void refreshEntries();
+    window.addEventListener(CHARACTERS_CHANGED_EVENT, reload);
+    window.addEventListener(NPCS_CHANGED_EVENT, reload);
+    window.addEventListener(ITEMS_CHANGED_EVENT, reload);
+    window.addEventListener(CUSTOM_SRD_CHANGED_EVENT, reload);
+    return () => {
+      window.removeEventListener(CHARACTERS_CHANGED_EVENT, reload);
+      window.removeEventListener(NPCS_CHANGED_EVENT, reload);
+      window.removeEventListener(ITEMS_CHANGED_EVENT, reload);
+      window.removeEventListener(CUSTOM_SRD_CHANGED_EVENT, reload);
+    };
+  }, [refreshEntries]);
+
+  const registerDropZone = useCallback((registration: VaultDropRegistration) => {
+    dropZonesRef.current.set(registration.zoneId, registration);
+    setDropZones([...dropZonesRef.current.values()]);
+  }, []);
+
+  const unregisterDropZone = useCallback((zoneId: string) => {
+    dropZonesRef.current.delete(zoneId);
+    setDropZones([...dropZonesRef.current.values()]);
+  }, []);
+
+  const handleDrop = useCallback(async (zoneId: string, payload: VaultDragPayload) => {
+    const zone = dropZonesRef.current.get(zoneId);
+    if (!zone) {
+      return { ok: false, message: "No drop target is active here." };
+    }
+    if (zone.accepts && !zone.accepts.includes(payload.ciClass)) {
+      return { ok: false, message: "This zone does not accept that card type." };
+    }
+    const result = await zone.handler(payload, zoneId);
+    if (result && typeof result === "object" && "ok" in result) {
+      return { ok: Boolean(result.ok), message: result.message };
+    }
+    return { ok: true };
+  }, []);
+
+  const filteredEntries = useMemo(
+    () => filterVaultEntries(entries, shelf, query),
+    [entries, shelf, query],
+  );
+
+  const value = useMemo<VaultDrawerContextValue>(
+    () => ({
+      open,
+      setOpen,
+      toggleOpen,
+      entries,
+      refreshEntries,
+      shelf,
+      setShelf,
+      query,
+      setQuery,
+      filteredEntries,
+      dragging,
+      setDragging,
+      registerDropZone,
+      unregisterDropZone,
+      dropZones,
+      handleDrop,
+    }),
+    [
+      open,
+      setOpen,
+      toggleOpen,
+      entries,
+      refreshEntries,
+      shelf,
+      query,
+      filteredEntries,
+      dragging,
+      registerDropZone,
+      unregisterDropZone,
+      dropZones,
+      handleDrop,
+    ],
+  );
+
+  return <VaultDrawerContext.Provider value={value}>{children}</VaultDrawerContext.Provider>;
+}
+
+export function useVaultDrawer(): VaultDrawerContextValue {
+  const ctx = useContext(VaultDrawerContext);
+  if (!ctx) throw new Error("useVaultDrawer must be used within VaultDrawerProvider");
+  return ctx;
+}
+
+export function useVaultDropZone(registration: VaultDropRegistration | null): void {
+  const { registerDropZone, unregisterDropZone } = useVaultDrawer();
+
+  useEffect(() => {
+    if (!registration) return;
+    registerDropZone(registration);
+    return () => unregisterDropZone(registration.zoneId);
+  }, [registration, registerDropZone, unregisterDropZone]);
+}

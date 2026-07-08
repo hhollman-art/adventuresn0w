@@ -37,6 +37,8 @@ import {
   savePartyFromSession,
   saveTabletopSession,
 } from "@/modules/vtt";
+import { applyEncounterCombatImport } from "@/lib/encounter/applyEncounterCombatImport";
+import { consumePendingEncounterCombatImport } from "@/lib/workshop/workspaceRouter";
 import { onRostersChanged, type SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
 import { addRevealed, allCells, clampTokenPosition, removeRevealed } from "@/lib/tabletop/grid";
 import { rollDice } from "@/lib/tabletop/dice";
@@ -62,6 +64,8 @@ import { createDmSync } from "@/lib/tabletop/sync";
 import { createDmHostSync, loadDmActiveRoom, type DmActiveRoom } from "@/lib/session-room/dmHost";
 import SessionRoomHostPanel from "@/features/session-room/SessionRoomHostPanel";
 import { useFullscreen } from "@/features/tabletop/useFullscreen";
+import VaultDropZone from "@/features/vault/VaultDropZone";
+import TabletopVaultDropBridge from "@/features/vault/TabletopVaultDropBridge";
 import {
   TOKEN_COLOR_PALETTE,
   TOKEN_KIND_DEFAULT_COLOR,
@@ -86,8 +90,10 @@ export default function TabletopPage() {
   const [brushRadius, setBrushRadius] = useState(1);
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [panel, setPanel] = useState<VttSidePanel>("tokens");
+  const [vaultStatus, setVaultStatus] = useState<string | null>(null);
   const mainRef = useRef<HTMLElement | null>(null);
   const pendingImportHandled = useRef(false);
+  const pendingEncounterHandled = useRef(false);
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
 
   useEffect(() => {
@@ -147,6 +153,15 @@ export default function TabletopPage() {
     });
   }, [session, update]);
 
+  useEffect(() => {
+    if (!session || pendingEncounterHandled.current) return;
+    const pending = consumePendingEncounterCombatImport();
+    if (!pending) return;
+    pendingEncounterHandled.current = true;
+    update((s) => applyEncounterCombatImport(s, pending));
+    if (pending.openInitiativePanel !== false) setPanel("initiative");
+  }, [session, update]);
+
   if (!session) {
     return (
       <main className="app-main app-main--table app-main--vtt mx-auto flex w-full flex-1 flex-col min-h-0 px-2 py-2 sm:px-3 sm:py-3">
@@ -184,13 +199,25 @@ export default function TabletopPage() {
   return (
     <main
       ref={mainRef}
-      className="app-main app-main--table app-main--vtt mx-auto flex w-full flex-1 min-h-0 px-2 py-2 sm:px-3 sm:py-3"
+      className="app-main app-main--table app-main--vtt relative mx-auto flex w-full flex-1 min-h-0 px-2 py-2 sm:px-3 sm:py-3"
       style={{
         height: isFullscreen ? "100dvh" : undefined,
         paddingTop: isFullscreen ? 12 : undefined,
         background: isFullscreen ? "var(--bg)" : undefined,
       }}
     >
+      <TabletopVaultDropBridge
+        session={session}
+        update={update}
+        onSelectToken={setSelectedTokenId}
+        newPlayerToken={newPlayerToken}
+        onStatus={setVaultStatus}
+      />
+      {vaultStatus ? (
+        <p className="vault-vtt-status" role="status">
+          {vaultStatus}
+        </p>
+      ) : null}
       <VttControlSidebar
         session={session}
         tool={tool}
@@ -210,7 +237,14 @@ export default function TabletopPage() {
         sessionRoom={<SessionRoomHostPanel onRoomChange={handleRoomChange} />}
       >
         {panel === "party" && (
-          <PartyPanel session={session} update={update} onSelectToken={setSelectedTokenId} />
+          <VaultDropZone
+            zoneId="vtt-party"
+            label="Drop heroes or fellowships here"
+            hint="Adds sheets and places tokens when possible."
+            compact
+          >
+            <PartyPanel session={session} update={update} onSelectToken={setSelectedTokenId} />
+          </VaultDropZone>
         )}
         {panel === "tokens" && (
           <TokensPanel
@@ -225,7 +259,12 @@ export default function TabletopPage() {
         {panel === "map" && <MapPanel session={session} update={update} />}
       </VttControlSidebar>
 
-      <div className="vtt-stage-shell min-h-0 min-w-0 flex-1">
+      <VaultDropZone
+        zoneId="vtt-map"
+        label="Drop onto the battle map"
+        hint="Heroes, NPCs, monsters, and gear tokens land here."
+        className="vtt-stage-shell min-h-0 min-w-0 flex-1"
+      >
         <BattleStage
           session={session}
           mode="dm"
@@ -252,7 +291,7 @@ export default function TabletopPage() {
             }))
           }
         />
-      </div>
+      </VaultDropZone>
     </main>
   );
 }

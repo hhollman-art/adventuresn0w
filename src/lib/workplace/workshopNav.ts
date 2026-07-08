@@ -5,7 +5,7 @@ import { dmTip } from "@/lib/ui/dmTips";
 /** Creation generators on the Fantasy Forge home route (`/`). */
 export type WorkshopCreationId = "realm" | "adventure" | "maps" | "characters" | "props";
 
-export type WorkshopNavId = "welcome" | WorkshopCreationId | WorkplaceId;
+export type WorkshopNavId = "welcome" | WorkshopCreationId | WorkplaceId | "encounters";
 
 export type WorkshopNavGroup = "hearth" | "campaign" | "forge" | "tend" | "library";
 
@@ -93,6 +93,15 @@ export const WORKSHOP_NAV_ITEMS: WorkshopNavItem[] = [
     href: "/tavern",
   },
   {
+    id: "encounters",
+    label: "Encounters",
+    hint: "Prep fights and send them to the live initiative tracker",
+    dmTip: "Stage combatants here, then pivot to the Virtual Table in one click.",
+    icon: "\u{1F5E1}\uFE0F",
+    group: "tend",
+    href: "/encounters",
+  },
+  {
     id: "items",
     label: "Items",
     hint: "AI handouts or craft homebrew equipment & magic items",
@@ -138,6 +147,9 @@ export function activeWorkshopNavId(options: {
   }
   if (options.pathname === "/items" || options.pathname.startsWith("/items/")) {
     return "items";
+  }
+  if (options.pathname === "/encounters" || options.pathname.startsWith("/encounters/")) {
+    return "encounters";
   }
   if (options.pathname === "/" || options.pathname.startsWith("/?")) {
     if (options.workspace === "characters") return "tavern";
