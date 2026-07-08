@@ -1,6 +1,6 @@
 {
   "name": "ddeasy",
-  "version": "0.5.2.4",
+  "version": "0.5.2.5",
   "private": true,
   "scripts": {
     "dev": "node node_modules/next/dist/bin/next dev --turbopack",
@@ -16,6 +16,7 @@
     "consolidate:srd-rules": "node scripts/consolidate-srd-rules.mjs",
     "consolidate:srd-macro": "node node_modules/tsx/dist/cli.mjs scripts/consolidate-srd-macro.ts",
     "build:macro-srd": "node node_modules/tsx/dist/cli.mjs scripts/buildMacroSrd.ts",
+    "compile:perfect-srd": "node node_modules/tsx/dist/cli.mjs scripts/compilePerfectSrd.ts",
     "purge:segmented-srd": "node node_modules/tsx/dist/cli.mjs scripts/purgeSegmentedFiles.ts",
     "parse:srd-pdf": "node node_modules/tsx/dist/cli.mjs scripts/parseSrdPdf.ts",
     "generate:theme-art": "node scripts/generate-theme-art.mjs"

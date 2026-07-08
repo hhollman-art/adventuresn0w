@@ -12,6 +12,9 @@ This is the default input for PDF-driven parser scripts. The file is gitignored 
 
 ```bash
 # Unified macro files (create_a_character, fighter, gameplay_mechanics)
+npm run compile:perfect-srd
+
+# Incremental rebuild (no full wipe)
 npm run build:macro-srd -- --dry-run
 npm run build:macro-srd
 
