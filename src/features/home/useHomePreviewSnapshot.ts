@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import type { LibraryViewSelection } from "@/features/workshop/WorkshopLibraryPanel";
-import { autoLinkToActiveCampaign } from "@/lib/campaigns";
 import type { SavedCampaign } from "@/lib/campaigns";
 import type { SavedSessionRecord } from "@/lib/sessions/record";
 import type { SavedNpc } from "@/lib/worldAssets/npc";
@@ -25,11 +24,8 @@ import { buildSrdPreviewMarkdown } from "@/lib/srd/srdPreviewMarkdown";
 import { characterSummary } from "@/lib/tabletop/character";
 import { characterToMarkdownFile } from "@/lib/tabletop/characterMarkdown";
 import type { SavedCharacter } from "@/lib/tabletop/characterLibrary";
-import {
-  saveCharacterRoster,
-  type SavedCharacterRoster,
-} from "@/lib/tabletop/characterRoster";
-import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
+import type { SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
+import { instantiateAiHeroesFromMarkdown } from "@/lib/tabletop/instantiateAiHeroes";
 import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
 import { THE_TAVERN } from "@/lib/workplace/forgeLexicon";
 import { buildSrdRuleBundleMarkdown } from "@/lib/srd/srdRuleBundles";
@@ -277,27 +273,23 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
     return previewMarkdown;
   }
 
-  async function savePartyForVtt() {
+  async function savePartyForVtt(selectedIndices?: number[]) {
     const md = exportMarkdownForDownload();
     if (!md.trim()) return;
     setPartySaveMessage(null);
-    const parsed = parseCharactersMarkdown(md);
-    if (parsed.players.length === 0) {
-      setPartySaveMessage(
-        "Could not find any heroes. Each hero needs a ### heading under ## Characters.",
-      );
-      return;
-    }
     try {
-      const rosters = await saveCharacterRoster({
-        name: parsed.rosterName,
-        markdown: md,
+      // Instantiate only checked heroes as Character CFs in The Tavern.
+      const result = await instantiateAiHeroesFromMarkdown(md, {
+        saveRoster: true,
         source: "workshop",
-        players: parsed.players,
+        selectedIndices,
       });
-      if (rosters[0]) void autoLinkToActiveCampaign({ partyId: rosters[0].id });
+      if (!result.ok) {
+        setPartySaveMessage(result.error);
+        return;
+      }
       setPartySaveMessage(
-        `Saved ${parsed.players.length} hero${parsed.players.length === 1 ? "" : "es"} as "${parsed.rosterName}". Open ${THE_TAVERN} or the Virtual Table to load them.`,
+        `${result.message} Open ${THE_TAVERN} to drag them into campaigns or the Lore Vault.`,
       );
     } catch (err) {
       setPartySaveMessage(
@@ -560,9 +552,11 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
             openCustomSrdEditor(librarySelection.id);
           }
           break;
-        case "save-party-vtt":
-          void savePartyForVtt();
+        case "save-party-vtt": {
+          const payload = event.data.payload as { selectedIndices?: number[] } | undefined;
+          void savePartyForVtt(payload?.selectedIndices);
           break;
+        }
         case "load-party-vtt":
           if (viewingParty) {
             queuePartyImport({

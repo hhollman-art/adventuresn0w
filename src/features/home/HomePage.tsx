@@ -1688,7 +1688,7 @@ export default function Home(props: PageProps<"/">) {
                 if (libraryViewingSeed) openEditSeedEditor(libraryViewingSeed.id);
               }}
               onEditResult={openLibraryResultEditor}
-              onSavePartyVtt={() => void savePartyForVtt()}
+              onSavePartyVtt={(selectedIndices) => void savePartyForVtt(selectedIndices)}
               onLoadPartyVtt={() => {
                 const partyId = libraryPreviewSnapshot?.viewingPartyId;
                 if (!partyId) return;

@@ -10,6 +10,12 @@ import {
   openSrdSpellPreview,
   srdSpellsForClass,
 } from "@/lib/srd";
+import {
+  canKnowSpellAtLevel,
+  maxSpellLevelForCharacter,
+} from "@/lib/srd/classProgression";
+import { findSpellIndexEntry } from "@/lib/srd/spellIndex";
+import { formatSpellSlotsHint } from "@/lib/tabletop/characterLevelValidation";
 import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 
 type SrdNamedSelectProps = {
@@ -120,11 +126,29 @@ type SrdSpellPickerProps = {
   className: string;
   selectedIds: string[];
   onChange: (ids: string[]) => void;
+  /** Character level — gates which spell tiers can be selected. */
+  characterLevel?: number;
+  subclass?: string;
 };
 
-export function SrdSpellPicker({ className, selectedIds, onChange }: SrdSpellPickerProps) {
+export function SrdSpellPicker({
+  className,
+  selectedIds,
+  onChange,
+  characterLevel = 1,
+  subclass = "",
+}: SrdSpellPickerProps) {
   const [query, setQuery] = useState("");
+  const [levelHint, setLevelHint] = useState<string | null>(null);
   const spells = useMemo(() => srdSpellsForClass(className), [className]);
+  const maxSpellLevel = useMemo(
+    () => maxSpellLevelForCharacter(characterLevel, className, subclass),
+    [characterLevel, className, subclass],
+  );
+  const slotsHint = useMemo(
+    () => formatSpellSlotsHint(characterLevel, className, subclass),
+    [characterLevel, className, subclass],
+  );
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return spells;
@@ -136,31 +160,47 @@ export function SrdSpellPicker({ className, selectedIds, onChange }: SrdSpellPic
     );
   }, [query, spells]);
 
-  const toggle = (id: string) => {
-    onChange(
-      selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id],
-    );
+  const tryAdd = (id: string, spellLevel: number, name: string) => {
+    if (selectedIds.includes(id)) {
+      onChange(selectedIds.filter((x) => x !== id));
+      setLevelHint(null);
+      return;
+    }
+    if (!canKnowSpellAtLevel(characterLevel, className, subclass, spellLevel)) {
+      setLevelHint(
+        maxSpellLevel < 0
+          ? `${className || "This class"} cannot learn spells at level ${characterLevel}.`
+          : `${name} is too high — at level ${characterLevel} you may only take up to level-${Math.max(0, maxSpellLevel)} spells.`,
+      );
+      return;
+    }
+    setLevelHint(null);
+    onChange([...selectedIds, id]);
+  };
+
+  const toggle = (id: string, spellLevel: number, name: string) => {
+    tryAdd(id, spellLevel, name);
   };
 
   if (!srdSpellsForClass(className).length) {
     return (
       <p className="text-xs text-[var(--muted)]">
         This class has no spell list in the included rules. Add spells from your own books in
-        Notes — they stay on this device.
+        Background — they stay on this device.
       </p>
     );
   }
 
   return (
     <div className="flex flex-col gap-2">
+      <p className="text-[10px] leading-relaxed text-[var(--text-soft)]">{slotsHint}</p>
       <SrdEntityCombobox
         label="Find any SRD spell"
         kinds={["spell"]}
         placeholder="Search the full spell list…"
         onSelect={(entity) => {
-          if (!selectedIds.includes(entity.key)) {
-            onChange([...selectedIds, entity.key]);
-          }
+          const level = findSpellIndexEntry(entity.key)?.level ?? 0;
+          tryAdd(entity.key, level, entity.name);
         }}
       />
       <div className="flex items-center justify-between gap-2">
@@ -174,6 +214,11 @@ export function SrdSpellPicker({ className, selectedIds, onChange }: SrdSpellPic
         className="rounded border px-2 py-1.5 text-sm"
         style={{ borderColor: "var(--border)", background: "var(--bg)" }}
       />
+      {levelHint ? (
+        <p className="rounded border border-red-300 bg-red-50 px-2 py-1 text-[10px] text-red-800" role="status">
+          {levelHint}
+        </p>
+      ) : null}
       <div
         className="max-h-40 overflow-y-auto rounded border p-1"
         style={{ borderColor: "var(--border)", background: "var(--bg)" }}
@@ -181,41 +226,53 @@ export function SrdSpellPicker({ className, selectedIds, onChange }: SrdSpellPic
         {filtered.length === 0 ? (
           <p className="px-2 py-1 text-xs text-[var(--muted)]">No matches.</p>
         ) : (
-          filtered.map((spell) => (
-            <div
-              key={spell.id}
-              className="flex items-start gap-2 rounded px-2 py-1 text-xs hover:bg-[rgba(154,116,22,0.06)]"
-            >
-              <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-2">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.includes(spell.id)}
-                  onChange={() => toggle(spell.id)}
-                  className="mt-0.5"
-                />
-                <span>
-                  <span className="font-semibold">{spell.name}</span>{" "}
-                  <span className="text-[var(--muted)]">
-                    ({formatSpellLevel(spell.level)}, {spell.school})
-                  </span>
-                </span>
-              </label>
-              <button
-                type="button"
-                onClick={() => openSrdSpellPreview(spell)}
-                className="shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold text-[var(--accent)]"
-                style={{ borderColor: "var(--accent-dim)" }}
-                title={`Open ${spell.name} in the ${PREVIEW_WINDOW}`}
+          filtered.map((spell) => {
+            const allowed = canKnowSpellAtLevel(
+              characterLevel,
+              className,
+              subclass,
+              spell.level,
+            );
+            return (
+              <div
+                key={spell.id}
+                className={`flex items-start gap-2 rounded px-2 py-1 text-xs ${
+                  allowed ? "hover:bg-[rgba(154,116,22,0.06)]" : "opacity-45"
+                }`}
               >
-                Rules
-              </button>
-            </div>
-          ))
+                <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(spell.id)}
+                    disabled={!allowed && !selectedIds.includes(spell.id)}
+                    onChange={() => toggle(spell.id, spell.level, spell.name)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="font-semibold">{spell.name}</span>{" "}
+                    <span className="text-[var(--muted)]">
+                      ({formatSpellLevel(spell.level)}, {spell.school})
+                      {!allowed ? " — locked for this level" : ""}
+                    </span>
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => openSrdSpellPreview(spell)}
+                  className="shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold text-[var(--accent)]"
+                  style={{ borderColor: "var(--accent-dim)" }}
+                  title={`Open ${spell.name} in the ${PREVIEW_WINDOW}`}
+                >
+                  Rules
+                </button>
+              </div>
+            );
+          })
         )}
       </div>
       <p className="text-[10px] leading-relaxed text-[var(--muted)]">
-        Spells from books you own that are not in the SRD belong in Notes — they stay on this device
-        only.
+        Spell tiers follow your character level and class slots. Spells from books you own that are
+        not in the SRD belong in Background — they stay on this device only.
       </p>
     </div>
   );

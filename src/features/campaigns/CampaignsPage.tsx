@@ -288,12 +288,21 @@ export default function CampaignsPage() {
                   borderColor: isActive ? "var(--accent)" : "var(--border)",
                 }}
               >
-                <div className="flex flex-wrap items-start gap-2 p-4">
-                  <button
-                    type="button"
-                    className="min-w-0 flex-1 text-left"
-                    onClick={() => setExpandedId(open ? null : campaign.id)}
-                  >
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="flex cursor-pointer flex-wrap items-start gap-2 p-4"
+                  onClick={() => setExpandedId(open ? null : campaign.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setExpandedId(open ? null : campaign.id);
+                    }
+                  }}
+                  aria-expanded={open}
+                  aria-label={open ? `Collapse ${campaign.name}` : `Open ${campaign.name} workspace`}
+                >
+                  <div className="min-w-0 flex-1 text-left">
                     <span className="flex flex-wrap items-center gap-2">
                       <input
                         value={campaign.name}
@@ -314,7 +323,7 @@ export default function CampaignsPage() {
                           className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
                           style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
                         >
-                          Open now
+                          Active
                         </span>
                       ) : null}
                     </span>
@@ -331,8 +340,12 @@ export default function CampaignsPage() {
                       {campaign.itemIds.length} item{campaign.itemIds.length === 1 ? "" : "s"} · Updated{" "}
                       {formatPartyUpdated(campaign.updatedAt)}
                     </p>
-                  </button>
-                  <div className="flex flex-wrap gap-1">
+                  </div>
+                  <div
+                    className="flex flex-wrap gap-1"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
                     {isActive ? (
                       <FantasyTooltipWrap
                         label="Close campaign"
@@ -350,17 +363,17 @@ export default function CampaignsPage() {
                       </FantasyTooltipWrap>
                     ) : (
                       <FantasyTooltipWrap
-                        label="Open campaign"
+                        label="Activate for VTT"
                         hint="Make this the active campaign and restore its Virtual Table"
                       >
                         <button
                           type="button"
                           disabled={switching}
                           onClick={() => void openCampaign(campaign)}
-                          className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-white"
-                          style={{ background: "var(--accent)" }}
+                          className="rounded-md border px-2.5 py-1.5 text-xs font-semibold"
+                          style={{ borderColor: "var(--border)" }}
                         >
-                          Open campaign
+                          Activate for VTT
                         </button>
                       </FantasyTooltipWrap>
                     )}

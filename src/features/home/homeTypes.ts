@@ -174,7 +174,12 @@ export const initialPropFormStandalone: PropFormState = {
 };
 
 export type FormState = {
+  /** Derived from sessionCount for prompt templates / API compat. */
   adventureLength: AdventureLength;
+  /** Number of sessions this adventure should cover. */
+  sessionCount: number;
+  /** Average hours per session at the table. */
+  hoursPerSession: number;
   combatIntensity: CombatIntensity;
   titleHint: string;
   levelRange: string;
@@ -182,12 +187,15 @@ export type FormState = {
   setting: string;
   villainOrThreat: string;
   partySize: string;
+  /** Legacy / derived human-readable table-time string. */
   sessionLength: string;
   extraNotes: string;
 };
 
 export const initialForm: FormState = {
-  adventureLength: "short",
+  adventureLength: "one_night",
+  sessionCount: 1,
+  hoursPerSession: 3,
   combatIntensity: 3,
   titleHint: "",
   levelRange: "",
@@ -195,12 +203,14 @@ export const initialForm: FormState = {
   setting: "",
   villainOrThreat: "",
   partySize: "",
-  sessionLength: "",
+  sessionLength: "3 hours (1 session)",
   extraNotes: "",
 };
 
 export const initialFormCharacters: FormState = {
-  adventureLength: "short",
+  adventureLength: "one_night",
+  sessionCount: 1,
+  hoursPerSession: 3,
   combatIntensity: 3,
   titleHint: "",
   levelRange: "",

@@ -3,13 +3,19 @@ import {
   ADVENTURE_MAP_RULE_SHORT_LINE,
 } from "@/lib/battleMapDirectives";
 
+/** Derived template family for headings / map rules (from session count). */
 export type AdventureLength = "short" | "one_night";
 
 /** 1 = minimal combat, 5 = encounter-dense. */
 export type CombatIntensity = 1 | 2 | 3 | 4 | 5;
 
 export type AdventureInput = {
+  /** Kept for prompt templates; derived from sessionCount when omitted by callers. */
   adventureLength: AdventureLength;
+  /** How many sessions this adventure should cover (1–20). */
+  sessionCount: number;
+  /** Average hours at the table per session (0.5–12). */
+  hoursPerSession: number;
   combatIntensity: CombatIntensity;
   titleHint: string;
   levelRange: string;
@@ -17,29 +23,34 @@ export type AdventureInput = {
   setting: string;
   villainOrThreat: string;
   partySize: string;
+  /** Human-readable table-time summary (derived or legacy). */
   sessionLength: string;
   extraNotes: string;
   /** Optional saved realm Markdown; when set, the model should treat it as canonical setting context. */
   realmSeedMarkdown?: string;
 };
 
-const LENGTH_DESCRIPTION: Record<AdventureLength, string> = {
-  short:
-    "**Short adventure** — about **one session** (roughly 3–5 playable scenes or beats), clear arc, usable this week.",
-  one_night:
-    "**One-nighter** — a **single tight evening** (about 2–4 hours at the table), minimal locations, strong start and finish same night.",
-};
+/** Map granular session count → existing heading / map-rule templates. */
+export function adventureLengthFromSessionCount(sessionCount: number): AdventureLength {
+  return sessionCount <= 1 ? "one_night" : "short";
+}
 
-/**
- * Plain-text descriptions for UI hover tooltips (`title`).
- * Kept in sync with generator scope; no Markdown (browser tooltips are plain text).
- */
-export const ADVENTURE_LENGTH_HOVER_HELP: Record<AdventureLength, string> = {
-  short:
-    "Short adventure — built for about one session at the table (roughly 3–5 playable scenes). Expect a clear arc, scene-by-scene DM notes (NPCs, encounters, skill checks, treasure embedded where they show up), plus locale and battle map briefs suitable for image generation. Best when you want something runnable this week without committing to a long arc.",
-  one_night:
-    "One-nighter — a single tight evening (about 2–4 hours). Fewer locations, brisk pacing, and a strong start-to-finish in one sitting. Scene beats read like compact chapters; map briefs stay focused on tonight’s fights and set-pieces. Ideal for a pickup game or a con slot.",
-};
+export function formatSessionScopeLabel(sessionCount: number, hoursPerSession: number): string {
+  const sessions = Math.min(20, Math.max(1, Math.round(sessionCount)));
+  const hours = Math.min(12, Math.max(0.5, Number(hoursPerSession) || 3));
+  const total = Math.round(sessions * hours * 10) / 10;
+  if (sessions === 1) {
+    return `**${sessions} session** · about **${hours} hour${hours === 1 ? "" : "s"}** at the table (≈ ${total}h total).`;
+  }
+  return `**${sessions} sessions** · about **${hours} hour${hours === 1 ? "" : "s"}** each (≈ **${total} hours** total table time).`;
+}
+
+export function formatSessionLengthField(sessionCount: number, hoursPerSession: number): string {
+  const sessions = Math.min(20, Math.max(1, Math.round(sessionCount)));
+  const hours = Math.min(12, Math.max(0.5, Number(hoursPerSession) || 3));
+  if (sessions === 1) return `${hours} hours (1 session)`;
+  return `${sessions} sessions × ${hours} hours`;
+}
 
 function lengthSpecificRules(length: AdventureLength): string {
   switch (length) {
@@ -182,17 +193,24 @@ ${body}
 }
 
 export function buildUserMessage(input: AdventureInput): string {
-  const lengthLabel = LENGTH_DESCRIPTION[input.adventureLength];
+  const sessions = Math.min(20, Math.max(1, Math.round(input.sessionCount || 1)));
+  const hours = Math.min(12, Math.max(0.5, Number(input.hoursPerSession) || 3));
+  const length =
+    input.adventureLength || adventureLengthFromSessionCount(sessions);
+  const lengthLabel = formatSessionScopeLabel(sessions, hours);
   const realmRef = realmSeedReferenceBlock(input.realmSeedMarkdown ?? "");
 
   return `Create ONE adventure document in Markdown.
 
 ## Adventure length / scope
 ${lengthLabel}
+- Pace the arc across **${sessions}** session${sessions === 1 ? "" : "s"} at roughly **${hours}** hour${hours === 1 ? "" : "s"} each.
+- Prefer about **${Math.max(3, Math.min(8, sessions * 3))}–${Math.max(4, Math.min(12, sessions * 4))}** playable scene beats total, scaled to that table time.
+- ${sessions === 1 ? "Tight single-evening structure: strong start and finish the same night." : "Multi-session structure: clear mid-arc milestones and a finale in the last session."}
 
 ${combatIntensityBlock(input.combatIntensity)}
 
-${magicItemRulesBlock(input.levelRange, input.adventureLength)}
+${magicItemRulesBlock(input.levelRange, length)}
 
 ## Parameters
 - Working title or theme: ${input.titleHint || "(you choose)"}
@@ -216,10 +234,10 @@ ${realmRef}## Rules (all lengths)
 - **Magic items:** include level-appropriate magic loot and consumables where treasure matters; **## Treasure & rewards** should briefly **summarize** permanents and notable consumables, while scene chapters remain the **authoritative** place where items are found or offered.
 
 ## Rules (this length only)
-${lengthSpecificRules(input.adventureLength)}
+${lengthSpecificRules(length)}
 
 ## Output format (Markdown)
-${outputHeadings(input.adventureLength)}${SCENE_CHAPTER_RULES}`;
+${outputHeadings(length)}${SCENE_CHAPTER_RULES}`;
 }
 
 export const SYSTEM_PROMPT = `You are an experienced Dungeons & Dragons Dungeon Master and adventure designer.

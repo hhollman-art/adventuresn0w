@@ -1,6 +1,8 @@
 import { findSrdEntityByName, getSrdEntity, parseSrdEntityId } from "@/lib/srd/corpus";
 import { SRD_CATALOGUE } from "@/lib/srd";
 import type { SrdEntityId } from "@/lib/srd/types";
+import { canKnowSpellAtLevel } from "@/lib/srd/classProgression";
+import { findSpellIndexEntry } from "@/lib/srd/spellIndex";
 
 export type SpellValidationResult = {
   valid: boolean;
@@ -81,4 +83,33 @@ export function validateKnownSpellIds(ids: readonly string[]): SpellValidationRe
 
 export function allSpellsValid(ids: readonly string[]): boolean {
   return validateKnownSpellIds(ids).every((row) => row.valid);
+}
+
+/** Validate a spell against the SRD catalogue AND character level / class slots. */
+export function validateSpellForCharacter(options: {
+  ref: string;
+  characterLevel: number;
+  className: string;
+  subclass?: string;
+}): SpellValidationResult {
+  const base = validateSpellReference(options.ref);
+  if (!base.valid || !base.normalizedId) return base;
+
+  const entry = findSpellIndexEntry(base.normalizedId);
+  const spellLevel = entry?.level ?? 0;
+  if (
+    !canKnowSpellAtLevel(
+      options.characterLevel,
+      options.className,
+      options.subclass ?? "",
+      spellLevel,
+    )
+  ) {
+    return {
+      ...base,
+      valid: false,
+      message: `"${base.name}" (level ${spellLevel}) is above what a level-${options.characterLevel} ${options.className || "character"} can cast.`,
+    };
+  }
+  return base;
 }

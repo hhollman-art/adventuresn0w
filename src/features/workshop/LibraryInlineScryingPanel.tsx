@@ -12,7 +12,7 @@ export type LibraryInlineScryingPanelProps = {
   onEdit?: () => void;
   onEditSeed?: () => void;
   onEditResult?: () => void;
-  onSavePartyVtt?: () => void;
+  onSavePartyVtt?: (selectedIndices: number[]) => void;
   onLoadPartyVtt?: () => void;
 };
 

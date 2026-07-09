@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import OutputMarkdownCarousel from "@/features/workshop/OutputMarkdownCarousel";
+import HeroScrySelection from "@/features/workshop/HeroScrySelection";
 import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 import { ciClassVisual } from "@/lib/ui/ciClassVisuals";
 import { fantasyCiLabel } from "@/lib/workshop/libraryBrowseFilters";
@@ -28,7 +30,7 @@ type WorkshopPreviewPanelProps = {
   onEdit?: () => void;
   onEditSeed?: () => void;
   onEditResult?: () => void;
-  onSavePartyVtt?: () => void;
+  onSavePartyVtt?: (selectedIndices: number[]) => void;
   onLoadPartyVtt?: () => void;
 };
 
@@ -138,6 +140,11 @@ export default function WorkshopPreviewPanel({
   const exportBaseName = fileBaseName(previewMarkdown, exportMode);
   const hasContent = previewMarkdown.trim() || previewImages.length > 0;
   const ciVisual = ciClass ? ciClassVisual(ciClass) : null;
+  const [recruitBusy, setRecruitBusy] = useState(false);
+
+  useEffect(() => {
+    if (partySaveMessage) setRecruitBusy(false);
+  }, [partySaveMessage]);
 
   function handleEdit() {
     if (popupMode) {
@@ -153,9 +160,13 @@ export default function WorkshopPreviewPanel({
     else onEdit?.();
   }
 
-  function handleSaveParty() {
-    if (popupMode) postPreviewAction("save-party-vtt");
-    else onSavePartyVtt?.();
+  function handleAcceptHeroes(selectedIndices: number[]) {
+    setRecruitBusy(true);
+    if (popupMode) {
+      postPreviewAction("save-party-vtt", { selectedIndices });
+      return;
+    }
+    onSavePartyVtt?.(selectedIndices);
   }
 
   function handleLoadParty() {
@@ -243,15 +254,6 @@ export default function WorkshopPreviewPanel({
                 </button>
                 {showSavePartyVtt ? (
                   <>
-                    <button
-                      type="button"
-                      onClick={handleSaveParty}
-                      className="rounded-md px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-                      style={{ background: "var(--accent)" }}
-                      title="Parse this roster and save it for the Virtual Table party panel"
-                    >
-                      Save party for VTT
-                    </button>
                     <Link
                       href="/tavern"
                       className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
@@ -313,6 +315,14 @@ export default function WorkshopPreviewPanel({
         <p className="scrying-glass-status no-print mt-2 rounded-lg border px-3 py-2 text-xs" role="status">
           {partySaveMessage}
         </p>
+      ) : null}
+
+      {showSavePartyVtt && previewMarkdown.trim() && !loading ? (
+        <HeroScrySelection
+          markdown={previewMarkdown}
+          busy={recruitBusy}
+          onAccept={handleAcceptHeroes}
+        />
       ) : null}
 
       {previewMarkdown.trim() ? (

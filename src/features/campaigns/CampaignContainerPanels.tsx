@@ -7,7 +7,6 @@ import type { SavedGameItem } from "@/lib/itemLibrary";
 import type { SavedRealmSeed } from "@/lib/realmSeeds";
 import type { CiClass } from "@/lib/ciRegistry";
 import ContainerDropZone from "@/features/vault/ContainerDropZone";
-import CampaignLibraryChessRail from "@/features/campaigns/CampaignLibraryChessRail";
 import UnassignedLootPanel from "@/features/campaigns/UnassignedLootPanel";
 import {
   dropIntoCampaignContainer,
@@ -42,8 +41,8 @@ const ADVENTURE_ACCEPT: CiClass[] = [
 ];
 
 /**
- * Multi-panel Campaign container layout — Library chess rail + drop slots
- * for Party, Adventure, Loot, and Scene. Local mutability via container write path.
+ * Multi-panel Campaign container layout — drop slots for Party, Adventure,
+ * Loot, and Scene. Global parking / drag source is the Lore Vault.
  */
 export default function CampaignContainerPanels({
   campaign,
@@ -100,9 +99,7 @@ export default function CampaignContainerPanels({
   const linkedSeeds = seeds.filter((s) => campaign.seedIds.includes(s.id));
 
   return (
-    <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
-      <CampaignLibraryChessRail characters={characters} items={items} seeds={seeds} />
-
+    <div className="mt-3">
       <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         <ContainerDropZone
           zoneId={`campaign-${campaign.id}-party`}

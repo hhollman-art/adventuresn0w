@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ABILITY_LIST,
   abilityMod,
@@ -12,6 +12,7 @@ import {
 import type { AbilityScores, CharacterItem, PlayerCharacter } from "@/lib/tabletop/types";
 import PreparedSpellsByLevel from "@/features/parties/PreparedSpellsByLevel";
 import CharacterContainerSlots from "@/features/parties/CharacterContainerSlots";
+import CharacterSheetPrintView from "@/features/parties/CharacterSheetPrintView";
 import { formatModifierLine } from "@/lib/tabletop/modifierEngine";
 import { newId } from "@/lib/tabletop/session";
 import { linkModifierToCharacter } from "@/lib/workshop/cfCloneWritePath";
@@ -35,6 +36,7 @@ import {
   type SavedGameItem,
 } from "@/lib/itemLibrary";
 import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
+import { structureAiHero } from "@/lib/tabletop/instantiateAiHeroes";
 import type { SingleCharacterLocks } from "@/lib/characterPrompt";
 import {
   SrdClassSubclassFields,
@@ -43,8 +45,11 @@ import {
 } from "@/features/ui/SrdPickers";
 import { fetchDnd5eList } from "@/lib/srd/dnd5eApi";
 import { openSrdItemPreview } from "@/lib/srd/openSrdPreview";
-import SrdMarkdownTextarea from "@/features/ui/SrdMarkdownTextarea";
-import { allSpellsValid } from "@/lib/srd/spellValidation";
+import {
+  pruneSpellsForLevel,
+  validateCharacterSpellLevels,
+  formatSpellSlotsHint,
+} from "@/lib/tabletop/characterLevelValidation";
 import {
   parseSrdItemRefFromNotes,
   srdItemRefFromApi,
@@ -182,6 +187,43 @@ export default function CharacterEditorDialog({
   const [aiFlavor, setAiFlavor] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [levelNotice, setLevelNotice] = useState<string | null>(null);
+  const [printOpen, setPrintOpen] = useState(false);
+
+  const slotsHint = useMemo(
+    () => formatSpellSlotsHint(draft.level, draft.className, draft.subclass),
+    [draft.level, draft.className, draft.subclass],
+  );
+
+  // Reactive level / class gate — prune illegal spells whenever progression changes.
+  useEffect(() => {
+    const pruned = pruneSpellsForLevel({
+      level: draft.level,
+      className: draft.className,
+      subclass: draft.subclass,
+      knownSpellIds: draft.knownSpellIds,
+      preparedSpellIds: draft.preparedSpellIds,
+    });
+    const knownChanged =
+      pruned.knownSpellIds.length !== draft.knownSpellIds.length ||
+      pruned.knownSpellIds.some((id, i) => id !== draft.knownSpellIds[i]);
+    const prepChanged =
+      pruned.preparedSpellIds.length !== draft.preparedSpellIds.length ||
+      pruned.preparedSpellIds.some((id, i) => id !== draft.preparedSpellIds[i]);
+    if (!knownChanged && !prepChanged) return;
+    setDraft((d) => ({
+      ...d,
+      knownSpellIds: pruned.knownSpellIds,
+      preparedSpellIds: pruned.preparedSpellIds,
+    }));
+    if (pruned.removed.length > 0) {
+      setLevelNotice(
+        `Level rules cleared ${pruned.removed.length} spell${pruned.removed.length === 1 ? "" : "s"} that this hero cannot use yet.`,
+      );
+    }
+    // Only re-run when progression inputs change — not on every spell edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional progression gate
+  }, [draft.level, draft.className, draft.subclass]);
 
   const generateWithAi = async () => {
     setAiBusy(true);
@@ -203,27 +245,29 @@ export default function CharacterEditorDialog({
         setAiError("The AI response could not be read as a hero. Please try again.");
         return;
       }
-      const { items: gearItems, rest: newNotes } = splitGearFromNotes(generated.notes);
+      const structured = structureAiHero(generated, data.markdown);
       setDraft((d) => {
         const keptGear = new Set(d.items.map((i) => i.name.trim().toLowerCase()));
-        const addedItems = gearItems
-          .filter((g) => !keptGear.has(g.name.toLowerCase()))
-          .map((g) => ({ id: newId(), name: g.name, notes: g.notes, bonuses: emptyBonuses() }));
+        const addedItems = structured.items.filter(
+          (g) => !keptGear.has(g.name.trim().toLowerCase()),
+        );
         return {
           ...d,
-          name: locks.name ?? generated.name,
-          species: locks.species ?? generated.species,
-          className: locks.className ?? generated.className,
-          subclass: locks.subclass ?? generated.subclass,
-          background: locks.background ?? generated.background,
-          alignment: locks.alignment ?? generated.alignment,
-          level: locks.level ?? generated.level,
-          ac: locks.ac ?? generated.ac,
-          maxHp: locks.maxHp ?? generated.maxHp,
-          speed: locks.speed ?? generated.speed,
-          abilities: locks.abilities ?? generated.abilities,
+          name: locks.name ?? structured.name,
+          species: locks.species ?? structured.species,
+          className: locks.className ?? structured.className,
+          subclass: locks.subclass ?? structured.subclass,
+          background: locks.background ?? structured.background,
+          alignment: locks.alignment ?? structured.alignment,
+          level: locks.level ?? structured.level,
+          ac: locks.ac ?? structured.ac,
+          maxHp: locks.maxHp ?? structured.maxHp,
+          speed: locks.speed ?? structured.speed,
+          abilities: locks.abilities ?? structured.abilities,
           items: [...d.items, ...addedItems],
-          notes: [d.notes.trim(), newNotes].filter(Boolean).join("\n"),
+          knownSpellIds: structured.knownSpellIds,
+          preparedSpellIds: structured.preparedSpellIds,
+          notes: [d.notes.trim(), structured.notes].filter(Boolean).join("\n\n"),
         };
       });
     } catch {
@@ -336,14 +380,28 @@ export default function CharacterEditorDialog({
       if (draft.knownSpellIds.includes(spellKey)) {
         return { ok: false, message: "Spell already known." };
       }
+      const levelCheck = validateCharacterSpellLevels({
+        level: draft.level,
+        className: draft.className,
+        subclass: draft.subclass,
+        knownSpellIds: [...draft.knownSpellIds, spellKey],
+        preparedSpellIds: draft.preparedSpellIds,
+      });
+      if (!levelCheck.allowedKnownIds.includes(spellKey)) {
+        return {
+          ok: false,
+          message:
+            levelCheck.invalidKnown[0]?.reason ??
+            `${inst.name} is above this hero’s spellcasting level.`,
+        };
+      }
       setDraft((d) => ({
         ...d,
         knownSpellIds: [...d.knownSpellIds, spellKey],
-        notes: `${d.notes.trim()}\n[instance:${inst.instanceId} _source:SRD spell:${spellKey}]`.trim(),
       }));
       return {
         ok: true,
-        message: `${inst.name} instantiated from SRD (${inst.instanceId}).`,
+        message: `${inst.name} added to known spells (${inst.instanceId}).`,
       };
     }
 
@@ -352,6 +410,21 @@ export default function CharacterEditorDialog({
       : payload.id;
     if (draft.knownSpellIds.includes(spellId)) {
       return { ok: false, message: "Spell already known." };
+    }
+    const levelCheck = validateCharacterSpellLevels({
+      level: draft.level,
+      className: draft.className,
+      subclass: draft.subclass,
+      knownSpellIds: [...draft.knownSpellIds, spellId],
+      preparedSpellIds: draft.preparedSpellIds,
+    });
+    if (!levelCheck.allowedKnownIds.includes(spellId)) {
+      return {
+        ok: false,
+        message:
+          levelCheck.invalidKnown[0]?.reason ??
+          `${payload.title} is above this hero’s spellcasting level.`,
+      };
     }
     setDraft((d) => ({
       ...d,
@@ -418,8 +491,23 @@ export default function CharacterEditorDialog({
       setError("Give this hero a name first.");
       return;
     }
-    if (draft.knownSpellIds.length > 0 && !allSpellsValid(draft.knownSpellIds)) {
-      setError("One or more selected spells are not in the bundled SRD list.");
+    const spellCheck = validateCharacterSpellLevels({
+      level: draft.level,
+      className: draft.className,
+      subclass: draft.subclass,
+      knownSpellIds: draft.knownSpellIds,
+      preparedSpellIds: draft.preparedSpellIds,
+    });
+    if (!spellCheck.ok) {
+      setError(
+        spellCheck.messages[0] ??
+          "One or more spells are not allowed for this hero’s level or class.",
+      );
+      setDraft((d) => ({
+        ...d,
+        knownSpellIds: spellCheck.allowedKnownIds,
+        preparedSpellIds: spellCheck.allowedPreparedIds,
+      }));
       return;
     }
     setSaving(true);
@@ -456,6 +544,7 @@ export default function CharacterEditorDialog({
   };
 
   return (
+    <>
     <div
       className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8"
       role="dialog"
@@ -806,6 +895,8 @@ export default function CharacterEditorDialog({
             <>
               <SrdSpellPicker
                 className={draft.className}
+                subclass={draft.subclass}
+                characterLevel={draft.level}
                 selectedIds={draft.knownSpellIds}
                 onChange={(ids) => {
                   set("knownSpellIds", ids);
@@ -818,10 +909,14 @@ export default function CharacterEditorDialog({
               />
               <div className="mt-3">
                 <h3 className="text-sm font-bold text-[var(--text)]">Prepared / Memorized</h3>
+                <p className="mt-1 text-[10px] text-[var(--text-soft)]">{slotsHint}</p>
                 <div className="mt-2">
                   <PreparedSpellsByLevel
                     knownSpellIds={draft.knownSpellIds}
                     preparedSpellIds={draft.preparedSpellIds}
+                    characterLevel={draft.level}
+                    className={draft.className}
+                    subclass={draft.subclass}
                     onChangePrepared={(ids) => set("preparedSpellIds", ids)}
                   />
                 </div>
@@ -858,17 +953,33 @@ export default function CharacterEditorDialog({
         })()}
 
         <label className="mt-4 flex flex-col gap-1 text-xs">
-          <span className="font-semibold">Notes</span>
-          <SrdMarkdownTextarea
+          <span className="font-semibold">Background &amp; flavor</span>
+          <span className="text-[10px] font-normal text-[var(--text-soft)]">
+            Personality, bonds, ideals, flaws, and table flavor — a clean notebook for the story,
+            not rules lookups.
+          </span>
+          <textarea
             value={draft.notes}
-            onChange={(notes) => set("notes", notes)}
-            rows={3}
-            showInsertBar
-            className="rounded border px-2 py-1.5 text-sm"
-            style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-            placeholder="Features, languages, proficiencies, backstory…"
+            onChange={(e) => set("notes", e.target.value)}
+            rows={5}
+            className="character-notebook rounded border px-3 py-2 text-sm leading-relaxed"
+            style={{
+              borderColor: "var(--border)",
+              background:
+                "repeating-linear-gradient(transparent, transparent 1.4rem, rgba(120,90,40,0.08) 1.4rem, rgba(120,90,40,0.08) calc(1.4rem + 1px)), var(--bg)",
+              lineHeight: "1.4rem",
+            }}
+            placeholder="Who is this hero at the table? Backstory, mannerisms, goals…"
           />
         </label>
+
+        {levelNotice ? (
+          <p className="mt-3 rounded border px-3 py-2 text-xs text-[var(--text)]" role="status"
+            style={{ borderColor: "var(--accent-dim)", background: "rgba(201,162,39,0.1)" }}
+          >
+            {levelNotice}
+          </p>
+        ) : null}
 
         {error ? (
           <p className="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">
@@ -876,9 +987,17 @@ export default function CharacterEditorDialog({
           </p>
         ) : null}
 
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
           <button type="button" onClick={onClose} className="btn btn-sm">
             Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => setPrintOpen(true)}
+            className="btn btn-sm"
+            title="Print a clean paper sheet for the table"
+          >
+            Print sheet
           </button>
           <button
             type="button"
@@ -889,7 +1008,15 @@ export default function CharacterEditorDialog({
             {saving ? "Saving…" : character ? "Save changes" : "Create hero"}
           </button>
         </div>
+
       </div>
     </div>
+    {printOpen ? (
+      <CharacterSheetPrintView
+        character={{ ...draft, tokenId: null }}
+        onClose={() => setPrintOpen(false)}
+      />
+    ) : null}
+    </>
   );
 }

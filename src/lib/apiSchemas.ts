@@ -12,6 +12,8 @@ const mapDistanceUnitsSchema = z.preprocess(
 
 export const adventurePostSchema = z.object({
   adventureLength: z.string().optional(),
+  sessionCount: z.union([z.number(), z.string()]).optional(),
+  hoursPerSession: z.union([z.number(), z.string()]).optional(),
   combatIntensity: z.union([z.number(), z.string()]).optional(),
   titleHint: z.string().optional(),
   levelRange: z.string().optional(),

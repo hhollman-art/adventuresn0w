@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import {
-  ADVENTURE_LENGTH_HOVER_HELP,
+  adventureLengthFromSessionCount,
+  formatSessionLengthField,
   type CombatIntensity,
 } from "@/lib/adventurePrompt";
 import { REALM_SIZE_LABEL, REALM_SIZES } from "@/lib/realmPrompt";
@@ -34,7 +35,6 @@ import {
 import {
   ADVENTURE_SAMPLE_LEVEL_PLACEHOLDER,
   ADVENTURE_SAMPLE_PARTY_PLACEHOLDER,
-  ADVENTURE_SAMPLE_SESSION_PLACEHOLDER,
   ADVENTURE_SAMPLE_SETTING_PLACEHOLDER,
   ADVENTURE_SAMPLE_TONE_PLACEHOLDER,
   ADVENTURE_SAMPLE_VILLAIN_PLACEHOLDER,
@@ -160,7 +160,7 @@ export function CreationWorkspacePanel(props: CreationWorkspacePanelProps) {
         (workspace === "realm"
           ? "Pick how big the place is — a whole world down to a single village — then describe it in your own words. You get table-ready pages you can read, print, or edit. Everything is original to your game."
           : workspace === "adventure"
-            ? "Pick a length — a short session or a full one-nighter — and describe the story you want. You get a ready-to-run quest, original to your game."
+            ? "Set how many sessions and hours per night, tune combat focus, then describe the story. You get a ready-to-run quest, original to your game."
             : workspace === "characters"
               ? "Generate a ready-to-play party of heroes from the included rules. When you are done, manage sheets and fellowships in The Tavern."
               : workspace === "props"
@@ -169,6 +169,73 @@ export function CreationWorkspacePanel(props: CreationWorkspacePanelProps) {
     </p>
       </div>
     </div>
+
+    {workspace === "adventure" ? (
+      <div
+        className="mt-4 rounded-lg border p-3"
+        style={{ borderColor: "var(--accent-dim)", background: "rgba(201,162,39,0.08)" }}
+      >
+        <p className="text-xs font-bold uppercase tracking-wide text-[var(--text)]">
+          Auto-generate with adventure
+        </p>
+        <p className="mt-1 text-[11px] text-[var(--text-soft)]">
+          Maps and item handouts run after the adventure text — keep these on for a full prep pack.
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          <AutoGenerateToggle
+            checked={autoGenerateAdventureMap}
+            onChange={setAutoGenerateAdventureMap}
+            icon={"\u{1F5FA}\uFE0F"}
+          >
+            Auto-generate maps (overview + one battle map per scene, up to {MAX_AUTO_SCENE_IMAGES})
+          </AutoGenerateToggle>
+          {autoGenerateAdventureMap ? (
+            <fieldset
+              className="flex flex-col gap-2 rounded-lg border p-3 text-sm"
+              style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+            >
+              <legend className="text-sm font-medium text-[var(--muted)]">Auto-map scale</legend>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="radio"
+                    name="mapDistanceUnitsAdventure"
+                    checked={mapDistanceUnits === "imperial"}
+                    onChange={() => setMapDistanceUnits("imperial")}
+                    className="accent-[var(--accent)]"
+                  />
+                  <span>Imperial (miles, feet)</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="radio"
+                    name="mapDistanceUnitsAdventure"
+                    checked={mapDistanceUnits === "metric"}
+                    onChange={() => setMapDistanceUnits("metric")}
+                    className="accent-[var(--accent)]"
+                  />
+                  <span>Metric (km, meters)</span>
+                </label>
+              </div>
+              <BattleMapGridFieldset
+                mapForm={mapForm}
+                embedded
+                compactLegend="Battle map grid (Virtual Table)"
+                onApplyPreset={(cols, rows) => applyBattleGridSize(cols, rows)}
+                onCustomSize={(cols, rows) => applyBattleGridSize(cols, rows)}
+              />
+            </fieldset>
+          ) : null}
+          <AutoGenerateToggle
+            checked={autoGenerateAdventureProps}
+            onChange={setAutoGenerateAdventureProps}
+            icon={"\u{1F3FA}"}
+          >
+            Auto-generate item handouts (one per scene when found, up to {MAX_AUTO_SCENE_IMAGES})
+          </AutoGenerateToggle>
+        </div>
+      </div>
+    ) : null}
 
     <div className="mt-4 flex flex-wrap items-center gap-2">
       {workspace === "characters" ? (
@@ -638,63 +705,67 @@ export function CreationWorkspacePanel(props: CreationWorkspacePanelProps) {
         </>
       ) : null}
       {workspace === "adventure" ? (
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-medium text-[var(--muted)]">
-            Adventure length
-          </legend>
-          <div
-            className="flex flex-col gap-2 rounded-lg border p-2 text-xs sm:flex-row sm:flex-wrap sm:gap-1"
-            style={{ borderColor: "var(--border)" }}
-          >
-            {(
-              [
-                {
-                  id: "short" as const,
-                  label: "Short",
-                  hint: "~1 session, 3–5 scenes",
-                },
-                {
-                  id: "one_night" as const,
-                  label: "One-nighter",
-                  hint: "Single evening, tight",
-                },
-              ] as const
-            ).map((opt) => (
-              <label
-                key={opt.id}
-                title={ADVENTURE_LENGTH_HOVER_HELP[opt.id]}
-                className="flex cursor-help items-start gap-2 rounded-md px-2 py-2 sm:flex-1 sm:flex-col sm:px-3"
-                style={{
-                  background:
-                    form.adventureLength === opt.id
-                      ? "rgba(201, 162, 39, 0.15)"
-                      : "transparent",
-                  outline:
-                    form.adventureLength === opt.id
-                      ? "1px solid var(--accent)"
-                      : "none",
+        <div
+          className="grid gap-3 rounded-lg border p-3 sm:grid-cols-2"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <label className="flex flex-col gap-1 text-xs">
+            <span className="font-semibold text-[var(--muted)]">Number of sessions</span>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              step={1}
+              value={form.sessionCount}
+              onChange={(e) => {
+                const sessionCount = Math.min(
+                  20,
+                  Math.max(1, Number.parseInt(e.target.value, 10) || 1),
+                );
+                setForm((f) => ({
+                  ...f,
+                  sessionCount,
+                  adventureLength: adventureLengthFromSessionCount(sessionCount),
+                  sessionLength: formatSessionLengthField(sessionCount, f.hoursPerSession),
+                }));
+              }}
+              className="rounded border px-2 py-1.5 text-sm tabular-nums"
+              style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+              aria-label="Number of sessions"
+            />
+            <span className="text-[10px] text-[var(--text-soft)]">1–20 sessions for this arc</span>
+          </label>
+          <label className="flex flex-col gap-1 text-xs">
+            <span className="font-semibold text-[var(--muted)]">Average time per session</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0.5}
+                max={12}
+                step={0.5}
+                value={form.hoursPerSession}
+                onChange={(e) => {
+                  const hoursPerSession = Math.min(
+                    12,
+                    Math.max(0.5, Number.parseFloat(e.target.value) || 3),
+                  );
+                  setForm((f) => ({
+                    ...f,
+                    hoursPerSession,
+                    sessionLength: formatSessionLengthField(f.sessionCount, hoursPerSession),
+                  }));
                 }}
-              >
-                <input
-                  type="radio"
-                  name="adventureLength"
-                  value={opt.id}
-                  checked={form.adventureLength === opt.id}
-                  onChange={() =>
-                    setForm((f) => ({ ...f, adventureLength: opt.id }))
-                  }
-                  className="mt-0.5 accent-[var(--accent)]"
-                />
-                <span>
-                  <span className="font-semibold text-[var(--text)]">
-                    {opt.label}
-                  </span>
-                  <span className="block text-[var(--muted)]">{opt.hint}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+                className="min-w-0 flex-1 rounded border px-2 py-1.5 text-sm tabular-nums"
+                style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+                aria-label="Average hours per session"
+              />
+              <span className="shrink-0 text-xs text-[var(--text-soft)]">hours</span>
+            </div>
+            <span className="text-[10px] text-[var(--text-soft)]">
+              ≈ {Math.round(form.sessionCount * form.hoursPerSession * 10) / 10}h total table time
+            </span>
+          </label>
+        </div>
       ) : null}
       {workspace === "adventure" ? (
         <div
@@ -796,69 +867,6 @@ export function CreationWorkspacePanel(props: CreationWorkspacePanelProps) {
           </div>
         </div>
       ) : null}
-      {workspace === "adventure" ? (
-        <AutoGenerateToggle
-          checked={autoGenerateAdventureMap}
-          onChange={setAutoGenerateAdventureMap}
-          icon={"\u{1F5FA}\uFE0F"}
-        >
-          Auto-generate maps with adventure (overview + one battle map per scene, up to{" "}
-          {MAX_AUTO_SCENE_IMAGES})
-        </AutoGenerateToggle>
-      ) : null}
-      {workspace === "adventure" && autoGenerateAdventureMap ? (
-        <fieldset
-          className="flex flex-col gap-2 rounded-lg border p-3 text-sm"
-          style={{ borderColor: "var(--border)" }}
-        >
-          <legend className="text-sm font-medium text-[var(--muted)]">
-            Auto-map scale
-          </legend>
-          <p className="text-xs text-[var(--muted)]">
-            Same as the Maps tab: units for overview scale bars and battle grids.
-          </p>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="radio"
-                name="mapDistanceUnitsAdventure"
-                checked={mapDistanceUnits === "imperial"}
-                onChange={() => setMapDistanceUnits("imperial")}
-                className="accent-[var(--accent)]"
-              />
-              <span>Imperial (miles, feet)</span>
-            </label>
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="radio"
-                name="mapDistanceUnitsAdventure"
-                checked={mapDistanceUnits === "metric"}
-                onChange={() => setMapDistanceUnits("metric")}
-                className="accent-[var(--accent)]"
-              />
-              <span>Metric (km, meters)</span>
-            </label>
-          </div>
-          <BattleMapGridFieldset
-              mapForm={mapForm}
-              embedded
-              compactLegend="Battle map grid (Virtual Table)"
-              onApplyPreset={(cols, rows) => applyBattleGridSize(cols, rows)}
-              onCustomSize={(cols, rows) => applyBattleGridSize(cols, rows)}
-            />
-        </fieldset>
-      ) : null}
-      {workspace === "adventure" ? (
-        <AutoGenerateToggle
-          checked={autoGenerateAdventureProps}
-          onChange={setAutoGenerateAdventureProps}
-          icon={"\u{1F3FA}"}
-        >
-          Auto-generate item handouts with adventure (one per scene when scenes are found, up to{" "}
-          {MAX_AUTO_SCENE_IMAGES}; otherwise one handout)
-        </AutoGenerateToggle>
-      ) : null}
-
       {workspace === "adventure" || workspace === "characters" ? (
         <>
           <Field
@@ -918,22 +926,12 @@ export function CreationWorkspacePanel(props: CreationWorkspacePanelProps) {
             />
           ) : null}
           {workspace === "adventure" ? (
-            <div className="grid grid-cols-2 gap-3">
-              <Field
-                label="Party size (optional)"
-                value={form.partySize}
-                onChange={(v) => setForm((f) => ({ ...f, partySize: v }))}
-                placeholder={ADVENTURE_SAMPLE_PARTY_PLACEHOLDER}
-              />
-              <Field
-                label="Session length (optional)"
-                value={form.sessionLength}
-                onChange={(v) =>
-                  setForm((f) => ({ ...f, sessionLength: v }))
-                }
-                placeholder={ADVENTURE_SAMPLE_SESSION_PLACEHOLDER}
-              />
-            </div>
+            <Field
+              label="Party size (optional)"
+              value={form.partySize}
+              onChange={(v) => setForm((f) => ({ ...f, partySize: v }))}
+              placeholder={ADVENTURE_SAMPLE_PARTY_PLACEHOLDER}
+            />
           ) : null}
           {workspace === "characters" ? (
             <fieldset

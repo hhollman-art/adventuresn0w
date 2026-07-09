@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import {
   SYSTEM_PROMPT,
+  adventureLengthFromSessionCount,
   buildUserMessage,
+  formatSessionLengthField,
   type AdventureInput,
   type AdventureLength,
   type CombatIntensity,
@@ -25,6 +27,18 @@ function parseAdventureLength(value: unknown): AdventureLength {
     return "one_night";
   }
   return "short";
+}
+
+function parseSessionCount(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 1;
+  return Math.min(20, Math.max(1, Math.round(n)));
+}
+
+function parseHoursPerSession(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 3;
+  return Math.min(12, Math.max(0.5, Math.round(n * 2) / 2));
 }
 
 function parseCombatIntensity(value: unknown): CombatIntensity {
@@ -60,8 +74,16 @@ export async function POST(request: Request) {
   const body = parsed.data;
   const realmSeedMarkdown = parseRealmSeedMarkdown(body.realmSeedMarkdown);
 
+  const sessionCount = parseSessionCount(body.sessionCount ?? 1);
+  const hoursPerSession = parseHoursPerSession(body.hoursPerSession ?? 3);
+  const adventureLength = body.adventureLength
+    ? parseAdventureLength(body.adventureLength)
+    : adventureLengthFromSessionCount(sessionCount);
+
   const input: AdventureInput = {
-    adventureLength: parseAdventureLength(body.adventureLength),
+    adventureLength,
+    sessionCount,
+    hoursPerSession,
     combatIntensity: parseCombatIntensity(body.combatIntensity),
     titleHint: String(body.titleHint ?? "").trim(),
     levelRange: String(body.levelRange ?? "3–4").trim(),
@@ -69,7 +91,9 @@ export async function POST(request: Request) {
     setting: String(body.setting ?? "").trim() || "wilderness borderland",
     villainOrThreat: String(body.villainOrThreat ?? "").trim() || "a rising local threat",
     partySize: String(body.partySize ?? "4").trim(),
-    sessionLength: String(body.sessionLength ?? "3–4 hours").trim(),
+    sessionLength:
+      String(body.sessionLength ?? "").trim() ||
+      formatSessionLengthField(sessionCount, hoursPerSession),
     extraNotes: String(body.extraNotes ?? "").trim(),
     ...(realmSeedMarkdown ? { realmSeedMarkdown } : {}),
   };

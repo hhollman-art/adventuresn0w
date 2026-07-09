@@ -27,6 +27,19 @@ export {
 } from "./spells";
 
 export {
+  canKnowSpellAtLevel,
+  casterKindForClass,
+  clampCharacterLevel,
+  maxSpellLevelForCharacter,
+  proficiencyBonusForLevel,
+  spellSlotsForCharacter,
+  summarizeLevelProgression,
+  type CasterKind,
+  type LevelProgressionSummary,
+  type SpellSlotRow,
+} from "./classProgression";
+
+export {
   SRD_MANIFEST,
   SRD_ATTRIBUTION_SHORT,
   SRD_ATTRIBUTION_MARKDOWN,
