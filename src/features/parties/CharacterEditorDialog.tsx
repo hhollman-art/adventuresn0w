@@ -92,7 +92,10 @@ function emptyDraft(): Draft {
 }
 
 function draftFrom(character: SavedCharacter): Draft {
-  const { tokenId: _tokenId, ...rest } = character.player;
+  const rest = (({ tokenId: _omit, ...player }) => {
+    void _omit;
+    return player;
+  })(character.player);
   return {
     ...rest,
     preparedSpellIds: rest.preparedSpellIds ?? [],

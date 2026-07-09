@@ -12,7 +12,6 @@ import { loadSavedGameItems, saveGameItem, type SavedGameItem } from "@/lib/item
 import {
   loadSavedCustomSrdEntries,
   saveCustomSrdEntry,
-  type SavedCustomSrdEntry,
 } from "@/lib/srd/srdCustomLibrary";
 import { getSrdEntity, parseSrdEntityId } from "@/lib/srd/corpus";
 import { instantiateSrdEntity } from "@/lib/srd/instantiateSrdEntity";

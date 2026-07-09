@@ -28,7 +28,6 @@ import {
 import {
   loadSavedCharacters,
   updateCharacterInLibrary,
-  type SavedCharacter,
 } from "@/lib/tabletop/characterLibrary";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
 
