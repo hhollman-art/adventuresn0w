@@ -22,6 +22,7 @@ import { CUSTOM_SRD_CHANGED_EVENT } from "@/lib/srd/srdCustomLibrary";
 import { CHARACTERS_CHANGED_EVENT } from "@/lib/tabletop/characterLibrary";
 import { NPCS_CHANGED_EVENT } from "@/lib/worldAssets/npc";
 import { ITEMS_CHANGED_EVENT } from "@/lib/itemLibrary";
+import { VAULT_EXCLUSION_CHANGED_EVENT } from "@/lib/vault/vaultExclusion";
 
 const VAULT_OPEN_KEY = "ddeasy-vault-drawer-open";
 
@@ -108,20 +109,28 @@ export function VaultDrawerProvider({ children }: { children: ReactNode }) {
     window.addEventListener(NPCS_CHANGED_EVENT, reload);
     window.addEventListener(ITEMS_CHANGED_EVENT, reload);
     window.addEventListener(CUSTOM_SRD_CHANGED_EVENT, reload);
+    window.addEventListener(VAULT_EXCLUSION_CHANGED_EVENT, reload);
     return () => {
       window.removeEventListener(CHARACTERS_CHANGED_EVENT, reload);
       window.removeEventListener(NPCS_CHANGED_EVENT, reload);
       window.removeEventListener(ITEMS_CHANGED_EVENT, reload);
       window.removeEventListener(CUSTOM_SRD_CHANGED_EVENT, reload);
+      window.removeEventListener(VAULT_EXCLUSION_CHANGED_EVENT, reload);
     };
   }, [refreshEntries]);
 
   const registerDropZone = useCallback((registration: VaultDropRegistration) => {
+    const existed = dropZonesRef.current.has(registration.zoneId);
     dropZonesRef.current.set(registration.zoneId, registration);
-    setDropZones([...dropZonesRef.current.values()]);
+    // Only notify React when membership changes — silent updates avoid
+    // Maximum update depth loops from zones re-registering every render.
+    if (!existed) {
+      setDropZones([...dropZonesRef.current.values()]);
+    }
   }, []);
 
   const unregisterDropZone = useCallback((zoneId: string) => {
+    if (!dropZonesRef.current.has(zoneId)) return;
     dropZonesRef.current.delete(zoneId);
     setDropZones([...dropZonesRef.current.values()]);
   }, []);
@@ -193,10 +202,28 @@ export function useVaultDrawer(): VaultDrawerContextValue {
 
 export function useVaultDropZone(registration: VaultDropRegistration | null): void {
   const { registerDropZone, unregisterDropZone } = useVaultDrawer();
+  const registrationRef = useRef(registration);
+  registrationRef.current = registration;
+  const zoneId = registration?.zoneId ?? null;
 
   useEffect(() => {
-    if (!registration) return;
-    registerDropZone(registration);
-    return () => unregisterDropZone(registration.zoneId);
-  }, [registration, registerDropZone, unregisterDropZone]);
+    if (!zoneId) return;
+    // Stable registration: handler/accepts/label always read from the latest ref
+    // so parent memo churn cannot loop setState via unregister/register.
+    registerDropZone({
+      zoneId,
+      get label() {
+        return registrationRef.current?.label ?? zoneId;
+      },
+      get accepts() {
+        return registrationRef.current?.accepts;
+      },
+      handler: async (payload, id) => {
+        const current = registrationRef.current;
+        if (!current) return { ok: false, message: "Drop zone is inactive." };
+        return current.handler(payload, id);
+      },
+    });
+    return () => unregisterDropZone(zoneId);
+  }, [zoneId, registerDropZone, unregisterDropZone]);
 }

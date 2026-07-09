@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   deleteGameItem,
   GAME_ITEM_KIND_LABEL,
@@ -47,6 +48,7 @@ function bonusSummary(item: SavedGameItem): string {
 }
 
 export default function ItemLibraryPage() {
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<SavedGameItem[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -67,6 +69,13 @@ export default function ItemLibraryPage() {
     void refresh();
     return onItemsChanged(() => void refresh());
   }, [refresh]);
+
+  useEffect(() => {
+    if (searchParams.get("homebrewDraft") !== "1") return;
+    setEditingItem(null);
+    setNewKind("magic");
+    setEditorOpen(true);
+  }, [searchParams]);
 
   useEffect(() => {
     const onVisible = () => {

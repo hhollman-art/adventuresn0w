@@ -19,6 +19,8 @@ const sampleHero: PlayerCharacter = {
   notes: "",
   items: [],
   knownSpellIds: [],
+    preparedSpellIds: [],
+    linkedModifiers: [],
   currentHp: null,
   tokenId: null,
 };

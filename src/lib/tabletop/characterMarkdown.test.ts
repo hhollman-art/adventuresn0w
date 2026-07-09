@@ -44,6 +44,8 @@ const PLAYER: Omit<PlayerCharacter, "tokenId"> = {
     },
   ],
   knownSpellIds: [],
+    preparedSpellIds: [],
+    linkedModifiers: [],
   currentHp: 20,
 };
 

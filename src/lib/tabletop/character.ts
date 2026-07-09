@@ -1,4 +1,5 @@
 import type { AbilityScores, CharacterItem, ItemBonuses, PlayerCharacter } from "./types";
+import { computeCharacterStats } from "./modifierEngine";
 
 export const ABILITY_LIST: { key: keyof AbilityScores; label: string }[] = [
   { key: "str", label: "STR" },
@@ -65,6 +66,7 @@ export function characterSummary(p: PlayerCharacter): string {
 export function sumItemBonuses(items: CharacterItem[]): ItemBonuses {
   const total = emptyBonuses();
   for (const item of items) {
+    if (item.equipped === false) continue;
     for (const { key } of ITEM_BONUS_FIELDS) {
       total[key] += item.bonuses[key] ?? 0;
     }
@@ -91,26 +93,27 @@ export function effectiveAbilities(
   };
 }
 
+/** Full reactive recompute including linked CF modifiers (curses, etc.). */
+export function effectiveStatsForCharacter(player: PlayerCharacter) {
+  return computeCharacterStats(player);
+}
+
 export function effectiveAc(player: PlayerCharacter): number {
-  return Math.max(1, player.ac + sumItemBonuses(player.items).ac);
+  return computeCharacterStats(player).ac.total;
 }
 
 export function effectiveMaxHp(player: PlayerCharacter): number {
-  return Math.max(1, player.maxHp + sumItemBonuses(player.items).maxHp);
+  return computeCharacterStats(player).maxHp.total;
 }
 
 export function effectiveSpeed(player: PlayerCharacter): number {
-  return Math.max(0, player.speed + sumItemBonuses(player.items).speed);
+  return computeCharacterStats(player).speed.total;
 }
 
 export function effectiveInitiative(player: PlayerCharacter): number {
-  const b = sumItemBonuses(player.items);
-  return abilityMod(effectiveAbilities(player.abilities, player.items).dex) + b.initiative;
+  return computeCharacterStats(player).initiative.total;
 }
 
 export function effectivePassivePerception(player: PlayerCharacter): number {
-  const b = sumItemBonuses(player.items);
-  return (
-    10 + abilityMod(effectiveAbilities(player.abilities, player.items).wis) + b.passivePerception
-  );
+  return computeCharacterStats(player).passivePerception.total;
 }

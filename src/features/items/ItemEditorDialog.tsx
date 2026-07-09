@@ -16,6 +16,14 @@ import {
 import { emptyBonuses } from "@/lib/tabletop/character";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
 import { autoLinkToActiveCampaign } from "@/lib/campaigns";
+import { gateFirstCustomCfSave } from "@/lib/workshop/firstSaveGate";
+import HomebrewDocumentDropzone from "@/features/workshop/HomebrewDocumentDropzone";
+import type { CfItemDraft, CfMappedDraft } from "@/lib/workshop/cfSchemaMapper";
+import {
+  draftHasBlankFields,
+  draftToPartial,
+  mapHomebrewToCfSchema,
+} from "@/lib/workshop/cfSchemaMapper";
 
 type Draft = {
   kind: GameItemKind;
@@ -51,6 +59,32 @@ function draftFrom(item: SavedGameItem): Draft {
   };
 }
 
+function draftFromMapped(mapped: CfItemDraft): Draft {
+  return {
+    kind: mapped.kind,
+    name: mapped.name,
+    itemType: mapped.itemType,
+    rarity: mapped.rarity,
+    requiresAttunement: mapped.requiresAttunement,
+    description: mapped.description,
+    bonuses: { ...emptyBonuses(), ...mapped.bonuses },
+  };
+}
+
+function consumeSessionHomebrewItemDraft(): CfItemDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem("ddeasy-homebrew-cf-draft");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { mapped?: CfMappedDraft };
+    if (parsed.mapped?.cfKind !== "item") return null;
+    sessionStorage.removeItem("ddeasy-homebrew-cf-draft");
+    return parsed.mapped.draft;
+  } catch {
+    return null;
+  }
+}
+
 type ItemEditorDialogProps = {
   /** When set, the dialog edits this item; otherwise it creates a new one. */
   item?: SavedGameItem | null;
@@ -67,11 +101,14 @@ export default function ItemEditorDialog({
   onClose,
   onSaved,
 }: ItemEditorDialogProps) {
-  const [draft, setDraft] = useState<Draft>(() =>
-    item ? draftFrom(item) : emptyDraft(initialKind),
-  );
+  const [draft, setDraft] = useState<Draft>(() => {
+    if (item) return draftFrom(item);
+    const fromHub = consumeSessionHomebrewItemDraft();
+    return fromHub ? draftFromMapped(fromHub) : emptyDraft(initialKind);
+  });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [completeBusy, setCompleteBusy] = useState(false);
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -84,6 +121,37 @@ export default function ItemEditorDialog({
     }));
   };
 
+  const applyMappedItem = (mapped: CfMappedDraft) => {
+    if (mapped.cfKind !== "item") return;
+    setDraft(draftFromMapped(mapped.draft));
+  };
+
+  const onCompleteWithAi = async () => {
+    setCompleteBusy(true);
+    setError(null);
+    try {
+      const mapped: CfMappedDraft = { cfKind: "item", draft };
+      const response = await mapHomebrewToCfSchema({
+        targetKind: "item",
+        extractedText: [
+          draft.name,
+          draft.itemType,
+          draft.description,
+          JSON.stringify(draft.bonuses),
+        ]
+          .filter(Boolean)
+          .join("\n"),
+        completeMissing: true,
+        partial: draftToPartial(mapped),
+      });
+      applyMappedItem(response.mapped);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not complete with AI.");
+    } finally {
+      setCompleteBusy(false);
+    }
+  };
+
   const onSave = async () => {
     if (!draft.name.trim()) {
       setError("Give this item a name first.");
@@ -92,6 +160,14 @@ export default function ItemEditorDialog({
     setSaving(true);
     setError(null);
     try {
+      if (!item) {
+        const allowed = await gateFirstCustomCfSave(draft.name.trim() || "new item");
+        if (!allowed) {
+          setSaving(false);
+          setError("Save cancelled — configure Arcane Vault storage to continue.");
+          return;
+        }
+      }
       const list = item
         ? await updateGameItem(item.id, draft)
         : await saveGameItem({ ...draft, source: "created" });
@@ -134,6 +210,15 @@ export default function ItemEditorDialog({
           time — the sheet gets its own copy, so editing here never silently changes a
           character.
         </p>
+
+        {!item ? (
+          <HomebrewDocumentDropzone
+            className="mt-4"
+            compact
+            targetKind="item"
+            onMapped={applyMappedItem}
+          />
+        ) : null}
 
         <div
           className="mt-4 flex flex-wrap gap-1 rounded-lg border p-1"
@@ -256,7 +341,18 @@ export default function ItemEditorDialog({
           </p>
         ) : null}
 
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
+          {!item &&
+          draftHasBlankFields({ cfKind: "item", draft }) ? (
+            <button
+              type="button"
+              className="btn btn-sm"
+              disabled={completeBusy || saving}
+              onClick={() => void onCompleteWithAi()}
+            >
+              {completeBusy ? "Completing…" : "✨ Complete with AI"}
+            </button>
+          ) : null}
           <button type="button" onClick={onClose} className="btn btn-sm">
             Cancel
           </button>

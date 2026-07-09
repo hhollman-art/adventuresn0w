@@ -25,11 +25,57 @@ const itemBonusesSchema = z.object({
   cha: z.number(),
 });
 
+const modifierSourceKindSchema = z.enum([
+  "item",
+  "equipped-item",
+  "species",
+  "class",
+  "background",
+  "feat",
+  "condition",
+  "curse",
+  "blessing",
+  "creation-file",
+  "manual",
+]);
+
 const characterItemSchema = z.object({
   id: z.string(),
   name: z.string(),
   notes: z.string(),
   bonuses: itemBonusesSchema,
+  equipped: z.boolean().optional(),
+  libraryItemId: z.string().nullable().optional(),
+  sourceKind: modifierSourceKindSchema.optional(),
+});
+
+const characterModifierSchema = z.object({
+  id: z.string(),
+  sourceKind: modifierSourceKindSchema,
+  sourceLabel: z.string(),
+  sourceCfId: z.string().nullable(),
+  target: z.enum([
+    "str",
+    "dex",
+    "con",
+    "int",
+    "wis",
+    "cha",
+    "ac",
+    "maxHp",
+    "speed",
+    "initiative",
+    "passivePerception",
+    "save-str",
+    "save-dex",
+    "save-con",
+    "save-int",
+    "save-wis",
+    "save-cha",
+  ]),
+  value: z.number(),
+  active: z.boolean(),
+  notes: z.string().optional(),
 });
 
 /** BYOD character sheet — same shape as Tavern `PlayerCharacter`. */
@@ -50,6 +96,8 @@ export const playerCharacterSchema = z.object({
   notes: z.string(),
   items: z.array(characterItemSchema),
   knownSpellIds: z.array(z.string()),
+  preparedSpellIds: z.array(z.string()).default([]),
+  linkedModifiers: z.array(characterModifierSchema).default([]),
   currentHp: z.number().nullable(),
   tokenId: z.string().nullable(),
 });

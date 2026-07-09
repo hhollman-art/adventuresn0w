@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { CiClass } from "@/lib/ciRegistry";
 import { readAnyVaultDragData, vaultDragHasPayload } from "@/lib/vault/cfDragDrop";
 import { useVaultDrawer } from "@/contexts/VaultDrawerContext";
+import { evictFromVaultAfterSuccessfulDrop } from "@/lib/vault/removeFileFromVault";
 
 type VaultDropZoneProps = {
   zoneId: string;
@@ -54,6 +55,9 @@ export default function VaultDropZone({
       return;
     }
     const result = await handleDrop(zoneId, payload);
+    if (result.ok && payload.container?.holdKind === "park") {
+      await evictFromVaultAfterSuccessfulDrop(payload.id, true);
+    }
     setMessage(result.ok ? `Deployed ${payload.title}.` : result.message ?? "Could not deploy.");
     window.setTimeout(() => setMessage(null), 3200);
   };

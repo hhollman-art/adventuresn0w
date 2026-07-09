@@ -19,6 +19,7 @@ export type GenerationFeature =
   | "realm"
   | "characters"
   | "character-sheet"
+  | "homebrew-cf-map"
   | "map-image"
   | "realm-image"
   | "prop-image";

@@ -38,6 +38,11 @@ export const CI_CLASS_VISUAL: Record<CiClass, CiClassVisual> = {
   "monster.srd-entry": { icon: APP_ICONS.combat, accent: "#7a2828" },
 };
 
-export function ciClassVisual(ciClass: CiClass): CiClassVisual {
-  return CI_CLASS_VISUAL[ciClass];
+const FALLBACK_VISUAL: CiClassVisual = {
+  icon: APP_ICONS.scroll,
+  accent: "#6a6a6a",
+};
+
+export function ciClassVisual(ciClass: CiClass | string): CiClassVisual {
+  return CI_CLASS_VISUAL[ciClass as CiClass] ?? FALLBACK_VISUAL;
 }

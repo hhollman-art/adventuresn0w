@@ -61,6 +61,8 @@ function sampleBackup(): LibraryBackupFile {
           notes: "",
           items: [],
           knownSpellIds: [],
+    preparedSpellIds: [],
+    linkedModifiers: [],
           currentHp: null,
           tokenId: null,
         },
@@ -106,6 +108,10 @@ function sampleBackup(): LibraryBackupFile {
         resultIds: ["r1"],
         characterIds: [],
         itemIds: [],
+        unassignedLootIds: [],
+        npcIds: [],
+        locationIds: [],
+        sessionRecordIds: [],
       },
     ],
     relationshipGraphs: [
@@ -188,6 +194,7 @@ describe("libraryBackup", () => {
         locations: 0,
         sessionRecords: 0,
         relationshipGraphs: 0,
+        customSrd: 0,
       }),
     ).toBe("Restored 2 CFs, 1 result, 3 characters, 2 items, 1 party, 1 campaign from backup.");
     expect(
@@ -202,6 +209,7 @@ describe("libraryBackup", () => {
         locations: 0,
         sessionRecords: 0,
         relationshipGraphs: 0,
+        customSrd: 0,
       }),
     ).toBe("Backup read, but everything in it is already in your library.");
   });

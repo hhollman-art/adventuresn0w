@@ -121,6 +121,22 @@ function fixItem(o: Record<string, unknown>): CharacterItem | null {
     name: o.name,
     notes: typeof o.notes === "string" ? o.notes : "",
     bonuses: fixItemBonuses(rawBonuses),
+    equipped: o.equipped !== false,
+    libraryItemId: typeof o.libraryItemId === "string" ? o.libraryItemId : null,
+    sourceKind:
+      typeof o.sourceKind === "string"
+        ? (o.sourceKind as CharacterItem["sourceKind"])
+        : undefined,
+    instanceId: typeof o.instanceId === "string" ? o.instanceId : undefined,
+    _source:
+      o._source === "SRD" ||
+      o._source === "user" ||
+      o._source === "import" ||
+      o._source === "created"
+        ? o._source
+        : undefined,
+    sourceSrdEntityId:
+      typeof o.sourceSrdEntityId === "string" ? o.sourceSrdEntityId : null,
   };
 }
 
@@ -164,6 +180,31 @@ export function fixPlayer(o: Record<string, unknown>): PlayerCharacter | null {
     items,
     knownSpellIds: Array.isArray(o.knownSpellIds)
       ? o.knownSpellIds.filter((id): id is string => typeof id === "string")
+      : [],
+    preparedSpellIds: Array.isArray(o.preparedSpellIds)
+      ? o.preparedSpellIds.filter((id): id is string => typeof id === "string")
+      : Array.isArray(o.knownSpellIds)
+        ? o.knownSpellIds.filter((id): id is string => typeof id === "string")
+        : [],
+    linkedModifiers: Array.isArray(o.linkedModifiers)
+      ? o.linkedModifiers
+          .filter((row): row is Record<string, unknown> => typeof row === "object" && row !== null)
+          .map((row) => ({
+            id: typeof row.id === "string" ? row.id : `${Date.now()}-${Math.random()}`,
+            sourceKind:
+              typeof row.sourceKind === "string"
+                ? (row.sourceKind as PlayerCharacter["linkedModifiers"][number]["sourceKind"])
+                : "creation-file",
+            sourceLabel: typeof row.sourceLabel === "string" ? row.sourceLabel : "Linked effect",
+            sourceCfId: typeof row.sourceCfId === "string" ? row.sourceCfId : null,
+            target:
+              typeof row.target === "string"
+                ? (row.target as PlayerCharacter["linkedModifiers"][number]["target"])
+                : "wis",
+            value: typeof row.value === "number" && Number.isFinite(row.value) ? row.value : 0,
+            active: row.active !== false,
+            notes: typeof row.notes === "string" ? row.notes : undefined,
+          }))
       : [],
     currentHp:
       typeof o.currentHp === "number" && Number.isFinite(o.currentHp)

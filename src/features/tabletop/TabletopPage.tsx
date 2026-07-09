@@ -810,6 +810,8 @@ function buildSheetPlayer(
     notes: f.notes,
     items: items.filter((item) => item.name.trim()),
     knownSpellIds,
+    preparedSpellIds: knownSpellIds,
+    linkedModifiers: [],
     currentHp,
     tokenId,
   };

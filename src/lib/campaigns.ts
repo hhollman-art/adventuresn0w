@@ -39,6 +39,11 @@ export type SavedCampaign = {
   characterIds: string[];
   /** Linked user item ids (itemLibrary.ts). References — may be shared. */
   itemIds: string[];
+  /**
+   * Library item ids staged as campaign loot / rewards not yet assigned to a hero.
+   * Cloned from Library via cfCloneWritePath; removed when assigned to a character.
+   */
+  unassignedLootIds: string[];
   /** Linked NPC ids (worldAssets/npc.ts). References — may be shared. */
   npcIds: string[];
   /** Linked location ids (worldAssets/location.ts). References — may be shared. */
@@ -78,6 +83,7 @@ export function fixSavedCampaign(value: unknown): SavedCampaign | null {
     resultIds: stringArray(o.resultIds),
     characterIds: stringArray(o.characterIds),
     itemIds: stringArray(o.itemIds),
+    unassignedLootIds: stringArray(o.unassignedLootIds),
     npcIds: stringArray(o.npcIds),
     locationIds: stringArray(o.locationIds),
     sessionRecordIds: stringArray(o.sessionRecordIds),
@@ -235,6 +241,7 @@ export type SaveCampaignInput = {
   resultIds?: string[];
   characterIds?: string[];
   itemIds?: string[];
+  unassignedLootIds?: string[];
   npcIds?: string[];
   locationIds?: string[];
   sessionRecordIds?: string[];
@@ -255,6 +262,7 @@ export async function saveCampaign(input: SaveCampaignInput): Promise<SavedCampa
       resultIds: stringArray(input.resultIds),
       characterIds: stringArray(input.characterIds),
       itemIds: stringArray(input.itemIds),
+      unassignedLootIds: stringArray(input.unassignedLootIds),
       npcIds: stringArray(input.npcIds),
       locationIds: stringArray(input.locationIds),
       sessionRecordIds: stringArray(input.sessionRecordIds),
@@ -273,6 +281,7 @@ export type UpdateCampaignPatch = {
   resultIds?: string[];
   characterIds?: string[];
   itemIds?: string[];
+  unassignedLootIds?: string[];
   npcIds?: string[];
   locationIds?: string[];
   sessionRecordIds?: string[];
@@ -298,6 +307,10 @@ export async function updateCampaign(
         characterIds:
           patch.characterIds !== undefined ? stringArray(patch.characterIds) : c.characterIds,
         itemIds: patch.itemIds !== undefined ? stringArray(patch.itemIds) : c.itemIds,
+        unassignedLootIds:
+          patch.unassignedLootIds !== undefined
+            ? stringArray(patch.unassignedLootIds)
+            : c.unassignedLootIds,
         npcIds: patch.npcIds !== undefined ? stringArray(patch.npcIds) : c.npcIds,
         locationIds:
           patch.locationIds !== undefined ? stringArray(patch.locationIds) : c.locationIds,

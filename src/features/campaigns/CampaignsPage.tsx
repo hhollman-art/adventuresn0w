@@ -19,6 +19,7 @@ import {
   onCampaignRelationshipsChanged,
 } from "@/lib/campaignRelationships";
 import CampaignRelationshipGraphPanel from "@/features/campaigns/CampaignRelationshipGraphPanel";
+import CampaignContainerPanels from "@/features/campaigns/CampaignContainerPanels";
 import { activateCampaign } from "@/lib/campaignSwitch";
 import { deleteCampaignTableSnapshot } from "@/lib/tabletop/store";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
@@ -431,13 +432,22 @@ export default function CampaignsPage() {
                           href="/tavern"
                           className="font-semibold text-[var(--accent)] underline"
                         >
-                          Parties
+                          Character workspace
                         </Link>{" "}
                         page.
                       </p>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <CampaignContainerPanels
+                      campaign={campaign}
+                      characters={characters}
+                      items={items}
+                      seeds={seeds}
+                      onChanged={() => void refresh()}
+                      onStatus={setStatus}
+                    />
+
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       <div>
                         <p className="mb-1 text-xs font-bold tracking-wide uppercase text-[var(--text)]">
                           Linked CFs

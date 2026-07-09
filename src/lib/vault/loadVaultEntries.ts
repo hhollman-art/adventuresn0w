@@ -10,11 +10,18 @@ import { loadSavedCharacters } from "@/lib/tabletop/characterLibrary";
 import { loadSavedGameItems } from "@/lib/itemLibrary";
 import { loadSavedNpcs } from "@/lib/worldAssets/npc";
 import { loadSavedCustomSrdEntries } from "@/lib/srd/srdCustomLibrary";
+import { sourceSrdEntityIdFromGameItem } from "@/lib/vault/vaultSrdPark";
+import {
+  entryIsVaultExcluded,
+  loadVaultExcludedIds,
+} from "@/lib/vault/vaultExclusion";
 
 export type VaultShelf = "all" | "heroes" | "lore" | "rules" | "gear";
 
 export type VaultCardEntry = LibraryListEntry & {
   shelf: Exclude<VaultShelf, "all">;
+  /** When this Library CF was hydrated from a bundled SRD entity. */
+  sourceSrdEntityId?: string | null;
 };
 
 const SHELF_CI: Record<Exclude<VaultShelf, "all">, CiClass[]> = {
@@ -33,22 +40,43 @@ function shelfForEntry(entry: LibraryListEntry): VaultCardEntry["shelf"] {
 
 /** Load deployable user-owned CF mini-cards for the Lore Vault drawer. */
 export async function loadVaultCardEntries(): Promise<VaultCardEntry[]> {
-  const [characters, items, npcs, customSrd] = await Promise.all([
+  const [characters, items, npcs, customSrd, excludedIds] = await Promise.all([
     loadSavedCharacters(),
     loadSavedGameItems(),
     loadSavedNpcs(),
     loadSavedCustomSrdEntries(),
+    loadVaultExcludedIds(),
   ]);
 
-  const entries: LibraryListEntry[] = [
-    ...characters.map(characterToLibraryEntry),
-    ...items.map(gameItemToLibraryEntry),
-    ...npcs.map(npcToLibraryEntry),
-    ...customSrd.map(customSrdToLibraryEntry),
+  const entries: VaultCardEntry[] = [
+    ...characters.map((row) => {
+      const entry = characterToLibraryEntry(row);
+      return { ...entry, shelf: shelfForEntry(entry), sourceSrdEntityId: null };
+    }),
+    ...items.map((row) => {
+      const entry = gameItemToLibraryEntry(row);
+      return {
+        ...entry,
+        shelf: shelfForEntry(entry),
+        sourceSrdEntityId: sourceSrdEntityIdFromGameItem(row),
+      };
+    }),
+    ...npcs.map((row) => {
+      const entry = npcToLibraryEntry(row);
+      return { ...entry, shelf: shelfForEntry(entry), sourceSrdEntityId: null };
+    }),
+    ...customSrd.map((row) => {
+      const entry = customSrdToLibraryEntry(row);
+      return {
+        ...entry,
+        shelf: shelfForEntry(entry),
+        sourceSrdEntityId: row.sourceSrdEntityId,
+      };
+    }),
   ];
 
   return entries
-    .map((entry) => ({ ...entry, shelf: shelfForEntry(entry) }))
+    .filter((entry) => !entryIsVaultExcluded(entry, excludedIds))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 

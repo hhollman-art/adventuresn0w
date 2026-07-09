@@ -70,8 +70,8 @@ const SHELF_CI_CLASSES: Record<Exclude<WorkshopLibraryCategory, "all">, CiClass[
   sessions: ciClassesForCategory("sessions"),
 };
 
-export function fantasyCiLabel(ciClass: CiClass): string {
-  return LIBRARY_CI_FANTASY_LABEL[ciClass];
+export function fantasyCiLabel(ciClass: CiClass | string): string {
+  return LIBRARY_CI_FANTASY_LABEL[ciClass as CiClass] ?? "Creation File";
 }
 
 export function matchesBrowseSearch(entry: LibraryListEntry, query: string): boolean {

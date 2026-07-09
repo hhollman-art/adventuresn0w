@@ -41,12 +41,71 @@ export type ItemBonuses = {
   cha: number;
 };
 
+/** Where a modifier came from — used for UI provenance and stacking rules. */
+export type ModifierSourceKind =
+  | "item"
+  | "equipped-item"
+  | "species"
+  | "class"
+  | "background"
+  | "feat"
+  | "condition"
+  | "curse"
+  | "blessing"
+  | "creation-file"
+  | "manual";
+
+export type ModifierTarget =
+  | keyof AbilityScores
+  | "ac"
+  | "maxHp"
+  | "speed"
+  | "initiative"
+  | "passivePerception"
+  | "save-str"
+  | "save-dex"
+  | "save-con"
+  | "save-int"
+  | "save-wis"
+  | "save-cha";
+
+/** Linked CF / effect that programmatically alters sheet stats. */
+export type CharacterModifier = {
+  id: string;
+  sourceKind: ModifierSourceKind;
+  /** Display name of the CF / item / effect. */
+  sourceLabel: string;
+  /** Optional library / campaign CF id this modifier was cloned from. */
+  sourceCfId: string | null;
+  target: ModifierTarget;
+  /** Flat numeric delta (e.g. -2 Wisdom from a curse). */
+  value: number;
+  /** When false, ignored by the engine (unequipped / inactive). */
+  active: boolean;
+  notes?: string;
+};
+
 /** Gear, magic items, conditions, or other effects with stat modifiers. */
 export type CharacterItem = {
   id: string;
   name: string;
   notes: string;
   bonuses: ItemBonuses;
+  /** When false, bonuses are ignored by the reactive modifier engine. Default true. */
+  equipped?: boolean;
+  /** Library CF id this gear was cloned from (provenance). */
+  libraryItemId?: string | null;
+  /** Optional override for modifier provenance (curse, blessing, …). */
+  sourceKind?: ModifierSourceKind;
+  /**
+   * Hydrated SRD instance id (`instance_weapon_shortsword_9a8b7c`).
+   * Present when this row was instantiated from a static SRD reference.
+   */
+  instanceId?: string;
+  /** Provenance tag — `"SRD"` means cloned from bundled rules; edits stay local. */
+  _source?: "SRD" | "user" | "import" | "created";
+  /** Canonical bundled SRD entity id this instance was hydrated from. */
+  sourceSrdEntityId?: string | null;
 };
 
 /** A party member, entered from their D&D 5.2-style character sheet. */
@@ -73,6 +132,16 @@ export type PlayerCharacter = {
   items: CharacterItem[];
   /** Bundled SRD spell catalogue ids (user-owned custom spells stay in notes). */
   knownSpellIds: string[];
+  /**
+   * Spells currently prepared / memorized (subset of knownSpellIds).
+   * Checkbox toggles on the Character workspace write here.
+   */
+  preparedSpellIds: string[];
+  /**
+   * Linked Creation File modifiers (curses, blessings, race templates, etc.)
+   * that are not inventory items but still alter stats reactively.
+   */
+  linkedModifiers: CharacterModifier[];
   /** Last recorded current HP when the party was saved (campaign carry-over). */
   currentHp: number | null;
   /** The token representing this character on the battle map, if placed. */

@@ -42,6 +42,8 @@ export function middleware(req: NextRequest) {
     path === "/api/generate" ||
     path === "/api/generate-realm" ||
     path === "/api/generate-characters" ||
+    path === "/api/generate-character" ||
+    path === "/api/generate-cf-from-homebrew" ||
     path === "/api/generate-map-image" ||
     path === "/api/generate-prop-image" ||
     path === "/api/generate-realm-image";
@@ -90,6 +92,8 @@ export const config = {
     "/api/generate",
     "/api/generate-realm",
     "/api/generate-characters",
+    "/api/generate-character",
+    "/api/generate-cf-from-homebrew",
     "/api/generate-map-image",
     "/api/generate-prop-image",
     "/api/generate-realm-image",

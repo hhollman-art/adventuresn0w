@@ -191,6 +191,8 @@ function parseDdbCharacter(
     notes: "Imported from your D&D Beyond character file on this device.",
     items: [],
     knownSpellIds: [],
+    preparedSpellIds: [],
+    linkedModifiers: [],
     currentHp: null,
   };
 }

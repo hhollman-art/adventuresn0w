@@ -23,6 +23,8 @@ describe("applyTabletopMutation", () => {
         notes: "",
         items: [],
         knownSpellIds: [],
+    preparedSpellIds: [],
+    linkedModifiers: [],
         currentHp: 30,
         tokenId: null,
       },

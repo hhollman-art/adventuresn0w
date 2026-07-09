@@ -7,9 +7,20 @@ import {
   emptyBonuses,
   formatMod,
   proficiencyBonus,
+  effectiveStatsForCharacter,
 } from "@/lib/tabletop/character";
 import type { AbilityScores, CharacterItem, PlayerCharacter } from "@/lib/tabletop/types";
+import PreparedSpellsByLevel from "@/features/parties/PreparedSpellsByLevel";
+import CharacterContainerSlots from "@/features/parties/CharacterContainerSlots";
+import { formatModifierLine } from "@/lib/tabletop/modifierEngine";
 import { newId } from "@/lib/tabletop/session";
+import { linkModifierToCharacter } from "@/lib/workshop/cfCloneWritePath";
+import type { VaultDragPayload } from "@/lib/vault/cfDragDrop";
+import { vaultPayloadIsStaticSrd } from "@/lib/vault/cfDragDrop";
+import {
+  instantiateSrdEntity,
+  isStaticSrdDragId,
+} from "@/lib/srd/instantiateSrdEntity";
 import {
   saveCharacterToLibrary,
   updateCharacterInLibrary,
@@ -17,6 +28,7 @@ import {
 } from "@/lib/tabletop/characterLibrary";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
 import { autoLinkToActiveCampaign } from "@/lib/campaigns";
+import { gateFirstCustomCfSave } from "@/lib/workshop/firstSaveGate";
 import {
   loadSavedGameItems,
   MAGIC_RARITY_LABEL,
@@ -73,13 +85,24 @@ function emptyDraft(): Draft {
     notes: "",
     items: [],
     knownSpellIds: [],
+    preparedSpellIds: [],
+    linkedModifiers: [],
     currentHp: null,
   };
 }
 
 function draftFrom(character: SavedCharacter): Draft {
   const { tokenId: _tokenId, ...rest } = character.player;
-  return { ...rest, items: rest.items.map((i) => ({ ...i, bonuses: { ...i.bonuses } })) };
+  return {
+    ...rest,
+    preparedSpellIds: rest.preparedSpellIds ?? [],
+    linkedModifiers: rest.linkedModifiers ?? [],
+    items: rest.items.map((i) => ({
+      ...i,
+      bonuses: { ...i.bonuses },
+      equipped: i.equipped !== false,
+    })),
+  };
 }
 
 const DEFAULTS = emptyDraft();
@@ -249,9 +272,117 @@ export default function CharacterEditorDialog({
           name: item.name,
           notes: noteParts.join(", "),
           bonuses: { ...item.bonuses },
+          equipped: true,
+          libraryItemId: item.id,
+          sourceKind: "equipped-item",
         },
       ],
     }));
+  };
+
+  const onInventoryDrop = async (payload: VaultDragPayload) => {
+    // Hydrate static SRD → local mutable embed (never link global entity id).
+    if (
+      vaultPayloadIsStaticSrd(payload) ||
+      isStaticSrdDragId(payload.id) ||
+      payload.ciClass === "item.srd-equipment" ||
+      payload.ciClass === "item.srd-magic"
+    ) {
+      const inst = instantiateSrdEntity(payload.id, "character-item", {
+        name: payload.title,
+        equipped: true,
+      });
+      if (!inst || inst.payload.target !== "character-item") {
+        return { ok: false, message: "Could not instantiate that SRD item." };
+      }
+      const embedded = inst.payload.item;
+      if (
+        draft.items.some(
+          (i) =>
+            i.sourceSrdEntityId === inst.sourceSrdEntityId ||
+            i.instanceId === inst.instanceId,
+        )
+      ) {
+        return { ok: false, message: `${inst.name} is already on this sheet.` };
+      }
+      setDraft((d) => ({ ...d, items: [...d.items, embedded] }));
+      return {
+        ok: true,
+        message: `${inst.name} instantiated from SRD (${inst.instanceId}).`,
+      };
+    }
+
+    const item = libraryItems.find((i) => i.id === payload.id);
+    if (!item) {
+      return { ok: false, message: "Item not found in Library." };
+    }
+    if (draft.items.some((i) => i.libraryItemId === item.id)) {
+      return { ok: false, message: `${item.name} is already on this sheet.` };
+    }
+    addLibraryItem(item);
+    return { ok: true, message: `${item.name} added to inventory.` };
+  };
+
+  const onSpellDrop = async (payload: VaultDragPayload) => {
+    if (vaultPayloadIsStaticSrd(payload) || isStaticSrdDragId(payload.id)) {
+      const inst = instantiateSrdEntity(payload.id, "spell", { name: payload.title });
+      if (!inst || inst.payload.target !== "spell") {
+        return { ok: false, message: "Could not instantiate that SRD spell." };
+      }
+      const spellKey = inst.payload.spellKey;
+      if (draft.knownSpellIds.includes(spellKey)) {
+        return { ok: false, message: "Spell already known." };
+      }
+      setDraft((d) => ({
+        ...d,
+        knownSpellIds: [...d.knownSpellIds, spellKey],
+        notes: `${d.notes.trim()}\n[instance:${inst.instanceId} _source:SRD spell:${spellKey}]`.trim(),
+      }));
+      return {
+        ok: true,
+        message: `${inst.name} instantiated from SRD (${inst.instanceId}).`,
+      };
+    }
+
+    const spellId = payload.id.includes(":")
+      ? payload.id.split(":").slice(1).join(":") || payload.id
+      : payload.id;
+    if (draft.knownSpellIds.includes(spellId)) {
+      return { ok: false, message: "Spell already known." };
+    }
+    setDraft((d) => ({
+      ...d,
+      knownSpellIds: [...d.knownSpellIds, spellId],
+    }));
+    return { ok: true, message: `${payload.title} added to known spells.` };
+  };
+
+  const onEffectDrop = async (payload: VaultDragPayload) => {
+    if (vaultPayloadIsStaticSrd(payload) || isStaticSrdDragId(payload.id)) {
+      const inst = instantiateSrdEntity(payload.id, "effect", { name: payload.title });
+      if (!inst || inst.payload.target !== "effect") {
+        return { ok: false, message: "Could not instantiate that SRD effect." };
+      }
+      const modifier = inst.payload.modifier;
+      setDraft((d) => linkModifierToCharacter(d as PlayerCharacter, modifier) as Draft);
+      return {
+        ok: true,
+        message: `${inst.name} instantiated from SRD as an effect (${inst.instanceId}).`,
+      };
+    }
+
+    setDraft((d) =>
+      linkModifierToCharacter(d as PlayerCharacter, {
+        sourceKind: "creation-file",
+        sourceLabel: payload.title,
+        sourceCfId: payload.id,
+        target: "wis",
+        value: 0,
+        active: true,
+        notes: `Linked from ${payload.ciClass}`,
+      }) as Draft,
+    );
+    return { ok: true, message: `${payload.title} linked as an active effect.` };
   };
 
   /** Reference an SRD equipment or magic item (read-only Creation File (CF) — not copied to item storage). */
@@ -295,6 +426,14 @@ export default function CharacterEditorDialog({
       items: draft.items.filter((i) => i.name.trim() !== ""),
     };
     try {
+      if (!character) {
+        const allowed = await gateFirstCustomCfSave(cleaned.name.trim() || "new hero");
+        if (!allowed) {
+          setSaving(false);
+          setError("Save cancelled — configure Arcane Vault storage to continue.");
+          return;
+        }
+      }
       const list = character
         ? await updateCharacterInLibrary(character.id, cleaned)
         : await saveCharacterToLibrary({ player: cleaned, source: "created" });
@@ -531,140 +670,189 @@ export default function CharacterEditorDialog({
           </label>
         </div>
 
-        <div className="mt-4">
-          <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-bold tracking-wide uppercase">Gear &amp; items</p>
-            <div className="flex flex-wrap items-center gap-1">
-              {libraryItems.length > 0 ? (
-                <select
-                  value=""
-                  onChange={(e) => {
-                    const item = libraryItems.find((i) => i.id === e.target.value);
-                    if (item) addLibraryItem(item);
-                  }}
-                  className="rounded border px-2 py-0.5 text-[10px] font-semibold"
-                  style={{ borderColor: "var(--accent-dim)", background: "var(--bg)" }}
-                  aria-label="Add gear from your item library"
-                >
-                  <option value="">From item library…</option>
-                  {libraryItems.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.name}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-              {srdEquipment.length > 0 || srdMagicItems.length > 0 ? (
-                <select
-                  value=""
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    if (!raw) return;
-                    const [resource, index] = raw.split(":");
-                    if (resource !== "equipment" && resource !== "magic-items") return;
-                    const list = resource === "equipment" ? srdEquipment : srdMagicItems;
-                    const hit = list.find((i) => i.index === index);
-                    if (hit) {
-                      addSrdItem(
-                        srdItemRefFromApi(resource, hit.index, hit.name),
-                      );
-                    }
-                  }}
-                  className="rounded border px-2 py-0.5 text-[10px] font-semibold"
-                  style={{ borderColor: "var(--accent-dim)", background: "var(--bg)" }}
-                  aria-label="Add gear from the SRD catalogue"
-                >
-                  <option value="">From SRD…</option>
-                  {srdEquipment.length > 0 ? (
-                    <optgroup label="SRD equipment">
-                      {srdEquipment.map((i) => (
-                        <option key={`eq-${i.index}`} value={`equipment:${i.index}`}>
-                          {i.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ) : null}
-                  {srdMagicItems.length > 0 ? (
-                    <optgroup label="SRD magic items">
-                      {srdMagicItems.map((i) => (
-                        <option key={`mi-${i.index}`} value={`magic-items:${i.index}`}>
-                          {i.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ) : null}
-                </select>
-              ) : null}
-              <button
-                type="button"
-                onClick={addItem}
-                className="rounded border px-2 py-0.5 text-[10px] font-semibold"
-                style={{ borderColor: "var(--accent-dim)" }}
-              >
-                Add item
-              </button>
-            </div>
-          </div>
-          {draft.items.length === 0 ? (
-            <p className="text-xs text-[var(--muted)]">
-              No gear yet. Stat bonuses (like +1 armor) can be tuned on the Virtual Table sheet.
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {draft.items.map((item) => {
-                const srdRef = parseSrdItemRefFromNotes(item.notes, item.name);
-                return (
-                <li key={item.id} className="flex flex-wrap items-center gap-2">
-                  <input
-                    value={item.name}
-                    onChange={(e) => patchItem(item.id, { name: e.target.value })}
-                    placeholder="Item name"
-                    className="min-w-0 flex-1 rounded border px-2 py-1.5 text-sm"
-                    style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-                    aria-label="Item name"
-                  />
-                  <input
-                    value={item.notes}
-                    onChange={(e) => patchItem(item.id, { notes: e.target.value })}
-                    placeholder="Notes (optional)"
-                    className="min-w-0 flex-1 rounded border px-2 py-1.5 text-sm"
-                    style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-                    aria-label="Item notes"
-                  />
-                  {srdRef ? (
-                    <button
-                      type="button"
-                      onClick={() => openSrdItemPreview(srdRef)}
-                      className="rounded border px-2 py-1 text-xs font-semibold text-[var(--accent)]"
-                      style={{ borderColor: "var(--accent-dim)" }}
-                      title={`Open ${srdRef.name} rules in the ${PREVIEW_WINDOW}`}
-                    >
-                      Rules
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                    className="rounded border px-2 py-1 text-xs text-red-800"
-                    style={{ borderColor: "var(--border)" }}
-                    aria-label={`Remove ${item.name || "item"}`}
+        <CharacterContainerSlots
+          characterId={draft.id}
+          linkedModifiers={draft.linkedModifiers ?? []}
+          onInventoryDrop={onInventoryDrop}
+          onSpellDrop={onSpellDrop}
+          onEffectDrop={onEffectDrop}
+          inventoryChildren={
+            <>
+              <div className="mb-1 flex flex-wrap items-center justify-end gap-1">
+                {libraryItems.length > 0 ? (
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const item = libraryItems.find((i) => i.id === e.target.value);
+                      if (item) addLibraryItem(item);
+                    }}
+                    className="rounded border px-2 py-0.5 text-[10px] font-semibold"
+                    style={{ borderColor: "var(--accent-dim)", background: "var(--bg)" }}
+                    aria-label="Add gear from your item library"
                   >
-                    Remove
-                  </button>
-                </li>
-              );
-              })}
-            </ul>
-          )}
-        </div>
+                    <option value="">From item library…</option>
+                    {libraryItems.map((i) => (
+                      <option key={i.id} value={i.id}>
+                        {i.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+                {srdEquipment.length > 0 || srdMagicItems.length > 0 ? (
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (!raw) return;
+                      const [resource, index] = raw.split(":");
+                      if (resource !== "equipment" && resource !== "magic-items") return;
+                      const list = resource === "equipment" ? srdEquipment : srdMagicItems;
+                      const hit = list.find((i) => i.index === index);
+                      if (hit) {
+                        addSrdItem(srdItemRefFromApi(resource, hit.index, hit.name));
+                      }
+                    }}
+                    className="rounded border px-2 py-0.5 text-[10px] font-semibold"
+                    style={{ borderColor: "var(--accent-dim)", background: "var(--bg)" }}
+                    aria-label="Add gear from the SRD catalogue"
+                  >
+                    <option value="">From SRD…</option>
+                    {srdEquipment.length > 0 ? (
+                      <optgroup label="SRD equipment">
+                        {srdEquipment.map((i) => (
+                          <option key={`eq-${i.index}`} value={`equipment:${i.index}`}>
+                            {i.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : null}
+                    {srdMagicItems.length > 0 ? (
+                      <optgroup label="SRD magic items">
+                        {srdMagicItems.map((i) => (
+                          <option key={`mi-${i.index}`} value={`magic-items:${i.index}`}>
+                            {i.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : null}
+                  </select>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="rounded border px-2 py-0.5 text-[10px] font-semibold"
+                  style={{ borderColor: "var(--accent-dim)" }}
+                >
+                  Add item
+                </button>
+              </div>
+              {draft.items.length === 0 ? (
+                <p className="text-xs text-[var(--muted)]">
+                  Drop gear here, or add from the lists. Stat bonuses recalculate when equipped.
+                </p>
+              ) : (
+                <ul className="flex flex-col gap-2">
+                  {draft.items.map((item) => {
+                    const srdRef = parseSrdItemRefFromNotes(item.notes, item.name);
+                    return (
+                      <li key={item.id} className="flex flex-wrap items-center gap-2">
+                        <input
+                          value={item.name}
+                          onChange={(e) => patchItem(item.id, { name: e.target.value })}
+                          placeholder="Item name"
+                          className="min-w-0 flex-1 rounded border px-2 py-1.5 text-sm"
+                          style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+                          aria-label="Item name"
+                        />
+                        <input
+                          value={item.notes}
+                          onChange={(e) => patchItem(item.id, { notes: e.target.value })}
+                          placeholder="Notes (optional)"
+                          className="min-w-0 flex-1 rounded border px-2 py-1.5 text-sm"
+                          style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+                          aria-label="Item notes"
+                        />
+                        {srdRef ? (
+                          <button
+                            type="button"
+                            onClick={() => openSrdItemPreview(srdRef)}
+                            className="rounded border px-2 py-1 text-xs font-semibold text-[var(--accent)]"
+                            style={{ borderColor: "var(--accent-dim)" }}
+                            title={`Open ${srdRef.name} rules in the ${PREVIEW_WINDOW}`}
+                          >
+                            Rules
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.id)}
+                          className="rounded border px-2 py-1 text-xs text-red-800"
+                          style={{ borderColor: "var(--border)" }}
+                          aria-label={`Remove ${item.name || "item"}`}
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </>
+          }
+          spellChildren={
+            <>
+              <SrdSpellPicker
+                className={draft.className}
+                selectedIds={draft.knownSpellIds}
+                onChange={(ids) => {
+                  set("knownSpellIds", ids);
+                  setDraft((d) => ({
+                    ...d,
+                    knownSpellIds: ids,
+                    preparedSpellIds: d.preparedSpellIds.filter((id) => ids.includes(id)),
+                  }));
+                }}
+              />
+              <div className="mt-3">
+                <h3 className="text-sm font-bold text-[var(--text)]">Prepared / Memorized</h3>
+                <div className="mt-2">
+                  <PreparedSpellsByLevel
+                    knownSpellIds={draft.knownSpellIds}
+                    preparedSpellIds={draft.preparedSpellIds}
+                    onChangePrepared={(ids) => set("preparedSpellIds", ids)}
+                  />
+                </div>
+              </div>
+            </>
+          }
+        />
 
-        <div className="mt-4">
-          <SrdSpellPicker
-            className={draft.className}
-            selectedIds={draft.knownSpellIds}
-            onChange={(ids) => set("knownSpellIds", ids)}
-          />
-        </div>
+        {(() => {
+          const live = effectiveStatsForCharacter({
+            ...draft,
+            tokenId: null,
+          } as PlayerCharacter);
+          const activeMods = live.appliedModifiers.filter((m) => m.value !== 0);
+          if (activeMods.length === 0) return null;
+          return (
+            <div className="mt-4 rounded-md border p-3" style={{ borderColor: "var(--border)" }}>
+              <h3 className="text-sm font-bold text-[var(--text)]">Active modifiers</h3>
+              <p className="mt-1 text-xs text-[var(--text-soft)]">
+                Equipped gear and linked Creation Files recalculate stats live (e.g. a curse can
+                lower Wisdom).
+              </p>
+              <ul className="mt-2 space-y-1 text-xs text-[var(--text)]">
+                {activeMods.map((mod) => (
+                  <li key={mod.id}>{formatModifierLine(mod)}</li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-[var(--text-soft)]">
+                Effective AC {live.ac.total} · HP {live.maxHp.total} · Init{" "}
+                {formatMod(live.initiative.total)} · PP {live.passivePerception.total}
+              </p>
+            </div>
+          );
+        })()}
 
         <label className="mt-4 flex flex-col gap-1 text-xs">
           <span className="font-semibold">Notes</span>

@@ -47,6 +47,21 @@ export {
   srdEntityToPreviewMarkdown,
   SRD_ENTITIES,
 } from "./corpus";
+
+export {
+  instantiateSrdEntity,
+  instantiateTargetForSlot,
+  isInstantiatedCF,
+  isStaticSRDReference,
+  isStaticSrdDragId,
+  isSrdInstantiatedItem,
+  makeSrdInstanceId,
+  toStaticSRDReference,
+  type InstantiatedCF,
+  type InstantiatedPayload,
+  type StaticSRDReference,
+  type SrdInstanceSource,
+} from "./instantiateSrdEntity";
 export { SRD_ENTITY_COUNTS, SRD_TAXONOMY_COUNTS } from "./srdEntities.data";
 export { SRD_ORPHANS, SRD_ORPHAN_COUNT } from "./srdOrphans.data";
 export { SRD_SPELL_INDEX } from "./spellIndex.data";

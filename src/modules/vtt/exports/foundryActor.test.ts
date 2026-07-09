@@ -29,6 +29,8 @@ const sampleHero: PlayerCharacter = {
     },
   ],
   knownSpellIds: ["fireball"],
+  preparedSpellIds: ["fireball"],
+  linkedModifiers: [],
   currentHp: 22,
   tokenId: null,
 };

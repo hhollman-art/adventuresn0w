@@ -187,6 +187,8 @@ function parseCharacterBlock(
     notes: collectNotes(body),
     items: [],
     knownSpellIds: [],
+    preparedSpellIds: [],
+    linkedModifiers: [],
     currentHp: null,
   };
 }

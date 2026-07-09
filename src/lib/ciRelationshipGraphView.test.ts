@@ -14,6 +14,10 @@ const campaign: SavedCampaign = {
   resultIds: [],
   characterIds: ["char-1"],
   itemIds: [],
+  unassignedLootIds: [],
+  npcIds: [],
+  locationIds: [],
+  sessionRecordIds: [],
 };
 
 const data = {
@@ -51,6 +55,8 @@ const data = {
         notes: "",
         items: [],
         knownSpellIds: [],
+    preparedSpellIds: [],
+    linkedModifiers: [],
         currentHp: null,
         tokenId: null,
       },

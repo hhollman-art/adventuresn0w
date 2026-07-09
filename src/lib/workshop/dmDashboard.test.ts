@@ -36,7 +36,24 @@ describe("dmDashboard", () => {
 
   it("merges live and shelved table sessions by recency", () => {
     const sessions = buildRecentSessions(
-      [{ id: "c1", name: "Curse of Fog", description: "", createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z", partyId: null, seedIds: [], resultIds: [], characterIds: [], itemIds: [] }],
+      [
+        {
+          id: "c1",
+          name: "Curse of Fog",
+          description: "",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          partyId: null,
+          seedIds: [],
+          resultIds: [],
+          characterIds: [],
+          itemIds: [],
+          unassignedLootIds: [],
+          npcIds: [],
+          locationIds: [],
+          sessionRecordIds: [],
+        },
+      ],
       "c1",
       "2026-07-05T12:00:00.000Z",
       "Tavern brawl",

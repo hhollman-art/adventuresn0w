@@ -30,6 +30,8 @@ const roster: SavedCharacterRoster = {
       notes: "Knows fire bolt",
       items: [{ id: "i1", name: "Cloak of protection", notes: "", bonuses: { ac: 1, maxHp: 0, speed: 0, initiative: 0, passivePerception: 0, str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 } }],
       knownSpellIds: [],
+    preparedSpellIds: [],
+    linkedModifiers: [],
       currentHp: 18,
       tokenId: null,
     },

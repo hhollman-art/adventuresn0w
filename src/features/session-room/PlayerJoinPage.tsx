@@ -31,6 +31,8 @@ function defaultByodCharacter(displayName: string): PlayerCharacter {
     notes: "",
     items: [],
     knownSpellIds: [],
+    preparedSpellIds: [],
+    linkedModifiers: [],
     currentHp: null,
     tokenId: null,
   };

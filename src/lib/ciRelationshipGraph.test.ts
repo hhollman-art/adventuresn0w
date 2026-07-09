@@ -19,6 +19,10 @@ const campaign: SavedCampaign = {
   resultIds: ["result-1"],
   characterIds: ["char-1"],
   itemIds: ["item-1"],
+  unassignedLootIds: [],
+  npcIds: [],
+  locationIds: [],
+  sessionRecordIds: [],
 };
 
 describe("ciRelationshipGraph", () => {
