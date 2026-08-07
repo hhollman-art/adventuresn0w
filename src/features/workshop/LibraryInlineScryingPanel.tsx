@@ -14,6 +14,7 @@ export type LibraryInlineScryingPanelProps = {
   onEditResult?: () => void;
   onSavePartyVtt?: (selectedIndices: number[]) => void;
   onLoadPartyVtt?: () => void;
+  onSaveToLibrary?: () => void;
 };
 
 export default function LibraryInlineScryingPanel({
@@ -25,6 +26,7 @@ export default function LibraryInlineScryingPanel({
   onEditResult,
   onSavePartyVtt,
   onLoadPartyVtt,
+  onSaveToLibrary,
 }: LibraryInlineScryingPanelProps) {
   if (!hasSelection || !snapshot) {
     return (
@@ -54,6 +56,7 @@ export default function LibraryInlineScryingPanel({
       onEditResult={onEditResult}
       onSavePartyVtt={onSavePartyVtt}
       onLoadPartyVtt={onLoadPartyVtt}
+      onSaveToLibrary={onSaveToLibrary}
     />
   );
 }

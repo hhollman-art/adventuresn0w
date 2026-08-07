@@ -35,6 +35,8 @@ function customSrdPreviewSnapshot(entry: SavedCustomSrdEntry): WorkshopPreviewSn
     showSavePartyVtt: false,
     showLoadPartyVtt: false,
     viewingPartyId: null,
+    showPrimaryCommit: false,
+    primaryCommitLabel: "Save to Library",
     updatedAt: new Date().toISOString(),
   };
 }

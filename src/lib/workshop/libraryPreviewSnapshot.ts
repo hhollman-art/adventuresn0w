@@ -23,6 +23,7 @@ import type { SavedLocation } from "@/lib/worldAssets/location";
 import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
 import type { WorkshopPreviewSnapshot } from "@/lib/workshop/previewSnapshot";
 import { resolvePreviewCiClass } from "@/lib/workshop/previewCiClass";
+import { planPreviewCommit } from "@/lib/workshop/previewCommit";
 
 export type BuildLibraryPreviewSnapshotParams = {
   selection: LibraryViewSelection;
@@ -39,6 +40,7 @@ export type BuildLibraryPreviewSnapshotParams = {
   srdPreviewMarkdown?: string;
   srdPreviewLoading?: boolean;
   workspace?: string;
+  partySaveMessage?: string | null;
 };
 
 function libraryPreviewMarkdown(params: BuildLibraryPreviewSnapshotParams): string {
@@ -221,6 +223,16 @@ export function buildLibraryPreviewSnapshot(
     editKind = "library-result";
   }
 
+  const commitPlan = planPreviewCommit({
+    hasContent: Boolean(previewMarkdown.trim() || previewImages.length > 0),
+    loading: false,
+    isSrdPreview: isSrd,
+    showHeroRecruit: false,
+    isLibraryView: true,
+    hasViewingResult: Boolean(viewingResult),
+    committedLibraryId: viewingResult?.id ?? null,
+  });
+
   return {
     markdown: previewMarkdown,
     images: previewImages,
@@ -250,7 +262,7 @@ export function buildLibraryPreviewSnapshot(
     imageLoading: false,
     error: null,
     imageError: null,
-    partySaveMessage: null,
+    partySaveMessage: params.partySaveMessage ?? null,
     srdLoading,
     autoMapEnabled: false,
     autoPropsEnabled: false,
@@ -261,6 +273,8 @@ export function buildLibraryPreviewSnapshot(
     showSavePartyVtt: false,
     showLoadPartyVtt: Boolean(viewingParty),
     viewingPartyId: viewingParty?.id ?? null,
+    showPrimaryCommit: commitPlan.show,
+    primaryCommitLabel: commitPlan.label || "Save to Library",
     updatedAt: new Date().toISOString(),
   };
 }

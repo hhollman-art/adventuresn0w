@@ -15,6 +15,7 @@ export type ScryingContentPanelProps = {
   onEditResult?: () => void;
   onSavePartyVtt?: (selectedIndices: number[]) => void;
   onLoadPartyVtt?: () => void;
+  onSaveToLibrary?: () => void;
 };
 
 /** Shared Scrying Glass body — popup modal or Library inline panel. */
@@ -27,6 +28,7 @@ export default function ScryingContentPanel({
   onEditResult,
   onSavePartyVtt,
   onLoadPartyVtt,
+  onSaveToLibrary,
 }: ScryingContentPanelProps) {
   const popupMode = variant === "popup";
   const frameClass =
@@ -80,6 +82,7 @@ export default function ScryingContentPanel({
             onEditResult={onEditResult}
             onSavePartyVtt={onSavePartyVtt}
             onLoadPartyVtt={onLoadPartyVtt}
+            onSaveToLibrary={onSaveToLibrary}
           />
         </div>
       </div>

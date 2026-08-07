@@ -5,15 +5,17 @@ import Image from "next/image";
 import Link from "next/link";
 import OutputMarkdownCarousel from "@/features/workshop/OutputMarkdownCarousel";
 import HeroScrySelection from "@/features/workshop/HeroScrySelection";
+import ScryingExportMenu, {
+  type ScryingExportAction,
+} from "@/features/workshop/ScryingExportMenu";
 import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 import { ciClassVisual } from "@/lib/ui/ciClassVisuals";
 import { fantasyCiLabel } from "@/lib/workshop/libraryBrowseFilters";
 import type { LibraryImage } from "@/lib/generationLibrary";
 import {
   copyMarkdownText,
-  downloadHtmlFile,
+  downloadDmmsCreationFileJson,
   downloadMapImage,
-  downloadMarkdownFile,
   fileBaseName,
   previewMarkdownToHtml,
   type PreviewExportMode,
@@ -32,6 +34,7 @@ type WorkshopPreviewPanelProps = {
   onEditResult?: () => void;
   onSavePartyVtt?: (selectedIndices: number[]) => void;
   onLoadPartyVtt?: () => void;
+  onSaveToLibrary?: () => void;
 };
 
 function MapImageBlock({
@@ -111,6 +114,7 @@ export default function WorkshopPreviewPanel({
   onEditResult,
   onSavePartyVtt,
   onLoadPartyVtt,
+  onSaveToLibrary,
 }: WorkshopPreviewPanelProps) {
   const {
     markdown: previewMarkdown,
@@ -134,16 +138,23 @@ export default function WorkshopPreviewPanel({
     editKind,
     showSavePartyVtt,
     showLoadPartyVtt,
+    showPrimaryCommit,
+    primaryCommitLabel,
   } = snapshot;
 
   const exportMode = (outputLayoutKind || workspace || "adventure") as PreviewExportMode;
   const exportBaseName = fileBaseName(previewMarkdown, exportMode);
-  const hasContent = previewMarkdown.trim() || previewImages.length > 0;
+  const hasContent = Boolean(previewMarkdown.trim() || previewImages.length > 0);
   const ciVisual = ciClass ? ciClassVisual(ciClass) : null;
   const [recruitBusy, setRecruitBusy] = useState(false);
+  const [commitBusy, setCommitBusy] = useState(false);
+  const [exportNotice, setExportNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    if (partySaveMessage) setRecruitBusy(false);
+    if (partySaveMessage) {
+      setRecruitBusy(false);
+      setCommitBusy(false);
+    }
   }, [partySaveMessage]);
 
   function handleEdit() {
@@ -174,9 +185,45 @@ export default function WorkshopPreviewPanel({
     else onLoadPartyVtt?.();
   }
 
+  function handlePrimaryCommit() {
+    setCommitBusy(true);
+    setExportNotice(null);
+    if (popupMode) {
+      postPreviewAction("save-to-library");
+      return;
+    }
+    onSaveToLibrary?.();
+  }
+
+  function handleExportAction(action: ScryingExportAction) {
+    setExportNotice(null);
+    if (action === "copy-text") {
+      if (!previewMarkdown.trim()) {
+        setExportNotice("Nothing to copy yet.");
+        return;
+      }
+      copyMarkdownText(previewMarkdown);
+      setExportNotice("Copied text to your clipboard.");
+      return;
+    }
+    if (action === "print-pdf") {
+      window.print();
+      return;
+    }
+    downloadDmmsCreationFileJson({
+      markdown: previewMarkdown,
+      images: previewImages,
+      textModel: previewTextModel,
+      imageModel: previewImageModel,
+      mode: exportMode,
+      ciClass,
+    });
+    setExportNotice("Downloaded a DMMS Creation File (JSON) for backup or sharing.");
+  }
+
   return (
     <section
-      className="preview-window-panel fantasy-panel print-generation-root panel-scroll panel-scroll--scrying-glass min-h-0 flex-1 rounded-xl border p-6"
+      className="preview-window-panel fantasy-panel print-generation-root panel-scroll panel-scroll--scrying-glass flex min-h-0 flex-1 flex-col rounded-xl border p-6"
       data-ci-class={ciClass ?? undefined}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -185,12 +232,13 @@ export default function WorkshopPreviewPanel({
             {ciClass && ciVisual ? (
               <span
                 className="scrying-glass-ci-class"
-                style={{ borderColor: ciVisual.accent, color: ciVisual.accent }}
+                style={{ borderColor: ciVisual.accent }}
                 title={ciClass}
               >
-                <span aria-hidden="true">{ciVisual.icon}</span>
-                <span>{fantasyCiLabel(ciClass)}</span>
-                <span className="scrying-glass-ci-class-key">{ciClass}</span>
+                <span className="scrying-glass-ci-class-icon" aria-hidden="true">
+                  {ciVisual.icon}
+                </span>
+                <span className="scrying-glass-ci-class-label">{fantasyCiLabel(ciClass)}</span>
               </span>
             ) : null}
             {viewingLabel ? (
@@ -209,7 +257,7 @@ export default function WorkshopPreviewPanel({
           <div className="min-w-0 flex-1" />
         )}
         {hasContent ? (
-          <div className="no-print flex flex-wrap gap-2">
+          <div className="scrying-glass-toolbar no-print flex flex-wrap items-center justify-end gap-2">
             {previewMarkdown.trim() && canEdit ? (
               <button
                 type="button"
@@ -226,79 +274,47 @@ export default function WorkshopPreviewPanel({
                     : "Edit"}
               </button>
             ) : null}
-            {previewMarkdown.trim() ? (
+            <ScryingExportMenu
+              disabled={!hasContent || loading}
+              onAction={handleExportAction}
+            />
+            {showSavePartyVtt ? (
               <>
-                <button
-                  type="button"
-                  onClick={() => copyMarkdownText(previewMarkdown)}
+                <Link
+                  href="/tavern"
                   className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
                   style={{ borderColor: "var(--border)" }}
                 >
-                  Copy Markdown
-                </button>
-                <button
-                  type="button"
-                  onClick={() => downloadMarkdownFile(previewMarkdown, exportMode)}
+                  The Tavern
+                </Link>
+                <Link
+                  href="/table"
                   className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                  style={{ borderColor: "var(--border)" }}
+                  style={{ borderColor: "var(--accent-dim)" }}
                 >
-                  Download .md
-                </button>
-                <button
-                  type="button"
-                  onClick={() => downloadHtmlFile(previewMarkdown, exportMode)}
-                  className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                  style={{ borderColor: "var(--border)" }}
-                >
-                  Download .html
-                </button>
-                {showSavePartyVtt ? (
-                  <>
-                    <Link
-                      href="/tavern"
-                      className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                      style={{ borderColor: "var(--border)" }}
-                    >
-                      The Tavern
-                    </Link>
-                    <Link
-                      href="/table"
-                      className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                      style={{ borderColor: "var(--accent-dim)" }}
-                    >
-                      Virtual Table
-                    </Link>
-                  </>
-                ) : null}
-                {showLoadPartyVtt ? (
-                  <>
-                    <Link
-                      href="/tavern"
-                      className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                      style={{ borderColor: "var(--border)" }}
-                    >
-                      Manage party
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={handleLoadParty}
-                      className="rounded-md px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-                      style={{ background: "var(--accent)" }}
-                    >
-                      Load to VTT
-                    </button>
-                  </>
-                ) : null}
+                  Virtual Table
+                </Link>
               </>
             ) : null}
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="rounded-md px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-              style={{ background: "var(--accent)" }}
-            >
-              Print
-            </button>
+            {showLoadPartyVtt ? (
+              <>
+                <Link
+                  href="/tavern"
+                  className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  Manage party
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLoadParty}
+                  className="rounded-md px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                  style={{ background: "var(--accent)" }}
+                >
+                  Load to VTT
+                </button>
+              </>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -316,6 +332,11 @@ export default function WorkshopPreviewPanel({
           {partySaveMessage}
         </p>
       ) : null}
+      {exportNotice ? (
+        <p className="scrying-glass-status no-print mt-2 rounded-lg border px-3 py-2 text-xs" role="status">
+          {exportNotice}
+        </p>
+      ) : null}
 
       {showSavePartyVtt && previewMarkdown.trim() && !loading ? (
         <HeroScrySelection
@@ -325,12 +346,11 @@ export default function WorkshopPreviewPanel({
         />
       ) : null}
 
-      {previewMarkdown.trim() ? (
+      {previewMarkdown.trim() && !showSavePartyVtt ? (
         <p className="no-print mt-2 max-w-xl text-xs leading-relaxed text-[var(--muted)]">
-          Tip: use <strong className="text-[var(--text)]/80">Print</strong> above to get text and
-          map images together (choose &ldquo;Save as PDF&rdquo; in the print window). You can also
-          export as <strong className="text-[var(--text)]/80">.md</strong> or{" "}
-          <strong className="text-[var(--text)]/80">.html</strong> files for notes apps.
+          Save keeps this Creation File in your Library. Use{" "}
+          <strong className="text-[var(--text)]/80">Export Options</strong> only when you need a
+          backup file, clipboard text, or a printed PDF for the table.
         </p>
       ) : null}
 
@@ -345,53 +365,74 @@ export default function WorkshopPreviewPanel({
         </p>
       ) : null}
 
-      {previewMarkdown.trim() ? (
-        <OutputMarkdownCarousel
-          html={previewMarkdownToHtml(previewMarkdown, isSrdPreview)}
-          enableSpellLinks={isSrdPreview || ciClass === "npc.record" || ciClass === "rules.custom-entry"}
-        />
-      ) : null}
+      <div className="min-h-0 flex-1">
+        {previewMarkdown.trim() ? (
+          <OutputMarkdownCarousel
+            html={previewMarkdownToHtml(previewMarkdown, isSrdPreview)}
+            enableSpellLinks={isSrdPreview || ciClass === "npc.record" || ciClass === "rules.custom-entry"}
+          />
+        ) : null}
 
-      {isSrdPreview && srdLoading ? (
-        <p className="no-print mt-4 text-sm text-[var(--muted)]">Loading SRD entry…</p>
-      ) : null}
+        {isSrdPreview && srdLoading ? (
+          <p className="no-print mt-4 text-sm text-[var(--muted)]">Loading SRD entry…</p>
+        ) : null}
 
-      <MapImageBlock mapImages={previewImages} exportBaseName={exportBaseName} />
+        <MapImageBlock mapImages={previewImages} exportBaseName={exportBaseName} />
 
-      {isLibraryView && !isSrdPreview && !previewMarkdown.trim() && previewImages.length === 0 ? (
-        <div className="library-preview-empty no-print mt-6">
-          <p className="text-sm text-[var(--muted)]">
-            Choose any entry in{" "}
-            <strong className="text-[var(--text)]">Search the stacks</strong> on the main window to
-            read it here — then copy, export, or print.
+        {isLibraryView && !isSrdPreview && !previewMarkdown.trim() && previewImages.length === 0 ? (
+          <div className="library-preview-empty no-print mt-6">
+            <p className="text-sm text-[var(--muted)]">
+              Choose any entry in{" "}
+              <strong className="text-[var(--text)]">Search the stacks</strong> on the main window to
+              read it here — then save it to a campaign or export if you need a shareable copy.
+            </p>
+          </div>
+        ) : isSrdPreview && !previewMarkdown.trim() && !srdLoading ? (
+          <p className="no-print mt-6 text-sm text-[var(--muted)]">
+            Could not load this SRD entry. Close the {PREVIEW_WINDOW}, pick the entry again, or check
+            your connection.
           </p>
-        </div>
-      ) : isSrdPreview && !previewMarkdown.trim() && !srdLoading ? (
-        <p className="no-print mt-6 text-sm text-[var(--muted)]">
-          Could not load this SRD entry. Close the {PREVIEW_WINDOW}, pick the entry again, or check
-          your connection.
-        </p>
-      ) : null}
+        ) : null}
 
-      {!loading && !error && !previewMarkdown.trim() && previewImages.length === 0 && !isLibraryView ? (
-        <p className="no-print mt-8 text-sm text-[var(--muted)]">{workspaceEmptyHint(workspace)}</p>
-      ) : null}
+        {!loading && !error && !previewMarkdown.trim() && previewImages.length === 0 && !isLibraryView ? (
+          <p className="no-print mt-8 text-sm text-[var(--muted)]">{workspaceEmptyHint(workspace)}</p>
+        ) : null}
 
-      {loading ? (
-        <p className="no-print mt-8 animate-pulse text-sm text-[var(--muted)]">
-          {workspace === "adventure" || workspace === "characters" || workspace === "realm"
-            ? "Calling Claude…"
-            : "Working on images… this can take a minute."}
-        </p>
-      ) : null}
-      {imageLoading ? (
-        <p className="no-print mt-2 animate-pulse text-sm text-[var(--muted)]">
-          {workspace === "props"
-            ? "Rendering item image…"
-            : workspace === "realm"
-              ? "Draw Realm…"
-              : "Rendering maps and handouts (batched API calls)…"}
-        </p>
+        {loading ? (
+          <p className="no-print mt-8 animate-pulse text-sm text-[var(--muted)]">
+            {workspace === "adventure" || workspace === "characters" || workspace === "realm"
+              ? "Calling Claude…"
+              : "Working on images… this can take a minute."}
+          </p>
+        ) : null}
+        {imageLoading ? (
+          <p className="no-print mt-2 animate-pulse text-sm text-[var(--muted)]">
+            {workspace === "props"
+              ? "Rendering item image…"
+              : workspace === "realm"
+                ? "Draw Realm…"
+                : "Rendering maps and handouts (batched API calls)…"}
+          </p>
+        ) : null}
+      </div>
+
+      {showPrimaryCommit ? (
+        <footer className="scrying-glass-commit-footer no-print mt-4 shrink-0 border-t pt-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] text-[var(--muted)]">
+              Saves into your local Library — no file download.
+            </p>
+            <button
+              type="button"
+              disabled={commitBusy || loading || !hasContent}
+              onClick={handlePrimaryCommit}
+              className="rounded-md px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+              style={{ background: "var(--accent)" }}
+            >
+              {commitBusy ? "Saving…" : primaryCommitLabel}
+            </button>
+          </div>
+        </footer>
       ) : null}
     </section>
   );

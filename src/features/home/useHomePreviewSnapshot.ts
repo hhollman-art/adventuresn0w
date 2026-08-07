@@ -31,6 +31,10 @@ import { THE_TAVERN } from "@/lib/workplace/forgeLexicon";
 import { buildSrdRuleBundleMarkdown } from "@/lib/srd/srdRuleBundles";
 import { buildLibraryPreviewSnapshot } from "@/lib/workshop/libraryPreviewSnapshot";
 import {
+  commitPreviewToLibrary,
+  planPreviewCommit,
+} from "@/lib/workshop/previewCommit";
+import {
   isPreviewReadyMessage,
   PREVIEW_SYNC_CHANNEL,
   publishPreviewSnapshot,
@@ -75,6 +79,11 @@ export type UseHomePreviewSnapshotParams = {
   openEditSeedEditor: (id: string) => void;
   openLibraryResultEditor: () => void;
   openCustomSrdEditor: (id: string) => void;
+  /** Autosaved / last committed generation library id for the forge preview. */
+  currentResultLibraryId: string | null;
+  setCurrentResultLibraryId: (id: string | null) => void;
+  setLibraryResults: (items: LibraryItem[]) => void;
+  titleHint: string;
 };
 
 export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
@@ -114,6 +123,10 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
     openEditSeedEditor,
     openLibraryResultEditor,
     openCustomSrdEditor,
+    currentResultLibraryId,
+    setCurrentResultLibraryId,
+    setLibraryResults,
+    titleHint,
   } = params;
 
   const viewingSeed =
@@ -319,6 +332,45 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
               ? "adventure"
               : (workspace as LibraryKind);
 
+  async function saveToLibrary() {
+    const md = exportMarkdownForDownload();
+    const images = previewImages;
+    const showHeroRecruit =
+      !isLibraryView && outputLayoutKind === "characters" && Boolean(md.trim());
+    const plan = planPreviewCommit({
+      hasContent: Boolean(md.trim() || images.length > 0),
+      loading,
+      isSrdPreview:
+        librarySelection?.kind === "srd" || librarySelection?.kind === "srd-entity",
+      showHeroRecruit,
+      isLibraryView,
+      hasViewingResult: Boolean(viewingResult),
+      committedLibraryId: currentResultLibraryId,
+    });
+    setPartySaveMessage(null);
+    const result = await commitPreviewToLibrary({
+      markdown: md,
+      images,
+      textModel: previewTextModel,
+      imageModel: previewImageModel,
+      workspace: isLibraryView ? (viewingResult?.kind ?? outputLayoutKind) : workspace,
+      titleHint,
+      committedLibraryId: currentResultLibraryId,
+      viewingResult: viewingResult ?? null,
+      planKind: plan.kind,
+    });
+    if (!result.ok) {
+      setPartySaveMessage(result.error);
+      return;
+    }
+    if (result.libraryId) setCurrentResultLibraryId(result.libraryId);
+    setPartySaveMessage(result.message);
+    if (!isLibraryView || viewingResult) {
+      const { loadGenerationLibraryItems } = await import("@/lib/generationLibrary");
+      void loadGenerationLibraryItems().then(setLibraryResults);
+    }
+  }
+
   const libraryPreviewSnapshot = useMemo(() => {
     if (!isLibraryView || !librarySelection) return null;
     return buildLibraryPreviewSnapshot({
@@ -336,6 +388,7 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
       srdPreviewMarkdown,
       srdPreviewLoading,
       workspace,
+      partySaveMessage,
     });
   }, [
     isLibraryView,
@@ -353,6 +406,7 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
     srdPreviewMarkdown,
     srdPreviewLoading,
     workspace,
+    partySaveMessage,
   ]);
 
   const republishRef = useRef<(() => void) | null>(null);
@@ -377,6 +431,7 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
         srdPreviewMarkdown,
         srdPreviewLoading,
         workspace,
+        partySaveMessage,
       });
       if (snapshot) publishPreviewSnapshot(snapshot);
       return;
@@ -422,6 +477,23 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
       editKind = "library-result";
     }
 
+    const showHeroRecruit =
+      !isLibraryView &&
+      outputLayoutKind === "characters" &&
+      Boolean(previewMarkdown.trim());
+    const commitPlan = planPreviewCommit({
+      hasContent: Boolean(previewMarkdown.trim() || previewImages.length > 0),
+      loading: loading || imageLoading,
+      isSrdPreview:
+        librarySelection?.kind === "srd" || librarySelection?.kind === "srd-entity",
+      showHeroRecruit,
+      isLibraryView,
+      hasViewingResult: Boolean(viewingResult),
+      committedLibraryId: isLibraryView
+        ? (viewingResult?.id ?? null)
+        : currentResultLibraryId,
+    });
+
     publishPreviewSnapshot({
       markdown: previewMarkdown,
       images: previewImages,
@@ -461,10 +533,11 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
       isSrdPreview: false,
       canEdit,
       editKind,
-      showSavePartyVtt:
-        outputLayoutKind === "characters" && Boolean(previewMarkdown.trim()),
+      showSavePartyVtt: showHeroRecruit,
       showLoadPartyVtt: false,
       viewingPartyId: viewingParty?.id ?? null,
+      showPrimaryCommit: commitPlan.show,
+      primaryCommitLabel: commitPlan.label || "Save to Library",
       updatedAt: new Date().toISOString(),
     });
   };
@@ -568,6 +641,9 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
             window.location.href = "/table";
           }
           break;
+        case "save-to-library":
+          void saveToLibrary();
+          break;
         default:
           break;
       }
@@ -580,6 +656,7 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
     previewMarkdown,
     exportMarkdownForDownload,
     savePartyForVtt,
+    saveToLibrary,
     viewingSeed,
     viewingResult,
     viewingParty,

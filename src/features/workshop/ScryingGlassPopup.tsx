@@ -39,6 +39,8 @@ const EMPTY_SNAPSHOT: WorkshopPreviewSnapshot = {
   showSavePartyVtt: false,
   showLoadPartyVtt: false,
   viewingPartyId: null,
+  showPrimaryCommit: false,
+  primaryCommitLabel: "Save to Library",
   updatedAt: new Date(0).toISOString(),
 };
 

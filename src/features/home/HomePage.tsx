@@ -1383,6 +1383,7 @@ export default function Home(props: PageProps<"/">) {
   const {
     libraryPreviewSnapshot,
     savePartyForVtt,
+    saveToLibrary,
     viewingSeed: libraryViewingSeed,
   } = useHomePreviewSnapshot({
     isLibraryView,
@@ -1420,6 +1421,10 @@ export default function Home(props: PageProps<"/">) {
     openEditSeedEditor,
     openLibraryResultEditor,
     openCustomSrdEditor,
+    currentResultLibraryId,
+    setCurrentResultLibraryId,
+    setLibraryResults,
+    titleHint: form.titleHint,
   });
 
 
@@ -1689,6 +1694,7 @@ export default function Home(props: PageProps<"/">) {
               }}
               onEditResult={openLibraryResultEditor}
               onSavePartyVtt={(selectedIndices) => void savePartyForVtt(selectedIndices)}
+              onSaveToLibrary={() => void saveToLibrary()}
               onLoadPartyVtt={() => {
                 const partyId = libraryPreviewSnapshot?.viewingPartyId;
                 if (!partyId) return;

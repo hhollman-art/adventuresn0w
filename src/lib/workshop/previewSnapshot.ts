@@ -34,6 +34,9 @@ export type WorkshopPreviewSnapshot = {
   showSavePartyVtt: boolean;
   showLoadPartyVtt: boolean;
   viewingPartyId: string | null;
+  /** Primary footer commit into local Library / campaign (not a file download). */
+  showPrimaryCommit: boolean;
+  primaryCommitLabel: string;
   updatedAt: string;
 };
 
@@ -43,7 +46,8 @@ export type PreviewAction =
   | "edit-result"
   | "edit-custom-srd"
   | "save-party-vtt"
-  | "load-party-vtt";
+  | "load-party-vtt"
+  | "save-to-library";
 
 export const PREVIEW_READY_MESSAGE = "ddeasy-preview-ready";
 

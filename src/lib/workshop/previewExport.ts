@@ -107,6 +107,7 @@ function buildStandaloneHtmlDocument(title: string, bodyHtml: string): string {
 </html>`;
 }
 
+/** @deprecated Prefer Print / Save as PDF or Export DMMS JSON from the Scrying Glass. */
 export function downloadHtmlFile(md: string, mode: PreviewExportMode): void {
   if (!md.trim()) return;
   const title =
@@ -123,6 +124,74 @@ export function downloadHtmlFile(md: string, mode: PreviewExportMode): void {
   const doc = buildStandaloneHtmlDocument(title, markdownToBasicHtml(md));
   const name = `${fileBaseName(md, mode)}.html`;
   triggerDownload(new Blob([doc], { type: "text/html;charset=utf-8" }), name);
+}
+
+/** Portable Creation File envelope for backup or sharing with another DM. */
+export type DmmsCreationFileExport = {
+  format: "ddeasy-creation-file";
+  version: 1;
+  ciClass: string | null;
+  kind: string;
+  title: string;
+  markdown: string;
+  images: { kind: string; label?: string; imageDataUrl: string }[];
+  textModel: string | null;
+  imageModel: string | null;
+  exportedAt: string;
+};
+
+export function buildDmmsCreationFileExport(input: {
+  markdown: string;
+  images: { kind: string; label?: string; imageDataUrl: string }[];
+  textModel: string | null;
+  imageModel: string | null;
+  mode: PreviewExportMode;
+  ciClass: string | null;
+}): DmmsCreationFileExport {
+  const title =
+    firstHeading(input.markdown) ??
+    (input.mode === "realm"
+      ? "Realm"
+      : input.mode === "adventure"
+        ? "Adventure"
+        : input.mode === "characters"
+          ? "Heroes"
+          : input.mode === "props"
+            ? "Items"
+            : input.mode === "maps"
+              ? "Maps"
+              : "Creation File");
+  return {
+    format: "ddeasy-creation-file",
+    version: 1,
+    ciClass: input.ciClass,
+    kind: input.mode,
+    title,
+    markdown: input.markdown,
+    images: input.images,
+    textModel: input.textModel,
+    imageModel: input.imageModel,
+    exportedAt: new Date().toISOString(),
+  };
+}
+
+export function downloadDmmsCreationFileJson(input: {
+  markdown: string;
+  images: { kind: string; label?: string; imageDataUrl: string }[];
+  textModel: string | null;
+  imageModel: string | null;
+  mode: PreviewExportMode;
+  ciClass: string | null;
+}): void {
+  if (!input.markdown.trim() && input.images.length === 0) return;
+  const payload = buildDmmsCreationFileExport(input);
+  const name = `${fileBaseName(input.markdown, input.mode)}.ddeasy.json`;
+  triggerDownload(
+    new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json;charset=utf-8",
+    }),
+    name,
+  );
 }
 
 export function previewMarkdownToHtml(md: string, isSrd: boolean): string {
