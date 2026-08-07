@@ -15,6 +15,7 @@ import {
 import { createMarkdownSseResponse } from "@/lib/sseStream";
 import { parseRealmSeedMarkdown } from "@/lib/requestLimits";
 import { adventurePostSchema, badRequest } from "@/lib/apiSchemas";
+import { parseHoursPerSession } from "@/lib/parseHoursPerSession";
 import { logApiError } from "@/lib/serverLog";
 import { recordTextGenerationUsage } from "@/lib/usageMetering";
 
@@ -33,12 +34,6 @@ function parseSessionCount(value: unknown): number {
   const n = Number(value);
   if (!Number.isFinite(n)) return 1;
   return Math.min(20, Math.max(1, Math.round(n)));
-}
-
-function parseHoursPerSession(value: unknown): number {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return 3;
-  return Math.min(12, Math.max(0.5, Math.round(n * 2) / 2));
 }
 
 function parseCombatIntensity(value: unknown): CombatIntensity {
@@ -116,6 +111,7 @@ export async function POST(request: Request) {
       user: userMessage,
       feature: "adventure",
       logTag: "adventure_stream_failed",
+      signal: request.signal,
     });
   } catch (err) {
     const { message, status } = formatAnthropicError(err);

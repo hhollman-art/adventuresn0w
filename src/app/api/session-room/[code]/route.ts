@@ -12,7 +12,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ valid: false, error: "Invalid room code format." }, { status: 400 });
   }
 
-  const room = getSessionRoomByCode(normalized);
+  const room = await getSessionRoomByCode(normalized);
   if (!room) {
     return NextResponse.json({ valid: false, error: "Room not found." }, { status: 404 });
   }

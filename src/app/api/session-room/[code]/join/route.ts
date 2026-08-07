@@ -28,7 +28,7 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Invalid join payload." }, { status: 400 });
   }
 
-  const result = joinSessionRoom(normalized, parsed.data);
+  const result = await joinSessionRoom(normalized, parsed.data);
   if (!result) {
     return NextResponse.json({ error: "Room not found or closed." }, { status: 404 });
   }

@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  const result = createSessionRoom(
+  const result = await createSessionRoom(
     dmSession.dm.id,
     parsed.data.transport ?? "relay",
   );

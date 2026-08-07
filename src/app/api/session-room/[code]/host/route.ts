@@ -36,7 +36,7 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Invalid session payload." }, { status: 400 });
   }
 
-  const room = syncDmMasterState(
+  const room = await syncDmMasterState(
     normalized,
     dmSession.dm.id,
     parsed.data.state as TabletopSession,

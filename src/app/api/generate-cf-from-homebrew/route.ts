@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { formatAnthropicError, generateMarkdown } from "@/lib/anthropicGenerate";
 import { badRequest } from "@/lib/apiSchemas";
+import { parseImageDataUrlForVision } from "@/lib/parseDataUrl";
 import { logApiError } from "@/lib/serverLog";
 import { recordTextGenerationUsage } from "@/lib/usageMetering";
 import {
@@ -88,16 +89,14 @@ export async function POST(request: Request) {
     let usage: { inputTokens: number; outputTokens: number };
 
     if (imageDataUrl?.startsWith("data:image/")) {
+      const vision = parseImageDataUrlForVision(imageDataUrl);
+      if ("error" in vision) {
+        return badRequest(vision.error);
+      }
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
       const client = new Anthropic({ apiKey });
       const preferred =
         process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-6";
-      const match = imageDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
-      if (!match) {
-        return badRequest("imageDataUrl must be a data:image/...;base64,... URL.");
-      }
-      const mediaType = match[1] as "image/png" | "image/jpeg" | "image/gif" | "image/webp";
-      const data = match[2]!;
       const message = await client.messages.create({
         model: preferred,
         max_tokens: 4096,
@@ -108,7 +107,11 @@ export async function POST(request: Request) {
             content: [
               {
                 type: "image",
-                source: { type: "base64", media_type: mediaType, data },
+                source: {
+                  type: "base64",
+                  media_type: vision.mediaType,
+                  data: vision.data,
+                },
               },
               { type: "text", text: userText },
             ],
@@ -124,6 +127,8 @@ export async function POST(request: Request) {
         inputTokens: message.usage?.input_tokens ?? 0,
         outputTokens: message.usage?.output_tokens ?? 0,
       };
+    } else if (imageDataUrl) {
+      return badRequest("imageDataUrl must be a data:image/...;base64,... URL.");
     } else {
       const result = await generateMarkdown({
         apiKey,

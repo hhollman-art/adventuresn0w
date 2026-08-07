@@ -69,6 +69,7 @@ export async function POST(request: Request) {
       user,
       feature: "realm",
       logTag: "realm_stream_failed",
+      signal: request.signal,
     });
   } catch (err) {
     const { message, status } = formatAnthropicError(err);

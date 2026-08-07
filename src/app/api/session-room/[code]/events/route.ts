@@ -34,7 +34,7 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Invalid mutation envelope." }, { status: 400 });
   }
 
-  const result = applyRoomMutation(
+  const result = await applyRoomMutation(
     normalized,
     parsed.data.seatId,
     parsed.data.playerToken,

@@ -116,7 +116,11 @@ export async function POST(request: Request) {
   };
 
   if (body.stream) {
-    return createHeartbeatJsonResponse({ work, logTag: "map_image_route_failed" });
+    return createHeartbeatJsonResponse({
+      work,
+      logTag: "map_image_route_failed",
+      signal: request.signal,
+    });
   }
 
   try {

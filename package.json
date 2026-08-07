@@ -1,6 +1,6 @@
 {
   "name": "ddeasy",
-  "version": "0.5.2.9",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
     "dev": "node node_modules/next/dist/bin/next dev --turbopack",
@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@upstash/redis": "^1.38.2",
     "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

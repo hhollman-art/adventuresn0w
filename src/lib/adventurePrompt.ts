@@ -2,6 +2,7 @@ import {
   ADVENTURE_MAP_RULE_ONE_NIGHT_LINE,
   ADVENTURE_MAP_RULE_SHORT_LINE,
 } from "@/lib/battleMapDirectives";
+import { normalizeHoursPerSession } from "@/lib/parseHoursPerSession";
 
 /** Derived template family for headings / map rules (from session count). */
 export type AdventureLength = "short" | "one_night";
@@ -37,8 +38,8 @@ export function adventureLengthFromSessionCount(sessionCount: number): Adventure
 
 export function formatSessionScopeLabel(sessionCount: number, hoursPerSession: number): string {
   const sessions = Math.min(20, Math.max(1, Math.round(sessionCount)));
-  const hours = Math.min(12, Math.max(0.5, Number(hoursPerSession) || 3));
-  const total = Math.round(sessions * hours * 10) / 10;
+  const hours = normalizeHoursPerSession(hoursPerSession);
+  const total = Number((sessions * hours).toFixed(1));
   if (sessions === 1) {
     return `**${sessions} session** · about **${hours} hour${hours === 1 ? "" : "s"}** at the table (≈ ${total}h total).`;
   }
@@ -47,7 +48,7 @@ export function formatSessionScopeLabel(sessionCount: number, hoursPerSession: n
 
 export function formatSessionLengthField(sessionCount: number, hoursPerSession: number): string {
   const sessions = Math.min(20, Math.max(1, Math.round(sessionCount)));
-  const hours = Math.min(12, Math.max(0.5, Number(hoursPerSession) || 3));
+  const hours = normalizeHoursPerSession(hoursPerSession);
   if (sessions === 1) return `${hours} hours (1 session)`;
   return `${sessions} sessions × ${hours} hours`;
 }
@@ -194,7 +195,7 @@ ${body}
 
 export function buildUserMessage(input: AdventureInput): string {
   const sessions = Math.min(20, Math.max(1, Math.round(input.sessionCount || 1)));
-  const hours = Math.min(12, Math.max(0.5, Number(input.hoursPerSession) || 3));
+  const hours = normalizeHoursPerSession(input.hoursPerSession);
   const length =
     input.adventureLength || adventureLengthFromSessionCount(sessions);
   const lengthLabel = formatSessionScopeLabel(sessions, hours);

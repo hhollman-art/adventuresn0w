@@ -6,6 +6,7 @@ import {
   formatSessionLengthField,
   type CombatIntensity,
 } from "@/lib/adventurePrompt";
+import { parseHoursPerSession } from "@/lib/parseHoursPerSession";
 import { REALM_SIZE_LABEL, REALM_SIZES } from "@/lib/realmPrompt";
 import SeedMultiSelect from "@/features/workshop/SeedMultiSelect";
 import SrdMarkdownTextarea from "@/features/ui/SrdMarkdownTextarea";
@@ -745,10 +746,7 @@ export function CreationWorkspacePanel(props: CreationWorkspacePanelProps) {
                 step={0.5}
                 value={form.hoursPerSession}
                 onChange={(e) => {
-                  const hoursPerSession = Math.min(
-                    12,
-                    Math.max(0.5, Number.parseFloat(e.target.value) || 3),
-                  );
+                  const hoursPerSession = parseHoursPerSession(e.target.value);
                   setForm((f) => ({
                     ...f,
                     hoursPerSession,
@@ -762,7 +760,7 @@ export function CreationWorkspacePanel(props: CreationWorkspacePanelProps) {
               <span className="shrink-0 text-xs text-[var(--text-soft)]">hours</span>
             </div>
             <span className="text-[10px] text-[var(--text-soft)]">
-              ≈ {Math.round(form.sessionCount * form.hoursPerSession * 10) / 10}h total table time
+              ≈ {Number((form.sessionCount * form.hoursPerSession).toFixed(1))}h total table time
             </span>
           </label>
         </div>

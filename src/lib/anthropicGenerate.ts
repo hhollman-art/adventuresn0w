@@ -32,6 +32,8 @@ export type GenerateMarkdownResult = {
 type GenerateMarkdownStreamParams = GenerateMarkdownParams & {
   onText: (chunk: string) => void;
   onModel?: (model: string) => void;
+  /** Cancel upstream Anthropic streaming when the client disconnects. */
+  signal?: AbortSignal;
 };
 
 function isModelNotFound(err: unknown): boolean {
@@ -102,6 +104,7 @@ export async function generateMarkdownStream({
   user,
   onText,
   onModel,
+  signal,
 }: GenerateMarkdownStreamParams): Promise<GenerateMarkdownResult> {
   const client = new Anthropic({ apiKey });
   const modelsToTry = getModelsToTry();
@@ -109,16 +112,22 @@ export async function generateMarkdownStream({
 
   for (const model of modelsToTry) {
     try {
+      if (signal?.aborted) {
+        throw new DOMException("The operation was aborted.", "AbortError");
+      }
       onModel?.(model);
       let markdown = "";
       const usage: TokenUsage = { inputTokens: 0, outputTokens: 0 };
-      const stream = await client.messages.create({
-        model,
-        max_tokens: 8192,
-        system,
-        messages: [{ role: "user", content: user }],
-        stream: true,
-      });
+      const stream = await client.messages.create(
+        {
+          model,
+          max_tokens: 8192,
+          system,
+          messages: [{ role: "user", content: user }],
+          stream: true,
+        },
+        signal ? { signal } : undefined,
+      );
 
       for await (const event of stream as AsyncIterable<{
         type?: string;
@@ -126,6 +135,9 @@ export async function generateMarkdownStream({
         message?: { usage?: { input_tokens?: number; output_tokens?: number } };
         usage?: { input_tokens?: number; output_tokens?: number };
       }>) {
+        if (signal?.aborted) {
+          throw new DOMException("The operation was aborted.", "AbortError");
+        }
         // Billable units arrive as stream metadata: input tokens on
         // message_start, cumulative output tokens on message_delta.
         if (event.type === "message_start") {
@@ -150,6 +162,7 @@ export async function generateMarkdownStream({
       }
       return { markdown, model, usage };
     } catch (err) {
+      if (signal?.aborted) throw err;
       if (!isModelNotFound(err)) {
         throw err;
       }

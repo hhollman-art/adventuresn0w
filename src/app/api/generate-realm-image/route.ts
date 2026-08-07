@@ -90,6 +90,7 @@ export async function POST(request: Request) {
     return createHeartbeatJsonResponse({
       work,
       logTag: "realm_image_route_failed",
+      signal: request.signal,
     });
   }
 

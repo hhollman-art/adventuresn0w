@@ -1,5 +1,4 @@
-import { randomUUID } from "crypto";
-import { createHmac, timingSafeEqual } from "crypto";
+import { randomUUID, createHmac, timingSafeEqual } from "crypto";
 import { createDefaultSession, newId } from "@/lib/tabletop/session";
 import { playerVisibleSession } from "@/lib/tabletop/session";
 import type { TabletopSession } from "@/lib/tabletop/types";
@@ -14,12 +13,13 @@ import type {
   SessionRoomJoinResult,
   SessionTransportMode,
 } from "./types";
+import {
+  getSessionStore,
+  SESSION_ROOM_TTL_MS,
+  __resetSessionStoreForTests,
+} from "@/lib/session-room/store";
 
-const ROOM_TTL_MS = 8 * 60 * 60 * 1000;
-
-/** In-memory room registry — swap for Redis/Upstash when scaling relay mode. */
-const rooms = new Map<string, SessionRoom>();
-const codeIndex = new Map<string, string>();
+export { SESSION_ROOM_TTL_MS };
 
 function playerTokenSecret(): string {
   return process.env.DM_AUTH_SECRET?.trim() || "dev-player-token-secret";
@@ -43,27 +43,37 @@ export function verifyPlayerToken(roomId: string, seatId: string, token: string)
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-function purgeExpired(): void {
-  const now = Date.now();
-  for (const [id, room] of rooms) {
-    if (Date.parse(room.expiresAt) <= now) {
-      rooms.delete(id);
-      codeIndex.delete(room.code);
-    }
-  }
+function withSeatContext(mutation: TabletopMutation, seatId: string): TabletopMutation {
+  if (mutation.type === "DM_STATE_SYNC") return mutation;
+  return { ...mutation, seatId } as TabletopMutation;
 }
 
-export function createSessionRoom(
+/**
+ * Create a new session room for a DM.
+ * Persists via SessionStore (Redis/Upstash in prod, memory locally).
+ */
+export async function createSessionRoom(
   dmId: string,
   transport: SessionTransportMode = "relay",
   seedState?: TabletopSession,
-): CreateSessionRoomResult {
-  purgeExpired();
-  let code = generateRoomCode();
-  while (codeIndex.has(code)) code = generateRoomCode();
+): Promise<CreateSessionRoomResult> {
+  const store = getSessionStore();
+  let code = "";
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const candidate = generateRoomCode();
+    if (!isValidRoomCodeFormat(candidate)) continue;
+    const existing = await store.getRoom(candidate);
+    if (!existing) {
+      code = candidate;
+      break;
+    }
+  }
+  if (!code) {
+    throw new Error("Unable to allocate a unique room code.");
+  }
 
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + ROOM_TTL_MS);
+  const expiresAt = new Date(now.getTime() + SESSION_ROOM_TTL_MS);
   const room: SessionRoom = {
     id: randomUUID(),
     code,
@@ -76,25 +86,21 @@ export function createSessionRoom(
     masterState: seedState ?? createDefaultSession(),
     players: [],
   };
-  rooms.set(room.id, room);
-  codeIndex.set(code, room.id);
-  return { room, joinUrl: `/join?code=${code}` };
+  await store.setRoom(code, room);
+  return { room: structuredClone(room), joinUrl: `/join?code=${code}` };
 }
 
-export function getSessionRoomByCode(code: string): SessionRoom | null {
-  purgeExpired();
+export async function getSessionRoomByCode(code: string): Promise<SessionRoom | null> {
   const normalized = normalizeRoomCode(code);
   if (!isValidRoomCodeFormat(normalized)) return null;
-  const roomId = codeIndex.get(normalized);
-  if (!roomId) return null;
-  return rooms.get(roomId) ?? null;
+  return getSessionStore().getRoom(normalized);
 }
 
-export function joinSessionRoom(
+export async function joinSessionRoom(
   code: string,
   request: PlayerJoinRequest,
-): SessionRoomJoinResult | null {
-  const room = getSessionRoomByCode(code);
+): Promise<SessionRoomJoinResult | null> {
+  const room = await getSessionRoomByCode(code);
   if (!room || room.status !== "open") return null;
 
   const character = sanitizeJoinCharacter(request.character);
@@ -106,36 +112,46 @@ export function joinSessionRoom(
   if (existingIdx >= 0) players[existingIdx] = character;
   else players.push(character);
 
-  room.masterState = {
+  const masterState: TabletopSession = {
     ...room.masterState,
     players,
     updatedAt: new Date().toISOString(),
   };
-  room.revision += 1;
-  room.players.push({
-    seatId,
-    displayName: request.displayName.trim(),
-    joinedAt: new Date().toISOString(),
-    characterId: character.id,
-    playerToken,
+  const revision = room.revision + 1;
+  const roomPlayers = [
+    ...room.players,
+    {
+      seatId,
+      displayName: request.displayName.trim(),
+      joinedAt: new Date().toISOString(),
+      characterId: character.id,
+      playerToken,
+    },
+  ];
+
+  const updated = await getSessionStore().updateRoom(room.code, {
+    masterState,
+    revision,
+    players: roomPlayers,
   });
+  if (!updated) return null;
 
   return {
     seatId,
     playerToken,
-    revision: room.revision,
-    session: playerVisibleSession(room.masterState),
-    transport: room.transport,
+    revision: updated.revision,
+    session: playerVisibleSession(updated.masterState),
+    transport: updated.transport,
   };
 }
 
-export function applyRoomMutation(
+export async function applyRoomMutation(
   code: string,
   seatId: string,
   playerToken: string,
   envelope: MutationEnvelope,
-): { revision: number; session: TabletopSession } | null {
-  const room = getSessionRoomByCode(code);
+): Promise<{ revision: number; session: TabletopSession } | null> {
+  const room = await getSessionRoomByCode(code);
   if (!room || room.status !== "open") return null;
   if (!verifyPlayerToken(room.id, seatId, playerToken)) return null;
   if (envelope.baseRevision > room.revision) return null;
@@ -147,43 +163,47 @@ export function applyRoomMutation(
   const result = applyTabletopMutation(room.masterState, mutation);
   if (!result.ok) return null;
 
-  room.masterState = result.session;
-  room.revision += 1;
+  const revision = room.revision + 1;
+  const updated = await getSessionStore().updateRoom(room.code, {
+    masterState: result.session,
+    revision,
+  });
+  if (!updated) return null;
+
   return {
-    revision: room.revision,
-    session: playerVisibleSession(room.masterState),
+    revision: updated.revision,
+    session: playerVisibleSession(updated.masterState),
   };
 }
 
-export function syncDmMasterState(
+export async function syncDmMasterState(
   code: string,
   dmId: string,
   state: TabletopSession,
-): SessionRoom | null {
-  const room = getSessionRoomByCode(code);
+): Promise<SessionRoom | null> {
+  const room = await getSessionRoomByCode(code);
   if (!room || room.dmId !== dmId || room.status !== "open") return null;
-  room.masterState = state;
-  room.revision += 1;
-  room.masterState.updatedAt = new Date().toISOString();
-  return room;
+
+  const masterState: TabletopSession = {
+    ...state,
+    updatedAt: new Date().toISOString(),
+  };
+  return getSessionStore().updateRoom(room.code, {
+    masterState,
+    revision: room.revision + 1,
+  });
 }
 
-export function getPlayerVisibleState(code: string): {
+export async function getPlayerVisibleState(code: string): Promise<{
   revision: number;
   session: TabletopSession;
-} | null {
-  const room = getSessionRoomByCode(code);
+} | null> {
+  const room = await getSessionRoomByCode(code);
   if (!room || room.status !== "open") return null;
   return { revision: room.revision, session: playerVisibleSession(room.masterState) };
 }
 
-function withSeatContext(mutation: TabletopMutation, seatId: string): TabletopMutation {
-  if (mutation.type === "DM_STATE_SYNC") return mutation;
-  return { ...mutation, seatId } as TabletopMutation;
-}
-
-/** Test-only reset */
+/** Test-only: reset the underlying SessionStore singleton to a fresh memory store. */
 export function __resetSessionRoomStoreForTests(): void {
-  rooms.clear();
-  codeIndex.clear();
+  __resetSessionStoreForTests();
 }

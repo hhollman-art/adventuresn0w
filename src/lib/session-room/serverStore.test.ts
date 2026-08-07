@@ -11,11 +11,11 @@ describe("session room gateway", () => {
     __resetSessionRoomStoreForTests();
   });
 
-  it("creates a room and accepts BYOD player join", () => {
-    const { room } = createSessionRoom("dm-test", "relay");
+  it("creates a room and accepts BYOD player join", async () => {
+    const { room } = await createSessionRoom("dm-test", "relay");
     expect(room.code).toHaveLength(5);
 
-    const join = joinSessionRoom(room.code, {
+    const join = await joinSessionRoom(room.code, {
       displayName: "Alex",
       character: {
         id: "hero-1",
@@ -34,8 +34,8 @@ describe("session room gateway", () => {
         notes: "",
         items: [],
         knownSpellIds: [],
-    preparedSpellIds: [],
-    linkedModifiers: [],
+        preparedSpellIds: [],
+        linkedModifiers: [],
         currentHp: null,
         tokenId: null,
       },
@@ -46,7 +46,7 @@ describe("session room gateway", () => {
     expect(join?.session.players).toHaveLength(1);
     expect(join?.session.players[0]?.name).toBe("Thorgar");
 
-    const stored = getSessionRoomByCode(room.code);
+    const stored = await getSessionRoomByCode(room.code);
     expect(stored?.players).toHaveLength(1);
   });
 });

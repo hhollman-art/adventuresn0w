@@ -12,7 +12,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Invalid room code." }, { status: 400 });
   }
 
-  const result = getPlayerVisibleState(normalized);
+  const result = await getPlayerVisibleState(normalized);
   if (!result) {
     return NextResponse.json({ error: "Room not found." }, { status: 404 });
   }

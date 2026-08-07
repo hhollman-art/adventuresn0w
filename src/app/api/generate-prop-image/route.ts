@@ -125,6 +125,7 @@ export async function POST(request: Request) {
     return createHeartbeatJsonResponse({
       work,
       logTag: "prop_image_route_failed",
+      signal: request.signal,
     });
   }
 
