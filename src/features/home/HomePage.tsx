@@ -1493,6 +1493,9 @@ export default function Home(props: PageProps<"/">) {
           setLibrarySelection(null);
         }
       }}
+      onItemsChange={(next) => {
+        setLibraryItems(next);
+      }}
       onDeleteParty={async (id) => {
         const next = await deleteSavedCharacterRoster(id);
         setLibraryParties(next);

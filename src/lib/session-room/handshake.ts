@@ -47,6 +47,9 @@ const characterItemSchema = z.object({
   equipped: z.boolean().optional(),
   libraryItemId: z.string().nullable().optional(),
   sourceKind: modifierSourceKindSchema.optional(),
+  instanceId: z.string().optional(),
+  _source: z.enum(["SRD", "user", "import", "created"]).optional(),
+  sourceSrdEntityId: z.string().nullable().optional(),
 });
 
 const characterModifierSchema = z.object({
@@ -78,6 +81,41 @@ const characterModifierSchema = z.object({
   notes: z.string().optional(),
 });
 
+const abilityKeySchema = z.enum(["str", "dex", "con", "int", "wis", "cha"]);
+const skillProficiencySchema = z.enum([
+  "acrobatics",
+  "animal-handling",
+  "arcana",
+  "athletics",
+  "deception",
+  "history",
+  "insight",
+  "intimidation",
+  "investigation",
+  "medicine",
+  "nature",
+  "perception",
+  "performance",
+  "persuasion",
+  "religion",
+  "sleight-of-hand",
+  "stealth",
+  "survival",
+]);
+const characterAttackSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  attackBonus: z.string(),
+  damageType: z.string(),
+});
+const characterCurrencySchema = z.object({
+  cp: z.number().int().min(0),
+  sp: z.number().int().min(0),
+  ep: z.number().int().min(0),
+  gp: z.number().int().min(0),
+  pp: z.number().int().min(0),
+});
+
 /** BYOD character sheet — same shape as Tavern `PlayerCharacter`. */
 export const playerCharacterSchema = z.object({
   id: z.string(),
@@ -88,7 +126,7 @@ export const playerCharacterSchema = z.object({
   subclass: z.string(),
   background: z.string(),
   alignment: z.string(),
-  level: z.number().int().min(1).max(30),
+  level: z.number().int().min(1).max(20),
   abilities: abilityScoresSchema,
   ac: z.number(),
   maxHp: z.number(),
@@ -100,6 +138,22 @@ export const playerCharacterSchema = z.object({
   linkedModifiers: z.array(characterModifierSchema).default([]),
   currentHp: z.number().nullable(),
   tokenId: z.string().nullable(),
+  experiencePoints: z.number().int().min(0).optional(),
+  inspiration: z.boolean().optional(),
+  proficientSavingThrows: z.array(abilityKeySchema).optional(),
+  skillProficiencies: z.array(skillProficiencySchema).optional(),
+  otherProficiencies: z.string().optional(),
+  temporaryHp: z.number().int().min(0).optional(),
+  hitDice: z.string().optional(),
+  deathSaveSuccesses: z.number().int().min(0).max(3).optional(),
+  deathSaveFailures: z.number().int().min(0).max(3).optional(),
+  attacks: z.array(characterAttackSchema).optional(),
+  currency: characterCurrencySchema.optional(),
+  personalityTraits: z.string().optional(),
+  ideals: z.string().optional(),
+  bonds: z.string().optional(),
+  flaws: z.string().optional(),
+  features: z.string().optional(),
 });
 
 export const byodPayloadSchema = z.object({

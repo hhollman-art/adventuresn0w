@@ -33,9 +33,19 @@ vi.mock("@/lib/itemLibrary", async () => {
         itemType: input.itemType ?? "",
         rarity: input.rarity ?? null,
         requiresAttunement: input.requiresAttunement ?? false,
+        attunementNote: input.attunementNote ?? "",
         description: input.description ?? "",
+        properties: input.properties ?? "",
+        charges: input.charges ?? "",
+        effects: input.effects ?? "",
         bonuses: input.bonuses ?? empty(),
         source: input.source ?? "import",
+        isHomebrew: input.isHomebrew ?? false,
+        createdBy: input.createdBy ?? null,
+        tags: input.tags ?? [],
+        settingTags: input.settingTags ?? [],
+        sourceNote: input.sourceNote ?? "",
+        imageDataUrl: input.imageDataUrl ?? null,
       };
       items = [row, ...items];
       return items;
@@ -126,9 +136,19 @@ describe("vaultSrdPark", () => {
       itemType: "Weapon",
       rarity: null,
       requiresAttunement: false,
+      attunementNote: "",
       description: "A sword.\n\n_source: SRD\nsourceSrdEntityId: magic-item:dancing-sword",
+      properties: "",
+      charges: "",
+      effects: "",
       bonuses: emptyBonuses(),
       source: "import",
+      isHomebrew: false,
+      createdBy: null,
+      tags: [],
+      settingTags: [],
+      sourceNote: "",
+      imageDataUrl: null,
     });
     expect(sid).toBe("magic-item:dancing-sword");
   });

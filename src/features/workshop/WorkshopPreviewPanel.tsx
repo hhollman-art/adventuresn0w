@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import OutputMarkdownCarousel from "@/features/workshop/OutputMarkdownCarousel";
 import HeroScrySelection from "@/features/workshop/HeroScrySelection";
+import CharacterSheetLayout from "@/features/characters/CharacterSheetLayout";
 import ScryingExportMenu, {
   type ScryingExportAction,
 } from "@/features/workshop/ScryingExportMenu";
@@ -24,6 +25,7 @@ import {
   postPreviewAction,
   type WorkshopPreviewSnapshot,
 } from "@/lib/workshop/previewSnapshot";
+import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
 
 type WorkshopPreviewPanelProps = {
   snapshot: WorkshopPreviewSnapshot;
@@ -146,6 +148,18 @@ export default function WorkshopPreviewPanel({
   const exportBaseName = fileBaseName(previewMarkdown, exportMode);
   const hasContent = Boolean(previewMarkdown.trim() || previewImages.length > 0);
   const ciVisual = ciClass ? ciClassVisual(ciClass) : null;
+  const sheetCharacters = useMemo(() => {
+    if (
+      !previewMarkdown.trim() ||
+      (workspace !== "characters" && ciClass !== "character.sheet")
+    ) {
+      return [];
+    }
+    return parseCharactersMarkdown(previewMarkdown).players.map((player) => ({
+      ...player,
+      tokenId: null,
+    }));
+  }, [ciClass, previewMarkdown, workspace]);
   const [recruitBusy, setRecruitBusy] = useState(false);
   const [commitBusy, setCommitBusy] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
@@ -226,98 +240,117 @@ export default function WorkshopPreviewPanel({
       className="preview-window-panel fantasy-panel print-generation-root panel-scroll panel-scroll--scrying-glass flex min-h-0 flex-1 flex-col rounded-xl border p-6"
       data-ci-class={ciClass ?? undefined}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        {(ciClass && ciVisual) || viewingLabel ? (
-          <div className="scrying-glass-file-meta no-print min-w-0 flex-1">
-            {ciClass && ciVisual ? (
-              <span
-                className="scrying-glass-ci-class"
-                style={{ borderColor: ciVisual.accent }}
-                title={ciClass}
-              >
-                <span className="scrying-glass-ci-class-icon" aria-hidden="true">
-                  {ciVisual.icon}
+      <header className="scrying-glass-inspection-header no-print flex shrink-0 flex-col gap-3 border-b pb-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          {(ciClass && ciVisual) || viewingLabel ? (
+            <div className="scrying-glass-file-meta min-w-0 flex-1">
+              {ciClass && ciVisual ? (
+                <span
+                  className="scrying-glass-ci-class"
+                  style={{ borderColor: ciVisual.accent }}
+                  title={ciClass}
+                >
+                  <span className="scrying-glass-ci-class-icon" aria-hidden="true">
+                    {ciVisual.icon}
+                  </span>
+                  <span className="scrying-glass-ci-class-label">{fantasyCiLabel(ciClass)}</span>
                 </span>
-                <span className="scrying-glass-ci-class-label">{fantasyCiLabel(ciClass)}</span>
-              </span>
-            ) : null}
-            {viewingLabel ? (
-              <p className="scrying-glass-file-label text-xs text-[var(--muted)]">
-                {viewingLabel}
-                {viewingSubline ? (
-                  <>
-                    {" "}
-                    <strong className="text-[var(--text)]">({viewingSubline})</strong>
-                  </>
-                ) : null}
-              </p>
-            ) : null}
-          </div>
-        ) : (
-          <div className="min-w-0 flex-1" />
-        )}
-        {hasContent ? (
-          <div className="scrying-glass-toolbar no-print flex flex-wrap items-center justify-end gap-2">
-            {previewMarkdown.trim() && canEdit ? (
-              <button
-                type="button"
-                onClick={handleEdit}
-                className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                style={{ borderColor: "var(--border)" }}
-              >
-                {editKind === "seed"
-                  ? "Edit CF"
-                  : editKind === "library-result"
-                    ? "Edit result"
-                    : editKind === "custom-srd"
-                      ? "Edit workspace copy"
-                    : "Edit"}
-              </button>
-            ) : null}
-            <ScryingExportMenu
-              disabled={!hasContent || loading}
-              onAction={handleExportAction}
-            />
-            {showSavePartyVtt ? (
-              <>
-                <Link
-                  href="/tavern"
-                  className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                  style={{ borderColor: "var(--border)" }}
-                >
-                  The Tavern
-                </Link>
-                <Link
-                  href="/table"
-                  className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                  style={{ borderColor: "var(--accent-dim)" }}
-                >
-                  Virtual Table
-                </Link>
-              </>
-            ) : null}
-            {showLoadPartyVtt ? (
-              <>
-                <Link
-                  href="/tavern"
-                  className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-                  style={{ borderColor: "var(--border)" }}
-                >
-                  Manage party
-                </Link>
+              ) : null}
+              {viewingLabel ? (
+                <p className="scrying-glass-file-label text-xs text-[var(--muted)]">
+                  {viewingLabel}
+                  {viewingSubline ? (
+                    <>
+                      {" "}
+                      <strong className="text-[var(--text)]">({viewingSubline})</strong>
+                    </>
+                  ) : null}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <div className="min-w-0 flex-1" />
+          )}
+          {hasContent ? (
+            <div className="scrying-glass-toolbar flex flex-wrap items-center justify-end gap-2">
+              {previewMarkdown.trim() && canEdit ? (
                 <button
                   type="button"
-                  onClick={handleLoadParty}
-                  className="rounded-md px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-                  style={{ background: "var(--accent)" }}
+                  onClick={handleEdit}
+                  className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                  style={{ borderColor: "var(--border)" }}
                 >
-                  Load to VTT
+                  {editKind === "seed"
+                    ? "Edit CF"
+                    : editKind === "library-result"
+                      ? "Edit result"
+                      : editKind === "custom-srd"
+                        ? "Edit workspace copy"
+                        : "Edit"}
                 </button>
-              </>
-            ) : null}
+              ) : null}
+              <ScryingExportMenu
+                disabled={!hasContent || loading}
+                onAction={handleExportAction}
+              />
+              {showSavePartyVtt ? (
+                <>
+                  <Link
+                    href="/tavern"
+                    className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    The Tavern
+                  </Link>
+                  <Link
+                    href="/table"
+                    className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                    style={{ borderColor: "var(--accent-dim)" }}
+                  >
+                    Virtual Table
+                  </Link>
+                </>
+              ) : null}
+              {showLoadPartyVtt ? (
+                <>
+                  <Link
+                    href="/tavern"
+                    className="rounded-md border px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    Manage party
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleLoadParty}
+                    className="rounded-md px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                    style={{ background: "var(--accent)" }}
+                  >
+                    Load to VTT
+                  </button>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
+        {showPrimaryCommit ? (
+          <div className="scrying-glass-save-action flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <button
+              type="button"
+              disabled={commitBusy || loading || !hasContent}
+              onClick={handlePrimaryCommit}
+              className="shrink-0 rounded-md px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+              style={{ background: "var(--accent)" }}
+            >
+              {commitBusy ? "Saving…" : primaryCommitLabel}
+            </button>
+            <p className="text-[11px] leading-relaxed text-[var(--muted)] sm:text-right">
+              Saves into your local Library — no file download.
+            </p>
           </div>
         ) : null}
-      </div>
+      </header>
 
       {previewTextModel || previewImageModel ? (
         <p className="no-print mt-1 text-xs text-[var(--muted)]">
@@ -367,10 +400,20 @@ export default function WorkshopPreviewPanel({
 
       <div className="min-h-0 flex-1">
         {previewMarkdown.trim() ? (
-          <OutputMarkdownCarousel
-            html={previewMarkdownToHtml(previewMarkdown, isSrdPreview)}
-            enableSpellLinks={isSrdPreview || ciClass === "npc.record" || ciClass === "rules.custom-entry"}
-          />
+          sheetCharacters.length > 0 ? (
+            <div className="grid gap-5">
+              {sheetCharacters.map((character) => (
+                <CharacterSheetLayout key={character.id} characterData={character} />
+              ))}
+            </div>
+          ) : (
+            <OutputMarkdownCarousel
+              html={previewMarkdownToHtml(previewMarkdown, isSrdPreview)}
+              enableSpellLinks={
+                isSrdPreview || ciClass === "npc.record" || ciClass === "rules.custom-entry"
+              }
+            />
+          )
         ) : null}
 
         {isSrdPreview && srdLoading ? (
@@ -416,24 +459,6 @@ export default function WorkshopPreviewPanel({
         ) : null}
       </div>
 
-      {showPrimaryCommit ? (
-        <footer className="scrying-glass-commit-footer no-print mt-4 shrink-0 border-t pt-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[11px] text-[var(--muted)]">
-              Saves into your local Library — no file download.
-            </p>
-            <button
-              type="button"
-              disabled={commitBusy || loading || !hasContent}
-              onClick={handlePrimaryCommit}
-              className="rounded-md px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
-              style={{ background: "var(--accent)" }}
-            >
-              {commitBusy ? "Saving…" : primaryCommitLabel}
-            </button>
-          </div>
-        </footer>
-      ) : null}
     </section>
   );
 }

@@ -79,6 +79,7 @@ import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
 import { collectUserSeedTags, filterSeeds, seedTagLabel } from "@/lib/seedTags";
 import type { CiClass } from "@/lib/ciRegistry";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
+import CreateArtifactModal from "@/features/workshop/CreateArtifactModal";
 import SrdLibraryBrowser from "@/features/workshop/SrdLibraryBrowser";
 import type { SrdApiResource } from "@/lib/srd/dnd5eApi";
 import type { SrdEntityId, SrdRuleBundleId } from "@/lib/srd/types";
@@ -141,6 +142,8 @@ type WorkshopLibraryPanelProps = {
   onDeleteResult: (id: string) => void;
   onDeleteCharacter: (id: string) => void;
   onDeleteItem: (id: string) => void;
+  /** Refresh parent item list after Create Artifact / other local writes. */
+  onItemsChange?: (items: SavedGameItem[]) => void;
   onDeleteParty: (id: string) => void;
   onDeleteNpc: (id: string) => void;
   onDeleteLocation: (id: string) => void;
@@ -178,6 +181,23 @@ function ProvenanceBadge({ provenance }: { provenance: LibraryProvenance }) {
       }}
     >
       {LIBRARY_PROVENANCE_LABEL[provenance]}
+    </span>
+  );
+}
+
+/** Marks custom homebrew artifacts created via Library Create Artifact. */
+function HomebrewTag() {
+  return (
+    <span
+      className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+      style={{
+        borderColor: "rgba(120, 70, 160, 0.45)",
+        color: "rgb(120, 70, 160)",
+        background: "rgba(120, 70, 160, 0.08)",
+      }}
+      title="Custom homebrew — yours on this device, not from the included rules"
+    >
+      Homebrew
     </span>
   );
 }
@@ -397,7 +417,8 @@ function LibraryEntryRow({
               {fantasyCiLabel(entry.ciClass)}
             </span>
             <ProvenanceBadge provenance={entry.provenance} />
-            {entry.origin === "creation" ? <CreationTag /> : null}
+            {entry.isHomebrew ? <HomebrewTag /> : null}
+            {entry.origin === "creation" && !entry.isHomebrew ? <CreationTag /> : null}
             <span className="font-display font-semibold text-[var(--text)]">{entry.title}</span>
           </span>
           <span className="library-entry-shelf mt-1 block text-xs text-[var(--muted)]">
@@ -478,6 +499,7 @@ export default function WorkshopLibraryPanel({
   onDeleteResult,
   onDeleteCharacter,
   onDeleteItem,
+  onItemsChange,
   onDeleteParty,
   onDeleteNpc,
   onDeleteLocation,
@@ -497,6 +519,7 @@ export default function WorkshopLibraryPanel({
 }: WorkshopLibraryPanelProps) {
   const splitScrying = wideLayout && inlineScryingLayout;
   const [showStorageInfo, setShowStorageInfo] = useState(false);
+  const [showCreateArtifact, setShowCreateArtifact] = useState(false);
   const [syncStatus, setSyncStatus] = useState<LibrarySyncStatus>({ state: "off" });
 
   useEffect(() => {
@@ -892,6 +915,14 @@ export default function WorkshopLibraryPanel({
               Re-enable auto-save
             </button>
           ) : null}
+          <button
+            type="button"
+            onClick={() => setShowCreateArtifact(true)}
+            className="btn btn-sm btn-accent"
+            title="Add a custom homebrew magic item to your Library"
+          >
+            + Create Artifact
+          </button>
           <button type="button" onClick={onAddSeed} className="btn btn-sm btn-accent">
             Plant a CF
           </button>
@@ -987,6 +1018,16 @@ export default function WorkshopLibraryPanel({
           seedScopeFilter={seedScopeFilter}
           onSeedScopeFilterChange={setSeedScopeFilter}
           seedTagOptions={seedTagOptions}
+          searchAction={
+            <button
+              type="button"
+              onClick={() => setShowCreateArtifact(true)}
+              className="btn btn-sm btn-accent shrink-0"
+              title="Add a custom homebrew magic item to your Library"
+            >
+              + Create Artifact
+            </button>
+          }
         />
       ) : null}
 
@@ -1060,6 +1101,16 @@ export default function WorkshopLibraryPanel({
                 seedScopeFilter={seedScopeFilter}
                 onSeedScopeFilterChange={setSeedScopeFilter}
                 seedTagOptions={seedTagOptions}
+                searchAction={
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateArtifact(true)}
+                    className="btn btn-sm btn-accent shrink-0"
+                    title="Add a custom homebrew magic item to your Library"
+                  >
+                    + Create Artifact
+                  </button>
+                }
               />
               {entries.length === 0 ? (
                 <p className="text-sm leading-relaxed text-[var(--muted)]">
@@ -1311,6 +1362,16 @@ export default function WorkshopLibraryPanel({
                 seedScopeFilter={seedScopeFilter}
                 onSeedScopeFilterChange={setSeedScopeFilter}
                 seedTagOptions={seedTagOptions}
+                searchAction={
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateArtifact(true)}
+                    className="btn btn-sm btn-accent shrink-0"
+                    title="Add a custom homebrew magic item to your Library"
+                  >
+                    + Create Artifact
+                  </button>
+                }
               />
               {entries.length === 0 ? (
                 <p className="text-sm leading-relaxed text-[var(--muted)]">
@@ -1773,6 +1834,19 @@ export default function WorkshopLibraryPanel({
             onPartiesChange(list);
             onStatus(message);
             setShowAddParty(false);
+          }}
+        />
+      ) : null}
+
+      {showCreateArtifact ? (
+        <CreateArtifactModal
+          onClose={() => setShowCreateArtifact(false)}
+          onSaved={(list, item, message) => {
+            onItemsChange?.(list);
+            onStatus(message);
+            onCategoryChange("items");
+            onSelect({ kind: "item", id: item.id });
+            setShowCreateArtifact(false);
           }}
         />
       ) : null}

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { CiClass } from "@/lib/ciRegistry";
 import type { RealmScopeTag, SeedKind } from "@/lib/realmSeeds";
 import {
@@ -37,6 +38,8 @@ type LibraryBrowseToolbarProps = {
   onSeedScopeFilterChange?: (value: RealmScopeTag | "all") => void;
   seedTagOptions?: string[];
   showSeedRefine?: boolean;
+  /** Optional primary action beside search (e.g. Create Artifact). */
+  searchAction?: React.ReactNode;
   /** full = default toolbar; shelves-only = vertical shelf nav for 3-pane layout. */
   variant?: "full" | "shelves-only" | "filters-only";
 };
@@ -102,6 +105,7 @@ export default function LibraryBrowseToolbar({
   onSeedScopeFilterChange,
   seedTagOptions = [],
   showSeedRefine = false,
+  searchAction,
   variant = "full",
 }: LibraryBrowseToolbarProps) {
   const kindOptions = ciClassOptions.length > 1 ? ciClassOptions : [];
@@ -116,7 +120,8 @@ export default function LibraryBrowseToolbar({
       }`}
     >
       {showSearch ? (
-      <label className="library-browse-search flex items-center gap-2 rounded-lg border px-3 py-2">
+      <div className="flex flex-wrap items-stretch gap-2">
+      <label className="library-browse-search flex min-w-[12rem] flex-1 items-center gap-2 rounded-lg border px-3 py-2">
         <span className="font-display text-sm text-[var(--accent)]" aria-hidden="true">
           &#10022;
         </span>
@@ -128,6 +133,8 @@ export default function LibraryBrowseToolbar({
           aria-label="Search The Library"
         />
       </label>
+      {searchAction}
+      </div>
       ) : null}
 
       {showShelves ? (

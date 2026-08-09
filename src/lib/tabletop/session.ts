@@ -152,6 +152,8 @@ export function fixPlayer(o: Record<string, unknown>): PlayerCharacter | null {
   ) as AbilityScores;
 
   const str = (v: unknown) => (typeof v === "string" ? v : "");
+  const stringList = (v: unknown) =>
+    Array.isArray(v) ? v.filter((row): row is string => typeof row === "string") : [];
   const items = Array.isArray(o.items)
     ? o.items
         .map((item) =>
@@ -211,6 +213,49 @@ export function fixPlayer(o: Record<string, unknown>): PlayerCharacter | null {
         ? clampInt(o.currentHp, 0, 999, 0)
         : null,
     tokenId: typeof o.tokenId === "string" ? o.tokenId : null,
+    experiencePoints: clampInt(o.experiencePoints, 0, 99_999_999, 0),
+    inspiration: o.inspiration === true,
+    proficientSavingThrows: stringList(o.proficientSavingThrows).filter(
+      (key): key is keyof AbilityScores => ABILITY_KEYS.includes(key as keyof AbilityScores),
+    ),
+    skillProficiencies:
+      stringList(o.skillProficiencies) as PlayerCharacter["skillProficiencies"],
+    otherProficiencies: str(o.otherProficiencies),
+    temporaryHp: clampInt(o.temporaryHp, 0, 999, 0),
+    hitDice: str(o.hitDice),
+    deathSaveSuccesses: clampInt(o.deathSaveSuccesses, 0, 3, 0),
+    deathSaveFailures: clampInt(o.deathSaveFailures, 0, 3, 0),
+    attacks: Array.isArray(o.attacks)
+      ? o.attacks
+          .filter(
+            (row): row is Record<string, unknown> =>
+              typeof row === "object" && row !== null,
+          )
+          .map((row, index) => ({
+            id: typeof row.id === "string" ? row.id : `attack-${index}`,
+            name: str(row.name),
+            attackBonus: str(row.attackBonus),
+            damageType: str(row.damageType),
+          }))
+      : [],
+    currency: (() => {
+      const raw =
+        typeof o.currency === "object" && o.currency !== null
+          ? (o.currency as Record<string, unknown>)
+          : {};
+      return {
+        cp: clampInt(raw.cp, 0, 999_999, 0),
+        sp: clampInt(raw.sp, 0, 999_999, 0),
+        ep: clampInt(raw.ep, 0, 999_999, 0),
+        gp: clampInt(raw.gp, 0, 999_999, 0),
+        pp: clampInt(raw.pp, 0, 999_999, 0),
+      };
+    })(),
+    personalityTraits: str(o.personalityTraits),
+    ideals: str(o.ideals),
+    bonds: str(o.bonds),
+    flaws: str(o.flaws),
+    features: str(o.features),
   };
 }
 

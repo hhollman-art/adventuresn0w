@@ -107,6 +107,8 @@ export type LibraryListEntry = {
   provenance: LibraryProvenance;
   /** Only user-tier items have an origin; SRD entries never do. */
   origin?: LibraryOrigin;
+  /** Custom / homebrew artifacts created via Library Create Artifact. */
+  isHomebrew?: boolean;
   kindLabel: string;
   title: string;
   detail: string;
@@ -169,16 +171,31 @@ export function characterToLibraryEntry(character: SavedCharacter): LibraryListE
 export function gameItemToLibraryEntry(item: SavedGameItem): LibraryListEntry {
   const rarity =
     item.kind === "magic" && item.rarity ? MAGIC_RARITY_LABEL[item.rarity] : "";
+  const tags = Array.from(
+    new Set(
+      [
+        ...(item.isHomebrew ? ["Homebrew"] : []),
+        ...item.settingTags,
+        ...item.tags,
+        item.sourceNote.trim() || null,
+      ].filter((t): t is string => Boolean(t)),
+    ),
+  );
   return {
     id: item.id,
     ciClass: ciClassForGameItem(item.kind),
     category: "items",
     provenance: "user",
     origin: item.source === "created" ? "creation" : "import",
+    isHomebrew: item.isHomebrew,
     kindLabel: GAME_ITEM_KIND_LABEL[item.kind],
     title: item.name,
-    detail: [item.itemType, rarity].filter(Boolean).join(" · ") || item.description.slice(0, 80),
+    detail:
+      [item.itemType, rarity, item.description.trim().slice(0, 80)]
+        .filter(Boolean)
+        .join(" · ") || item.properties.slice(0, 80),
     createdAt: item.updatedAt,
+    ...(tags.length ? { tags } : {}),
   };
 }
 

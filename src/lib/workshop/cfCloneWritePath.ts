@@ -160,9 +160,20 @@ export async function cloneLibraryItemAsHomebrew(
     itemType: item.itemType,
     rarity: item.rarity,
     requiresAttunement: item.requiresAttunement,
+    attunementNote: item.attunementNote,
     description: item.description,
+    properties: item.properties,
+    charges: item.charges,
+    effects: item.effects,
     bonuses: { ...item.bonuses },
     source: "created",
+    isHomebrew: true,
+    tags: item.tags,
+    settingTags: item.settingTags.includes("Homebrew")
+      ? item.settingTags
+      : ["Homebrew", ...item.settingTags],
+    sourceNote: item.sourceNote,
+    imageDataUrl: item.imageDataUrl,
   });
   const created = list[0];
   if (!created) return { ok: false, error: "Failed to save homebrew copy." };

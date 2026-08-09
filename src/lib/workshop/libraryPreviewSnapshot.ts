@@ -10,7 +10,7 @@ import {
   type LibraryItem,
   type LibraryKind,
 } from "@/lib/generationLibrary";
-import { GAME_ITEM_KIND_LABEL, type SavedGameItem } from "@/lib/itemLibrary";
+import { GAME_ITEM_KIND_LABEL, gameItemToMarkdown, type SavedGameItem } from "@/lib/itemLibrary";
 import { characterSummary } from "@/lib/tabletop/character";
 import { characterToMarkdownFile } from "@/lib/tabletop/characterMarkdown";
 import type { SavedCharacter } from "@/lib/tabletop/characterLibrary";
@@ -73,7 +73,7 @@ function libraryPreviewMarkdown(params: BuildLibraryPreviewSnapshotParams): stri
   if (selection.kind === "item") {
     const item = items.find((i) => i.id === selection.id);
     if (!item) return "";
-    return `# ${item.name}\n\n${item.description.trim() || `${GAME_ITEM_KIND_LABEL[item.kind]} · ${item.itemType}`.trim()}`;
+    return gameItemToMarkdown(item);
   }
 
   if (selection.kind === "campaign") {

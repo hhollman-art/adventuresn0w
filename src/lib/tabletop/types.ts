@@ -108,8 +108,62 @@ export type CharacterItem = {
   sourceSrdEntityId?: string | null;
 };
 
+export type CharacterSkillProficiency =
+  | "acrobatics"
+  | "animal-handling"
+  | "arcana"
+  | "athletics"
+  | "deception"
+  | "history"
+  | "insight"
+  | "intimidation"
+  | "investigation"
+  | "medicine"
+  | "nature"
+  | "perception"
+  | "performance"
+  | "persuasion"
+  | "religion"
+  | "sleight-of-hand"
+  | "stealth"
+  | "survival";
+
+export type CharacterAttack = {
+  id: string;
+  name: string;
+  attackBonus: string;
+  damageType: string;
+};
+
+export type CharacterCurrency = {
+  cp: number;
+  sp: number;
+  ep: number;
+  gp: number;
+  pp: number;
+};
+
+export type CharacterSheetDetails = {
+  experiencePoints?: number;
+  inspiration?: boolean;
+  proficientSavingThrows?: (keyof AbilityScores)[];
+  skillProficiencies?: CharacterSkillProficiency[];
+  otherProficiencies?: string;
+  temporaryHp?: number;
+  hitDice?: string;
+  deathSaveSuccesses?: number;
+  deathSaveFailures?: number;
+  attacks?: CharacterAttack[];
+  currency?: CharacterCurrency;
+  personalityTraits?: string;
+  ideals?: string;
+  bonds?: string;
+  flaws?: string;
+  features?: string;
+};
+
 /** A party member, entered from their D&D 5.2-style character sheet. */
-export type PlayerCharacter = {
+export type PlayerCharacter = CharacterSheetDetails & {
   id: string;
   /** Character name (required). */
   name: string;

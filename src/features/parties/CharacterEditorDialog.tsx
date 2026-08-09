@@ -13,6 +13,7 @@ import type { AbilityScores, CharacterItem, PlayerCharacter } from "@/lib/tablet
 import PreparedSpellsByLevel from "@/features/parties/PreparedSpellsByLevel";
 import CharacterContainerSlots from "@/features/parties/CharacterContainerSlots";
 import CharacterSheetPrintView from "@/features/parties/CharacterSheetPrintView";
+import CharacterSheetLayout from "@/features/characters/CharacterSheetLayout";
 import { formatModifierLine } from "@/lib/tabletop/modifierEngine";
 import { newId } from "@/lib/tabletop/session";
 import { linkModifierToCharacter } from "@/lib/workshop/cfCloneWritePath";
@@ -555,7 +556,7 @@ export default function CharacterEditorDialog({
       }}
     >
       <div
-        className="flex max-h-full w-full max-w-2xl flex-col overflow-y-auto rounded-xl border p-6 shadow-lg"
+        className="flex max-h-full w-full max-w-7xl flex-col overflow-y-auto rounded-xl border p-6 shadow-lg"
         style={{ background: "var(--surface)", borderColor: "var(--border)" }}
       >
         <h2
@@ -621,6 +622,25 @@ export default function CharacterEditorDialog({
           ) : null}
         </div>
 
+        <details className="mt-4" open>
+          <summary className="cursor-pointer text-sm font-bold text-[var(--text)]">
+            Character sheet editor
+          </summary>
+          <p className="mb-3 mt-1 text-xs text-[var(--muted)]">
+            Edit the table-ready sheet directly. Detailed spell, gear, and linked-effect tools
+            remain below it.
+          </p>
+          <CharacterSheetLayout
+            characterData={{ ...draft, tokenId: null }}
+            mode="editable"
+            onChange={({ tokenId: _tokenId, ...next }) => {
+              void _tokenId;
+              setDraft(next);
+            }}
+          />
+        </details>
+
+        <h3 className="mt-5 text-sm font-bold text-[var(--text)]">Detailed character tools</h3>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-xs">
             <span className="font-semibold">Hero name</span>

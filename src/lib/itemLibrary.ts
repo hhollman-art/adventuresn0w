@@ -71,11 +71,34 @@ export type SavedGameItem = {
   /** Magic items only; null for normal equipment. */
   rarity: MagicRarity | null;
   requiresAttunement: boolean;
+  /** Optional free-text attunement detail (e.g. "by a spellcaster"). */
+  attunementNote: string;
   /** What it does, in the DM's own words. */
   description: string;
+  /** Mechanical properties line (damage, AC, weapon properties, etc.). */
+  properties: string;
+  /** Charges / uses / recharge notes. */
+  charges: string;
+  /** Triggered effects, curses, or special rules. */
+  effects: string;
   /** Stat modifiers applied when a character carries it (same shape as sheet gear). */
   bonuses: ItemBonuses;
   source: GameItemSource;
+  /**
+   * True for custom / homebrew artifacts created via the Library Create Artifact tool
+   * (or flagged on save). Distinct from legal provenance — still always user-tier.
+   */
+  isHomebrew: boolean;
+  /** DM account id or display name when known at create time. */
+  createdBy: string | null;
+  /** Free-form classification tags (searchable). */
+  tags: string[];
+  /** System / setting chips (e.g. Homebrew, Realm). */
+  settingTags: string[];
+  /** Book or campaign source note ("My realm codex", etc.). */
+  sourceNote: string;
+  /** Optional artwork as a local `data:image/...` URL (never uploaded). */
+  imageDataUrl: string | null;
 };
 
 function normalizeKind(value: unknown): GameItemKind {
@@ -103,6 +126,27 @@ function normalizeBonuses(value: unknown): ItemBonuses {
   return base;
 }
 
+function normalizeStringList(value: unknown, max = 24): string[] {
+  if (!Array.isArray(value)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of value) {
+    if (typeof raw !== "string") continue;
+    const tag = raw.trim().slice(0, 40);
+    if (!tag) continue;
+    const key = tag.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(tag);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+function normalizeImageDataUrl(value: unknown): string | null {
+  return typeof value === "string" && value.startsWith("data:image/") ? value : null;
+}
+
 /** Validates and upgrades a persisted item row. */
 export function fixSavedGameItem(value: unknown): SavedGameItem | null {
   if (typeof value !== "object" || value === null) return null;
@@ -112,6 +156,7 @@ export function fixSavedGameItem(value: unknown): SavedGameItem | null {
   }
   const kind = normalizeKind(o.kind);
   const createdAt = typeof o.createdAt === "string" ? o.createdAt : new Date().toISOString();
+  const source = normalizeSource(o.source);
   return {
     id: o.id,
     createdAt,
@@ -121,9 +166,22 @@ export function fixSavedGameItem(value: unknown): SavedGameItem | null {
     itemType: typeof o.itemType === "string" ? o.itemType : "",
     rarity: kind === "magic" ? normalizeRarity(o.rarity) : null,
     requiresAttunement: kind === "magic" && o.requiresAttunement === true,
+    attunementNote: typeof o.attunementNote === "string" ? o.attunementNote : "",
     description: typeof o.description === "string" ? o.description : "",
+    properties: typeof o.properties === "string" ? o.properties : "",
+    charges: typeof o.charges === "string" ? o.charges : "",
+    effects: typeof o.effects === "string" ? o.effects : "",
     bonuses: normalizeBonuses(o.bonuses),
-    source: normalizeSource(o.source),
+    source,
+    isHomebrew: o.isHomebrew === true,
+    createdBy:
+      typeof o.createdBy === "string" && o.createdBy.trim()
+        ? o.createdBy.trim()
+        : null,
+    tags: normalizeStringList(o.tags, 24),
+    settingTags: normalizeStringList(o.settingTags, 12),
+    sourceNote: typeof o.sourceNote === "string" ? o.sourceNote : "",
+    imageDataUrl: normalizeImageDataUrl(o.imageDataUrl),
   };
 }
 
@@ -271,10 +329,63 @@ export type SaveGameItemInput = {
   itemType?: string;
   rarity?: MagicRarity | null;
   requiresAttunement?: boolean;
+  attunementNote?: string;
   description?: string;
+  properties?: string;
+  charges?: string;
+  effects?: string;
   bonuses?: ItemBonuses;
   source?: GameItemSource;
+  isHomebrew?: boolean;
+  createdBy?: string | null;
+  tags?: string[];
+  settingTags?: string[];
+  sourceNote?: string;
+  imageDataUrl?: string | null;
 };
+
+function buildRecordFromInput(
+  input: SaveGameItemInput,
+  existing?: SavedGameItem,
+): Omit<SavedGameItem, "id" | "createdAt" | "updatedAt"> {
+  const kind = input.kind;
+  return {
+    kind,
+    name: input.name.trim(),
+    itemType: input.itemType?.trim() ?? "",
+    rarity: kind === "magic" ? (input.rarity ?? null) : null,
+    requiresAttunement: kind === "magic" && input.requiresAttunement === true,
+    attunementNote:
+      input.attunementNote !== undefined
+        ? input.attunementNote
+        : (existing?.attunementNote ?? ""),
+    description: input.description ?? "",
+    properties:
+      input.properties !== undefined ? input.properties : (existing?.properties ?? ""),
+    charges: input.charges !== undefined ? input.charges : (existing?.charges ?? ""),
+    effects: input.effects !== undefined ? input.effects : (existing?.effects ?? ""),
+    bonuses: normalizeBonuses(input.bonuses ?? existing?.bonuses),
+    source: input.source ?? existing?.source ?? "created",
+    isHomebrew:
+      input.isHomebrew !== undefined ? input.isHomebrew : (existing?.isHomebrew ?? false),
+    createdBy:
+      input.createdBy !== undefined ? input.createdBy : (existing?.createdBy ?? null),
+    tags:
+      input.tags !== undefined
+        ? normalizeStringList(input.tags, 24)
+        : (existing?.tags ?? []),
+    settingTags:
+      input.settingTags !== undefined
+        ? normalizeStringList(input.settingTags, 12)
+        : (existing?.settingTags ?? []),
+    sourceNote:
+      input.sourceNote !== undefined ? input.sourceNote : (existing?.sourceNote ?? ""),
+    imageDataUrl:
+      input.imageDataUrl !== undefined
+        ? normalizeImageDataUrl(input.imageDataUrl)
+        : (existing?.imageDataUrl ?? null),
+  };
+}
 
 export async function saveGameItem(input: SaveGameItemInput): Promise<SavedGameItem[]> {
   if (typeof window === "undefined") return [];
@@ -287,14 +398,7 @@ export async function saveGameItem(input: SaveGameItemInput): Promise<SavedGameI
       id: newId(),
       createdAt: now,
       updatedAt: now,
-      kind: input.kind,
-      name: input.name.trim(),
-      itemType: input.itemType?.trim() ?? "",
-      rarity: input.kind === "magic" ? (input.rarity ?? null) : null,
-      requiresAttunement: input.kind === "magic" && input.requiresAttunement === true,
-      description: input.description ?? "",
-      bonuses: normalizeBonuses(input.bonuses),
-      source: input.source ?? "created",
+      ...buildRecordFromInput(input),
     };
     const list = [record, ...(await loadInternal())].slice(0, MAX_ITEMS);
     await persist(list);
@@ -311,22 +415,102 @@ export async function updateGameItem(
     const now = new Date().toISOString();
     const list = (await loadInternal()).map((i) => {
       if (i.id !== id) return i;
-      const kind = patch.kind;
       return {
         ...i,
-        kind,
-        name: patch.name.trim() || i.name,
-        itemType: patch.itemType?.trim() ?? "",
-        rarity: kind === "magic" ? (patch.rarity ?? null) : null,
-        requiresAttunement: kind === "magic" && patch.requiresAttunement === true,
-        description: patch.description ?? "",
-        bonuses: normalizeBonuses(patch.bonuses),
+        ...buildRecordFromInput({ ...patch, source: i.source }, i),
+        id: i.id,
+        createdAt: i.createdAt,
         updatedAt: now,
+        source: i.source,
       };
     });
     await persist(list);
     return list;
   });
+}
+
+/**
+ * Validate + persist a custom homebrew artifact into the item library.
+ * Returns the refreshed list and the new row (for instant Library selection).
+ */
+export async function createCustomArtifact(
+  raw: unknown,
+): Promise<{ items: SavedGameItem[]; item: SavedGameItem }> {
+  const { parseCreateCustomArtifact } = await import("@/lib/itemArtifactSchema");
+  const parsed = parseCreateCustomArtifact(raw);
+  if (!parsed.ok) {
+    throw new Error(parsed.error);
+  }
+  const data = parsed.data;
+  const settingTags = data.settingTags.includes("Homebrew")
+    ? data.settingTags
+    : ["Homebrew", ...data.settingTags];
+  const tags = Array.from(
+    new Set(
+      [...data.tags, ...settingTags, data.sourceNote.trim()].filter(Boolean),
+    ),
+  );
+
+  const items = await saveGameItem({
+    kind: "magic",
+    name: data.name,
+    itemType: data.itemType,
+    rarity: data.rarity,
+    requiresAttunement: data.requiresAttunement,
+    attunementNote: data.attunementNote,
+    description: data.description,
+    properties: data.properties,
+    charges: data.charges,
+    effects: data.effects,
+    source: "created",
+    isHomebrew: true,
+    createdBy: data.createdBy,
+    tags,
+    settingTags,
+    sourceNote: data.sourceNote,
+    imageDataUrl: data.imageDataUrl ?? null,
+  });
+  const item = items.find((row) => row.name === data.name && row.isHomebrew) ?? items[0];
+  if (!item) {
+    throw new Error("Could not save this artifact. Please try again.");
+  }
+  return { items, item };
+}
+
+/** Table-ready markdown for Library detail / export. */
+export function gameItemToMarkdown(item: SavedGameItem): string {
+  const lines: string[] = [`# ${item.name}`, ""];
+  const meta = [
+    GAME_ITEM_KIND_LABEL[item.kind],
+    item.itemType,
+    item.kind === "magic" && item.rarity ? MAGIC_RARITY_LABEL[item.rarity] : "",
+    item.requiresAttunement
+      ? `Requires attunement${item.attunementNote.trim() ? ` (${item.attunementNote.trim()})` : ""}`
+      : "",
+    item.isHomebrew ? "Homebrew" : "",
+    item.sourceNote.trim() ? `Source: ${item.sourceNote.trim()}` : "",
+  ].filter(Boolean);
+  if (meta.length) lines.push(meta.join(" · "), "");
+  if (item.description.trim()) {
+    lines.push("## Description", "", item.description.trim(), "");
+  }
+  if (item.properties.trim()) {
+    lines.push("## Properties", "", item.properties.trim(), "");
+  }
+  if (item.charges.trim()) {
+    lines.push("## Charges", "", item.charges.trim(), "");
+  }
+  if (item.effects.trim()) {
+    lines.push("## Effects", "", item.effects.trim(), "");
+  }
+  const tags = [...item.settingTags, ...item.tags];
+  if (tags.length) {
+    lines.push("## Tags", "", tags.map((t) => `- ${t}`).join("\n"), "");
+  }
+  if (item.createdBy) {
+    lines.push(`_Created by ${item.createdBy}_`, "");
+  }
+  return lines.join("\n").trimEnd() + "\n";
 }
 
 export async function deleteGameItem(id: string): Promise<SavedGameItem[]> {

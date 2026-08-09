@@ -22,9 +22,19 @@ function sample(over: {
     itemType: "",
     rarity: over.kind === "magic" ? (over.rarity ?? null) : null,
     requiresAttunement: false,
+    attunementNote: "",
     description: "",
+    properties: "",
+    charges: "",
+    effects: "",
     bonuses: emptyBonuses(),
     source: "created",
+    isHomebrew: false,
+    createdBy: null,
+    tags: [],
+    settingTags: [],
+    sourceNote: "",
+    imageDataUrl: null,
   };
 }
 
@@ -37,6 +47,31 @@ describe("fixSavedGameItem", () => {
     expect(fixed!.requiresAttunement).toBe(false);
     expect(fixed!.bonuses).toEqual(emptyBonuses());
     expect(fixed!.source).toBe("import");
+    expect(fixed!.isHomebrew).toBe(false);
+    expect(fixed!.tags).toEqual([]);
+    expect(fixed!.imageDataUrl).toBeNull();
+  });
+
+  it("keeps homebrew metadata and artwork", () => {
+    const fixed = fixSavedGameItem({
+      id: "i1",
+      name: "Ember Crown",
+      kind: "magic",
+      rarity: "legendary",
+      isHomebrew: true,
+      createdBy: "dm1",
+      tags: ["fire"],
+      settingTags: ["Homebrew", "Realm"],
+      sourceNote: "My codex",
+      properties: "+1 AC",
+      charges: "3",
+      effects: "Burst of flame",
+      imageDataUrl: "data:image/png;base64,abc",
+    });
+    expect(fixed!.isHomebrew).toBe(true);
+    expect(fixed!.createdBy).toBe("dm1");
+    expect(fixed!.settingTags).toContain("Homebrew");
+    expect(fixed!.imageDataUrl).toBe("data:image/png;base64,abc");
   });
 
   it("rejects rows without an id or name", () => {

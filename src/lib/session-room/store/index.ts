@@ -3,6 +3,7 @@ import {
   hasRedisSessionEnv,
   RedisSessionStore,
   redisConfigFromEnv,
+  type SessionStoreEnv,
 } from "@/lib/session-room/store/redisSessionStore";
 import type { SessionStore } from "@/lib/session-room/store/types";
 
@@ -29,7 +30,7 @@ let singleton: SessionStore | null = null;
  * - otherwise in-memory (local / CI)
  */
 export function createSessionStore(
-  env: NodeJS.ProcessEnv = process.env,
+  env: SessionStoreEnv = process.env,
 ): SessionStore {
   const redisConfig = redisConfigFromEnv(env);
   if (redisConfig && hasRedisSessionEnv(env)) {

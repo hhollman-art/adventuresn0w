@@ -6,6 +6,7 @@ import Link from "next/link";
 import BattleStage, { type StageTool } from "@/features/tabletop/BattleStage";
 import VttControlSidebar, { type VttSidePanel } from "@/features/tabletop/VttControlSidebar";
 import VttExportPanel from "@/features/tabletop/VttExportPanel";
+import CharacterSheetLayout from "@/features/characters/CharacterSheetLayout";
 import { useGenerationLibraryImages } from "@/features/tabletop/useGenerationLibraryImages";
 import {
   SrdClassSubclassFields,
@@ -785,8 +786,10 @@ function buildSheetPlayer(
   tokenId: string | null,
   currentHp: number | null = null,
   knownSpellIds: string[] = [],
+  details: Partial<PlayerCharacter> = {},
 ): PlayerCharacter {
   return {
+    ...details,
     id,
     name: f.name.trim(),
     playerName: f.playerName.trim(),
@@ -810,8 +813,10 @@ function buildSheetPlayer(
     notes: f.notes,
     items: items.filter((item) => item.name.trim()),
     knownSpellIds,
-    preparedSpellIds: knownSpellIds,
-    linkedModifiers: [],
+    preparedSpellIds: (details.preparedSpellIds ?? knownSpellIds).filter((id) =>
+      knownSpellIds.includes(id),
+    ),
+    linkedModifiers: details.linkedModifiers ?? [],
     currentHp,
     tokenId,
   };
@@ -939,6 +944,9 @@ function PlayerSheetModal({
   const [knownSpellIds, setKnownSpellIds] = useState<string[]>(
     () => initial?.knownSpellIds ?? [],
   );
+  const [sheetDetails, setSheetDetails] = useState<Partial<PlayerCharacter>>(
+    () => initial ?? {},
+  );
   const [draftId] = useState(() => initial?.id ?? newId());
   const [placeToken, setPlaceToken] = useState(true);
   const set = (key: keyof SheetForm) => (value: string) => setF((v) => ({ ...v, [key]: value }));
@@ -950,6 +958,7 @@ function PlayerSheetModal({
     initial?.tokenId ?? null,
     initial?.currentHp ?? null,
     knownSpellIds,
+    sheetDetails,
   );
   const itemBonuses = sumItemBonuses(items);
   const effectiveScores = effectiveAbilities(preview.abilities, items);
@@ -967,7 +976,7 @@ function PlayerSheetModal({
       }}
     >
       <div
-        className="fantasy-panel flex max-h-full w-full max-w-xl flex-col overflow-hidden rounded-xl border"
+        className="fantasy-panel flex max-h-full w-full max-w-7xl flex-col overflow-hidden rounded-xl border"
         style={{ borderColor: "var(--border)", background: "var(--surface)" }}
       >
         <div
@@ -988,6 +997,18 @@ function PlayerSheetModal({
         </div>
 
         <div className="flex flex-col gap-3 overflow-y-auto p-4 text-sm">
+          <CharacterSheetLayout
+            characterData={preview}
+            mode="editable"
+            onChange={(next) => {
+              setF(toForm(next));
+              setItems(next.items);
+              setKnownSpellIds(next.knownSpellIds);
+              setSheetDetails(next);
+            }}
+          />
+
+          <h3 className="text-sm font-bold text-[var(--text)]">Detailed character tools</h3>
           {/* Identity */}
           <div className="grid grid-cols-2 gap-2">
             <SheetField label="Character name *" value={f.name} onChange={set("name")} />

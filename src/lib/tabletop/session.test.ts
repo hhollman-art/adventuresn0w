@@ -170,6 +170,45 @@ describe("fixSession", () => {
   });
 });
 
+describe("fixPlayer character sheet details", () => {
+  it("preserves optional official-sheet fields and safely defaults legacy rows", () => {
+    const legacy = fixPlayer({ id: "legacy", name: "Legacy Hero" })!;
+    expect(legacy.skillProficiencies).toEqual([]);
+    expect(legacy.currency).toEqual({ cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 });
+    expect(legacy.deathSaveSuccesses).toBe(0);
+
+    const detailed = fixPlayer({
+      id: "hero",
+      name: "Aria",
+      experiencePoints: 6400,
+      inspiration: true,
+      proficientSavingThrows: ["dex", "wis"],
+      skillProficiencies: ["perception", "stealth"],
+      temporaryHp: 5,
+      hitDice: "8d8",
+      deathSaveSuccesses: 2,
+      attacks: [
+        {
+          id: "attack-1",
+          name: "Rapier",
+          attackBonus: "+7",
+          damageType: "1d8+4 piercing",
+        },
+      ],
+      currency: { cp: 1, sp: 2, ep: 3, gp: 4, pp: 5 },
+      personalityTraits: "Always has a plan.",
+      features: "Cunning Action",
+    })!;
+
+    expect(detailed.experiencePoints).toBe(6400);
+    expect(detailed.proficientSavingThrows).toEqual(["dex", "wis"]);
+    expect(detailed.skillProficiencies).toEqual(["perception", "stealth"]);
+    expect(detailed.attacks?.[0]?.name).toBe("Rapier");
+    expect(detailed.currency?.gp).toBe(4);
+    expect(detailed.features).toBe("Cunning Action");
+  });
+});
+
 describe("initiative", () => {
   it("sorts by roll descending, ties by name", () => {
     const sorted = sortInitiative([

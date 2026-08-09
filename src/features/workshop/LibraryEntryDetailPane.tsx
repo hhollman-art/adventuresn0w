@@ -17,7 +17,7 @@ import type { SavedCharacter } from "@/lib/tabletop/characterLibrary";
 import type { SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
 import { characterToMarkdownFile } from "@/lib/tabletop/characterMarkdown";
 import { characterSummary } from "@/lib/tabletop/character";
-import { GAME_ITEM_KIND_LABEL } from "@/lib/itemLibrary";
+import { gameItemToMarkdown } from "@/lib/itemLibrary";
 import type { SavedSessionRecord } from "@/lib/sessions/record";
 import type { SavedNpc } from "@/lib/worldAssets/npc";
 import type { SavedLocation } from "@/lib/worldAssets/location";
@@ -27,6 +27,7 @@ import { getSrdEntity, srdEntityKindLabel } from "@/lib/srd/corpus";
 import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
 import SrdCloneButton from "@/features/srd/SrdCloneButton";
 import SpellLinkedMarkdownView from "@/features/srd/SpellLinkedMarkdownView";
+import CharacterSheetLayout from "@/features/characters/CharacterSheetLayout";
 import type { CloneSrdResult } from "@/lib/srd/cloneSrdEntity";
 
 export type LibraryEntryDetailPaneProps = {
@@ -87,7 +88,7 @@ function detailMarkdown(props: LibraryEntryDetailPaneProps): string {
   if (selection.kind === "item") {
     const item = props.items.find((i) => i.id === selection.id);
     if (!item) return "";
-    return `# ${item.name}\n\n${item.description.trim() || `${GAME_ITEM_KIND_LABEL[item.kind]} · ${item.itemType}`.trim()}`;
+    return gameItemToMarkdown(item);
   }
   if (selection.kind === "party") {
     return props.parties.find((p) => p.id === selection.id)?.markdown ?? "";
@@ -201,6 +202,25 @@ export default function LibraryEntryDetailPane(props: LibraryEntryDetailPaneProp
     );
   }
 
+  if (selection.kind === "character") {
+    const character = props.characters.find((row) => row.id === selection.id);
+    if (!character) {
+      return (
+        <div className="library-detail-pane rounded-lg border p-4 text-xs text-[var(--muted)]">
+          This hero is no longer in the Library.
+        </div>
+      );
+    }
+    return (
+      <div
+        className="library-detail-pane min-h-0 flex-1 overflow-auto rounded-lg border p-2"
+        style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+      >
+        <CharacterSheetLayout characterData={character.player} />
+      </div>
+    );
+  }
+
   const title =
     entry?.title ??
     (selection.kind === "npc"
@@ -211,7 +231,11 @@ export default function LibraryEntryDetailPane(props: LibraryEntryDetailPaneProp
           ? props.sessionRecords.find((r) => r.id === selection.id)?.title
           : "Selected entry");
 
-  const spellLinkedDetail = selection.kind === "npc" || selection.kind === "character";
+  const spellLinkedDetail = selection.kind === "npc";
+  const itemArt =
+    selection.kind === "item"
+      ? props.items.find((i) => i.id === selection.id)?.imageDataUrl ?? null
+      : null;
 
   return (
     <div
@@ -228,11 +252,32 @@ export default function LibraryEntryDetailPane(props: LibraryEntryDetailPaneProp
               {fantasyCiLabel(entry!.ciClass)}
             </span>
           ) : null}
+          {entry?.isHomebrew ? (
+            <span
+              className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+              style={{
+                borderColor: "rgba(120, 70, 160, 0.45)",
+                color: "rgb(120, 70, 160)",
+                background: "rgba(120, 70, 160, 0.08)",
+              }}
+            >
+              Homebrew
+            </span>
+          ) : null}
           <h3 className="font-display text-base font-bold text-[var(--text)]">{title}</h3>
         </div>
         {subline ? <p className="mt-1 text-xs text-[var(--muted)]">{subline}</p> : null}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        {itemArt ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={itemArt}
+            alt=""
+            className="mb-3 max-h-48 w-auto max-w-full rounded-md border object-contain"
+            style={{ borderColor: "var(--border)" }}
+          />
+        ) : null}
         {markdown.trim() ? (
           spellLinkedDetail ? (
             <SpellLinkedMarkdownView markdown={markdown} />

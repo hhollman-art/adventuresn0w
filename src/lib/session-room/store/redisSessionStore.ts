@@ -12,6 +12,8 @@ export type RedisSessionStoreConfig = {
   token: string;
 };
 
+export type SessionStoreEnv = Record<string, string | undefined>;
+
 /**
  * Upstash Redis (HTTP) SessionStore — works on Vercel / Lambda without sticky sessions.
  * Keys expire via Redis TTL aligned to each room's `expiresAt`.
@@ -71,7 +73,7 @@ export class RedisSessionStore implements SessionStore {
 
 /** True when Upstash / Vercel KV REST credentials are present. */
 export function hasRedisSessionEnv(
-  env: NodeJS.ProcessEnv = process.env,
+  env: SessionStoreEnv = process.env,
 ): boolean {
   const url = env.KV_REST_API_URL?.trim() || env.UPSTASH_REDIS_REST_URL?.trim();
   const token =
@@ -80,7 +82,7 @@ export function hasRedisSessionEnv(
 }
 
 export function redisConfigFromEnv(
-  env: NodeJS.ProcessEnv = process.env,
+  env: SessionStoreEnv = process.env,
 ): RedisSessionStoreConfig | null {
   const url = env.KV_REST_API_URL?.trim() || env.UPSTASH_REDIS_REST_URL?.trim();
   const token =

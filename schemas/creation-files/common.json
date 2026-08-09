@@ -121,7 +121,19 @@
         "id": { "$ref": "#/$defs/uuidOrId" },
         "name": { "type": "string" },
         "notes": { "type": "string" },
-        "bonuses": { "$ref": "#/$defs/itemBonuses" }
+        "bonuses": { "$ref": "#/$defs/itemBonuses" },
+        "equipped": { "type": "boolean" },
+        "libraryItemId": { "type": ["string", "null"] },
+        "sourceKind": {
+          "type": "string",
+          "enum": [
+            "item", "equipped-item", "species", "class", "background", "feat",
+            "condition", "curse", "blessing", "creation-file", "manual"
+          ]
+        },
+        "instanceId": { "type": "string" },
+        "_source": { "type": "string", "enum": ["SRD", "user", "import", "created"] },
+        "sourceSrdEntityId": { "type": ["string", "null"] }
       },
       "additionalProperties": false
     },
@@ -169,6 +181,99 @@
           "items": { "type": "string" },
           "description": "Bundled SRD spell catalogue ids"
         },
+        "preparedSpellIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "linkedModifiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id", "sourceKind", "sourceLabel", "sourceCfId", "target", "value", "active"
+            ],
+            "properties": {
+              "id": { "$ref": "#/$defs/uuidOrId" },
+              "sourceKind": {
+                "type": "string",
+                "enum": [
+                  "item", "equipped-item", "species", "class", "background", "feat",
+                  "condition", "curse", "blessing", "creation-file", "manual"
+                ]
+              },
+              "sourceLabel": { "type": "string" },
+              "sourceCfId": { "type": ["string", "null"] },
+              "target": {
+                "type": "string",
+                "enum": [
+                  "str", "dex", "con", "int", "wis", "cha", "ac", "maxHp", "speed",
+                  "initiative", "passivePerception", "save-str", "save-dex", "save-con",
+                  "save-int", "save-wis", "save-cha"
+                ]
+              },
+              "value": { "type": "number" },
+              "active": { "type": "boolean" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "experiencePoints": { "type": "integer", "minimum": 0 },
+        "inspiration": { "type": "boolean" },
+        "proficientSavingThrows": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["str", "dex", "con", "int", "wis", "cha"] },
+          "uniqueItems": true
+        },
+        "skillProficiencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "acrobatics", "animal-handling", "arcana", "athletics", "deception",
+              "history", "insight", "intimidation", "investigation", "medicine",
+              "nature", "perception", "performance", "persuasion", "religion",
+              "sleight-of-hand", "stealth", "survival"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "otherProficiencies": { "type": "string" },
+        "temporaryHp": { "type": "integer", "minimum": 0 },
+        "hitDice": { "type": "string" },
+        "deathSaveSuccesses": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "deathSaveFailures": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "attacks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "attackBonus", "damageType"],
+            "properties": {
+              "id": { "$ref": "#/$defs/uuidOrId" },
+              "name": { "type": "string" },
+              "attackBonus": { "type": "string" },
+              "damageType": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "currency": {
+          "type": "object",
+          "required": ["cp", "sp", "ep", "gp", "pp"],
+          "properties": {
+            "cp": { "type": "integer", "minimum": 0 },
+            "sp": { "type": "integer", "minimum": 0 },
+            "ep": { "type": "integer", "minimum": 0 },
+            "gp": { "type": "integer", "minimum": 0 },
+            "pp": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "personalityTraits": { "type": "string" },
+        "ideals": { "type": "string" },
+        "bonds": { "type": "string" },
+        "flaws": { "type": "string" },
+        "features": { "type": "string" },
         "currentHp": {
           "type": ["integer", "null"]
         },

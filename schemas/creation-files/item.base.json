@@ -39,6 +39,31 @@
     "description": { "type": "string" },
     "bonuses": { "$ref": "common.json#/$defs/itemBonuses" },
     "source": { "type": "string", "enum": ["created", "import"] },
+    "isHomebrew": {
+      "type": "boolean",
+      "description": "True for custom artifacts created via Library Create Artifact"
+    },
+    "createdBy": {
+      "type": ["string", "null"],
+      "description": "DM username / id when known at create time"
+    },
+    "attunementNote": { "type": "string" },
+    "properties": { "type": "string" },
+    "charges": { "type": "string" },
+    "effects": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "settingTags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "sourceNote": { "type": "string" },
+    "imageDataUrl": {
+      "type": ["string", "null"],
+      "description": "Local data:image URL for item artwork"
+    },
     "cfMetadata": { "$ref": "common.json#/$defs/cfMetadata" }
   },
   "additionalProperties": false
