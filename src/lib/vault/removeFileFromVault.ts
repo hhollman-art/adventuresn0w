@@ -21,6 +21,7 @@ import {
 } from "@/lib/vault/vaultSrdPark";
 import { loadSavedGameItems } from "@/lib/itemLibrary";
 import { loadSavedCustomSrdEntries } from "@/lib/srd/srdCustomLibrary";
+import { emitAppToast } from "@/lib/ui/appToast";
 
 export const VAULT_TOAST_EVENT = "ddeasy-vault-toast";
 
@@ -48,6 +49,7 @@ const SELECTION_STORAGE_KEYS = [
 
 function emitToast(message: string, tone: VaultToastDetail["tone"] = "info"): void {
   if (typeof window === "undefined") return;
+  emitAppToast(message, tone);
   window.dispatchEvent(
     new CustomEvent<VaultToastDetail>(VAULT_TOAST_EVENT, {
       detail: { message, tone },

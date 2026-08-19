@@ -8,9 +8,9 @@ import PowerWorkspaceProvider, {
 import PowerWorkspaceSwitcher from "@/features/workshop/PowerWorkspaceSwitcher";
 import CreateNewHubDialog from "@/features/workshop/CreateNewHubDialog";
 import FirstSaveVaultModal from "@/features/workshop/FirstSaveVaultModal";
-import ScryingGlassPopup from "@/features/workshop/ScryingGlassPopup";
 import DmmsCommandPalette from "@/features/commandPalette/DmmsCommandPalette";
-import VaultWorkplaceShell from "@/features/vault/VaultWorkplaceShell";
+import CommandCenterShell from "@/features/shell/CommandCenterShell";
+import AppToastHost from "@/features/ui/AppToastHost";
 
 function PowerWorkspaceChrome({ children }: { children: ReactNode }) {
   const power = usePowerWorkspaceOptional();
@@ -28,9 +28,9 @@ function PowerWorkspaceChrome({ children }: { children: ReactNode }) {
   }, [power]);
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       <PowerWorkspaceSwitcher onCreateNew={openHub} />
-      <VaultWorkplaceShell>{children}</VaultWorkplaceShell>
+      <CommandCenterShell>{children}</CommandCenterShell>
       <CreateNewHubDialog
         open={hubOpen}
         initialKind={power?.state.createHubKind}
@@ -38,9 +38,9 @@ function PowerWorkspaceChrome({ children }: { children: ReactNode }) {
         onClose={closeHub}
       />
       <FirstSaveVaultModal />
-      <ScryingGlassPopup />
       <DmmsCommandPalette />
-    </>
+      <AppToastHost />
+    </div>
   );
 }
 

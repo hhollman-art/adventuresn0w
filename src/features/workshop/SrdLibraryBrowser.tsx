@@ -3,15 +3,17 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  ciClassForSrdEntity,
   listSrdEntities,
   srdEntityKindLabel,
 } from "@/lib/srd/corpus";
-import { SRD_MANIFEST } from "@/lib/srd/manifest";
-import type { SrdEntityKind } from "@/lib/srd/types";
-import { PREVIEW_WINDOW } from "@/lib/ui/labels";
+import type { SrdEntityKind, SrdEntitySummary } from "@/lib/srd/types";
 import type { LibraryViewSelection } from "@/features/workshop/WorkshopLibraryPanel";
 import SrdCloneButton, { SrdCloneCategoryButton } from "@/features/srd/SrdCloneButton";
 import type { CloneSrdResult } from "@/lib/srd/cloneSrdEntity";
+import ContextMenu from "@/features/ui/ContextMenu";
+import { useContextMenu } from "@/hooks/useContextMenu";
+import { parkCfFromContext, sendCfToActiveCampaign } from "@/lib/workshop/cfContextActions";
 
 type SrdLibraryBrowserProps = {
   selection: LibraryViewSelection;
@@ -121,6 +123,8 @@ export default function SrdLibraryBrowser({
 }: SrdLibraryBrowserProps) {
   const [kind, setKind] = useState<SrdEntityKind>("rule");
   const [query, setQuery] = useState("");
+  const [menuEntity, setMenuEntity] = useState<SrdEntitySummary | null>(null);
+  const menu = useContextMenu();
 
   const filtered = useMemo(() => {
     const pool = listSrdEntities(kind);
@@ -143,24 +147,15 @@ export default function SrdLibraryBrowser({
     : null;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div
-        className="rounded-lg border p-3 text-xs leading-relaxed"
-        style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-      >
-        <p className="text-[var(--muted)]">
-          <strong className="text-[var(--text)]">Included rules (SRD)</strong> — browse spells,
-          monsters, classes, equipment, and rules. Full descriptions open in the {PREVIEW_WINDOW}{" "}
-          from the bundled <strong className="text-[var(--text)]">{SRD_MANIFEST.documentPdfId}</strong>{" "}
-          ({SRD_MANIFEST.license}, read-only). Clone any entry to your editable workspace with{" "}
-          <strong className="text-[var(--text)]">Copy &amp; Edit</strong>. Material from books you
-          own stays in your imports — never here. See{" "}
-          <Link href="/legal" className="font-semibold text-[var(--accent)] underline">
-            Licenses &amp; content
-          </Link>
-          .
-        </p>
-      </div>
+    <div className="flex min-h-0 flex-1 flex-col gap-2">
+      <p className="text-[11px] leading-snug text-[var(--muted)]">
+        <strong className="text-[var(--text)]">Included rules (SRD)</strong> — pick an entry to
+        inspect it in the Scrying panel. Clone with Copy &amp; Edit. See{" "}
+        <Link href="/legal" className="font-semibold text-[var(--accent)] underline">
+          Licenses &amp; content
+        </Link>
+        .
+      </p>
 
       <div className="flex flex-wrap items-center gap-2">
         {kindMeta ? (
@@ -209,18 +204,18 @@ export default function SrdLibraryBrowser({
       </div>
 
       {kindMeta ? (
-        <p className="text-xs text-[var(--muted)]">{kindMeta.description}</p>
+        <p className="sr-only">{kindMeta.description}</p>
       ) : null}
 
-      <label className="flex flex-col gap-1 text-xs text-[var(--muted)]">
+      <label className="library-browse-toolbar--sticky flex min-w-0 items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs text-[var(--muted)]">
         Search {kindMeta?.label.toLowerCase() ?? "entries"}
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter by name…"
-          className="rounded-md border px-2 py-1.5 text-sm text-[var(--text)]"
-          style={{ borderColor: "var(--border)", background: "var(--panel)" }}
+          className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[var(--text)] outline-none"
+          aria-label={`Search ${kindMeta?.label.toLowerCase() ?? "entries"}`}
         />
       </label>
 
@@ -249,6 +244,17 @@ export default function SrdLibraryBrowser({
                     name: entity.name,
                   })
                 }
+                onContextMenu={(event) => {
+                  setMenuEntity(entity);
+                  menu.bind.onContextMenu(event);
+                }}
+                onPointerDown={(event) => {
+                  setMenuEntity(entity);
+                  menu.bind.onPointerDown(event);
+                }}
+                onPointerMove={menu.bind.onPointerMove}
+                onPointerUp={menu.bind.onPointerUp}
+                onPointerCancel={menu.bind.onPointerCancel}
                 className={`srd-grid-btn${selected ? " srd-grid-btn-active" : ""}`}
               >
                 <span className="srd-grid-btn-label">{entity.name}</span>
@@ -270,6 +276,72 @@ export default function SrdLibraryBrowser({
           into your workspace.
         </p>
       ) : null}
+
+      <ContextMenu
+        open={menu.open && Boolean(menuEntity)}
+        x={menu.position?.x ?? 0}
+        y={menu.position?.y ?? 0}
+        label={`Actions for ${menuEntity?.name ?? "SRD entry"}`}
+        onClose={menu.close}
+        items={
+          menuEntity
+            ? [
+                {
+                  id: "campaign",
+                  label: "Send to Active Campaign",
+                  onSelect: () =>
+                    sendCfToActiveCampaign({
+                      id: menuEntity.id,
+                      title: menuEntity.name,
+                      ciClass: ciClassForSrdEntity(menuEntity.kind),
+                      category:
+                        menuEntity.kind === "monster"
+                          ? "monsters"
+                          : menuEntity.kind === "equipment" ||
+                              menuEntity.kind === "weapon" ||
+                              menuEntity.kind === "armor" ||
+                              menuEntity.kind === "magic-item"
+                            ? "items"
+                            : "rules",
+                      provenance: "srd",
+                      detail: menuEntity.subtitle ?? "",
+                      srdEntityId: menuEntity.id,
+                    }),
+                },
+                {
+                  id: "park",
+                  label: "Park in Lore Vault",
+                  onSelect: () =>
+                    parkCfFromContext({
+                      id: menuEntity.id,
+                      title: menuEntity.name,
+                      ciClass: ciClassForSrdEntity(menuEntity.kind),
+                      category: "rules",
+                      provenance: "srd",
+                      detail: menuEntity.subtitle ?? "",
+                      srdEntityId: menuEntity.id,
+                    }),
+                },
+                {
+                  id: "inspect",
+                  label: "Inspect Details (Scrying Glass)",
+                  onSelect: () =>
+                    onSelect({
+                      kind: "srd-entity",
+                      entityId: menuEntity.id,
+                      name: menuEntity.name,
+                    }),
+                },
+                {
+                  id: "edit",
+                  label: "Quick Edit",
+                  disabled: true,
+                  onSelect: () => undefined,
+                },
+              ]
+            : []
+        }
+      />
     </div>
   );
 }

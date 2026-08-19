@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import ScryingContentPanel from "@/features/workshop/ScryingContentPanel";
-import { PREVIEW_WINDOW } from "@/lib/ui/labels";
+import LibraryInlineScryingPanel from "@/features/workshop/LibraryInlineScryingPanel";
+import {
+  useCommandCenterActionsOptional,
+  useLibraryInspectorOptional,
+} from "@/contexts/CommandCenterContext";
 import {
   isPreviewSnapshotMessage,
   PREVIEW_SYNC_CHANNEL,
@@ -44,48 +47,41 @@ const EMPTY_SNAPSHOT: WorkshopPreviewSnapshot = {
   updatedAt: new Date(0).toISOString(),
 };
 
-const CLOSE_MS = 140;
+function snapshotHasContent(snapshot: WorkshopPreviewSnapshot | null): boolean {
+  if (!snapshot) return false;
+  return Boolean(
+    snapshot.markdown.trim() ||
+      snapshot.images.length ||
+      snapshot.loading ||
+      snapshot.srdLoading ||
+      snapshot.viewingLabel,
+  );
+}
 
+/** Persistent right-rail Scrying inspector — not a blocking modal. */
 export default function ScryingGlassPopup() {
-  const [mounted, setMounted] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [revealed, setRevealed] = useState(false);
-  const [closing, setClosing] = useState(false);
+  const actions = useCommandCenterActionsOptional();
+  const library = useLibraryInspectorOptional();
+  const setInspectorOpen = actions?.setInspectorOpen;
   const [snapshot, setSnapshot] = useState<WorkshopPreviewSnapshot>(EMPTY_SNAPSHOT);
 
-  const close = useCallback(() => {
-    setClosing(true);
-    setRevealed(false);
-    window.setTimeout(() => {
-      setOpen(false);
-      setClosing(false);
-    }, CLOSE_MS);
-  }, []);
+  const collapse = useCallback(() => {
+    setInspectorOpen?.(false);
+  }, [setInspectorOpen]);
 
-  const openPopup = useCallback(() => {
+  const reveal = useCallback(() => {
     const stored = readPreviewSnapshot();
     if (stored) setSnapshot(stored);
-    setClosing(false);
-    setOpen(true);
-  }, []);
+    setInspectorOpen?.(true);
+  }, [setInspectorOpen]);
 
   useEffect(() => {
-    setMounted(true);
-    return subscribeScryingGlassOpen(openPopup);
-  }, [openPopup]);
+    const stored = readPreviewSnapshot();
+    if (stored) setSnapshot(stored);
+    return subscribeScryingGlassOpen(reveal);
+  }, [reveal]);
 
   useEffect(() => {
-    if (!open) {
-      setRevealed(false);
-      return;
-    }
-    const frame = window.requestAnimationFrame(() => setRevealed(true));
-    return () => window.cancelAnimationFrame(frame);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-
     const onStorage = (event: StorageEvent) => {
       if (event.key !== PREVIEW_STORAGE_KEY) return;
       const stored = readPreviewSnapshot();
@@ -103,49 +99,39 @@ export default function ScryingGlassPopup() {
       /* ignore */
     }
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
-    };
-    const onPreviewAction = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type === "ddeasy-preview-action") close();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("message", onPreviewAction);
-
     return () => {
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("message", onPreviewAction);
       channel?.close();
-      document.body.style.overflow = previousOverflow;
     };
-  }, [open, close]);
+  }, []);
 
-  if (!mounted || !open) return null;
+  if (library) {
+    return (
+      <LibraryInlineScryingPanel
+        snapshot={library.snapshot}
+        hasSelection={library.hasSelection}
+        onClose={collapse}
+        onEdit={library.onEdit}
+        onEditSeed={library.onEditSeed}
+        onEditResult={library.onEditResult}
+        onSavePartyVtt={library.onSavePartyVtt}
+        onLoadPartyVtt={library.onLoadPartyVtt}
+        onSaveToLibrary={library.onSaveToLibrary}
+      />
+    );
+  }
 
-  const motionClass = revealed && !closing ? "is-open" : closing ? "is-closing" : "";
+  if (!snapshotHasContent(snapshot)) {
+    return (
+      <LibraryInlineScryingPanel snapshot={null} hasSelection={false} onClose={collapse} />
+    );
+  }
 
-  return createPortal(
-    <div
-      className={`scrying-glass-backdrop no-print ${motionClass}`.trim()}
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) close();
-      }}
-    >
-      <div
-        className={`scrying-glass-popup-shell ${motionClass}`.trim()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={PREVIEW_WINDOW}
-      >
-        <ScryingContentPanel snapshot={snapshot} variant="popup" onClose={close} />
-      </div>
-    </div>,
-    document.body,
+  return (
+    <ScryingContentPanel
+      snapshot={snapshot}
+      variant="popup"
+      onClose={collapse}
+    />
   );
 }

@@ -120,7 +120,20 @@ export type LibraryListEntry = {
   srdEntityId?: SrdEntityId;
   /** Consolidated SRD rule bundle (`create_a_character`, `combat_rules`, …). */
   srdBundleId?: SrdRuleBundleId;
+  /** 0 = cantrip. Set for SRD spells so the toolbar can filter by spell level. */
+  spellLevel?: number;
+  /** Challenge rating string (`0`, `1/4`, `12`). Set for SRD monsters. */
+  challengeRating?: string;
 };
+
+/** Pull a Challenge Rating token out of SRD subtitle / detail text. */
+export function parseLibraryChallengeRating(text: string | null | undefined): string | undefined {
+  if (!text) return undefined;
+  const match =
+    text.match(/\bCR\b[^\d]{0,16}([0-9]+(?:\/[0-9]+)?)/i) ??
+    text.match(/Challenge(?:\s+Rating)?\s*[:|]?\s*\**\s*([0-9]+(?:\/[0-9]+)?)/i);
+  return match?.[1];
+}
 
 export function seedToLibraryEntry(seed: SavedRealmSeed): LibraryListEntry {
   return {

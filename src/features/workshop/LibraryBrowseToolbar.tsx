@@ -5,10 +5,16 @@ import type { CiClass } from "@/lib/ciRegistry";
 import type { RealmScopeTag, SeedKind } from "@/lib/realmSeeds";
 import {
   LIBRARY_BROWSE_PROVENANCE_FILTERS,
+  LIBRARY_CR_BAND_FILTERS,
   LIBRARY_SHELF_LABEL,
+  LIBRARY_SPELL_LEVEL_FILTERS,
+  crBandFilterLabel,
   provenanceFilterLabel,
+  spellLevelFilterLabel,
   type CiClassFilterOption,
   type LibraryBrowseProvenanceFilter,
+  type LibraryCrBandFilter,
+  type LibrarySpellLevelFilter,
 } from "@/lib/workshop/libraryBrowseFilters";
 import type { WorkshopLibraryCategory } from "@/lib/workshop/libraryCatalog";
 import {
@@ -40,8 +46,14 @@ type LibraryBrowseToolbarProps = {
   showSeedRefine?: boolean;
   /** Optional primary action beside search (e.g. Create Artifact). */
   searchAction?: React.ReactNode;
-  /** full = default toolbar; shelves-only = vertical shelf nav for 3-pane layout. */
+  /** full = default toolbar; shelves-only = vertical shelf nav; filters-only = sticky search + pills. */
   variant?: "full" | "shelves-only" | "filters-only";
+  spellLevelFilter?: LibrarySpellLevelFilter;
+  onSpellLevelFilterChange?: (value: LibrarySpellLevelFilter) => void;
+  showSpellLevelFilters?: boolean;
+  crBandFilter?: LibraryCrBandFilter;
+  onCrBandFilterChange?: (value: LibraryCrBandFilter) => void;
+  showCrFilters?: boolean;
 };
 
 const SHELF_TABS: WorkshopLibraryCategory[] = [
@@ -73,11 +85,11 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className="library-filter-chip rounded-full border px-2.5 py-1 text-[11px] font-semibold transition"
+      className="library-filter-chip rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition"
       style={{
         borderColor: active ? "var(--accent)" : "var(--border)",
-        background: active ? "rgba(201, 162, 39, 0.16)" : "rgba(154, 116, 22, 0.04)",
-        color: active ? "var(--accent)" : "var(--text)",
+        background: active ? "rgba(201, 162, 39, 0.18)" : "transparent",
+        color: active ? "var(--accent-dim)" : "var(--text)",
       }}
     >
       {label}
@@ -107,29 +119,36 @@ export default function LibraryBrowseToolbar({
   showSeedRefine = false,
   searchAction,
   variant = "full",
+  spellLevelFilter = "all",
+  onSpellLevelFilterChange,
+  showSpellLevelFilters = false,
+  crBandFilter = "all",
+  onCrBandFilterChange,
+  showCrFilters = false,
 }: LibraryBrowseToolbarProps) {
   const kindOptions = ciClassOptions.length > 1 ? ciClassOptions : [];
   const showShelves = variant === "full" || variant === "shelves-only";
   const showSearch = variant === "full" || variant === "filters-only";
   const showSecondaryFilters = variant === "full" || variant === "filters-only";
+  const compactFilters = variant === "filters-only";
 
   return (
     <div
-      className={`library-browse-toolbar flex shrink-0 flex-col gap-3${
+      className={`library-browse-toolbar flex shrink-0 flex-col${
         variant === "shelves-only" ? " library-browse-toolbar--shelves" : ""
-      }`}
+      }${compactFilters ? " library-browse-toolbar--sticky gap-1.5" : " gap-3"}`}
     >
       {showSearch ? (
       <div className="flex flex-wrap items-stretch gap-2">
-      <label className="library-browse-search flex min-w-[12rem] flex-1 items-center gap-2 rounded-lg border px-3 py-2">
+      <label className={`library-browse-search flex min-w-[12rem] flex-1 items-center gap-2 rounded-lg border ${compactFilters ? "px-2.5 py-1.5" : "px-3 py-2"}`}>
         <span className="font-display text-sm text-[var(--accent)]" aria-hidden="true">
           &#10022;
         </span>
         <input
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search the stacks by name, kind, or note…"
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--muted)]"
+          placeholder="Search by name, kind, or note…"
+          className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
           aria-label="Search The Library"
         />
       </label>
@@ -172,41 +191,81 @@ export default function LibraryBrowseToolbar({
       </div>
       ) : null}
 
-      {showSecondaryFilters && kindOptions.length > 0 ? (
-        <div className="flex flex-col gap-1.5">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">
-            Kind of entry
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {kindOptions.map((opt) => (
+      {showSecondaryFilters ? (
+        <div
+          className={`library-filter-pills flex flex-wrap items-center ${compactFilters ? "gap-1" : "flex-col items-stretch gap-1.5"}`}
+          aria-label="Search filters"
+        >
+          {!compactFilters && kindOptions.length > 0 ? (
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">
+              Kind of entry
+            </p>
+          ) : null}
+          {kindOptions.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-1">
+              {compactFilters ? (
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">
+                  Category
+                </span>
+              ) : null}
+              {kindOptions.map((opt) => (
+                <FilterChip
+                  key={opt.ciClass}
+                  active={ciClassFilter === opt.ciClass}
+                  label={opt.label}
+                  count={compactFilters ? undefined : opt.count}
+                  onClick={() => onCiClassFilterChange(opt.ciClass)}
+                />
+              ))}
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">
+              Source
+            </span>
+            {LIBRARY_BROWSE_PROVENANCE_FILTERS.map((filter) => (
               <FilterChip
-                key={opt.ciClass}
-                active={ciClassFilter === opt.ciClass}
-                label={opt.label}
-                count={opt.count}
-                onClick={() => onCiClassFilterChange(opt.ciClass)}
+                key={filter}
+                active={provenanceFilter === filter}
+                label={provenanceFilterLabel(filter)}
+                onClick={() => onProvenanceFilterChange(filter)}
               />
             ))}
           </div>
-        </div>
-      ) : null}
 
-      {showSecondaryFilters ? (
-      <div className="flex flex-col gap-1.5">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">
-          Where it comes from
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {LIBRARY_BROWSE_PROVENANCE_FILTERS.map((filter) => (
-            <FilterChip
-              key={filter}
-              active={provenanceFilter === filter}
-              label={provenanceFilterLabel(filter)}
-              onClick={() => onProvenanceFilterChange(filter)}
-            />
-          ))}
+          {showSpellLevelFilters && onSpellLevelFilterChange ? (
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">
+                Spell level
+              </span>
+              {LIBRARY_SPELL_LEVEL_FILTERS.map((level) => (
+                <FilterChip
+                  key={String(level)}
+                  active={spellLevelFilter === level}
+                  label={spellLevelFilterLabel(level)}
+                  onClick={() => onSpellLevelFilterChange(level)}
+                />
+              ))}
+            </div>
+          ) : null}
+
+          {showCrFilters && onCrBandFilterChange ? (
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">
+                CR
+              </span>
+              {LIBRARY_CR_BAND_FILTERS.map((band) => (
+                <FilterChip
+                  key={band}
+                  active={crBandFilter === band}
+                  label={crBandFilterLabel(band)}
+                  onClick={() => onCrBandFilterChange(band)}
+                />
+              ))}
+            </div>
+          ) : null}
         </div>
-      </div>
       ) : null}
 
       {showSecondaryFilters &&

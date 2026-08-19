@@ -82,11 +82,96 @@ export function matchesBrowseSearch(entry: LibraryListEntry, query: string): boo
     entry.detail,
     entry.kindLabel,
     fantasyCiLabel(entry.ciClass),
+    entry.challengeRating ? `cr ${entry.challengeRating}` : "",
+    entry.spellLevel != null ? (entry.spellLevel === 0 ? "cantrip" : `level ${entry.spellLevel}`) : "",
     ...(entry.tags ?? []),
   ]
     .join(" ")
     .toLowerCase();
   return haystack.includes(q);
+}
+
+export type LibrarySpellLevelFilter = "all" | number;
+export type LibraryCrBandFilter = "all" | "0" | "frac" | "1-4" | "5-10" | "11+";
+
+export const LIBRARY_SPELL_LEVEL_FILTERS: LibrarySpellLevelFilter[] = [
+  "all",
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+];
+
+export const LIBRARY_CR_BAND_FILTERS: LibraryCrBandFilter[] = [
+  "all",
+  "0",
+  "frac",
+  "1-4",
+  "5-10",
+  "11+",
+];
+
+export function spellLevelFilterLabel(filter: LibrarySpellLevelFilter): string {
+  if (filter === "all") return "Any level";
+  if (filter === 0) return "Cantrip";
+  return `Lv ${filter}`;
+}
+
+export function crBandFilterLabel(filter: LibraryCrBandFilter): string {
+  switch (filter) {
+    case "all":
+      return "Any CR";
+    case "0":
+      return "CR 0";
+    case "frac":
+      return "CR ⅛–½";
+    case "1-4":
+      return "CR 1–4";
+    case "5-10":
+      return "CR 5–10";
+    case "11+":
+      return "CR 11+";
+  }
+}
+
+function challengeRatingValue(cr: string): number | null {
+  if (cr.includes("/")) {
+    const [num, den] = cr.split("/").map(Number);
+    if (!num || !den) return null;
+    return num / den;
+  }
+  const value = Number(cr);
+  return Number.isFinite(value) ? value : null;
+}
+
+export function matchesBrowseSpellLevel(
+  entry: LibraryListEntry,
+  filter: LibrarySpellLevelFilter,
+): boolean {
+  if (filter === "all") return true;
+  if (entry.spellLevel == null) return true;
+  return entry.spellLevel === filter;
+}
+
+export function matchesBrowseCrBand(
+  entry: LibraryListEntry,
+  filter: LibraryCrBandFilter,
+): boolean {
+  if (filter === "all") return true;
+  if (!entry.challengeRating) return true;
+  const value = challengeRatingValue(entry.challengeRating);
+  if (value == null) return true;
+  if (filter === "0") return value === 0;
+  if (filter === "frac") return value > 0 && value < 1;
+  if (filter === "1-4") return value >= 1 && value <= 4;
+  if (filter === "5-10") return value >= 5 && value <= 10;
+  return value >= 11;
 }
 
 export function matchesBrowseProvenance(
@@ -112,13 +197,17 @@ export function filterBrowseEntries(
     search: string;
     ciClass: CiClass | "all";
     provenance: LibraryBrowseProvenanceFilter;
+    spellLevel?: LibrarySpellLevelFilter;
+    crBand?: LibraryCrBandFilter;
   },
 ): LibraryListEntry[] {
   return entries.filter(
     (e) =>
       matchesBrowseSearch(e, opts.search) &&
       matchesBrowseProvenance(e, opts.provenance) &&
-      matchesBrowseCiClass(e, opts.ciClass),
+      matchesBrowseCiClass(e, opts.ciClass) &&
+      matchesBrowseSpellLevel(e, opts.spellLevel ?? "all") &&
+      matchesBrowseCrBand(e, opts.crBand ?? "all"),
   );
 }
 

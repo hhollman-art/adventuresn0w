@@ -99,7 +99,6 @@ import {
 } from "@/lib/sessions/record";
 import { openOrFocusPreviewWindow } from "@/lib/workshop/previewSnapshot";
 import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
-import LibraryInlineScryingPanel from "@/features/workshop/LibraryInlineScryingPanel";
 import type { CloneSrdResult } from "@/lib/srd/cloneSrdEntity";
 import { openCustomSrdPreview } from "@/lib/srd/openCustomSrdPreview";
 import {
@@ -122,6 +121,7 @@ import {
 } from "@/lib/tabletop/gridPresets";
 import { CreationWorkspacePanel } from "./CreationWorkspacePanel";
 import { LibraryWorkspaceSection } from "./LibraryWorkspaceSection";
+import { useCommandCenterActionsOptional } from "@/contexts/CommandCenterContext";
 import { ResultEditorDialog } from "./ResultEditorDialog";
 import { SeedEditorDialog } from "./SeedEditorDialog";
 import {
@@ -237,6 +237,9 @@ export default function Home(props: PageProps<"/">) {
   const router = useRouter();
   const pathname = usePathname() ?? "/";
   const searchParams = useSearchParams();
+  const commandCenterActions = useCommandCenterActionsOptional();
+  const setLibraryInspector = commandCenterActions?.setLibraryInspector;
+  const setInspectorOpen = commandCenterActions?.setInspectorOpen;
   const isLibraryView =
     pathname === "/library" || pathname.startsWith("/library/");
   const isWelcomeView = !isLibraryView && workspace === "welcome";
@@ -1427,6 +1430,74 @@ export default function Home(props: PageProps<"/">) {
     titleHint: form.titleHint,
   });
 
+  const libraryInspectorCallbacksRef = useRef({
+    onEdit: () => {},
+    onEditSeed: () => {},
+    onEditResult: () => {},
+    onSavePartyVtt: (_selectedIndices: number[]) => {},
+    onSaveToLibrary: () => {},
+    onLoadPartyVtt: () => {},
+  });
+  libraryInspectorCallbacksRef.current = {
+    onEdit: () => {
+      const id = libraryPreviewSnapshot?.customSrdId;
+      if (id) openCustomSrdEditor(id);
+    },
+    onEditSeed: () => {
+      if (libraryViewingSeed) openEditSeedEditor(libraryViewingSeed.id);
+    },
+    onEditResult: openLibraryResultEditor,
+    onSavePartyVtt: (selectedIndices) => {
+      void savePartyForVtt(selectedIndices);
+    },
+    onSaveToLibrary: () => {
+      void saveToLibrary();
+    },
+    onLoadPartyVtt: () => {
+      const partyId = libraryPreviewSnapshot?.viewingPartyId;
+      if (!partyId) return;
+      queuePartyImport({
+        rosterId: partyId,
+        placeTokens: true,
+        linkCampaign: true,
+        replaceExisting: true,
+      });
+      window.location.href = "/table";
+    },
+  };
+
+  const librarySelectionKey = librarySelection
+    ? `${librarySelection.kind}:${librarySelection.id}`
+    : null;
+
+  useEffect(() => {
+    if (!setLibraryInspector) return;
+    if (!isLibraryView) {
+      setLibraryInspector(null);
+      return;
+    }
+    setLibraryInspector({
+      snapshot: libraryPreviewSnapshot,
+      hasSelection: Boolean(librarySelectionKey),
+      onClose: () => setLibrarySelection(null),
+      onEdit: () => libraryInspectorCallbacksRef.current.onEdit(),
+      onEditSeed: () => libraryInspectorCallbacksRef.current.onEditSeed(),
+      onEditResult: () => libraryInspectorCallbacksRef.current.onEditResult(),
+      onSavePartyVtt: (selectedIndices) =>
+        libraryInspectorCallbacksRef.current.onSavePartyVtt(selectedIndices),
+      onSaveToLibrary: () => libraryInspectorCallbacksRef.current.onSaveToLibrary(),
+      onLoadPartyVtt: () => libraryInspectorCallbacksRef.current.onLoadPartyVtt(),
+    });
+  }, [setLibraryInspector, isLibraryView, libraryPreviewSnapshot, librarySelectionKey]);
+
+  useEffect(() => {
+    if (!isLibraryView || !librarySelectionKey) return;
+    setInspectorOpen?.(true);
+  }, [isLibraryView, librarySelectionKey, setInspectorOpen]);
+
+  useEffect(() => {
+    return () => setLibraryInspector?.(null);
+  }, [setLibraryInspector]);
 
     const libraryPanel = (
     <WorkshopLibraryPanel
@@ -1681,37 +1752,7 @@ export default function Home(props: PageProps<"/">) {
         }}
       >
       {isLibraryView ? (
-        <LibraryWorkspaceSection
-          resultsPanel={libraryPanel}
-          scryingPanel={
-            <LibraryInlineScryingPanel
-              snapshot={libraryPreviewSnapshot}
-              hasSelection={Boolean(librarySelection)}
-              onClose={() => setLibrarySelection(null)}
-              onEdit={() => {
-                const id = libraryPreviewSnapshot?.customSrdId;
-                if (id) openCustomSrdEditor(id);
-              }}
-              onEditSeed={() => {
-                if (libraryViewingSeed) openEditSeedEditor(libraryViewingSeed.id);
-              }}
-              onEditResult={openLibraryResultEditor}
-              onSavePartyVtt={(selectedIndices) => void savePartyForVtt(selectedIndices)}
-              onSaveToLibrary={() => void saveToLibrary()}
-              onLoadPartyVtt={() => {
-                const partyId = libraryPreviewSnapshot?.viewingPartyId;
-                if (!partyId) return;
-                queuePartyImport({
-                  rosterId: partyId,
-                  placeTokens: true,
-                  linkCampaign: true,
-                  replaceExisting: true,
-                });
-                window.location.href = "/table";
-              }}
-            />
-          }
-        />
+        <LibraryWorkspaceSection resultsPanel={libraryPanel} />
       ) : null}
 
       {isWelcomeView ? (

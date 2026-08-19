@@ -253,8 +253,8 @@ export default function HelpPage() {
             Obsidian, Notion, Google Docs, or Word.
           </li>
           <li>
-            <strong>Download .md / .html</strong> — saves the document as a
-            file. The HTML version is styled and ready to open in any browser.
+            <strong>Share / Print</strong> — copy text or print (Save as PDF) when you need a
+            table copy. Everyday saves stay in your Library automatically.
           </li>
           <li>
             <strong>Print</strong> — opens your browser&apos;s print dialog

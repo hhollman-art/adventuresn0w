@@ -26,10 +26,9 @@ import {
   VAULT_EXCLUSION_CHANGED_EVENT,
 } from "@/lib/vault/vaultExclusion";
 import { dropIntoVaultParking } from "@/lib/workshop/containerMoveWritePath";
+import { emitAppToast } from "@/lib/ui/appToast";
 import {
   removeFileFromVault,
-  VAULT_TOAST_EVENT,
-  type VaultToastDetail,
 } from "@/lib/vault/removeFileFromVault";
 import type { CiClass } from "@/lib/ciRegistry";
 import type { VaultCardEntry } from "@/lib/vault/loadVaultEntries";
@@ -73,7 +72,7 @@ function parkedToCard(row: VaultParkedEntry): VaultCardEntry {
   };
 }
 
-export default function VaultDrawer() {
+export default function VaultDrawer({ layout = "overlay" }: { layout?: "overlay" | "docked" }) {
   const pathname = usePathname() ?? "/";
   const {
     open,
@@ -94,7 +93,6 @@ export default function VaultDrawer() {
   const [parkActive, setParkActive] = useState(false);
   const [trashActive, setTrashActive] = useState(false);
   const [parkMessage, setParkMessage] = useState<string | null>(null);
-  const [toast, setToast] = useState<VaultToastDetail | null>(null);
   const [purgeConfirm, setPurgeConfirm] = useState<{
     id: string;
     title: string;
@@ -131,17 +129,6 @@ export default function VaultDrawer() {
       window.removeEventListener(VAULT_EXCLUSION_CHANGED_EVENT, onChange);
     };
   }, [refreshParked]);
-
-  useEffect(() => {
-    const onToast = (event: Event) => {
-      const detail = (event as CustomEvent<VaultToastDetail>).detail;
-      if (!detail?.message) return;
-      setToast(detail);
-      window.setTimeout(() => setToast(null), 3200);
-    };
-    window.addEventListener(VAULT_TOAST_EVENT, onToast);
-    return () => window.removeEventListener(VAULT_TOAST_EVENT, onToast);
-  }, []);
 
   if (pathname.startsWith("/login") || pathname.startsWith("/preview")) {
     return null;
@@ -184,6 +171,7 @@ export default function VaultDrawer() {
     if (!payload) return;
     const result = await dropIntoVaultParking(payload);
     setParkMessage(result.ok ? result.message : result.error);
+    emitAppToast(result.ok ? result.message : result.error ?? "", result.ok ? "success" : "warn");
     if (result.ok) {
       void refreshParked();
       void refreshEntries();
@@ -219,23 +207,27 @@ export default function VaultDrawer() {
     window.setTimeout(() => setParkMessage(null), 3200);
   };
 
+  const docked = layout === "docked";
+
   return (
     <>
-      <button
-        type="button"
-        className={`vault-drawer-toggle ${open ? "vault-drawer-toggle--open" : ""}`}
-        onClick={toggleOpen}
-        aria-expanded={open}
-        aria-controls="lore-vault-drawer"
-      >
-        <span aria-hidden="true">{APP_ICONS.chest}</span>
-        Lore Vault
-      </button>
+      {docked ? null : (
+        <button
+          type="button"
+          className={`vault-drawer-toggle ${open ? "vault-drawer-toggle--open" : ""}`}
+          onClick={toggleOpen}
+          aria-expanded={open}
+          aria-controls="lore-vault-drawer"
+        >
+          <span aria-hidden="true">{APP_ICONS.chest}</span>
+          Lore Vault
+        </button>
+      )}
 
       <aside
         id="lore-vault-drawer"
-        className={`vault-drawer ${open ? "vault-drawer--open" : ""}`}
-        aria-label="Lore Vault — operational parking lot for Creation Files"
+        className={`vault-drawer ${open || docked ? "vault-drawer--open" : ""}${docked ? " vault-drawer--docked" : ""}`}
+        aria-label="Lore Vault — parking lot for Creation Files, lore, NPCs, and monsters"
       >
         <header className="vault-drawer-header">
           <div>
@@ -365,25 +357,6 @@ export default function VaultDrawer() {
           </footer>
         ) : null}
       </aside>
-
-      {toast ? (
-        <div
-          className="fixed bottom-4 left-1/2 z-[120] max-w-sm -translate-x-1/2 rounded-md border px-3 py-2 text-xs shadow-lg"
-          style={{
-            background: "var(--panel)",
-            borderColor:
-              toast.tone === "warn"
-                ? "#b91c1c"
-                : toast.tone === "success"
-                  ? "var(--accent)"
-                  : "var(--border)",
-            color: "var(--text)",
-          }}
-          role="status"
-        >
-          {toast.message}
-        </div>
-      ) : null}
 
       {purgeConfirm ? (
         <div

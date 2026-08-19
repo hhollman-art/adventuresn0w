@@ -15,7 +15,6 @@ import { fantasyCiLabel } from "@/lib/workshop/libraryBrowseFilters";
 import type { LibraryImage } from "@/lib/generationLibrary";
 import {
   copyMarkdownText,
-  downloadDmmsCreationFileJson,
   downloadMapImage,
   fileBaseName,
   previewMarkdownToHtml,
@@ -220,19 +219,7 @@ export default function WorkshopPreviewPanel({
       setExportNotice("Copied text to your clipboard.");
       return;
     }
-    if (action === "print-pdf") {
-      window.print();
-      return;
-    }
-    downloadDmmsCreationFileJson({
-      markdown: previewMarkdown,
-      images: previewImages,
-      textModel: previewTextModel,
-      imageModel: previewImageModel,
-      mode: exportMode,
-      ciClass,
-    });
-    setExportNotice("Downloaded a DMMS Creation File (JSON) for backup or sharing.");
+    window.print();
   }
 
   return (
@@ -381,9 +368,9 @@ export default function WorkshopPreviewPanel({
 
       {previewMarkdown.trim() && !showSavePartyVtt ? (
         <p className="no-print mt-2 max-w-xl text-xs leading-relaxed text-[var(--muted)]">
-          Save keeps this Creation File in your Library. Use{" "}
-          <strong className="text-[var(--text)]/80">Export Options</strong> only when you need a
-          backup file, clipboard text, or a printed PDF for the table.
+          Your Library auto-saves this Creation File. Use{" "}
+          <strong className="text-[var(--text)]/80">Share</strong> only to copy text or print
+          for the table.
         </p>
       ) : null}
 

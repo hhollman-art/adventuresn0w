@@ -15,6 +15,7 @@ import {
 import type { VaultDragPayload } from "@/lib/vault/cfDragDrop";
 import { setVaultDragData, withContainerContext } from "@/lib/vault/cfDragDrop";
 import { useVaultDrawer } from "@/contexts/VaultDrawerContext";
+import { emitAppToast } from "@/lib/ui/appToast";
 import { characterSummary } from "@/lib/tabletop/character";
 import { seedDisplayName } from "@/lib/realmSeeds";
 import { GAME_ITEM_KIND_LABEL } from "@/lib/itemLibrary";
@@ -62,6 +63,8 @@ export default function CampaignContainerPanels({
   const { setDragging } = useVaultDrawer();
   const campaignIdRef = useRef(campaign.id);
   campaignIdRef.current = campaign.id;
+  const campaignNameRef = useRef(campaign.name);
+  campaignNameRef.current = campaign.name;
   const onChangedRef = useRef(onChanged);
   onChangedRef.current = onChanged;
   const onStatusRef = useRef(onStatus);
@@ -76,9 +79,11 @@ export default function CampaignContainerPanels({
           slot,
         });
         if (!result.ok) {
+          emitAppToast(result.error, "warn");
           onStatusRef.current(result.error);
           return { ok: false, message: result.error };
         }
+        emitAppToast(`${payload.title} added to Campaign: ${campaignNameRef.current}`, "success");
         onStatusRef.current(result.message);
         onChangedRef.current();
         return { ok: true, message: result.message };

@@ -35,8 +35,11 @@ import {
   fantasyCiLabel,
   libraryShelfHint,
   type LibraryBrowseProvenanceFilter,
+  type LibraryCrBandFilter,
+  type LibrarySpellLevelFilter,
 } from "@/lib/workshop/libraryBrowseFilters";
 import { ciClassVisual } from "@/lib/ui/ciClassVisuals";
+import LibraryActionsMenu from "@/features/workshop/LibraryActionsMenu";
 import LibraryBrowseToolbar from "@/features/workshop/LibraryBrowseToolbar";
 import LibraryEntryDetailPane from "@/features/workshop/LibraryEntryDetailPane";
 import LibraryTwoPaneBrowse from "@/features/workshop/LibraryTwoPaneBrowse";
@@ -86,6 +89,9 @@ import type { SrdEntityId, SrdRuleBundleId } from "@/lib/srd/types";
 import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
 import type { CloneSrdResult } from "@/lib/srd/cloneSrdEntity";
 import { setSrdEntityDragData } from "@/lib/srd/srdDragDrop";
+import { setVaultDragData } from "@/lib/vault/cfDragDrop";
+import { vaultPayloadForTarget, libraryEntryToContextTarget } from "@/lib/workshop/cfContextActions";
+import CfContextMenu from "@/features/ui/CfContextMenu";
 import {
   getActiveCampaignId,
   getCampaign,
@@ -222,16 +228,8 @@ function CreationTag() {
 /** Plain-language "where does my data live" explainer, one card per tier. */
 function DataStorageExplainer({
   syncStatus,
-  onChooseFolder,
-  onDisconnect,
-  onExport,
-  onRestoreFile,
 }: {
   syncStatus: LibrarySyncStatus;
-  onChooseFolder: () => void;
-  onDisconnect: () => void;
-  onExport: () => void;
-  onRestoreFile: (e: ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div
@@ -270,43 +268,19 @@ function DataStorageExplainer({
           </li>
         ))}
       </ul>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
+      <p className="mt-2 text-[var(--muted)]">
         {syncStatus.state === "on" ? (
           <>
-            <span className="font-semibold text-[var(--text)]">
-              Auto-save is on — saving to “{syncStatus.folderName}”.
-            </span>
-            <button type="button" onClick={onChooseFolder} className="btn btn-sm">
-              Change folder
-            </button>
-            <button type="button" onClick={onDisconnect} className="btn btn-sm">
-              Turn off
-            </button>
+            Auto-save is on — writing to “{syncStatus.folderName}”. Backup and folder
+            controls are under <strong className="text-[var(--text)]">Actions</strong> in
+            the header.{" "}
           </>
-        ) : syncStatus.state === "unsupported" ? (
-          <span className="text-[var(--muted)]">
-            This browser can&apos;t auto-save to a folder (try Chrome or Edge), so use
-            manual backups:
-          </span>
         ) : (
-          <button type="button" onClick={onChooseFolder} className="btn btn-sm btn-accent">
-            Set auto-save folder
-          </button>
+          <>
+            Backup and auto-save live under{" "}
+            <strong className="text-[var(--text)]">Actions</strong> in the Library header.{" "}
+          </>
         )}
-        <button type="button" onClick={onExport} className="btn btn-sm">
-          Export backup
-        </button>
-        <label className="btn btn-sm cursor-pointer">
-          Restore backup
-          <input
-            type="file"
-            accept=".json,application/json"
-            className="hidden"
-            onChange={onRestoreFile}
-          />
-        </label>
-      </div>
-      <p className="mt-2 text-[var(--muted)]">
         Without an auto-save folder or a backup file, your data exists only in this
         browser and clearing browser data deletes it. See{" "}
         <Link href="/legal" className="font-semibold text-[var(--accent)] underline">
@@ -357,6 +331,7 @@ function LibraryEntryRow({
   onEdit,
   onDelete,
   editLabel,
+  compact = true,
 }: {
   entry: LibraryListEntry;
   selected: boolean;
@@ -364,22 +339,41 @@ function LibraryEntryRow({
   onEdit?: () => void;
   onDelete?: () => void;
   editLabel?: string;
+  compact?: boolean;
 }) {
   const visual = ciClassVisual(entry.ciClass);
   const borderTone = selected ? "var(--accent)" : "var(--border)";
+  const metaBits = [
+    entry.spellLevel != null
+      ? entry.spellLevel === 0
+        ? "Cantrip"
+        : `Lv ${entry.spellLevel}`
+      : null,
+    entry.challengeRating ? `CR ${entry.challengeRating}` : null,
+    compact ? null : formatEntryShelfLine(entry),
+  ].filter(Boolean);
   return (
+    <CfContextMenu
+      target={libraryEntryToContextTarget(entry)}
+      onInspect={onView}
+      onQuickEdit={onEdit}
+      onDelete={onDelete}
+    >
+      {(bind) => (
     <li
-      draggable={Boolean(entry.srdEntityId)}
-      onDragStart={
-        entry.srdEntityId
-          ? (e) => {
-              setSrdEntityDragData(e.dataTransfer, {
-                entityId: entry.srdEntityId!,
-                name: entry.title,
-              });
-            }
-          : undefined
-      }
+      draggable
+      {...bind}
+      onDragStart={(e) => {
+        const payload = vaultPayloadForTarget(libraryEntryToContextTarget(entry));
+        setVaultDragData(e.dataTransfer, payload);
+        e.dataTransfer.effectAllowed = "copyMove";
+        if (entry.srdEntityId) {
+          setSrdEntityDragData(e.dataTransfer, {
+            entityId: entry.srdEntityId,
+            name: entry.title,
+          });
+        }
+      }}
     >
       <div
         role="button"
@@ -391,7 +385,9 @@ function LibraryEntryRow({
             onView();
           }
         }}
-        className={`library-entry-row library-entry-card rounded-lg border p-3 text-sm${
+        className={`library-entry-row library-entry-card rounded-md border text-sm${
+          compact ? " library-entry-row--compact" : " p-3"
+        }${
           entry.ciClass === "item.magic" || entry.ciClass === "item.srd-magic"
             ? " library-entry-row--magical"
             : ""
@@ -401,36 +397,47 @@ function LibraryEntryRow({
           borderTopColor: borderTone,
           borderRightColor: borderTone,
           borderBottomColor: borderTone,
-          background: selected ? "rgba(201, 162, 39, 0.1)" : undefined,
+          background: selected ? "rgba(201, 162, 39, 0.12)" : "color-mix(in srgb, var(--bg) 70%, transparent)",
           borderLeftWidth: "3px",
           borderLeftColor: visual.accent,
         }}
       >
+        <span className="library-entry-icon" style={{ color: visual.accent }} aria-hidden="true">
+          {visual.icon}
+        </span>
         <div className="min-w-0 flex-1">
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="font-display font-semibold leading-tight text-[var(--text)]">
+              {entry.title}
+            </span>
             <span
-              className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+              className="library-entry-kind-badge rounded-full border px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide"
               style={{ borderColor: visual.accent, color: visual.accent }}
               title={entry.ciClass}
             >
-              <span aria-hidden="true">{visual.icon} </span>
               {fantasyCiLabel(entry.ciClass)}
             </span>
-            <ProvenanceBadge provenance={entry.provenance} />
-            {entry.isHomebrew ? <HomebrewTag /> : null}
-            {entry.origin === "creation" && !entry.isHomebrew ? <CreationTag /> : null}
-            <span className="font-display font-semibold text-[var(--text)]">{entry.title}</span>
+            {compact ? (
+              <ProvenanceBadge provenance={entry.provenance} />
+            ) : (
+              <>
+                <ProvenanceBadge provenance={entry.provenance} />
+                {entry.isHomebrew ? <HomebrewTag /> : null}
+                {entry.origin === "creation" && !entry.isHomebrew ? <CreationTag /> : null}
+              </>
+            )}
+            {entry.isHomebrew && compact ? <HomebrewTag /> : null}
           </span>
-          <span className="library-entry-shelf mt-1 block text-xs text-[var(--muted)]">
-            {formatEntryShelfLine(entry)}
-            {entry.provenance === "user" ? (
+          <span className="library-entry-shelf mt-0.5 block truncate text-[11px] leading-snug text-[var(--muted)]">
+            {metaBits.join(" · ") || formatEntryShelfLine(entry)}
+            {!compact && entry.provenance === "user" ? (
               <> · {new Date(entry.createdAt).toLocaleDateString()}</>
             ) : null}
           </span>
-          {entry.detail ? (
+          {!compact && entry.detail ? (
             <span className="library-entry-detail mt-1 block text-xs text-[var(--muted)] line-clamp-2">{entry.detail}</span>
           ) : null}
-          {entry.tags?.length ? (
+          {!compact && entry.tags?.length ? (
             <span className="library-entry-tags mt-1.5 flex flex-wrap gap-1">
               {entry.tags.map((tag) => (
                 <span
@@ -444,34 +451,10 @@ function LibraryEntryRow({
             </span>
           ) : null}
         </div>
-        <div
-          className="library-entry-actions shrink-0"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
-          {onEdit ? (
-            <button
-              type="button"
-              onClick={onEdit}
-              className="rounded-md border px-2 py-1.5 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg)]"
-              style={{ borderColor: "var(--border)" }}
-            >
-              {editLabel ?? "Revise"}
-            </button>
-          ) : null}
-          {onDelete ? (
-            <button
-              type="button"
-              onClick={onDelete}
-              className="rounded-md border px-2 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
-              style={{ borderColor: "rgba(248,113,113,0.45)" }}
-            >
-              Remove
-            </button>
-          ) : null}
-        </div>
       </div>
     </li>
+      )}
+    </CfContextMenu>
   );
 }
 
@@ -544,6 +527,8 @@ export default function WorkshopLibraryPanel({
   const [ciClassFilter, setCiClassFilter] = useState<CiClass | "all">("all");
   const [provenanceFilter, setProvenanceFilter] =
     useState<LibraryBrowseProvenanceFilter>("all");
+  const [spellLevelFilter, setSpellLevelFilter] = useState<LibrarySpellLevelFilter>("all");
+  const [crBandFilter, setCrBandFilter] = useState<LibraryCrBandFilter>("all");
 
   const srdItemEntries = useMemo(() => listSrdItemLibraryEntries(), []);
   const srdSpellEntries = useMemo(() => listSrdSpellsLibraryEntries(), []);
@@ -720,8 +705,19 @@ export default function WorkshopLibraryPanel({
         search: searchQuery,
         ciClass: ciClassFilter,
         provenance: provenanceFilter,
+        spellLevel: spellLevelFilter,
+        crBand: crBandFilter,
       }),
-    [shelfEntries, searchQuery, ciClassFilter, provenanceFilter],
+    [shelfEntries, searchQuery, ciClassFilter, provenanceFilter, spellLevelFilter, crBandFilter],
+  );
+
+  const showSpellLevelFilters = useMemo(
+    () => shelfEntries.some((entry) => entry.spellLevel != null),
+    [shelfEntries],
+  );
+  const showCrFilters = useMemo(
+    () => shelfEntries.some((entry) => entry.challengeRating != null),
+    [shelfEntries],
   );
 
   const seedTagOptions = useMemo(() => collectUserSeedTags(campaignSeeds), [campaignSeeds]);
@@ -842,7 +838,7 @@ export default function WorkshopLibraryPanel({
       }
       style={wideLayout ? undefined : { borderColor: "var(--border)" }}
     >
-      <div className="flex flex-wrap items-center justify-between gap-1.5 shrink-0">
+      <div className="library-workspace-header flex flex-wrap items-center justify-between gap-1 shrink-0">
         <div className="min-w-0">
           {!wideLayout ? (
             <h2 className="font-display text-base font-bold text-[var(--text)]">
@@ -878,7 +874,15 @@ export default function WorkshopLibraryPanel({
             </p>
           ) : null}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <LibraryActionsMenu
+            syncState={syncStatus.state}
+            onChooseFolder={() => void onChooseSyncFolder()}
+            onReconnect={() => void onReconnectSync()}
+            onDisconnect={() => void onDisconnectSync()}
+            onExport={() => void onExportBackup()}
+            onRestoreFile={(e) => void onRestoreBackup(e)}
+          />
           <button
             type="button"
             onClick={() => {
@@ -898,23 +902,6 @@ export default function WorkshopLibraryPanel({
           >
             Gather a fellowship
           </button>
-          {syncStatus.state === "off" ? (
-            <button
-              type="button"
-              onClick={() => void onChooseSyncFolder()}
-              className="btn btn-sm"
-            >
-              Set auto-save folder
-            </button>
-          ) : syncStatus.state === "needs-permission" ? (
-            <button
-              type="button"
-              onClick={() => void onReconnectSync()}
-              className="btn btn-sm btn-accent"
-            >
-              Re-enable auto-save
-            </button>
-          ) : null}
           <button
             type="button"
             onClick={() => setShowCreateArtifact(true)}
@@ -945,13 +932,7 @@ export default function WorkshopLibraryPanel({
       </div>
 
       {showStorageInfo ? (
-        <DataStorageExplainer
-          syncStatus={syncStatus}
-          onChooseFolder={() => void onChooseSyncFolder()}
-          onDisconnect={() => void onDisconnectSync()}
-          onExport={() => void onExportBackup()}
-          onRestoreFile={(e) => void onRestoreBackup(e)}
-        />
+        <DataStorageExplainer syncStatus={syncStatus} />
       ) : null}
 
       {activeCampaign ? (
@@ -999,9 +980,11 @@ export default function WorkshopLibraryPanel({
           search={searchQuery}
           onSearchChange={setSearchQuery}
           shelf={category}
-          onShelfChange={(next) => {
+            onShelfChange={(next) => {
             onSrdOpenChange(false);
             setCiClassFilter("all");
+            setSpellLevelFilter("all");
+            setCrBandFilter("all");
             onCategoryChange(next);
           }}
           shelfCounts={shelfCounts}
@@ -1010,6 +993,12 @@ export default function WorkshopLibraryPanel({
           ciClassOptions={ciClassOptions}
           provenanceFilter={provenanceFilter}
           onProvenanceFilterChange={setProvenanceFilter}
+          spellLevelFilter={spellLevelFilter}
+          onSpellLevelFilterChange={setSpellLevelFilter}
+          showSpellLevelFilters={showSpellLevelFilters}
+          crBandFilter={crBandFilter}
+          onCrBandFilterChange={setCrBandFilter}
+          showCrFilters={showCrFilters}
           showSeedRefine={category === "seeds" || category === "all"}
           seedKindFilter={seedKindFilter}
           onSeedKindFilterChange={setSeedKindFilter}
@@ -1062,11 +1051,13 @@ export default function WorkshopLibraryPanel({
               search={searchQuery}
               onSearchChange={setSearchQuery}
               shelf={category}
-              onShelfChange={(next) => {
-                onSrdOpenChange(false);
-                setCiClassFilter("all");
-                onCategoryChange(next);
-              }}
+            onShelfChange={(next) => {
+            onSrdOpenChange(false);
+            setCiClassFilter("all");
+            setSpellLevelFilter("all");
+            setCrBandFilter("all");
+            onCategoryChange(next);
+          }}
               shelfCounts={shelfCounts}
               ciClassFilter={ciClassFilter}
               onCiClassFilterChange={setCiClassFilter}
@@ -1082,17 +1073,25 @@ export default function WorkshopLibraryPanel({
                 search={searchQuery}
                 onSearchChange={setSearchQuery}
                 shelf={category}
-                onShelfChange={(next) => {
-                  onSrdOpenChange(false);
-                  setCiClassFilter("all");
-                  onCategoryChange(next);
-                }}
+            onShelfChange={(next) => {
+            onSrdOpenChange(false);
+            setCiClassFilter("all");
+            setSpellLevelFilter("all");
+            setCrBandFilter("all");
+            onCategoryChange(next);
+          }}
                 shelfCounts={shelfCounts}
                 ciClassFilter={ciClassFilter}
                 onCiClassFilterChange={setCiClassFilter}
                 ciClassOptions={ciClassOptions}
                 provenanceFilter={provenanceFilter}
                 onProvenanceFilterChange={setProvenanceFilter}
+                spellLevelFilter={spellLevelFilter}
+                onSpellLevelFilterChange={setSpellLevelFilter}
+                showSpellLevelFilters={showSpellLevelFilters}
+                crBandFilter={crBandFilter}
+                onCrBandFilterChange={setCrBandFilter}
+                showCrFilters={showCrFilters}
                 showSeedRefine={category === "seeds" || category === "all"}
                 seedKindFilter={seedKindFilter}
                 onSeedKindFilterChange={setSeedKindFilter}
@@ -1114,7 +1113,11 @@ export default function WorkshopLibraryPanel({
               />
               {entries.length === 0 ? (
                 <p className="text-sm leading-relaxed text-[var(--muted)]">
-                  {searchQuery.trim() || ciClassFilter !== "all" || provenanceFilter !== "all"
+                  {searchQuery.trim() ||
+                  ciClassFilter !== "all" ||
+                  provenanceFilter !== "all" ||
+                  spellLevelFilter !== "all" ||
+                  crBandFilter !== "all"
                     ? "No entries match your search or filters — try clearing a filter or widening your query."
                     : browseEmptyMessage(
                         category,
@@ -1122,7 +1125,7 @@ export default function WorkshopLibraryPanel({
                       )}
                 </p>
               ) : (
-                <ul className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-1">
+                <ul className="library-results-grid min-h-0 flex-1 overflow-y-auto pr-1">
                   {entries.map((entry) => {
                     const selected = isSelected(selection, entry);
                     const select = () => {
@@ -1323,11 +1326,13 @@ export default function WorkshopLibraryPanel({
               search={searchQuery}
               onSearchChange={setSearchQuery}
               shelf={category}
-              onShelfChange={(next) => {
-                onSrdOpenChange(false);
-                setCiClassFilter("all");
-                onCategoryChange(next);
-              }}
+            onShelfChange={(next) => {
+            onSrdOpenChange(false);
+            setCiClassFilter("all");
+            setSpellLevelFilter("all");
+            setCrBandFilter("all");
+            onCategoryChange(next);
+          }}
               shelfCounts={shelfCounts}
               ciClassFilter={ciClassFilter}
               onCiClassFilterChange={setCiClassFilter}
@@ -1343,17 +1348,25 @@ export default function WorkshopLibraryPanel({
                 search={searchQuery}
                 onSearchChange={setSearchQuery}
                 shelf={category}
-                onShelfChange={(next) => {
-                  onSrdOpenChange(false);
-                  setCiClassFilter("all");
-                  onCategoryChange(next);
-                }}
+            onShelfChange={(next) => {
+            onSrdOpenChange(false);
+            setCiClassFilter("all");
+            setSpellLevelFilter("all");
+            setCrBandFilter("all");
+            onCategoryChange(next);
+          }}
                 shelfCounts={shelfCounts}
                 ciClassFilter={ciClassFilter}
                 onCiClassFilterChange={setCiClassFilter}
                 ciClassOptions={ciClassOptions}
                 provenanceFilter={provenanceFilter}
                 onProvenanceFilterChange={setProvenanceFilter}
+                spellLevelFilter={spellLevelFilter}
+                onSpellLevelFilterChange={setSpellLevelFilter}
+                showSpellLevelFilters={showSpellLevelFilters}
+                crBandFilter={crBandFilter}
+                onCrBandFilterChange={setCrBandFilter}
+                showCrFilters={showCrFilters}
                 showSeedRefine={category === "seeds" || category === "all"}
                 seedKindFilter={seedKindFilter}
                 onSeedKindFilterChange={setSeedKindFilter}
@@ -1375,7 +1388,11 @@ export default function WorkshopLibraryPanel({
               />
               {entries.length === 0 ? (
                 <p className="text-sm leading-relaxed text-[var(--muted)]">
-                  {searchQuery.trim() || ciClassFilter !== "all" || provenanceFilter !== "all"
+                  {searchQuery.trim() ||
+                  ciClassFilter !== "all" ||
+                  provenanceFilter !== "all" ||
+                  spellLevelFilter !== "all" ||
+                  crBandFilter !== "all"
                     ? "No entries match your search or filters — try clearing a filter or widening your query."
                     : browseEmptyMessage(
                         category,
@@ -1383,7 +1400,7 @@ export default function WorkshopLibraryPanel({
                       )}
                 </p>
               ) : (
-                <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
+                <ul className="library-results-grid min-h-0 flex-1 overflow-y-auto pr-1">
                   {entries.map((entry) => {
                     const selected = isSelected(selection, entry);
                     const select = () => {
@@ -1612,8 +1629,8 @@ export default function WorkshopLibraryPanel({
         <ul
           className={
             wideLayout
-              ? "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1"
-              : "flex max-h-[min(44vh,360px)] flex-col gap-2 overflow-y-auto pr-1"
+              ? "library-results-grid min-h-0 flex-1 overflow-y-auto pr-1"
+              : "library-results-grid max-h-[min(70vh,40rem)] overflow-y-auto pr-1"
           }
         >
           {entries.map((entry) => {

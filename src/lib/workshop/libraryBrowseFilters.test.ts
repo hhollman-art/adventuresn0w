@@ -63,6 +63,33 @@ describe("libraryBrowseFilters", () => {
     expect(filtered[0]?.ciClass).toBe("item.srd-equipment");
   });
 
+  it("keeps non-spell rows when a spell-level chip is active", () => {
+    const user = seedToLibraryEntry({
+      id: "s1",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      kind: "realm",
+      titleHint: "Mine",
+      briefDescription: "",
+      markdown: "",
+    });
+    const spell = {
+      ...user,
+      id: "sp1",
+      ciClass: "spell.srd-entry" as const,
+      category: "rules" as const,
+      provenance: "srd" as const,
+      spellLevel: 3,
+      title: "Fireball",
+    };
+    const filtered = filterBrowseEntries([user, spell], {
+      search: "",
+      ciClass: "all",
+      provenance: "all",
+      spellLevel: 3,
+    });
+    expect(filtered.map((row) => row.id).sort()).toEqual(["s1", "sp1"]);
+  });
+
   it("covers every registered ci class with a fantasy label", () => {
     for (const label of Object.values(LIBRARY_CI_FANTASY_LABEL)) {
       expect(label.length).toBeGreaterThan(2);

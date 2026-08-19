@@ -69,8 +69,7 @@ export default function ScryingContentPanel({
       <div className="preview-window-body scrying-glass-body flex min-h-0 flex-1 flex-col">
         {popupMode ? (
           <p className="scrying-glass-hint no-print shrink-0">
-            Review output here. Edit and save actions run in the main Fantasy Forge tab behind this
-            popup.
+            Review output here. Edit and save still apply in the Fantasy Forge workspace.
           </p>
         ) : null}
         <div className="scrying-glass-content-wrap flex min-h-0 flex-1 flex-col">

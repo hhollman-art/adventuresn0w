@@ -72,5 +72,12 @@ describe("SRD corpus", () => {
     const entry = srdEntityToLibraryEntry(entity!);
     expect(entry.category).toBe("monsters");
     expect(entry.ciClass).toBe("monster.srd-entry");
+    expect(entry.challengeRating).toBe("1/4");
+  });
+
+  it("maps spell library rows with a numeric spell level", () => {
+    const entity = getSrdEntity("spell:fireball");
+    const entry = srdEntityToLibraryEntry(entity!);
+    expect(entry.spellLevel).toBe(3);
   });
 });

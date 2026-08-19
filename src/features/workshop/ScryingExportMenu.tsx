@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-export type ScryingExportAction = "dmms-json" | "copy-text" | "print-pdf";
+export type ScryingExportAction = "copy-text" | "print-pdf";
 
 type ScryingExportMenuProps = {
   disabled?: boolean;
@@ -54,7 +54,7 @@ export default function ScryingExportMenu({
         aria-controls={menuId}
         onClick={() => setOpen((v) => !v)}
       >
-        Export Options
+        Share
         <span aria-hidden="true" className="ml-1 opacity-70">
           ▾
         </span>
@@ -63,7 +63,7 @@ export default function ScryingExportMenu({
         <div
           id={menuId}
           role="menu"
-          aria-label="Export Options"
+          aria-label="Share"
           className="scrying-export-menu__panel absolute right-0 z-20 mt-1 min-w-[14.5rem] rounded-lg border py-1 shadow-lg"
           style={{
             borderColor: "rgba(142, 212, 255, 0.35)",
@@ -74,22 +74,11 @@ export default function ScryingExportMenu({
             type="button"
             role="menuitem"
             className="scrying-export-menu__item"
-            onClick={() => run("dmms-json")}
-          >
-            <span className="font-semibold">Export DMMS JSON</span>
-            <span className="block text-[10px] font-normal opacity-80">
-              Full Creation File for backup or another DM
-            </span>
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="scrying-export-menu__item"
             onClick={() => run("copy-text")}
           >
             <span className="font-semibold">Copy text</span>
             <span className="block text-[10px] font-normal opacity-80">
-              Raw Markdown for notes apps
+              Paste into notes apps
             </span>
           </button>
           <button

@@ -7,11 +7,13 @@ import {
 } from "@/lib/srd/srdSpellPreview";
 import { SRD_ENTITIES } from "@/lib/srd/srdEntities.data";
 import type { LibraryListEntry } from "@/lib/workshop/libraryCatalog";
+import { parseLibraryChallengeRating } from "@/lib/workshop/libraryCatalog";
 import { ciClassLabel } from "@/lib/ciRegistry";
 import type { SrdEntityId, SrdEntityKind, SrdEntitySummary } from "@/lib/srd/types";
 import { normalizeSrdDocumentKey, lookupSrdDocumentMarkdown } from "@/lib/srd/srdDocumentLookup";
 import { isBundledSrdSectionKey } from "@/lib/srd/srdRuleBundles";
 import type { SrdItemRef } from "@/lib/srd/srdItemRef";
+import { SRD_DOCUMENT_BODY } from "@/lib/srd/srdDocument.data";
 
 const ENTITY_KIND_LABEL: Record<SrdEntityKind, string> = {
   spell: "SRD spell",
@@ -183,6 +185,13 @@ export function srdEntityToLibraryEntry(entity: SrdEntitySummary): LibraryListEn
     spellIndex != null
       ? formatSrdSpellLibraryDetail(spellIndex)
       : entity.subtitle ?? ciClassLabel(ciClass);
+  const challengeRating =
+    entity.kind === "monster"
+      ? parseLibraryChallengeRating(entity.subtitle) ??
+        parseLibraryChallengeRating(
+          SRD_DOCUMENT_BODY.slice(entity.start, Math.min(entity.end, entity.start + 2200)),
+        )
+      : undefined;
   return {
     id: `srd-entity:${entity.id}`,
     ciClass,
@@ -202,6 +211,8 @@ export function srdEntityToLibraryEntry(entity: SrdEntitySummary): LibraryListEn
     createdAt: "5.2.1-01-01T00:00:00.000Z",
     srdItemRef: itemRef ?? undefined,
     srdEntityId: entity.id,
+    ...(spellIndex != null ? { spellLevel: spellIndex.level } : {}),
+    ...(challengeRating ? { challengeRating } : {}),
   };
 }
 
