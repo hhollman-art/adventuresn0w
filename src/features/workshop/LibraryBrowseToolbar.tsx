@@ -45,7 +45,7 @@ type LibraryBrowseToolbarProps = {
   seedTagOptions?: string[];
   showSeedRefine?: boolean;
   /** Optional primary action beside search (e.g. Create Artifact). */
-  searchAction?: React.ReactNode;
+  searchAction?: ReactNode;
   /** full = default toolbar; shelves-only = vertical shelf nav; filters-only = sticky search + pills. */
   variant?: "full" | "shelves-only" | "filters-only";
   spellLevelFilter?: LibrarySpellLevelFilter;

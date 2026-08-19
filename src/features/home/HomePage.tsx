@@ -5,6 +5,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { combineLabeledSeedMarkdown, combineSavedSeedMarkdown, pruneSeedIds } from "@/lib/seedReference";
 import { MAX_LIBRARY_REF_CHARS } from "@/lib/requestLimits";
 import WorkshopLibraryPanel, {
+  libraryViewSelectionKey,
   type LibraryViewSelection,
 } from "@/features/workshop/WorkshopLibraryPanel";
 import WorkshopWorkspaceTabs from "@/features/workshop/WorkshopWorkspaceTabs";
@@ -1430,11 +1431,18 @@ export default function Home(props: PageProps<"/">) {
     titleHint: form.titleHint,
   });
 
-  const libraryInspectorCallbacksRef = useRef({
+  const libraryInspectorCallbacksRef = useRef<{
+    onEdit: () => void;
+    onEditSeed: () => void;
+    onEditResult: () => void;
+    onSavePartyVtt: (selectedIndices: number[]) => void;
+    onSaveToLibrary: () => void;
+    onLoadPartyVtt: () => void;
+  }>({
     onEdit: () => {},
     onEditSeed: () => {},
     onEditResult: () => {},
-    onSavePartyVtt: (_selectedIndices: number[]) => {},
+    onSavePartyVtt: () => {},
     onSaveToLibrary: () => {},
     onLoadPartyVtt: () => {},
   });
@@ -1466,9 +1474,7 @@ export default function Home(props: PageProps<"/">) {
     },
   };
 
-  const librarySelectionKey = librarySelection
-    ? `${librarySelection.kind}:${librarySelection.id}`
-    : null;
+  const librarySelectionKey = libraryViewSelectionKey(librarySelection);
 
   useEffect(() => {
     if (!setLibraryInspector) return;

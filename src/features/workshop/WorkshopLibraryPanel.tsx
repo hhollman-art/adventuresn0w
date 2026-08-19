@@ -116,6 +116,20 @@ export type LibraryViewSelection =
   | { kind: "custom-srd"; id: string }
   | null;
 
+export function libraryViewSelectionKey(selection: LibraryViewSelection): string | null {
+  if (!selection) return null;
+  switch (selection.kind) {
+    case "srd":
+      return `srd:${selection.resource}:${selection.index}`;
+    case "srd-entity":
+      return `srd-entity:${selection.entityId}`;
+    case "srd-bundle":
+      return `srd-bundle:${selection.bundleId}`;
+    default:
+      return `${selection.kind}:${selection.id}`;
+  }
+}
+
 function shelfEntriesForCategory(
   all: LibraryListEntry[],
   tab: WorkshopLibraryCategory,
@@ -330,7 +344,6 @@ function LibraryEntryRow({
   onView,
   onEdit,
   onDelete,
-  editLabel,
   compact = true,
 }: {
   entry: LibraryListEntry;
