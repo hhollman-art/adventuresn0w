@@ -142,7 +142,7 @@ export default function VaultMiniCard({
               <p className="vault-mini-card-title">
                 {entry.title}
                 {parked ? (
-                  <span className="ml-1 text-[10px] font-normal text-[var(--accent)]">parked</span>
+                  <span className="ml-1 text-[10px] font-normal text-[var(--dmms-accent,var(--accent))]">parked</span>
                 ) : null}
               </p>
               <p className="vault-mini-card-meta">
@@ -171,12 +171,12 @@ export default function VaultMiniCard({
           >
             <h3
               id={`purge-vault-${entry.id}`}
-              className="text-sm font-bold text-[var(--text)]"
+              className="text-sm font-bold text-slate-100"
             >
               Purge from Vault?
             </h3>
-            <p className="mt-2 text-xs leading-relaxed text-[var(--text-soft)]">
-              Remove <span className="text-[var(--text)]">{entry.title}</span> from the Lore
+            <p className="mt-2 text-xs leading-relaxed text-slate-300">
+              Remove <span className="text-slate-100">{entry.title}</span> from the Lore
               Vault? It will no longer appear here. The Library original (if any) is not
               deleted — drop it into “Park” again if you want it back in the vault.
             </p>
@@ -187,7 +187,11 @@ export default function VaultMiniCard({
               <button
                 type="button"
                 className="btn btn-sm"
-                style={{ background: "#7a2828", color: "#fff", borderColor: "#7a2828" }}
+                style={{
+                  background: "var(--dmms-hp, #f85149)",
+                  color: "var(--dmms-text, #f0f6fc)",
+                  borderColor: "var(--dmms-hp, #f85149)",
+                }}
                 onClick={() => void onConfirmPurge()}
               >
                 Purge from Vault

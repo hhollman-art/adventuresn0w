@@ -397,7 +397,6 @@ function LibraryEntryRow({
   compact?: boolean;
 }) {
   const visual = ciClassVisual(entry.ciClass);
-  const borderTone = selected ? "var(--accent)" : "var(--border)";
   const metaBits = [
     entry.spellLevel != null
       ? entry.spellLevel === 0
@@ -440,7 +439,7 @@ function LibraryEntryRow({
             onView();
           }
         }}
-        className={`library-entry-row library-entry-card rounded-md border text-sm${
+        className={`library-entry-row library-entry-card rounded-md border border-[var(--border)] text-sm text-slate-100${
           compact ? " library-entry-row--compact" : " p-3"
         }${
           entry.ciClass === "item.magic" || entry.ciClass === "item.srd-magic"
@@ -449,20 +448,17 @@ function LibraryEntryRow({
         }`}
         data-ci-class={entry.ciClass}
         style={{
-          borderTopColor: borderTone,
-          borderRightColor: borderTone,
-          borderBottomColor: borderTone,
-          background: selected ? "rgba(201, 162, 39, 0.12)" : "color-mix(in srgb, var(--bg) 70%, transparent)",
           borderLeftWidth: "3px",
           borderLeftColor: visual.accent,
+          background: selected ? "var(--dmms-panel-hover, var(--surface))" : "var(--surface)",
         }}
       >
         <span className="library-entry-icon" style={{ color: visual.accent }} aria-hidden="true">
           {visual.icon}
         </span>
         <div className="min-w-0 flex-1">
-          <span className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="font-display font-semibold leading-tight text-[var(--text)]">
+          <span className="flex min-w-0 items-center gap-x-2 gap-y-0.5">
+            <span className="library-entry-title font-display font-semibold leading-tight text-slate-100">
               {entry.title}
             </span>
             <span
@@ -483,14 +479,14 @@ function LibraryEntryRow({
             )}
             {entry.isHomebrew && compact ? <HomebrewTag /> : null}
           </span>
-          <span className="library-entry-shelf mt-0.5 block truncate text-[11px] leading-snug text-[var(--muted)]">
+          <span className="library-entry-shelf mt-0.5 block truncate text-[11px] leading-snug text-slate-400">
             {metaBits.join(" · ") || formatEntryShelfLine(entry)}
             {!compact && entry.provenance === "user" ? (
               <> · {new Date(entry.createdAt).toLocaleDateString()}</>
             ) : null}
           </span>
           {!compact && entry.detail ? (
-            <span className="library-entry-detail mt-1 block text-xs text-[var(--muted)] line-clamp-2">{entry.detail}</span>
+            <span className="library-entry-detail mt-1 block text-xs text-slate-400 line-clamp-2">{entry.detail}</span>
           ) : null}
           {!compact && entry.tags?.length ? (
             <span className="library-entry-tags mt-1.5 flex flex-wrap gap-1">
@@ -1180,7 +1176,7 @@ export default function WorkshopLibraryPanel({
                       )}
                 </p>
               ) : (
-                <ul className="library-results-grid min-h-0 flex-1 overflow-y-auto pr-1">
+                <ul className="library-results-grid custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
                   {entries.map((entry) => {
                     const selected = isSelected(selection, entry);
                     const select = () => {
@@ -1455,7 +1451,7 @@ export default function WorkshopLibraryPanel({
                       )}
                 </p>
               ) : (
-                <ul className="library-results-grid min-h-0 flex-1 overflow-y-auto pr-1">
+                <ul className="library-results-grid custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
                   {entries.map((entry) => {
                     const selected = isSelected(selection, entry);
                     const select = () => {
@@ -1684,8 +1680,8 @@ export default function WorkshopLibraryPanel({
         <ul
           className={
             wideLayout
-              ? "library-results-grid min-h-0 flex-1 overflow-y-auto pr-1"
-              : "library-results-grid max-h-[min(70vh,40rem)] overflow-y-auto pr-1"
+              ? "library-results-grid custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1"
+              : "library-results-grid custom-scrollbar max-h-[min(70vh,40rem)] overflow-y-auto pr-1"
           }
         >
           {entries.map((entry) => {

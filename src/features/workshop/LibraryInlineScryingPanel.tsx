@@ -31,13 +31,12 @@ export default function LibraryInlineScryingPanel({
   if (!hasSelection || !snapshot) {
     return (
       <div
-        className="library-inline-scrying-empty flex min-h-0 flex-1 flex-col items-center justify-center gap-3 rounded-xl border p-6 text-center"
-        style={{ borderColor: "var(--border)", background: "rgba(154, 116, 22, 0.04)" }}
+        className="library-inline-scrying-empty flex min-h-0 flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] p-6 text-center"
       >
-        <ScryingGlassIcon size={40} className="opacity-80" />
+        <ScryingGlassIcon size={40} className="opacity-90" />
         <div className="space-y-1">
-          <p className="font-display text-sm font-semibold text-[var(--text)]">{PREVIEW_WINDOW}</p>
-          <p className="max-w-[16rem] text-xs leading-relaxed text-[var(--muted)]">
+          <p className="font-display text-sm font-semibold text-slate-100">{PREVIEW_WINDOW}</p>
+          <p className="max-w-[16rem] text-xs leading-relaxed text-slate-400">
             Select a creation file or SRD entry from the stacks to scry its details here — no popup
             required.
           </p>

@@ -230,15 +230,21 @@ export default function VaultDrawer({ layout = "overlay" }: { layout?: "overlay"
         aria-label="Lore Vault — parking lot for Creation Files, lore, NPCs, and monsters"
       >
         <header className="vault-drawer-header">
-          <div>
+          <div className="vault-drawer-header-text">
             <p className="vault-drawer-badge">{THE_LIBRARY}</p>
             <h2 className="vault-drawer-title font-display">Lore Vault</h2>
             <p className="vault-drawer-subtitle">
               Parking lot for CFs — drag in to stage, drag out onto Campaigns, sheets, or the table.
             </p>
           </div>
-          <button type="button" className="vault-drawer-close" onClick={toggleOpen} aria-label="Close Lore Vault">
-            ×
+          <button
+            type="button"
+            className="command-center-panel-collapse"
+            onClick={toggleOpen}
+            aria-label={docked ? "Collapse Lore Vault" : "Close Lore Vault"}
+            title={docked ? "Collapse Vault (Alt+1)" : "Close Lore Vault"}
+          >
+            {docked ? "‹" : "×"}
           </button>
         </header>
 
@@ -272,19 +278,19 @@ export default function VaultDrawer({ layout = "overlay" }: { layout?: "overlay"
             parkActive ? "ring-2 ring-[var(--accent)]" : ""
           }`}
           style={{
-            borderColor: parkActive ? "var(--accent)" : "var(--border)",
-            background: parkActive ? "var(--accent-dim)" : "transparent",
+            borderColor: parkActive ? "var(--dmms-accent, var(--accent))" : "var(--border)",
+            background: parkActive ? "var(--accent-muted)" : "transparent",
           }}
           onDragOver={onParkDragOver}
           onDragLeave={() => setParkActive(false)}
           onDrop={(e) => void onParkDrop(e)}
         >
-          <p className="text-[11px] font-semibold text-[var(--text)]">Drop here to park</p>
-          <p className="text-[10px] text-[var(--text-soft)]">
+          <p className="text-[11px] font-semibold text-slate-100">Drop here to park</p>
+          <p className="text-[10px] text-slate-300">
             Stages a CF in the vault lot without removing it from The Library.
           </p>
           {parkMessage ? (
-            <p className="mt-1 text-[10px] text-[var(--accent)]" role="status">
+            <p className="mt-1 text-[10px] text-[var(--dmms-accent,var(--accent))]" role="status">
               {parkMessage}
             </p>
           ) : null}
@@ -292,10 +298,10 @@ export default function VaultDrawer({ layout = "overlay" }: { layout?: "overlay"
 
         {parkedCards.length > 0 ? (
           <div className="px-3 pb-1">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--accent)]">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--dmms-accent,var(--accent))]">
               Parked ({parkedCards.length})
             </p>
-            <ul className="vault-drawer-list mt-1">
+            <ul className="vault-drawer-list custom-scrollbar mt-1">
               {parkedCards.map((entry) => (
                 <VaultMiniCard
                   key={`parked:${entry.ciClass}:${entry.id}`}
@@ -308,7 +314,7 @@ export default function VaultDrawer({ layout = "overlay" }: { layout?: "overlay"
           </div>
         ) : null}
 
-        <ul className="vault-drawer-list">
+        <ul className="vault-drawer-list custom-scrollbar">
           {libraryCards.length === 0 && parkedCards.length === 0 ? (
             <li className="vault-drawer-empty">
               No cards here yet. Drop a CF into the park zone, or create heroes in The Tavern.
@@ -334,8 +340,8 @@ export default function VaultDrawer({ layout = "overlay" }: { layout?: "overlay"
           onDrop={onTrashDrop}
           aria-label="Trash — drop to purge from Lore Vault"
         >
-          <p className="text-[11px] font-semibold text-red-300">Trash</p>
-          <p className="text-[10px] text-[var(--text-soft)]">
+          <p className="text-[11px] font-semibold text-hp">Trash</p>
+          <p className="text-[10px] text-slate-300">
             Drop a vault card here to remove it from the Lore Vault (confirmation required).
           </p>
         </div>
@@ -371,11 +377,11 @@ export default function VaultDrawer({ layout = "overlay" }: { layout?: "overlay"
             style={{ background: "var(--panel)", borderColor: "var(--border)" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 id="vault-trash-purge-title" className="text-sm font-bold text-[var(--text)]">
+            <h3 id="vault-trash-purge-title" className="text-sm font-bold text-slate-100">
               Purge from Vault?
             </h3>
-            <p className="mt-2 text-xs leading-relaxed text-[var(--text-soft)]">
-              Remove <span className="text-[var(--text)]">{purgeConfirm.title}</span> from the Lore
+            <p className="mt-2 text-xs leading-relaxed text-slate-300">
+              Remove <span className="text-slate-100">{purgeConfirm.title}</span> from the Lore
               Vault? It will no longer appear here. The Library original (if any) is not deleted —
               drop it into “Park” again if you want it back.
             </p>
@@ -386,7 +392,11 @@ export default function VaultDrawer({ layout = "overlay" }: { layout?: "overlay"
               <button
                 type="button"
                 className="btn btn-sm"
-                style={{ background: "#7a2828", color: "#fff", borderColor: "#7a2828" }}
+                style={{
+                  background: "var(--dmms-hp, #f85149)",
+                  color: "var(--dmms-text, #f0f6fc)",
+                  borderColor: "var(--dmms-hp, #f85149)",
+                }}
                 onClick={() => void runHardPurge()}
               >
                 Purge from Vault

@@ -72,8 +72,8 @@ function ScryingEditPane({
   if (mode === "readonly") {
     return (
       <div className="scrying-inspector-pane">
-        <p className="text-sm text-[var(--text)]">This included rule is read-only.</p>
-        <p className="mt-2 text-xs text-[var(--text-soft)]">
+        <p className="text-sm text-slate-100">This included rule is read-only.</p>
+        <p className="mt-2 text-xs text-slate-300">
           Clone it to The Library if you want a copy you can rewrite in your own words.
         </p>
       </div>
@@ -83,7 +83,7 @@ function ScryingEditPane({
   if (mode === "workplace") {
     return (
       <div className="scrying-inspector-pane">
-        <p className="text-sm text-[var(--text)]">
+        <p className="text-sm text-slate-100">
           This Creation File uses a dedicated workplace (character sheet, party, or campaign
           builder) rather than a single notes field.
         </p>
@@ -113,20 +113,20 @@ function ScryingEditPane({
 
   return (
     <div className="scrying-inspector-pane flex min-h-0 flex-1 flex-col">
-      <p className="mb-2 text-xs text-[var(--text-soft)]">
+      <p className="mb-2 text-xs text-slate-300">
         Edit the notes for this Creation File. Changes save to this device’s Library.
       </p>
       <SrdMarkdownTextarea
         value={draft}
         onChange={setDraft}
         rows={16}
-        className="min-h-0 flex-1 rounded-md border bg-[var(--bg)] px-2 py-2 font-mono text-xs text-[var(--text)]"
+        className="min-h-0 flex-1 rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 py-2 font-mono text-xs text-slate-100"
       />
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <button type="button" className="btn btn-sm btn-accent" disabled={saving} onClick={() => void save()}>
           {saving ? "Saving…" : "Save"}
         </button>
-        {status ? <span className="text-xs text-[var(--text-soft)]">{status}</span> : null}
+        {status ? <span className="text-xs text-slate-300">{status}</span> : null}
       </div>
     </div>
   );
@@ -151,19 +151,19 @@ function ScryingRelatedPane({ meta }: { meta: InspectMeta | null }) {
 
   if (!meta) {
     return (
-      <p className="scrying-inspector-pane text-sm text-[var(--text-soft)]">
+      <p className="scrying-inspector-pane text-sm text-slate-300">
         Select a Creation File or included rule to see campaign and world links.
       </p>
     );
   }
 
   if (links === null) {
-    return <p className="scrying-inspector-pane text-sm text-[var(--text-soft)]">Looking up links…</p>;
+    return <p className="scrying-inspector-pane text-sm text-slate-300">Looking up links…</p>;
   }
 
   if (links.length === 0) {
     return (
-      <p className="scrying-inspector-pane text-sm text-[var(--text-soft)]">
+      <p className="scrying-inspector-pane text-sm text-slate-300">
         No campaign or location links yet. Send this file to a campaign from the context menu when
         you want it at the table.
       </p>
@@ -176,12 +176,11 @@ function ScryingRelatedPane({ meta }: { meta: InspectMeta | null }) {
         <li key={link.id}>
           <button
             type="button"
-            className="w-full rounded-md border px-3 py-2 text-left"
-            style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+            className="w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-left hover:bg-[var(--dmms-panel-hover,#1f242c)]"
             onClick={() => inspectEntity(link.inspect)}
           >
-            <span className="block text-sm font-semibold text-[var(--text)]">{link.label}</span>
-            <span className="block text-xs text-[var(--text-soft)]">{link.hint}</span>
+            <span className="block text-sm font-semibold text-slate-100">{link.label}</span>
+            <span className="block text-xs text-slate-300">{link.hint}</span>
           </button>
         </li>
       ))}
@@ -264,19 +263,30 @@ export default function ScryingInspector() {
 
   return (
     <div className="scrying-inspector flex min-h-0 flex-1 flex-col">
-      <div className="scrying-inspector-tabs" role="tablist" aria-label={`${PREVIEW_WINDOW} actions`}>
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={inspectorTab === tab.id}
-            className={`scrying-inspector-tab${inspectorTab === tab.id ? " is-active" : ""}`}
-            onClick={() => actions?.setInspectorTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="scrying-inspector-header">
+        <div className="scrying-inspector-tabs" role="tablist" aria-label={`${PREVIEW_WINDOW} actions`}>
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={inspectorTab === tab.id}
+              className={`scrying-inspector-tab${inspectorTab === tab.id ? " is-active" : ""}`}
+              onClick={() => actions?.setInspectorTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="command-center-panel-collapse"
+          onClick={collapse}
+          aria-label={`Collapse ${PREVIEW_WINDOW}`}
+          title={`${PREVIEW_WINDOW} (Alt+2)`}
+        >
+          ›
+        </button>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden" role="tabpanel">

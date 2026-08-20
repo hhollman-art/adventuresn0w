@@ -260,3 +260,222 @@
   background: color-mix(in srgb, var(--surface) 96%, black);
   border-color: color-mix(in srgb, var(--accent-dim) 55%, transparent);
 }
+
+/* ---- DMMS Command Center — WCAG AAA contrast tokens (Tailwind @theme + CSS) ----
+   Bound on `.command-center-root`. Neutral slate canvas — no purple wash. */
+
+@theme {
+  --color-dmms-canvas: #0b0e14;
+  --color-dmms-panel: #161b22;
+  --color-dmms-panel-hover: #1f242c;
+  --color-dmms-border: #21262d;
+  --color-dmms-border-strong: #30363d;
+  --color-dmms-text: #f0f6fc;
+  --color-dmms-text-soft: #c9d1d9;
+  --color-dmms-muted: #8b949e;
+  --color-dmms-accent: #e3b341;
+  --color-dmms-accent-bg: #d4a32d;
+  --color-dmms-link: #58a6ff;
+  --color-dmms-hp: #f85149;
+  --color-dmms-spell: #38bdf8;
+  --color-dmms-success: #3fb950;
+}
+
+.command-center-root {
+  /* Semantic aliases used by layout + child components */
+  --dmms-canvas: #0b0e14;
+  --dmms-panel: #161b22;
+  --dmms-panel-hover: #1f242c;
+  --dmms-border: #21262d;
+  --dmms-border-strong: #30363d;
+  --dmms-text: #f0f6fc;
+  --dmms-text-soft: #c9d1d9;
+  --dmms-muted: #8b949e;
+  --dmms-accent: #e3b341;
+  --dmms-accent-bg: #d4a32d;
+  --dmms-link: #58a6ff;
+  --dmms-hp: #f85149;
+  --dmms-spell: #38bdf8;
+  --dmms-success: #3fb950;
+
+  /* Remap app tokens so existing `var(--text)` / `text-[var(--muted)]` stay AAA */
+  --bg: var(--dmms-canvas);
+  --surface: var(--dmms-panel);
+  --panel: var(--dmms-panel);
+  --border: var(--dmms-border-strong);
+  --text: var(--dmms-text);
+  --text-soft: var(--dmms-text-soft);
+  --muted: var(--dmms-muted);
+  --accent: var(--dmms-accent-bg);
+  --accent-dim: var(--dmms-accent);
+  --accent-muted: rgba(227, 179, 65, 0.14);
+  --accent-muted-strong: rgba(227, 179, 65, 0.28);
+  --link: var(--dmms-link);
+  --hp: var(--dmms-hp);
+  --spell: var(--dmms-spell);
+  --success: var(--dmms-success);
+  --shadow-soft: none;
+  --scrollbar-track: rgba(0, 0, 0, 0.45);
+
+  color: var(--dmms-text);
+  background: var(--dmms-canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.command-center-root .text-primary,
+.command-center-root .text-\[var\(--text\)\] {
+  color: var(--dmms-text) !important;
+}
+
+.command-center-root .text-secondary,
+.command-center-root .text-\[var\(--text-soft\)\] {
+  color: var(--dmms-text-soft) !important;
+}
+
+.command-center-root .text-caption,
+.command-center-root .text-\[var\(--muted\)\] {
+  color: var(--dmms-muted) !important;
+}
+
+.command-center-root .text-link,
+.command-center-root a:not(.btn):not(.command-center-brand):not(.command-center-mode-btn) {
+  color: var(--dmms-link);
+}
+
+.command-center-root .text-hp {
+  color: var(--dmms-hp);
+}
+
+.command-center-root .text-spell {
+  color: var(--dmms-spell);
+}
+
+.command-center-root .text-success {
+  color: var(--dmms-success);
+}
+
+.command-center-root .btn-accent,
+.command-center-root .btn-primary {
+  border-color: color-mix(in srgb, var(--dmms-accent) 70%, #000);
+  background: linear-gradient(180deg, #e8c04e 0%, var(--dmms-accent-bg) 100%);
+  color: #0b0e14;
+  font-weight: 700;
+}
+
+.command-center-root .btn:not(.btn-accent):not(.btn-primary) {
+  border-color: var(--dmms-border-strong);
+  background: var(--dmms-panel);
+  color: var(--dmms-text);
+}
+
+.command-center-root .btn:not(.btn-accent):not(.btn-primary):hover:not(:disabled) {
+  background: var(--dmms-panel-hover);
+  border-color: var(--dmms-accent);
+}
+
+.command-center-root input:not([type="checkbox"]):not([type="radio"]),
+.command-center-root select,
+.command-center-root textarea {
+  border-color: var(--dmms-border-strong);
+  background: var(--dmms-canvas);
+  color: var(--dmms-text);
+}
+
+.command-center-root input::placeholder,
+.command-center-root textarea::placeholder {
+  color: var(--dmms-muted);
+  opacity: 1;
+}
+
+/* Map common Tailwind slate/gray text utilities → AAA hierarchy tokens */
+.command-center-root .text-slate-50,
+.command-center-root .text-slate-100,
+.command-center-root .text-gray-50,
+.command-center-root .text-gray-100,
+.command-center-root .text-zinc-50,
+.command-center-root .text-zinc-100,
+.command-center-root .text-white {
+  color: var(--dmms-text) !important;
+}
+
+.command-center-root .text-slate-200,
+.command-center-root .text-slate-300,
+.command-center-root .text-gray-200,
+.command-center-root .text-gray-300,
+.command-center-root .text-zinc-200,
+.command-center-root .text-zinc-300 {
+  color: var(--dmms-text-soft) !important;
+}
+
+.command-center-root .text-slate-400,
+.command-center-root .text-slate-500,
+.command-center-root .text-gray-400,
+.command-center-root .text-gray-500,
+.command-center-root .text-zinc-400,
+.command-center-root .text-zinc-500 {
+  color: var(--dmms-muted) !important;
+}
+
+.command-center-root .text-slate-600,
+.command-center-root .text-slate-700,
+.command-center-root .text-slate-800,
+.command-center-root .text-slate-900,
+.command-center-root .text-gray-600,
+.command-center-root .text-gray-700,
+.command-center-root .text-gray-800,
+.command-center-root .text-gray-900,
+.command-center-root .text-zinc-600,
+.command-center-root .text-zinc-700,
+.command-center-root .text-zinc-800,
+.command-center-root .text-zinc-900 {
+  color: var(--dmms-text-soft) !important;
+}
+
+.command-center-root .text-blue-400,
+.command-center-root .text-blue-500,
+.command-center-root .text-sky-400,
+.command-center-root .text-sky-500 {
+  color: var(--dmms-link) !important;
+}
+
+.command-center-root .text-red-300,
+.command-center-root .text-red-400,
+.command-center-root .text-red-500 {
+  color: var(--dmms-hp) !important;
+}
+
+.command-center-root .text-emerald-400,
+.command-center-root .text-green-400,
+.command-center-root .text-green-500 {
+  color: var(--dmms-success) !important;
+}
+
+.command-center-root .bg-slate-800,
+.command-center-root .bg-slate-900,
+.command-center-root .bg-gray-800,
+.command-center-root .bg-gray-900,
+.command-center-root .bg-zinc-800,
+.command-center-root .bg-zinc-900 {
+  background-color: var(--dmms-panel) !important;
+}
+
+.command-center-root .border-slate-700,
+.command-center-root .border-slate-800,
+.command-center-root .border-gray-700,
+.command-center-root .border-gray-800,
+.command-center-root .border-zinc-700,
+.command-center-root .border-zinc-800 {
+  border-color: var(--dmms-border-strong) !important;
+}
+
+.command-center-root .forge-forest-card,
+.command-center-root .workshop-campaign-card,
+.command-center-root .scrying-glass-frame,
+.command-center-root .preview-window-frame {
+  background: var(--dmms-panel) !important;
+  border: 1px solid var(--dmms-border-strong) !important;
+  box-shadow: none !important;
+  color: var(--dmms-text);
+}
+

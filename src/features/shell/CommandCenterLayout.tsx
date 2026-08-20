@@ -25,6 +25,9 @@ function isTypingTarget(target: EventTarget | null): boolean {
 /**
  * Persistent 3-zone DM Command Center:
  * header (Prep / Live) · Lore Vault · center canvas (router page) · Scrying inspector.
+ *
+ * Side panels use fixed widths and collapse to 48px icon rails so the center
+ * canvas keeps priority (≥650px) and never gets text-squished.
  */
 export default function CommandCenterLayout({ children }: CommandCenterLayoutProps) {
   const pathname = usePathname() ?? "/";
@@ -65,49 +68,52 @@ export default function CommandCenterLayout({ children }: CommandCenterLayoutPro
       <div
         className={`command-center${vaultOpen ? " command-center--vault-open" : ""}${inspectorOpen ? " command-center--inspector-open" : ""}`}
       >
-        <div className="command-center-vault-rail no-print">
-          <button
-            type="button"
-            className="command-center-rail-btn"
-            aria-pressed={vaultOpen}
-            aria-controls="lore-vault-drawer"
-            title="Lore Vault (Alt+1)"
-            onClick={() => setVaultOpen(!vaultOpen)}
-          >
-            Vault
-          </button>
-        </div>
-
-        <aside
-          className={`command-center-vault${vaultOpen ? " is-open" : ""}`}
-          aria-hidden={!vaultOpen}
-        >
-          <VaultDrawer layout="docked" />
-        </aside>
+        {vaultOpen ? (
+          <aside className="command-center-vault is-open" aria-label="Lore Vault">
+            <VaultDrawer layout="docked" />
+          </aside>
+        ) : (
+          <div className="command-center-vault-rail no-print">
+            <button
+              type="button"
+              className="command-center-rail-btn"
+              aria-pressed={false}
+              aria-controls="lore-vault-drawer"
+              title="Open Lore Vault (Alt+1)"
+              onClick={() => setVaultOpen(true)}
+            >
+              <span className="command-center-rail-chevron" aria-hidden="true">
+                ›
+              </span>
+              Vault
+            </button>
+          </div>
+        )}
 
         <div className="command-center-main min-w-0" role="main">
           {children}
         </div>
 
-        <aside
-          className={`command-center-inspector${inspectorOpen ? " is-open" : ""}`}
-          aria-label={PREVIEW_WINDOW}
-          aria-hidden={!inspectorOpen}
-        >
-          <ScryingInspector />
-        </aside>
-
-        <div className="command-center-inspector-rail no-print">
-          <button
-            type="button"
-            className="command-center-rail-btn"
-            aria-pressed={inspectorOpen}
-            title={`${PREVIEW_WINDOW} (Alt+2)`}
-            onClick={() => setInspectorOpen(!inspectorOpen)}
-          >
-            Scry
-          </button>
-        </div>
+        {inspectorOpen ? (
+          <aside className="command-center-inspector is-open" aria-label={PREVIEW_WINDOW}>
+            <ScryingInspector />
+          </aside>
+        ) : (
+          <div className="command-center-inspector-rail no-print">
+            <button
+              type="button"
+              className="command-center-rail-btn"
+              aria-pressed={false}
+              title={`Open ${PREVIEW_WINDOW} (Alt+2)`}
+              onClick={() => setInspectorOpen(true)}
+            >
+              <span className="command-center-rail-chevron" aria-hidden="true">
+                ‹
+              </span>
+              Scry
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
