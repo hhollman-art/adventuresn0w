@@ -1479,7 +1479,8 @@ html[data-preview-window="standalone"] .app-content {
 
 @media (min-width: 720px) {
   .library-results-grid {
-    grid-template-columns: repeat(auto-fill, minmax(17.25rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+    gap: 0.28rem;
   }
 }
 
@@ -4684,10 +4685,124 @@ article.adventure-md .module-read-aloud p {
 
 /* ---- DM Command Center — 3-panel layout ----------------------------------- */
 
+.command-center-root {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  background: #0d0a1a;
+  color: #ece6f8;
+}
+
+.command-center-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 0.85rem;
+  padding: 0.4rem 0.75rem;
+  background: #120e22;
+  border-bottom: 1px solid rgba(232, 201, 106, 0.35);
+  color: #ece6f8;
+}
+
+.command-center-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #f4e7b0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+}
+
+.command-center-brand:hover,
+.command-center-brand:focus-visible {
+  color: #fff6c8;
+}
+
+.command-center-mode {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid rgba(232, 201, 106, 0.5);
+  border-radius: 999px;
+}
+
+.command-center-mode-btn {
+  padding: 0.38rem 0.9rem;
+  border: none;
+  background: transparent;
+  color: #d8cdef;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.command-center-mode-btn.is-active {
+  background: rgba(232, 201, 106, 0.2);
+  color: #f4e7b0;
+}
+
+.command-center-header-search {
+  min-width: 10rem;
+  flex: 1 1 14rem;
+}
+
+.command-center-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: auto;
+}
+
+.command-center-canvas-menu {
+  position: relative;
+}
+
+.command-center-canvas-list {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  z-index: 60;
+  min-width: 12rem;
+  margin: 0;
+  padding: 0.3rem 0;
+  list-style: none;
+  background: #1a1430;
+  border: 1px solid rgba(232, 201, 106, 0.4);
+  border-radius: 0.4rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+
+.command-center-canvas-item {
+  display: block;
+  padding: 0.42rem 0.8rem;
+  color: #ece6f8;
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.command-center-canvas-item:hover,
+.command-center-canvas-item:focus-visible {
+  background: rgba(232, 201, 106, 0.16);
+  color: #f4e7b0;
+}
+
 .command-center {
   --command-center-bg: #0d0a1a;
   --command-center-text: #ece6f8;
   --command-center-gold: #e8c96a;
+  --text: #ece6f8;
+  --text-soft: #c9bddf;
+  --muted: #b7a9d4;
+  --bg: #1a1430;
+  --panel: #1a1430;
+  --border: rgba(232, 201, 106, 0.35);
+  --accent: #e8c96a;
   display: flex;
   min-width: 0;
   min-height: 0;
@@ -4753,7 +4868,7 @@ article.adventure-md .module-read-aloud p {
   display: flex;
   min-width: 0;
   min-height: 0;
-  flex: 3 1 60%;
+  flex: 65 1 65%;
   flex-direction: column;
 }
 
@@ -4776,6 +4891,43 @@ article.adventure-md .module-read-aloud p {
 .command-center-inspector > * {
   min-height: 0;
   flex: 1 1 auto;
+}
+
+.scrying-inspector {
+  min-height: 0;
+  background: #120e22;
+}
+
+.scrying-inspector-tabs {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.15rem;
+  padding: 0.35rem 0.4rem 0;
+  border-bottom: 1px solid rgba(232, 201, 106, 0.28);
+}
+
+.scrying-inspector-tab {
+  flex: 1 1 0;
+  padding: 0.4rem 0.35rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #c9bddf;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.scrying-inspector-tab.is-active {
+  color: #f4e7b0;
+  border-bottom-color: #e8c96a;
+}
+
+.scrying-inspector-pane {
+  padding: 0.75rem;
+  overflow: auto;
 }
 
 @media (max-width: 1023px) {

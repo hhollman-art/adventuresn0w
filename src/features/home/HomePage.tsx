@@ -123,6 +123,11 @@ import {
 import { CreationWorkspacePanel } from "./CreationWorkspacePanel";
 import { LibraryWorkspaceSection } from "./LibraryWorkspaceSection";
 import { useCommandCenterActionsOptional } from "@/contexts/CommandCenterContext";
+import {
+  INSPECT_ENTITY_EVENT,
+  isInspectMeta,
+} from "@/lib/workshop/inspectedEntity";
+import { saveInspectedMarkdown } from "@/lib/workshop/inspectMarkdownSave";
 import { ResultEditorDialog } from "./ResultEditorDialog";
 import { SeedEditorDialog } from "./SeedEditorDialog";
 import {
@@ -247,8 +252,8 @@ export default function Home(props: PageProps<"/">) {
   const isCreatingView = !isLibraryView && workspace !== "welcome";
 
   useEffect(() => {
-    setForgeBannerMode(isWelcomeView ? "welcome" : "compact");
-  }, [isWelcomeView]);
+    setForgeBannerMode("compact");
+  }, []);
   const forgeBodyClass = isLibraryView
     ? "forge-content-body--library"
     : isCreatingView
@@ -1438,6 +1443,7 @@ export default function Home(props: PageProps<"/">) {
     onSavePartyVtt: (selectedIndices: number[]) => void;
     onSaveToLibrary: () => void;
     onLoadPartyVtt: () => void;
+    onSaveInspectedMarkdown: (markdown: string) => void | Promise<void>;
   }>({
     onEdit: () => {},
     onEditSeed: () => {},
@@ -1445,6 +1451,7 @@ export default function Home(props: PageProps<"/">) {
     onSavePartyVtt: () => {},
     onSaveToLibrary: () => {},
     onLoadPartyVtt: () => {},
+    onSaveInspectedMarkdown: async () => {},
   });
   libraryInspectorCallbacksRef.current = {
     onEdit: () => {
@@ -1472,6 +1479,11 @@ export default function Home(props: PageProps<"/">) {
       });
       window.location.href = "/table";
     },
+    onSaveInspectedMarkdown: async (markdown) => {
+      if (!librarySelection) return;
+      await saveInspectedMarkdown(librarySelection, markdown);
+      refreshLibraryData();
+    },
   };
 
   const librarySelectionKey = libraryViewSelectionKey(librarySelection);
@@ -1493,8 +1505,23 @@ export default function Home(props: PageProps<"/">) {
         libraryInspectorCallbacksRef.current.onSavePartyVtt(selectedIndices),
       onSaveToLibrary: () => libraryInspectorCallbacksRef.current.onSaveToLibrary(),
       onLoadPartyVtt: () => libraryInspectorCallbacksRef.current.onLoadPartyVtt(),
+      onSaveInspectedMarkdown: (markdown) =>
+        libraryInspectorCallbacksRef.current.onSaveInspectedMarkdown(markdown),
     });
   }, [setLibraryInspector, isLibraryView, libraryPreviewSnapshot, librarySelectionKey]);
+
+  useEffect(() => {
+    const onInspect = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (!isInspectMeta(detail) || !detail.selection) return;
+      setLibrarySelection((current) => {
+        if (libraryViewSelectionKey(current) === detail.key) return current;
+        return detail.selection;
+      });
+    };
+    window.addEventListener(INSPECT_ENTITY_EVENT, onInspect);
+    return () => window.removeEventListener(INSPECT_ENTITY_EVENT, onInspect);
+  }, []);
 
   useEffect(() => {
     if (!isLibraryView || !librarySelectionKey) return;

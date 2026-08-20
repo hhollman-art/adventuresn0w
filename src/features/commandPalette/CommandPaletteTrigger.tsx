@@ -11,10 +11,10 @@ export default function CommandPaletteTrigger() {
       type="button"
       className="command-palette-trigger"
       onClick={openCommandPalette}
-      aria-label="Open command palette"
-      title="Jump anywhere (Ctrl+K)"
+      aria-label="Search Creation Files and included rules"
+      title="Search Creation Files and included rules (Ctrl+K)"
     >
-      <span className="command-palette-trigger-label">Jump to…</span>
+      <span className="command-palette-trigger-label">Search CFs &amp; rules</span>
       <kbd className="command-palette-trigger-kbd">{SHORTCUT}</kbd>
     </button>
   );

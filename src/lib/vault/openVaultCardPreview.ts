@@ -5,6 +5,8 @@ import {
   type WorkshopPreviewSnapshot,
 } from "@/lib/workshop/previewSnapshot";
 import type { VaultCardEntry } from "@/lib/vault/loadVaultEntries";
+import { inspectEntity, inspectMetaFromSelection } from "@/lib/workshop/inspectedEntity";
+import { libraryViewSelectionFromEntry } from "@/features/workshop/WorkshopLibraryPanel";
 
 function vaultCardSnapshot(entry: VaultCardEntry): WorkshopPreviewSnapshot {
   const kind = fantasyCiLabel(entry.ciClass);
@@ -45,12 +47,18 @@ function vaultCardSnapshot(entry: VaultCardEntry): WorkshopPreviewSnapshot {
     showPrimaryCommit: false,
     primaryCommitLabel: "Save to Library",
     updatedAt: new Date().toISOString(),
+    inspect: inspectMetaFromSelection(libraryViewSelectionFromEntry(entry), {
+      label: entry.title,
+      ciClass: entry.ciClass,
+    }),
   };
 }
 
 /** Show a vault card in the docked Scrying inspector — no blocking modal. */
 export function openVaultCardPreview(entry: VaultCardEntry): void {
   if (typeof window === "undefined") return;
-  publishPreviewSnapshot(vaultCardSnapshot(entry));
+  const snapshot = vaultCardSnapshot(entry);
+  if (snapshot.inspect) inspectEntity(snapshot.inspect);
+  publishPreviewSnapshot(snapshot);
   openOrFocusPreviewWindow();
 }

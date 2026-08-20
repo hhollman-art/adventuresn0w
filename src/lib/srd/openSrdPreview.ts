@@ -11,6 +11,7 @@ import {
   type WorkshopPreviewSnapshot,
 } from "@/lib/workshop/previewSnapshot";
 import { ciClassForSrdResource } from "@/lib/workshop/previewCiClass";
+import { inspectEntity, inspectMetaFromSelection, type InspectMeta } from "@/lib/workshop/inspectedEntity";
 
 export type SrdPreviewRef = {
   resource: SrdApiResource;
@@ -23,6 +24,7 @@ function srdPreviewSnapshot(
   markdown: string,
   loading: boolean,
   ciClass?: CiClass | null,
+  inspect?: InspectMeta | null,
 ): WorkshopPreviewSnapshot {
   return {
     markdown,
@@ -53,6 +55,7 @@ function srdPreviewSnapshot(
     showPrimaryCommit: false,
     primaryCommitLabel: "Save to Library",
     updatedAt: new Date().toISOString(),
+    inspect: inspect ?? null,
   };
 }
 
@@ -60,6 +63,11 @@ function srdPreviewSnapshot(
 export function openSrdPreview(ref: SrdPreviewRef): void {
   if (typeof window === "undefined") return;
 
+  const inspect = inspectMetaFromSelection(
+    { kind: "srd", resource: ref.resource, index: ref.index, name: ref.name },
+    { label: ref.name, ciClass: ciClassForSrdResource(ref.resource) },
+  );
+  if (inspect) inspectEntity(inspect);
   openOrFocusPreviewWindow();
 
   const bundled = lookupSrdDocumentMarkdown({
@@ -68,11 +76,15 @@ export function openSrdPreview(ref: SrdPreviewRef): void {
     index: ref.index,
   });
   if (bundled?.trim()) {
-    publishPreviewSnapshot(srdPreviewSnapshot(ref.name, bundled, false, ciClassForSrdResource(ref.resource)));
+    publishPreviewSnapshot(
+      srdPreviewSnapshot(ref.name, bundled, false, ciClassForSrdResource(ref.resource), inspect),
+    );
     return;
   }
 
-  publishPreviewSnapshot(srdPreviewSnapshot(ref.name, "", true, ciClassForSrdResource(ref.resource)));
+  publishPreviewSnapshot(
+    srdPreviewSnapshot(ref.name, "", true, ciClassForSrdResource(ref.resource), inspect),
+  );
 
   void fetchDnd5eResource(ref.resource, ref.index)
     .then((data) => {
@@ -86,6 +98,8 @@ export function openSrdPreview(ref: SrdPreviewRef): void {
             apiData: data,
           }),
           false,
+          ciClassForSrdResource(ref.resource),
+          inspect,
         ),
       );
     })
@@ -95,6 +109,8 @@ export function openSrdPreview(ref: SrdPreviewRef): void {
           ref.name,
           `# ${ref.name}\n\nCould not load this SRD entry: ${err instanceof Error ? err.message : "Unknown error"}.`,
           false,
+          ciClassForSrdResource(ref.resource),
+          inspect,
         ),
       );
     });
@@ -115,18 +131,27 @@ export function openSrdEntityPreview(entityId: SrdEntityId): void {
   const entity = getSrdEntity(entityId);
   if (!entity) return;
 
+  const inspect = inspectMetaFromSelection(
+    { kind: "srd-entity", entityId, name: entity.name },
+    { label: entity.name, ciClass: ciClassForSrdEntity(entity.kind) },
+  );
+  if (inspect) inspectEntity(inspect);
   openOrFocusPreviewWindow();
 
   const bundled = srdEntityToPreviewMarkdown(entity);
   if (bundled?.trim()) {
-    publishPreviewSnapshot(srdPreviewSnapshot(entity.name, bundled, false, ciClassForSrdEntity(entity.kind)));
+    publishPreviewSnapshot(
+      srdPreviewSnapshot(entity.name, bundled, false, ciClassForSrdEntity(entity.kind), inspect),
+    );
     return;
   }
 
   const resource = KIND_TO_API_RESOURCE[entity.kind];
   if (!resource) return;
 
-  publishPreviewSnapshot(srdPreviewSnapshot(entity.name, "", true, ciClassForSrdEntity(entity.kind)));
+  publishPreviewSnapshot(
+    srdPreviewSnapshot(entity.name, "", true, ciClassForSrdEntity(entity.kind), inspect),
+  );
 
   void fetchDnd5eResource(resource, entity.key)
     .then((data) => {
@@ -140,6 +165,8 @@ export function openSrdEntityPreview(entityId: SrdEntityId): void {
             apiData: data,
           }),
           false,
+          ciClassForSrdEntity(entity.kind),
+          inspect,
         ),
       );
     })
@@ -149,6 +176,8 @@ export function openSrdEntityPreview(entityId: SrdEntityId): void {
           entity.name,
           `# ${entity.name}\n\nCould not load this SRD entry: ${err instanceof Error ? err.message : "Unknown error"}.`,
           false,
+          ciClassForSrdEntity(entity.kind),
+          inspect,
         ),
       );
     });

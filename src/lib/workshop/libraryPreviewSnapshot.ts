@@ -24,6 +24,7 @@ import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
 import type { WorkshopPreviewSnapshot } from "@/lib/workshop/previewSnapshot";
 import { resolvePreviewCiClass } from "@/lib/workshop/previewCiClass";
 import { planPreviewCommit } from "@/lib/workshop/previewCommit";
+import { inspectMetaFromSelection } from "@/lib/workshop/inspectedEntity";
 
 export type BuildLibraryPreviewSnapshotParams = {
   selection: LibraryViewSelection;
@@ -276,5 +277,22 @@ export function buildLibraryPreviewSnapshot(
     showPrimaryCommit: commitPlan.show,
     primaryCommitLabel: commitPlan.label || "Save to Library",
     updatedAt: new Date().toISOString(),
+    inspect: inspectMetaFromSelection(selection, {
+      label: viewingLabel ?? "Untitled",
+      ciClass: resolvePreviewCiClass({
+        selection,
+        viewingSeed,
+        viewingResult,
+        viewingCharacter,
+        viewingItem,
+        viewingCampaign,
+        viewingNpc,
+        viewingLocation,
+        viewingSession,
+        viewingParty,
+        viewingCustomSrd,
+        isSrdPreview: isSrd,
+      }),
+    }),
   };
 }

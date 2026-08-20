@@ -1,4 +1,4 @@
-export type CommandPaletteCategory = "workspaces" | "quick-creation";
+export type CommandPaletteCategory = "workspaces" | "quick-creation" | "creation-files" | "srd";
 
 export type CommandPaletteItem = {
   id: string;
@@ -12,6 +12,8 @@ export type CommandPaletteItem = {
 
 export const COMMAND_PALETTE_CATEGORY_LABEL: Record<CommandPaletteCategory, string> = {
   workspaces: "Workspaces",
+  "creation-files": "Creation Files",
+  srd: "Included rules (SRD)",
   "quick-creation": "Quick creation",
 };
 
@@ -39,7 +41,12 @@ export function filterCommandPaletteItems(
 export function groupCommandPaletteItems(
   items: CommandPaletteItem[],
 ): Array<{ category: CommandPaletteCategory; items: CommandPaletteItem[] }> {
-  const order: CommandPaletteCategory[] = ["workspaces", "quick-creation"];
+  const order: CommandPaletteCategory[] = [
+    "creation-files",
+    "srd",
+    "workspaces",
+    "quick-creation",
+  ];
   return order
     .map((category) => ({
       category,

@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useVaultDrawer } from "@/contexts/VaultDrawerContext";
 import { buildCommandPaletteItems } from "@/lib/commandPalette/buildCommandPaletteItems";
+import { searchCommandCenterCatalog } from "@/lib/commandPalette/searchCommandCenterCatalog";
 import {
   COMMAND_PALETTE_CATEGORY_LABEL,
   filterCommandPaletteItems,
@@ -30,6 +31,7 @@ export default function DmmsCommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [catalogItems, setCatalogItems] = useState<CommandPaletteItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -42,10 +44,10 @@ export default function DmmsCommandPalette() {
     [router, setVaultOpen],
   );
 
-  const filteredItems = useMemo(
-    () => filterCommandPaletteItems(allItems, query),
-    [allItems, query],
-  );
+  const filteredItems = useMemo(() => {
+    const commands = filterCommandPaletteItems(allItems, query);
+    return [...catalogItems, ...commands];
+  }, [allItems, query, catalogItems]);
 
   const groupedItems = useMemo(() => groupCommandPaletteItems(filteredItems), [filteredItems]);
 
@@ -87,7 +89,25 @@ export default function DmmsCommandPalette() {
 
   useEffect(() => {
     setActiveIndex(0);
-  }, [query]);
+  }, [query, catalogItems]);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (!open || q.length < 2) {
+      setCatalogItems([]);
+      return;
+    }
+    let cancelled = false;
+    const handle = window.setTimeout(() => {
+      void searchCommandCenterCatalog(q, router).then((items) => {
+        if (!cancelled) setCatalogItems(items);
+      });
+    }, 120);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [open, query, router]);
 
   useEffect(() => {
     if (!open) return;
@@ -183,7 +203,7 @@ export default function DmmsCommandPalette() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={onInputKeyDown}
-            placeholder="Jump anywhere or start something new…"
+            placeholder="Search Creation Files and included rules…"
             className="dmms-command-palette-input"
             autoComplete="off"
             autoCorrect="off"

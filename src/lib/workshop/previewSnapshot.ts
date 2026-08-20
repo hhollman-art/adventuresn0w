@@ -1,5 +1,6 @@
 import type { CiClass } from "@/lib/ciRegistry";
 import type { LibraryImage } from "@/lib/generationLibrary";
+import type { InspectMeta } from "@/lib/workshop/inspectedEntity";
 
 export const PREVIEW_SYNC_CHANNEL = "ddeasy-preview-sync";
 export const PREVIEW_STORAGE_KEY = "ddeasy-preview-snapshot";
@@ -38,6 +39,8 @@ export type WorkshopPreviewSnapshot = {
   showPrimaryCommit: boolean;
   primaryCommitLabel: string;
   updatedAt: string;
+  /** Identity of the CF / SRD row currently shown in the Scrying inspector. */
+  inspect?: InspectMeta | null;
 };
 
 export type PreviewAction =

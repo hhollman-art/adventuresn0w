@@ -130,6 +130,48 @@ export function libraryViewSelectionKey(selection: LibraryViewSelection): string
   }
 }
 
+export function libraryViewSelectionFromEntry(
+  entry: LibraryListEntry,
+): NonNullable<LibraryViewSelection> {
+  if (entry.ciClass === "rules.custom-entry") return { kind: "custom-srd", id: entry.id };
+  if (entry.srdBundleId) {
+    return { kind: "srd-bundle", bundleId: entry.srdBundleId, name: entry.title };
+  }
+  if (entry.srdEntityId) {
+    return { kind: "srd-entity", entityId: entry.srdEntityId, name: entry.title };
+  }
+  if (entry.srdItemRef) {
+    return {
+      kind: "srd",
+      resource: entry.srdItemRef.resource,
+      index: entry.srdItemRef.index,
+      name: entry.title,
+    };
+  }
+  switch (entry.category) {
+    case "seeds":
+      return { kind: "seed", id: entry.id };
+    case "results":
+      return { kind: "result", id: entry.id };
+    case "characters":
+      return { kind: "character", id: entry.id };
+    case "items":
+      return { kind: "item", id: entry.id };
+    case "parties":
+      return { kind: "party", id: entry.id };
+    case "campaigns":
+      return { kind: "campaign", id: entry.id };
+    case "sessions":
+      return { kind: "session", id: entry.id };
+    case "world":
+      return entry.ciClass === "location.record"
+        ? { kind: "location", id: entry.id }
+        : { kind: "npc", id: entry.id };
+    default:
+      return { kind: "result", id: entry.id };
+  }
+}
+
 function shelfEntriesForCategory(
   all: LibraryListEntry[],
   tab: WorkshopLibraryCategory,

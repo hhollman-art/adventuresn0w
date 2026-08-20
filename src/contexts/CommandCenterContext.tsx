@@ -11,6 +11,13 @@ import {
   type ReactNode,
 } from "react";
 import type { WorkshopPreviewSnapshot } from "@/lib/workshop/previewSnapshot";
+import {
+  INSPECT_ENTITY_EVENT,
+  isInspectMeta,
+  type InspectMeta,
+} from "@/lib/workshop/inspectedEntity";
+
+export type InspectorTabId = "details" | "edit" | "related";
 
 const INSPECTOR_OPEN_KEY = "ddeasy-command-inspector-open";
 
@@ -24,6 +31,7 @@ export type CommandCenterLibraryInspector = {
   onSavePartyVtt?: (selectedIndices: number[]) => void;
   onLoadPartyVtt?: () => void;
   onSaveToLibrary?: () => void;
+  onSaveInspectedMarkdown?: (markdown: string) => void | Promise<void>;
 };
 
 type InspectorCallbacks = Omit<CommandCenterLibraryInspector, "snapshot" | "hasSelection">;
@@ -37,10 +45,15 @@ type CommandCenterActions = {
   setInspectorOpen: (open: boolean) => void;
   toggleInspector: () => void;
   setLibraryInspector: (next: CommandCenterLibraryInspector | null) => void;
+  openCreateInspector: () => void;
+  closeCreateInspector: () => void;
+  setInspectorTab: (tab: InspectorTabId) => void;
+  applyInspectedEntity: (meta: InspectMeta) => void;
 };
 
 type CommandCenterLayout = {
   inspectorOpen: boolean;
+  inspectorView: "scry" | "create";
 };
 
 type CommandCenterContextValue = CommandCenterActions &
@@ -51,9 +64,16 @@ type CommandCenterContextValue = CommandCenterActions &
 const CommandCenterActionsContext = createContext<CommandCenterActions | null>(null);
 const CommandCenterLayoutContext = createContext<CommandCenterLayout | null>(null);
 const CommandCenterInspectorContext = createContext<CommandCenterLibraryInspector | null>(null);
+const InspectorFocusContext = createContext<{
+  inspectedEntity: InspectMeta | null;
+  inspectorTab: InspectorTabId;
+} | null>(null);
 
 export function CommandCenterProvider({ children }: { children: ReactNode }) {
   const [inspectorOpen, setInspectorOpenState] = useState(true);
+  const [inspectorView, setInspectorView] = useState<"scry" | "create">("scry");
+  const [inspectorTab, setInspectorTabState] = useState<InspectorTabId>("details");
+  const [inspectedEntity, setInspectedEntity] = useState<InspectMeta | null>(null);
   const [payload, setPayload] = useState<InspectorPayload | null>(null);
   const callbacksRef = useRef<InspectorCallbacks | null>(null);
 
@@ -91,6 +111,22 @@ export function CommandCenterProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const applyInspectedEntity = useCallback(
+    (meta: InspectMeta) => {
+      setInspectedEntity((prev) => {
+        if (prev?.key !== meta.key) setInspectorTabState("details");
+        return prev?.key === meta.key ? prev : meta;
+      });
+      setInspectorView("scry");
+      setInspectorOpen(true);
+    },
+    [setInspectorOpen],
+  );
+
+  const setInspectorTab = useCallback((tab: InspectorTabId) => {
+    setInspectorTabState(tab);
+  }, []);
+
   const setLibraryInspector = useCallback((next: CommandCenterLibraryInspector | null) => {
     if (!next) {
       callbacksRef.current = null;
@@ -99,12 +135,34 @@ export function CommandCenterProvider({ children }: { children: ReactNode }) {
     }
     const { snapshot, hasSelection, ...callbacks } = next;
     callbacksRef.current = callbacks;
+    if (snapshot?.inspect) {
+      const nextInspect = snapshot.inspect;
+      setInspectedEntity((prev) => (prev?.key === nextInspect.key ? prev : nextInspect));
+    }
     setPayload((prev) => {
       if (prev && prev.snapshot === snapshot && prev.hasSelection === hasSelection) {
         return prev;
       }
       return { snapshot, hasSelection };
     });
+  }, []);
+
+  useEffect(() => {
+    const onInspect = (event: Event) => {
+      const detail = (event as CustomEvent<InspectMeta>).detail;
+      if (isInspectMeta(detail)) applyInspectedEntity(detail);
+    };
+    window.addEventListener(INSPECT_ENTITY_EVENT, onInspect);
+    return () => window.removeEventListener(INSPECT_ENTITY_EVENT, onInspect);
+  }, [applyInspectedEntity]);
+
+  const openCreateInspector = useCallback(() => {
+    setInspectorView("create");
+    setInspectorOpen(true);
+  }, [setInspectorOpen]);
+
+  const closeCreateInspector = useCallback(() => {
+    setInspectorView("scry");
   }, []);
 
   const stableCallbacks = useMemo<InspectorCallbacks>(
@@ -117,6 +175,8 @@ export function CommandCenterProvider({ children }: { children: ReactNode }) {
         callbacksRef.current?.onSavePartyVtt?.(selectedIndices),
       onLoadPartyVtt: () => callbacksRef.current?.onLoadPartyVtt?.(),
       onSaveToLibrary: () => callbacksRef.current?.onSaveToLibrary?.(),
+      onSaveInspectedMarkdown: (markdown) =>
+        callbacksRef.current?.onSaveInspectedMarkdown?.(markdown),
     }),
     [],
   );
@@ -135,17 +195,39 @@ export function CommandCenterProvider({ children }: { children: ReactNode }) {
       setInspectorOpen,
       toggleInspector,
       setLibraryInspector,
+      openCreateInspector,
+      closeCreateInspector,
+      setInspectorTab,
+      applyInspectedEntity,
     }),
-    [setInspectorOpen, toggleInspector, setLibraryInspector],
+    [
+      setInspectorOpen,
+      toggleInspector,
+      setLibraryInspector,
+      openCreateInspector,
+      closeCreateInspector,
+      setInspectorTab,
+      applyInspectedEntity,
+    ],
   );
 
-  const layout = useMemo<CommandCenterLayout>(() => ({ inspectorOpen }), [inspectorOpen]);
+  const layout = useMemo<CommandCenterLayout>(
+    () => ({ inspectorOpen, inspectorView }),
+    [inspectorOpen, inspectorView],
+  );
+
+  const inspectorFocus = useMemo(
+    () => ({ inspectedEntity, inspectorTab }),
+    [inspectedEntity, inspectorTab],
+  );
 
   return (
     <CommandCenterActionsContext.Provider value={actions}>
       <CommandCenterLayoutContext.Provider value={layout}>
         <CommandCenterInspectorContext.Provider value={libraryInspector}>
-          {children}
+          <InspectorFocusContext.Provider value={inspectorFocus}>
+            {children}
+          </InspectorFocusContext.Provider>
         </CommandCenterInspectorContext.Provider>
       </CommandCenterLayoutContext.Provider>
     </CommandCenterActionsContext.Provider>
@@ -186,4 +268,13 @@ export function useCommandCenterOptional(): CommandCenterContextValue | null {
 
 export function useLibraryInspectorOptional(): CommandCenterLibraryInspector | null {
   return useContext(CommandCenterInspectorContext);
+}
+
+export function useInspectorFocus(): {
+  inspectedEntity: InspectMeta | null;
+  inspectorTab: InspectorTabId;
+} {
+  const focus = useContext(InspectorFocusContext);
+  if (!focus) return { inspectedEntity: null, inspectorTab: "details" };
+  return focus;
 }

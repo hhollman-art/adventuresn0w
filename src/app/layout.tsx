@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Cinzel } from "next/font/google";
-import SiteTitleBar from "@/features/shell/SiteTitleBar";
 import AppChrome from "@/features/shell/AppChrome";
 import Providers from "@/app/Providers";
 import { APP_THEME_ORDER, APP_THEMES, DEFAULT_APP_THEME, LEGACY_THEME_MAP } from "@/lib/themes";
@@ -52,7 +51,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="app-shell flex min-h-dvh flex-col antialiased">
         <Providers>
-          <SiteTitleBar />
           <AppChrome>
             <div className="app-content">{children}</div>
           </AppChrome>

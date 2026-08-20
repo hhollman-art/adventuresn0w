@@ -1,42 +1,29 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useCallback, useState } from "react";
+import { useEffect } from "react";
 import PowerWorkspaceProvider, {
   usePowerWorkspaceOptional,
 } from "@/features/workshop/PowerWorkspaceProvider";
-import PowerWorkspaceSwitcher from "@/features/workshop/PowerWorkspaceSwitcher";
-import CreateNewHubDialog from "@/features/workshop/CreateNewHubDialog";
 import FirstSaveVaultModal from "@/features/workshop/FirstSaveVaultModal";
 import DmmsCommandPalette from "@/features/commandPalette/DmmsCommandPalette";
-import CommandCenterShell from "@/features/shell/CommandCenterShell";
+import CommandCenterLayout from "@/features/shell/CommandCenterLayout";
 import AppToastHost from "@/features/ui/AppToastHost";
+import { useCommandCenterActionsOptional } from "@/contexts/CommandCenterContext";
 
-function PowerWorkspaceChrome({ children }: { children: ReactNode }) {
+function CommandCenterChrome({ children }: { children: ReactNode }) {
   const power = usePowerWorkspaceOptional();
-  const [localHubOpen, setLocalHubOpen] = useState(false);
-  const hubOpen = power?.state.createHubOpen ?? localHubOpen;
+  const actions = useCommandCenterActionsOptional();
 
-  const openHub = useCallback(() => {
-    if (power) power.openCreateHub(undefined, true);
-    else setLocalHubOpen(true);
-  }, [power]);
-
-  const closeHub = useCallback(() => {
-    if (power) power.closeCreateHub();
-    else setLocalHubOpen(false);
-  }, [power]);
+  useEffect(() => {
+    if (power?.state.createHubOpen) {
+      actions?.openCreateInspector();
+    }
+  }, [power?.state.createHubOpen, actions]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <PowerWorkspaceSwitcher onCreateNew={openHub} />
-      <CommandCenterShell>{children}</CommandCenterShell>
-      <CreateNewHubDialog
-        open={hubOpen}
-        initialKind={power?.state.createHubKind}
-        homebrewPreferred={power?.state.homebrewPreferred ?? true}
-        onClose={closeHub}
-      />
+      <CommandCenterLayout>{children}</CommandCenterLayout>
       <FirstSaveVaultModal />
       <DmmsCommandPalette />
       <AppToastHost />
@@ -47,7 +34,7 @@ function PowerWorkspaceChrome({ children }: { children: ReactNode }) {
 export default function AppChrome({ children }: { children: ReactNode }) {
   return (
     <PowerWorkspaceProvider>
-      <PowerWorkspaceChrome>{children}</PowerWorkspaceChrome>
+      <CommandCenterChrome>{children}</CommandCenterChrome>
     </PowerWorkspaceProvider>
   );
 }
