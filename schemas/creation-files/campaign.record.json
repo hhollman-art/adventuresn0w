@@ -38,6 +38,10 @@
       "type": "array",
       "items": { "$ref": "common.json#/$defs/uuidOrId" }
     },
+    "unassignedLootIds": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/uuidOrId" }
+    },
     "npcIds": {
       "type": "array",
       "items": { "$ref": "common.json#/$defs/uuidOrId" }
@@ -49,6 +53,11 @@
     "sessionRecordIds": {
       "type": "array",
       "items": { "$ref": "common.json#/$defs/uuidOrId" }
+    },
+    "monsterIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Library CF ids or bundled SRD monster entity ids"
     },
     "cfMetadata": { "$ref": "common.json#/$defs/cfMetadata" }
   },

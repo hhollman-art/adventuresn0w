@@ -15,6 +15,10 @@ export type LibraryItem = {
   textModel: string | null;
   imageModel: string | null;
   images: LibraryImage[];
+  /**
+   * Nested CF card ids for adventure results — cascade when linked to a campaign.
+   */
+  childIds?: string[];
 };
 
 /** Legacy localStorage key; used once to migrate into IndexedDB. */
@@ -68,6 +72,9 @@ export function fixLibraryItem(o: Record<string, unknown>): LibraryItem | null {
   const imageModel =
     o.imageModel === null || typeof o.imageModel === "string" ? o.imageModel : null;
   const images = o.images.filter(isLibraryImage);
+  const childIds = Array.isArray(o.childIds)
+    ? [...new Set(o.childIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0))]
+    : undefined;
   return {
     id: o.id,
     createdAt: o.createdAt,
@@ -77,6 +84,7 @@ export function fixLibraryItem(o: Record<string, unknown>): LibraryItem | null {
     textModel,
     imageModel,
     images,
+    ...(childIds && childIds.length > 0 ? { childIds } : {}),
   };
 }
 

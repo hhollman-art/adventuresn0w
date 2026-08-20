@@ -35,7 +35,10 @@ export type ContainerSlot =
   | "loot"
   | "members"
   | "vault"
-  | "general";
+  | "general"
+  /** Campaign builder zones (Homebrew Campaign Builder). */
+  | "locations"
+  | "encounters";
 
 /**
  * One nested CF relationship inside a ContainerCF.
@@ -162,6 +165,7 @@ export function campaignToContainerCF(input: {
   unassignedLootIds: string[];
   npcIds: string[];
   locationIds: string[];
+  monsterIds?: string[];
 }): ContainerCF {
   const now = input.updatedAt;
   const rels: CfRelationship[] = [];
@@ -206,10 +210,13 @@ export function campaignToContainerCF(input: {
     push(id, "item.equipment", "loot", "park", id);
   }
   for (const id of input.npcIds) {
-    push(id, "npc.record", "scene", "link", id);
+    push(id, "npc.record", "encounters", "link", id);
   }
   for (const id of input.locationIds) {
-    push(id, "location.record", "scene", "link", id);
+    push(id, "location.record", "locations", "link", id);
+  }
+  for (const id of input.monsterIds ?? []) {
+    push(id, "monster.srd-entry", "encounters", "link", id);
   }
 
   return {

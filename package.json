@@ -9,6 +9,9 @@
     "lint": "node node_modules/next/dist/bin/next lint",
     "test": "node node_modules/vitest/vitest.mjs run",
     "test:watch": "node node_modules/vitest/vitest.mjs",
+    "test:e2e": "node node_modules/@playwright/test/cli.js test",
+    "test:e2e:ui": "node node_modules/@playwright/test/cli.js test --ui",
+    "test:e2e:install": "node node_modules/@playwright/test/cli.js install chromium",
     "build:srd-spells": "node scripts/build-srd-spells.mjs",
     "build:srd-spell-index": "node scripts/build-srd-spell-index.mjs",
     "build:srd-document": "node scripts/build-srd-document.mjs",
@@ -31,6 +34,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.0",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.0.0",
     "@types/pdf-parse": "^1.1.4",

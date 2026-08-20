@@ -156,6 +156,11 @@ export type SavedRealmSeed = {
   /** Optional subcategory tags for library and workshop filtering. */
   tags?: string[];
   markdown: string;
+  /**
+   * Nested CF card ids (Universal Creation File children) — adventures may
+   * list NPCs, maps, encounters, and items that cascade when linked to a campaign.
+   */
+  childIds?: string[];
 };
 
 function isRealmSize(v: unknown): v is RealmSize {
@@ -190,6 +195,9 @@ function normalizeSavedSeed(x: unknown): SavedRealmSeed | null {
     kind,
     realmSizeResolved,
   );
+  const childIds = Array.isArray(o.childIds)
+    ? [...new Set(o.childIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0))]
+    : undefined;
   const base = {
     id: o.id,
     createdAt: o.createdAt,
@@ -199,6 +207,7 @@ function normalizeSavedSeed(x: unknown): SavedRealmSeed | null {
     briefDescription: o.briefDescription,
     ...(tags.length > 0 ? { tags } : {}),
     markdown: o.markdown,
+    ...(childIds && childIds.length > 0 ? { childIds } : {}),
   };
   if (kind === "realm") {
     return {

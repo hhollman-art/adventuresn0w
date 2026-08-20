@@ -122,6 +122,7 @@ function sampleBackup(): LibraryBackupFile {
         npcIds: [],
         locationIds: [],
         sessionRecordIds: [],
+        monsterIds: [],
       },
     ],
     relationshipGraphs: [

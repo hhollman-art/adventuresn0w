@@ -23,6 +23,7 @@ const campaign: SavedCampaign = {
   npcIds: [],
   locationIds: [],
   sessionRecordIds: [],
+  monsterIds: [],
 };
 
 describe("ciRelationshipGraph", () => {

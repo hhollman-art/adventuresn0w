@@ -18,6 +18,7 @@ const campaign: SavedCampaign = {
   npcIds: [],
   locationIds: [],
   sessionRecordIds: [],
+  monsterIds: [],
 };
 
 const data = {

@@ -13,6 +13,10 @@ import type { SeedKind } from "@/lib/realmSeeds";
  *
  * This is a typed catalogue, not a data store: rows still live in their
  * storage modules (scale-portability rule). The registry describes them.
+ *
+ * Universal CF Cards (`src/lib/creationFile/`) project a subset of these
+ * classes into a shared workspace card shape (`CFType`) for UI — they do
+ * not replace class-specific persistence.
  */
 
 /** Management grouping — how the Library organizes and backs up Creation Files (CFs). */

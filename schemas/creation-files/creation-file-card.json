@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/creation-file-card.json",
+  "title": "Universal Creation File (CF) Card",
+  "description": "Workspace card view model layered on CiClass. Not a replacement for class-specific persistence schemas.",
+  "type": "object",
+  "required": ["id", "type", "ciClass", "title", "tags", "data", "createdAt", "updatedAt"],
+  "properties": {
+    "id": { "$ref": "common.json#/$defs/uuidOrId" },
+    "type": {
+      "type": "string",
+      "enum": ["character", "monster", "item", "spell", "map", "encounter", "adventure"]
+    },
+    "ciClass": {
+      "type": "string",
+      "description": "Authoritative CMDB class (CiClass or planned encounter.record)"
+    },
+    "title": { "$ref": "common.json#/$defs/nonEmptyString" },
+    "subtitle": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "data": {
+      "type": "object",
+      "description": "Class-specific sheet / stat block / markdown payload",
+      "additionalProperties": true
+    },
+    "childIds": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/uuidOrId" },
+      "uniqueItems": true
+    },
+    "parentId": { "$ref": "common.json#/$defs/uuidOrId" },
+    "createdAt": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Epoch milliseconds"
+    },
+    "updatedAt": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Epoch milliseconds"
+    }
+  },
+  "additionalProperties": false
+}

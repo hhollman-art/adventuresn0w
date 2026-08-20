@@ -71,6 +71,14 @@ describe("creation-files schema manifest", () => {
     ) as { $defs: Record<string, unknown> };
     expect(common.$defs.cfMetadata).toBeTruthy();
     expect(common.$defs.cfRelationship).toBeTruthy();
+    expect(common.$defs.cfType).toBeTruthy();
+  });
+
+  it("ships the universal CF card schema", () => {
+    const path = join(SCHEMA_ROOT, "creation-file-card.json");
+    expect(existsSync(path)).toBe(true);
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+    expect(parsed.$id).toContain("creation-file-card");
   });
 
   it("ships relationship graph JSON schemas", () => {

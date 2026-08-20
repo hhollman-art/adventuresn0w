@@ -24,6 +24,13 @@ import {
   updateCharacterInLibrary,
 } from "@/lib/tabletop/characterLibrary";
 import { loadSavedGameItems, saveGameItem } from "@/lib/itemLibrary";
+import { loadRealmSeeds } from "@/lib/realmSeeds";
+import { loadGenerationLibraryItems } from "@/lib/generationLibrary";
+import { loadSavedCharacterRosters } from "@/lib/tabletop/characterRoster";
+import { loadSavedNpcs } from "@/lib/worldAssets/npc";
+import { loadSavedLocations } from "@/lib/worldAssets/location";
+import { attachAdventureToCampaign } from "@/lib/campaignBuilder/attach";
+import type { CampaignBuilderCatalog } from "@/lib/campaignBuilder/cascade";
 import {
   assignCampaignLootToCharacter,
   cloneLibraryItemToCampaignLoot,
@@ -45,6 +52,19 @@ import {
 export type ContainerMoveResult =
   | { ok: true; message: string; instanceId?: string }
   | { ok: false; error: string };
+
+async function loadCampaignBuilderCatalog(): Promise<CampaignBuilderCatalog> {
+  const [characters, items, seeds, results, parties, npcs, locations] = await Promise.all([
+    loadSavedCharacters(),
+    loadSavedGameItems(),
+    loadRealmSeeds(),
+    loadGenerationLibraryItems(),
+    loadSavedCharacterRosters(),
+    loadSavedNpcs(),
+    loadSavedLocations(),
+  ]);
+  return { characters, items, seeds, results, parties, npcs, locations };
+}
 
 function isUserItemClass(ciClass: CiClass): boolean {
   return ciClass === "item.equipment" || ciClass === "item.magic";
@@ -118,16 +138,86 @@ export async function dropIntoCampaignContainer(options: {
     return { ok: true, message: `${payload.title} linked to campaign party roster.` };
   }
 
+  if (slot === "members" && payload.ciClass === "party.roster") {
+    await linkToCampaign(campaignId, { partyId: payload.id });
+    scheduleLibrarySnapshot();
+    return { ok: true, message: `${payload.title} set as campaign party.` };
+  }
+
   if (slot === "adventure") {
-    if (payload.ciClass.startsWith("seed.")) {
+    const catalog = await loadCampaignBuilderCatalog();
+    if (payload.ciClass === "seed.adventure" || payload.ciClass.startsWith("seed.")) {
+      const seed = catalog.seeds.find((s) => s.id === payload.id);
+      if (seed && (seed.kind === "adventure" || payload.ciClass === "seed.adventure")) {
+        const result = await attachAdventureToCampaign({
+          campaignId,
+          adventure: seed,
+          kind: "seed",
+          catalog,
+        });
+        if (!result.ok) return { ok: false, error: result.error };
+        return { ok: true, message: result.message };
+      }
       await linkToCampaign(campaignId, { seedId: payload.id });
       scheduleLibrarySnapshot();
       return { ok: true, message: `${payload.title} linked as adventure CF.` };
     }
-    if (payload.ciClass.startsWith("result.")) {
+    if (payload.ciClass === "result.adventure" || payload.ciClass.startsWith("result.")) {
+      const item = catalog.results.find((r) => r.id === payload.id);
+      if (item && (item.kind === "adventure" || payload.ciClass === "result.adventure")) {
+        const result = await attachAdventureToCampaign({
+          campaignId,
+          adventure: item,
+          kind: "result",
+          catalog,
+        });
+        if (!result.ok) return { ok: false, error: result.error };
+        return { ok: true, message: result.message };
+      }
       await linkToCampaign(campaignId, { resultId: payload.id });
       scheduleLibrarySnapshot();
       return { ok: true, message: `${payload.title} linked as adventure result.` };
+    }
+  }
+
+  if (slot === "locations") {
+    if (payload.ciClass === "location.record") {
+      await linkToCampaign(campaignId, { locationId: payload.id });
+      scheduleLibrarySnapshot();
+      return { ok: true, message: `${payload.title} linked to Locations & Maps.` };
+    }
+    if (payload.ciClass === "seed.maps") {
+      await linkToCampaign(campaignId, { seedId: payload.id });
+      scheduleLibrarySnapshot();
+      return { ok: true, message: `${payload.title} linked as a map CF.` };
+    }
+    if (payload.ciClass === "result.maps") {
+      await linkToCampaign(campaignId, { resultId: payload.id });
+      scheduleLibrarySnapshot();
+      return { ok: true, message: `${payload.title} linked as a map result.` };
+    }
+  }
+
+  if (slot === "encounters") {
+    if (payload.ciClass === "npc.record") {
+      await linkToCampaign(campaignId, { npcId: payload.id });
+      scheduleLibrarySnapshot();
+      return { ok: true, message: `${payload.title} linked to Monsters & Encounters.` };
+    }
+    if (payload.ciClass === "monster.srd-entry" || payload.id.startsWith("monster:")) {
+      await linkToCampaign(campaignId, { monsterId: payload.id });
+      scheduleLibrarySnapshot();
+      return { ok: true, message: `${payload.title} linked as a monster encounter ref.` };
+    }
+    if (payload.ciClass.startsWith("seed.")) {
+      await linkToCampaign(campaignId, { seedId: payload.id });
+      scheduleLibrarySnapshot();
+      return { ok: true, message: `${payload.title} linked as encounter notes.` };
+    }
+    if (payload.ciClass.startsWith("result.")) {
+      await linkToCampaign(campaignId, { resultId: payload.id });
+      scheduleLibrarySnapshot();
+      return { ok: true, message: `${payload.title} linked to Monsters & Encounters.` };
     }
   }
 

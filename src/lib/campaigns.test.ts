@@ -44,6 +44,7 @@ describe("fixSavedCampaign", () => {
       npcIds: [],
       locationIds: [],
       sessionRecordIds: [],
+      monsterIds: [],
     });
     expect(fixed!.createdAt).toBeTruthy();
     expect(fixed!.updatedAt).toBe(fixed!.createdAt);

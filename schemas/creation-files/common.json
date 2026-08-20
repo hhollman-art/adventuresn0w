@@ -29,11 +29,18 @@
         "results",
         "characters",
         "items",
+        "world",
         "parties",
         "campaigns",
         "sessions",
-        "rules"
+        "rules",
+        "monsters"
       ]
+    },
+    "cfType": {
+      "type": "string",
+      "enum": ["character", "monster", "item", "spell", "map", "encounter", "adventure"],
+      "description": "Universal CF Card workspace type (see creation-file-card.json)"
     },
     "provenance": {
       "type": "string",

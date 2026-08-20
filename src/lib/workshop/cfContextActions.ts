@@ -8,6 +8,28 @@ import { dropIntoVaultParking } from "@/lib/workshop/containerMoveWritePath";
 import { emitAppToast } from "@/lib/ui/appToast";
 import type { LibraryListEntry, LibraryStorageCategory } from "@/lib/workshop/libraryCatalog";
 import type { VaultDragPayload } from "@/lib/vault/cfDragDrop";
+import { attachAdventureToCampaign } from "@/lib/campaignBuilder/attach";
+import type { CampaignBuilderCatalog } from "@/lib/campaignBuilder/cascade";
+import { loadSavedCharacters } from "@/lib/tabletop/characterLibrary";
+import { loadSavedGameItems } from "@/lib/itemLibrary";
+import { loadRealmSeeds } from "@/lib/realmSeeds";
+import { loadGenerationLibraryItems } from "@/lib/generationLibrary";
+import { loadSavedCharacterRosters } from "@/lib/tabletop/characterRoster";
+import { loadSavedNpcs } from "@/lib/worldAssets/npc";
+import { loadSavedLocations } from "@/lib/worldAssets/location";
+
+async function loadCatalog(): Promise<CampaignBuilderCatalog> {
+  const [characters, items, seeds, results, parties, npcs, locations] = await Promise.all([
+    loadSavedCharacters(),
+    loadSavedGameItems(),
+    loadRealmSeeds(),
+    loadGenerationLibraryItems(),
+    loadSavedCharacterRosters(),
+    loadSavedNpcs(),
+    loadSavedLocations(),
+  ]);
+  return { characters, items, seeds, results, parties, npcs, locations };
+}
 
 export type CfContextTarget = {
   id: string;
@@ -83,6 +105,29 @@ export async function sendCfToActiveCampaign(target: CfContextTarget): Promise<v
     emitAppToast("Open a chronicle first so this can join the active campaign.", "warn");
     return;
   }
+
+  if (target.ciClass === "seed.adventure" || target.ciClass === "result.adventure") {
+    const catalog = await loadCatalog();
+    const adventure =
+      target.ciClass === "seed.adventure"
+        ? catalog.seeds.find((s) => s.id === target.id)
+        : catalog.results.find((r) => r.id === target.id);
+    if (adventure) {
+      const result = await attachAdventureToCampaign({
+        campaignId: activeId,
+        adventure,
+        kind: target.ciClass === "seed.adventure" ? "seed" : "result",
+        catalog,
+      });
+      if (!result.ok) {
+        emitAppToast(result.error, "warn");
+        return;
+      }
+      emitAppToast(result.message, "success");
+      return;
+    }
+  }
+
   const link = campaignLinkForTarget(target);
   if (!link) {
     emitAppToast(

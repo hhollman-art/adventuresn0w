@@ -19,7 +19,7 @@ import {
   onCampaignRelationshipsChanged,
 } from "@/lib/campaignRelationships";
 import CampaignRelationshipGraphPanel from "@/features/campaigns/CampaignRelationshipGraphPanel";
-import CampaignContainerPanels from "@/features/campaigns/CampaignContainerPanels";
+import CampaignWorkspace from "@/features/campaigns/CampaignWorkspace";
 import { activateCampaign } from "@/lib/campaignSwitch";
 import { deleteCampaignTableSnapshot } from "@/lib/tabletop/store";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
@@ -47,6 +47,8 @@ import {
   loadSavedCharacters,
   type SavedCharacter,
 } from "@/lib/tabletop/characterLibrary";
+import { loadSavedNpcs, type SavedNpc } from "@/lib/worldAssets/npc";
+import { loadSavedLocations, type SavedLocation } from "@/lib/worldAssets/location";
 import { characterSummary } from "@/lib/tabletop/character";
 import { formatPartyUpdated } from "@/lib/tabletop/partyCampaign";
 import { workplace } from "@/lib/workplace";
@@ -87,13 +89,15 @@ export default function CampaignsPage() {
   const [items, setItems] = useState<SavedGameItem[]>([]);
   const [seeds, setSeeds] = useState<SavedRealmSeed[]>([]);
   const [results, setResults] = useState<LibraryItem[]>([]);
+  const [npcs, setNpcs] = useState<SavedNpc[]>([]);
+  const [locations, setLocations] = useState<SavedLocation[]>([]);
   const [graphs, setGraphs] = useState<CampaignRelationshipGraph[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [switching, setSwitching] = useState(false);
 
   const refresh = useCallback(async () => {
-    const [list, rosters, charList, itemList, seedList, resultList, graphList] =
+    const [list, rosters, charList, itemList, seedList, resultList, npcList, locationList, graphList] =
       await Promise.all([
       loadCampaigns(),
       loadSavedCharacterRosters(),
@@ -101,6 +105,8 @@ export default function CampaignsPage() {
       loadSavedGameItems(),
       loadRealmSeeds(),
       loadGenerationLibraryItems(),
+      loadSavedNpcs(),
+      loadSavedLocations(),
       loadCampaignRelationshipGraphs(),
     ]);
     setCampaigns(list);
@@ -109,6 +115,8 @@ export default function CampaignsPage() {
     setItems(itemList);
     setSeeds(seedList);
     setResults(resultList);
+    setNpcs(npcList);
+    setLocations(locationList);
     setGraphs(graphList);
     setActiveId(getActiveCampaignId());
   }, []);
@@ -221,10 +229,10 @@ export default function CampaignsPage() {
             {workplace("campaigns").label}
           </h1>
           <p className="mt-1 max-w-xl text-sm leading-relaxed text-[var(--text-soft)]">
-            One campaign per group you run. Each campaign is the structural root of a CF tree:
-            link adventures (CFs and results), party, characters, and items by id — never copies.
-            Campaigns also keep their own Virtual Table — open one and the table comes back
-            exactly as that group left it.
+            One campaign per group you run. Use the Homebrew Campaign Builder below as a modular
+            CF card canvas — drag from the Lore Vault into Parties, Adventures, Locations,
+            Encounters, or Loot. Adventure cards cascade their nested children automatically.
+            Links are by id (never copies); Detach removes the relation only.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -451,11 +459,15 @@ export default function CampaignsPage() {
                       </p>
                     </div>
 
-                    <CampaignContainerPanels
+                    <CampaignWorkspace
                       campaign={campaign}
                       characters={characters}
+                      parties={parties}
                       items={items}
                       seeds={seeds}
+                      results={results}
+                      npcs={npcs}
+                      locations={locations}
                       onChanged={() => void refresh()}
                       onStatus={setStatus}
                     />

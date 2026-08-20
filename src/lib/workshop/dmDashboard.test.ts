@@ -52,6 +52,7 @@ describe("dmDashboard", () => {
           npcIds: [],
           locationIds: [],
           sessionRecordIds: [],
+          monsterIds: [],
         },
       ],
       "c1",
