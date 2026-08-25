@@ -51,6 +51,11 @@ type VaultDrawerContextValue = {
   filteredEntries: VaultCardEntry[];
   dragging: VaultDragPayload | null;
   setDragging: (payload: VaultDragPayload | null) => void;
+  /** Sync read of the in-flight payload (survives dragend / MIME gaps on drop). */
+  peekDragging: () => VaultDragPayload | null;
+  /** Zone currently under the pointer during an HTML5 drag (visual hover). */
+  dropHoverZoneId: string | null;
+  setDropHoverZoneId: (zoneId: string | null) => void;
   registerDropZone: (registration: VaultDropRegistration) => void;
   unregisterDropZone: (zoneId: string) => void;
   dropZones: VaultDropRegistration[];
@@ -64,9 +69,19 @@ export function VaultDrawerProvider({ children }: { children: ReactNode }) {
   const [entries, setEntries] = useState<VaultCardEntry[]>([]);
   const [shelf, setShelf] = useState<VaultShelf>("all");
   const [query, setQuery] = useState("");
-  const [dragging, setDragging] = useState<VaultDragPayload | null>(null);
+  const [dragging, setDraggingState] = useState<VaultDragPayload | null>(null);
+  const draggingRef = useRef<VaultDragPayload | null>(null);
+  const [dropHoverZoneId, setDropHoverZoneId] = useState<string | null>(null);
   const dropZonesRef = useRef<Map<string, VaultDropRegistration>>(new Map());
   const [dropZones, setDropZones] = useState<VaultDropRegistration[]>([]);
+
+  const setDragging = useCallback((payload: VaultDragPayload | null) => {
+    draggingRef.current = payload;
+    setDraggingState(payload);
+    if (!payload) setDropHoverZoneId(null);
+  }, []);
+
+  const peekDragging = useCallback(() => draggingRef.current, []);
 
   useEffect(() => {
     try {
@@ -74,6 +89,20 @@ export function VaultDrawerProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
+  }, []);
+
+  /** Clear ephemeral drag UI when the OS drag ends anywhere (cross-panel safety).
+   * Microtask delay keeps peekDragging() available during the synchronous `drop` handler. */
+  useEffect(() => {
+    const clear = () => {
+      queueMicrotask(() => {
+        draggingRef.current = null;
+        setDraggingState(null);
+        setDropHoverZoneId(null);
+      });
+    };
+    window.addEventListener("dragend", clear);
+    return () => window.removeEventListener("dragend", clear);
   }, []);
 
   const setOpen = useCallback((next: boolean) => {
@@ -169,6 +198,9 @@ export function VaultDrawerProvider({ children }: { children: ReactNode }) {
       filteredEntries,
       dragging,
       setDragging,
+      peekDragging,
+      dropHoverZoneId,
+      setDropHoverZoneId,
       registerDropZone,
       unregisterDropZone,
       dropZones,
@@ -184,6 +216,9 @@ export function VaultDrawerProvider({ children }: { children: ReactNode }) {
       query,
       filteredEntries,
       dragging,
+      setDragging,
+      peekDragging,
+      dropHoverZoneId,
       registerDropZone,
       unregisterDropZone,
       dropZones,
@@ -198,6 +233,10 @@ export function useVaultDrawer(): VaultDrawerContextValue {
   const ctx = useContext(VaultDrawerContext);
   if (!ctx) throw new Error("useVaultDrawer must be used within VaultDrawerProvider");
   return ctx;
+}
+
+export function useVaultDrawerOptional(): VaultDrawerContextValue | null {
+  return useContext(VaultDrawerContext);
 }
 
 export function useVaultDropZone(registration: VaultDropRegistration | null): void {

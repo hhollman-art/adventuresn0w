@@ -1,5 +1,5 @@
 import type { PlayerCharacter } from "./types";
-import { fixPlayer, newId } from "./session";
+import { fixPlayer } from "./session";
 
 /**
  * Standalone character library — characters as first-class Configuration
@@ -26,6 +26,15 @@ export const CHARACTER_SOURCE_LABEL: Record<CharacterSource, string> = {
   import: "Imported file",
   party: "From a party",
 };
+
+/** Mint a stable Creation File id for a new hero sheet (`cf_char_…`). */
+export function mintCharacterCfId(): string {
+  const rand =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID().slice(0, 8)
+      : Math.random().toString(36).slice(2, 10);
+  return `cf_char_${Date.now()}_${rand}`;
+}
 
 export type SavedCharacter = {
   /** Matches `player.id` — the stable identity across parties and the VTT. */
@@ -229,7 +238,7 @@ export async function saveCharacterToLibrary(
     const incomingId =
       typeof input.player.id === "string" && input.player.id && !known.has(input.player.id)
         ? input.player.id
-        : newId();
+        : mintCharacterCfId();
     const player = fixPlayer({ ...input.player, id: incomingId, tokenId: null });
     if (!player) {
       throw new Error("This character needs at least a name.");

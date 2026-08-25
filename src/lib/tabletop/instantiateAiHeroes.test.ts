@@ -64,12 +64,17 @@ describe("structureAiHero", () => {
 });
 
 describe("previewAiHeroesFromMarkdown", () => {
-  it("lists heroes with stable indices for Scry Window checkboxes", () => {
+  it("lists heroes with stable indices and CreationFile cards", () => {
     const { heroes } = previewAiHeroesFromMarkdown(TWO_HERO_MD);
     expect(heroes).toHaveLength(2);
     expect(heroes[0]?.index).toBe(0);
     expect(heroes[0]?.name).toMatch(/Mira/i);
+    expect(heroes[0]?.card.type).toBe("character");
+    expect(heroes[0]?.card.ciClass).toBe("character.sheet");
+    expect(heroes[0]?.card.id).toMatch(/^cf_char_/);
+    expect(heroes[0]?.card.subtitle).toMatch(/Wizard Level/i);
     expect(heroes[1]?.index).toBe(1);
     expect(heroes[1]?.name).toMatch(/Torin/i);
+    expect(heroes[1]?.player.id).toMatch(/^cf_char_/);
   });
 });

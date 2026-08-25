@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @deprecated Not shown in the Campaign workplace UI.
+ * Kept so backup/import of relationship-graph JSON continues to work.
+ * Prefer the five-bucket CampaignWorkspace for DM-facing organization.
+ */
+
 import { useMemo, useState } from "react";
 import type { SavedCampaign } from "@/lib/campaigns";
 import {

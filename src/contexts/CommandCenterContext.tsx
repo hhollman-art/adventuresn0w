@@ -28,7 +28,10 @@ export type CommandCenterLibraryInspector = {
   onEdit?: () => void;
   onEditSeed?: () => void;
   onEditResult?: () => void;
-  onSavePartyVtt?: (selectedIndices: number[]) => void;
+  onSavePartyVtt?: (
+    selectedIndices: number[],
+    options?: { linkCampaign?: boolean },
+  ) => void;
   onLoadPartyVtt?: () => void;
   onSaveToLibrary?: () => void;
   onSaveInspectedMarkdown?: (markdown: string) => void | Promise<void>;
@@ -171,8 +174,8 @@ export function CommandCenterProvider({ children }: { children: ReactNode }) {
       onEdit: () => callbacksRef.current?.onEdit?.(),
       onEditSeed: () => callbacksRef.current?.onEditSeed?.(),
       onEditResult: () => callbacksRef.current?.onEditResult?.(),
-      onSavePartyVtt: (selectedIndices) =>
-        callbacksRef.current?.onSavePartyVtt?.(selectedIndices),
+      onSavePartyVtt: (selectedIndices, options) =>
+        callbacksRef.current?.onSavePartyVtt?.(selectedIndices, options),
       onLoadPartyVtt: () => callbacksRef.current?.onLoadPartyVtt?.(),
       onSaveToLibrary: () => callbacksRef.current?.onSaveToLibrary?.(),
       onSaveInspectedMarkdown: (markdown) =>

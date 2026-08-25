@@ -288,7 +288,7 @@ export default function SrdLibraryBrowser({
             ? [
                 {
                   id: "campaign",
-                  label: "Send to Active Campaign",
+                  label: "Add to Active Campaign",
                   onSelect: () =>
                     sendCfToActiveCampaign({
                       id: menuEntity.id,

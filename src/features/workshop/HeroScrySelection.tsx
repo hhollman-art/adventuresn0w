@@ -5,16 +5,21 @@ import {
   previewAiHeroesFromMarkdown,
   type ParsedHeroPreview,
 } from "@/lib/tabletop/instantiateAiHeroes";
+import { getActiveCampaignId } from "@/lib/campaigns";
+
+export type SaveHeroesOptions = {
+  linkCampaign: boolean;
+};
 
 type HeroScrySelectionProps = {
   markdown: string;
-  onAccept: (selectedIndices: number[]) => void;
+  onAccept: (selectedIndices: number[], options: SaveHeroesOptions) => void;
   busy?: boolean;
 };
 
 /**
- * Scry Window multi-select for AI-generated heroes.
- * Checkbox state stays local for snappy toggles; accept writes only checked CFs.
+ * Scry Window hero recruit — Save Heroes writes CF cards into characterLibrary
+ * and refreshes the Lore Vault immediately.
  */
 export default function HeroScrySelection({
   markdown,
@@ -23,6 +28,8 @@ export default function HeroScrySelection({
 }: HeroScrySelectionProps) {
   const heroes = useMemo(() => previewAiHeroesFromMarkdown(markdown).heroes, [markdown]);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const hasActiveCampaign = Boolean(getActiveCampaignId());
+  const [linkCampaign, setLinkCampaign] = useState(hasActiveCampaign);
 
   useEffect(() => {
     const next: Record<number, boolean> = {};
@@ -30,19 +37,15 @@ export default function HeroScrySelection({
     setChecked(next);
   }, [heroes]);
 
+  useEffect(() => {
+    setLinkCampaign(hasActiveCampaign);
+  }, [hasActiveCampaign]);
+
   const selectedCount = heroes.filter((h) => checked[h.index]).length;
 
   const toggle = (index: number) => {
     startTransition(() => {
       setChecked((prev) => ({ ...prev, [index]: !prev[index] }));
-    });
-  };
-
-  const selectAll = (value: boolean) => {
-    startTransition(() => {
-      const next: Record<number, boolean> = {};
-      for (const h of heroes) next[h.index] = value;
-      setChecked(next);
     });
   };
 
@@ -56,44 +59,57 @@ export default function HeroScrySelection({
 
   return (
     <div
-      className="no-print mt-3 rounded-lg border p-3"
-      style={{ borderColor: "var(--accent-dim)", background: "rgba(201,162,39,0.06)" }}
+      className="no-print sticky top-0 z-[5] mt-3 rounded-lg border p-3"
+      style={{ borderColor: "var(--accent-dim)", background: "rgba(11,14,20,0.96)" }}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-[var(--text)]">
-            Choose heroes to recruit
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wide text-[#F0F6FC]">
+            Save Heroes
           </p>
-          <p className="mt-0.5 text-[11px] text-[var(--text-soft)]">
-            Checked heroes become Character CFs in The Tavern and can link to campaigns.
+          <p className="mt-0.5 text-[11px] text-slate-400">
+            Saves checked heroes as Character Creation File cards in your Library and Lore Vault.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="rounded border px-2 py-1 text-[10px]"
-            style={{ borderColor: "var(--border)" }}
-            onClick={() => selectAll(true)}
-          >
-            Select all
-          </button>
-          <button
-            type="button"
-            className="rounded border px-2 py-1 text-[10px]"
-            style={{ borderColor: "var(--border)" }}
-            onClick={() => selectAll(false)}
-          >
-            Clear
-          </button>
-        </div>
+        <button
+          type="button"
+          disabled={busy || selectedCount === 0}
+          onClick={() =>
+            onAccept(
+              heroes.filter((h) => checked[h.index]).map((h) => h.index),
+              { linkCampaign: hasActiveCampaign && linkCampaign },
+            )
+          }
+          className="shrink-0 rounded-md px-4 py-2.5 text-sm font-bold text-[#0B0E14] disabled:opacity-50"
+          style={{ background: "#E3B341" }}
+          data-testid="save-hero-to-library"
+        >
+          {busy
+            ? "Saving…"
+            : selectedCount === 1
+              ? "Save Heroes"
+              : `Save Heroes (${selectedCount})`}
+        </button>
       </div>
 
-      <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+      {hasActiveCampaign ? (
+        <label className="mt-2 flex cursor-pointer items-start gap-2 text-[11px] text-slate-300">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={linkCampaign}
+            onChange={(e) => setLinkCampaign(e.target.checked)}
+          />
+          <span>Attach saved heroes directly to Active Campaign</span>
+        </label>
+      ) : null}
+
+      <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto">
         {heroes.map((hero: ParsedHeroPreview) => (
           <li key={`${hero.index}:${hero.id}`}>
             <label
               className="flex cursor-pointer items-start gap-2 rounded border px-2 py-1.5 text-xs"
-              style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+              style={{ borderColor: "#30363D", background: "#161B22" }}
             >
               <input
                 type="checkbox"
@@ -102,30 +118,15 @@ export default function HeroScrySelection({
                 onChange={() => toggle(hero.index)}
               />
               <span className="min-w-0">
-                <span className="font-semibold text-[var(--text)]">{hero.name}</span>
-                <span className="block text-[10px] text-[var(--text-soft)]">{hero.summary}</span>
+                <span className="font-semibold text-[#F0F6FC]">{hero.card.title}</span>
+                <span className="block text-[10px] text-slate-400">
+                  {hero.card.subtitle}
+                </span>
               </span>
             </label>
           </li>
         ))}
       </ul>
-
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[10px] text-[var(--text-soft)]">
-          {selectedCount} of {heroes.length} selected
-        </span>
-        <button
-          type="button"
-          disabled={busy || selectedCount === 0}
-          onClick={() =>
-            onAccept(heroes.filter((h) => checked[h.index]).map((h) => h.index))
-          }
-          className="rounded-md px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
-          style={{ background: "var(--accent)" }}
-        >
-          {busy ? "Saving…" : `Accept ${selectedCount} hero${selectedCount === 1 ? "" : "es"}`}
-        </button>
-      </div>
     </div>
   );
 }

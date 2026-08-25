@@ -24,13 +24,10 @@ import {
   isStaticSrdDragId,
 } from "@/lib/srd/instantiateSrdEntity";
 import {
-  saveCharacterToLibrary,
-  updateCharacterInLibrary,
+  mintCharacterCfId,
   type SavedCharacter,
 } from "@/lib/tabletop/characterLibrary";
-import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
-import { autoLinkToActiveCampaign } from "@/lib/campaigns";
-import { gateFirstCustomCfSave } from "@/lib/workshop/firstSaveGate";
+import CharacterCreation from "@/features/characters/CharacterCreation";
 import {
   loadSavedGameItems,
   MAGIC_RARITY_LABEL,
@@ -75,7 +72,7 @@ type Draft = Omit<PlayerCharacter, "tokenId">;
 
 function emptyDraft(): Draft {
   return {
-    id: newId(),
+    id: mintCharacterCfId(),
     name: "",
     playerName: "",
     species: "",
@@ -181,9 +178,6 @@ export default function CharacterEditorDialog({
   const [draft, setDraft] = useState<Draft>(() =>
     character ? draftFrom(character) : emptyDraft(),
   );
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
   const [aiEnabled, setAiEnabled] = useState(false);
   const [aiFlavor, setAiFlavor] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
@@ -487,61 +481,16 @@ export default function CharacterEditorDialog({
   const removeItem = (id: string) =>
     setDraft((d) => ({ ...d, items: d.items.filter((i) => i.id !== id) }));
 
-  const onSave = async () => {
-    if (!draft.name.trim()) {
-      setError("Give this hero a name first.");
-      return;
-    }
-    const spellCheck = validateCharacterSpellLevels({
-      level: draft.level,
-      className: draft.className,
-      subclass: draft.subclass,
-      knownSpellIds: draft.knownSpellIds,
-      preparedSpellIds: draft.preparedSpellIds,
-    });
-    if (!spellCheck.ok) {
-      setError(
-        spellCheck.messages[0] ??
-          "One or more spells are not allowed for this hero’s level or class.",
-      );
-      setDraft((d) => ({
-        ...d,
-        knownSpellIds: spellCheck.allowedKnownIds,
-        preparedSpellIds: spellCheck.allowedPreparedIds,
-      }));
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    const cleaned: Draft = {
-      ...draft,
-      items: draft.items.filter((i) => i.name.trim() !== ""),
-    };
-    try {
-      if (!character) {
-        const allowed = await gateFirstCustomCfSave(cleaned.name.trim() || "new hero");
-        if (!allowed) {
-          setSaving(false);
-          setError("Save cancelled — configure Arcane Vault storage to continue.");
-          return;
-        }
-      }
-      const list = character
-        ? await updateCharacterInLibrary(character.id, cleaned)
-        : await saveCharacterToLibrary({ player: cleaned, source: "created" });
-      const saved = list.find((c) => c.id === cleaned.id) ?? list[0];
-      if (saved) void autoLinkToActiveCampaign({ characterId: saved.id });
-      scheduleLibrarySnapshot();
-      onSaved(
-        list,
-        character
-          ? `Saved changes to ${draft.name.trim()}.`
-          : `${draft.name.trim()} added to your heroes.`,
-      );
-    } catch {
-      setError("Could not save this hero. Please try again.");
-      setSaving(false);
-    }
+  const handleSaved = (result: {
+    character: SavedCharacter;
+    characters: SavedCharacter[];
+  }) => {
+    onSaved(
+      result.characters,
+      character
+        ? `Saved changes to ${result.character.player.name}.`
+        : `${result.character.player.name} added to your heroes — now in the Lore Vault.`,
+    );
   };
 
   return (
@@ -556,9 +505,17 @@ export default function CharacterEditorDialog({
       }}
     >
       <div
-        className="flex max-h-full w-full max-w-7xl flex-col overflow-y-auto rounded-xl border p-6 shadow-lg"
-        style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+        className="flex max-h-full w-full max-w-7xl flex-col overflow-hidden rounded-xl border p-6 shadow-lg"
+        style={{ borderColor: "var(--border)", background: "var(--panel)" }}
+        onMouseDown={(e) => e.stopPropagation()}
       >
+        <CharacterCreation
+          draft={draft}
+          existingId={character?.id ?? null}
+          onCancel={onClose}
+          onSaved={handleSaved}
+          className="min-h-0 flex-1"
+        >
         <h2
           id="character-editor-title"
           className="font-display text-lg font-bold text-[var(--text)]"
@@ -566,8 +523,9 @@ export default function CharacterEditorDialog({
           {character ? `Edit ${character.player.name}` : "Create a hero"}
         </h2>
         <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-          Heroes live in your library on this device. Add one to a fellowship any time — the
-          fellowship is what campaigns and the Virtual Table use.
+          Heroes live in your library on this device. Click{" "}
+          <strong className="text-[var(--text)]">Save Hero to Library</strong> once — the card
+          appears in the Lore Vault immediately.
         </p>
 
         <div
@@ -1001,16 +959,7 @@ export default function CharacterEditorDialog({
           </p>
         ) : null}
 
-        {error ? (
-          <p className="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">
-            {error}
-          </p>
-        ) : null}
-
-        <div className="mt-5 flex flex-wrap justify-end gap-2">
-          <button type="button" onClick={onClose} className="btn btn-sm">
-            Cancel
-          </button>
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
           <button
             type="button"
             onClick={() => setPrintOpen(true)}
@@ -1019,16 +968,8 @@ export default function CharacterEditorDialog({
           >
             Print sheet
           </button>
-          <button
-            type="button"
-            onClick={() => void onSave()}
-            disabled={saving}
-            className="btn btn-sm btn-accent"
-          >
-            {saving ? "Saving…" : character ? "Save changes" : "Create hero"}
-          </button>
         </div>
-
+        </CharacterCreation>
       </div>
     </div>
     {printOpen ? (

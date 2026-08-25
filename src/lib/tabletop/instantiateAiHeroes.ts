@@ -1,13 +1,13 @@
 /**
- * Turn AI-generated hero markdown into fully structured Character Container CFs
- * (SavedCharacter rows) — searchable in The Tavern, not flat text blocks.
+ * Turn AI-generated hero markdown into Character Creation File (CF) cards
+ * and persist them through characterLibrary — Vault-ready, sheet-renderable.
  */
 
 import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
 import {
-  saveCharacterToLibrary,
   type SavedCharacter,
 } from "@/lib/tabletop/characterLibrary";
+import { saveHeroToLibrary } from "@/lib/tabletop/saveHeroToLibrary";
 import { saveCharacterRoster } from "@/lib/tabletop/characterRoster";
 import { validateSpellReference } from "@/lib/srd/spellValidation";
 import { findSpellIndexEntry } from "@/lib/srd/spellIndex";
@@ -17,6 +17,10 @@ import { newId } from "@/lib/tabletop/session";
 import type { CharacterItem, PlayerCharacter } from "@/lib/tabletop/types";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
 import { autoLinkToActiveCampaign } from "@/lib/campaigns";
+import { emitAppToast } from "@/lib/ui/appToast";
+import { characterToCreationFile } from "@/lib/creationFile/adapters";
+import type { CreationFile } from "@/lib/creationFile/types";
+import { CHARACTERS_CHANGED_EVENT } from "@/lib/tabletop/characterLibrary";
 
 const SPELL_LINE =
   /(?:^|\n)\s*(?:[-*•]\s*)?(?:Spells?|Known spells?|Prepared spells?)\s*:\s*(.+)/gi;
@@ -32,7 +36,6 @@ function extractSpellNames(notes: string, markdownBlock: string): string[] {
       if (name) names.push(name);
     }
   }
-  // Also pick **Spell Name** style mentions near a Spells heading.
   const section = /##+\s*Spells?\b([\s\S]*?)(?=\n##+\s|\n###\s|$)/i.exec(hay);
   if (section?.[1]) {
     for (const line of section[1].split("\n")) {
@@ -98,13 +101,23 @@ function hydrateSpells(
   return { ...player, knownSpellIds, preparedSpellIds };
 }
 
-/** Structure one parsed AI hero into a complete PlayerCharacter CF payload. */
+/**
+ * Structure one parsed AI hero into a complete PlayerCharacter payload and
+ * mint a `cf_char_…` id so it matches the Universal CF Card identity scheme.
+ */
 export function structureAiHero(
   player: Omit<PlayerCharacter, "tokenId"> & { tokenId?: string | null },
   sourceMarkdown = "",
+  index = 0,
 ): PlayerCharacter {
+  const stableId =
+    typeof player.id === "string" && player.id.startsWith("cf_char_")
+      ? player.id
+      : `cf_char_${Date.now()}_${index}`;
+
   const base: PlayerCharacter = {
     ...player,
+    id: stableId,
     tokenId: player.tokenId ?? null,
     linkedModifiers: player.linkedModifiers ?? [],
     preparedSpellIds: player.preparedSpellIds ?? [],
@@ -130,9 +143,41 @@ export function structureAiHero(
   };
 }
 
+/** Project a structured hero sheet into a Universal CreationFile card (pre-persist). */
+export function generatedHeroToCreationFile(
+  player: PlayerCharacter,
+  options?: { tags?: string[] },
+): CreationFile {
+  const classLabel = player.className.trim() || "Adventurer";
+  const species = player.species.trim() || "Human";
+  const now = Date.now();
+  return {
+    id: player.id,
+    type: "character",
+    ciClass: "character.sheet",
+    title: player.name,
+    subtitle: `${classLabel} Level ${player.level || 1} · ${species}`,
+    tags: Array.from(
+      new Set(
+        [
+          "Hero",
+          classLabel || "Hero",
+          "Generated",
+          ...(options?.tags ?? []),
+        ].filter(Boolean),
+      ),
+    ),
+    data: player as unknown as Record<string, unknown>,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export type InstantiateAiHeroesResult = {
   ok: true;
   characters: SavedCharacter[];
+  /** Universal CF cards corresponding to the saved heroes. */
+  cards: CreationFile[];
   rosterName: string;
   rosterId: string | null;
   message: string;
@@ -144,6 +189,10 @@ export type ParsedHeroPreview = {
   id: string;
   name: string;
   summary: string;
+  /** Universal CF card projection for Vault / sheet rendering. */
+  card: CreationFile;
+  /** Sheet payload aligned with CharacterSheetLayout. */
+  player: PlayerCharacter;
 };
 
 /** Preview heroes from AI markdown without writing storage (for Scry Window selection). */
@@ -155,26 +204,30 @@ export function previewAiHeroesFromMarkdown(markdown: string): {
   return {
     rosterName: parsed.rosterName,
     heroes: parsed.players.map((p, index) => {
-      const structured = structureAiHero(p, markdown);
+      const structured = structureAiHero(p, markdown, index);
+      const card = generatedHeroToCreationFile(structured);
       return {
         index,
         id: structured.id,
         name: structured.name,
-        summary: [
-          `Lv ${structured.level}`,
-          structured.species,
-          structured.className,
-        ]
-          .filter(Boolean)
-          .join(" "),
+        summary: card.subtitle ?? "",
+        card,
+        player: structured,
       };
     }),
   };
 }
 
+function notifyVaultRefresh(): void {
+  if (typeof window === "undefined") return;
+  // CHARACTERS_CHANGED is already fired by characterLibrary.persist; re-dispatch
+  // ensures late Vault listeners catch bulk saves in the same tick.
+  window.dispatchEvent(new Event(CHARACTERS_CHANGED_EVENT));
+}
+
 /**
- * Parse AI markdown, save selected heroes as Character CFs in The Tavern library,
- * and optionally save the fellowship roster (selected heroes only).
+ * Parse AI markdown, wrap each hero as a CreationFile, persist via characterLibrary,
+ * refresh the Lore Vault, and optionally link to the active campaign.
  */
 export async function instantiateAiHeroesFromMarkdown(
   markdown: string,
@@ -183,10 +236,12 @@ export async function instantiateAiHeroesFromMarkdown(
     source?: "workshop" | "created";
     /** When set, only these parsed indices are instantiated. */
     selectedIndices?: number[];
+    /** Attach saved heroes to the active campaign (default true). */
+    linkActiveCampaign?: boolean;
   },
 ): Promise<InstantiateAiHeroesResult | { ok: false; error: string }> {
-  const parsed = parseCharactersMarkdown(markdown);
-  if (parsed.players.length === 0) {
+  const preview = previewAiHeroesFromMarkdown(markdown);
+  if (preview.heroes.length === 0) {
     return {
       ok: false,
       error:
@@ -196,50 +251,73 @@ export async function instantiateAiHeroesFromMarkdown(
 
   const selected =
     opts?.selectedIndices && opts.selectedIndices.length > 0
-      ? opts.selectedIndices
-          .filter((i) => i >= 0 && i < parsed.players.length)
-          .map((i) => parsed.players[i]!)
-      : parsed.players;
+      ? preview.heroes.filter((h) => opts.selectedIndices!.includes(h.index))
+      : preview.heroes;
 
   if (selected.length === 0) {
     return {
       ok: false,
-      error: "Select at least one hero to save into The Tavern.",
+      error: "Select at least one hero to save into The Library.",
     };
   }
 
-  const structured = selected.map((p) => structureAiHero(p, markdown));
+  const linkCampaign = opts?.linkActiveCampaign !== false;
+  const savedCharacters: SavedCharacter[] = [];
+  const cards: CreationFile[] = [];
   let list: SavedCharacter[] = [];
-  for (const player of structured) {
-    list = await saveCharacterToLibrary({
-      player,
+
+  for (const hero of selected) {
+    const result = await saveHeroToLibrary({
+      player: hero.player,
       source: opts?.source === "created" ? "created" : "import",
+      linkActiveCampaign: linkCampaign,
+      quiet: true,
     });
-    const saved = list.find((c) => c.id === player.id) ?? list[0];
-    if (saved) void autoLinkToActiveCampaign({ characterId: saved.id });
+    if (!result.ok) {
+      return { ok: false, error: result.error };
+    }
+    savedCharacters.push(result.character);
+    const card = characterToCreationFile(result.character, {
+      subtitle: result.card.subtitle,
+    });
+    cards.push({
+      ...card,
+      tags: Array.from(new Set(["Hero", "Generated", ...card.tags])),
+    });
+    list = result.characters;
   }
 
   let rosterId: string | null = null;
   if (opts?.saveRoster !== false) {
     const rosters = await saveCharacterRoster({
-      name: parsed.rosterName,
+      name: preview.rosterName,
       markdown,
       source: "workshop",
-      players: structured,
+      players: savedCharacters.map((c) => c.player),
     });
     rosterId = rosters[0]?.id ?? null;
-    if (rosterId) void autoLinkToActiveCampaign({ partyId: rosterId });
+    if (rosterId && linkCampaign) {
+      void autoLinkToActiveCampaign({ partyId: rosterId });
+    }
   }
 
   scheduleLibrarySnapshot();
+  notifyVaultRefresh();
+
+  const count = savedCharacters.length;
+  const toast =
+    count === 1 ? "1 Hero saved to Library" : `${count} Heroes saved to Library`;
+  emitAppToast(
+    rosterId ? `${toast} · fellowship “${preview.rosterName}”` : toast,
+    "success",
+  );
 
   return {
     ok: true,
     characters: list,
-    rosterName: parsed.rosterName,
+    cards,
+    rosterName: preview.rosterName,
     rosterId,
-    message: `Instantiated ${structured.length} hero Character CF${structured.length === 1 ? "" : "s"} in The Tavern${
-      rosterId ? ` and fellowship “${parsed.rosterName}”` : ""
-    }.`,
+    message: toast,
   };
 }

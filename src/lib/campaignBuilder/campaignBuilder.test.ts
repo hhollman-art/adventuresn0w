@@ -31,6 +31,15 @@ describe("campaign builder zones", () => {
       "loot",
     ]);
   });
+
+  it("resolves ciClass to the matching builder zone", async () => {
+    const { resolveCampaignBuilderZoneForCiClass } = await import("@/lib/campaignBuilder/zones");
+    expect(resolveCampaignBuilderZoneForCiClass("character.sheet")?.id).toBe("parties");
+    expect(resolveCampaignBuilderZoneForCiClass("seed.adventure")?.id).toBe("adventures");
+    expect(resolveCampaignBuilderZoneForCiClass("location.record")?.id).toBe("locations");
+    expect(resolveCampaignBuilderZoneForCiClass("npc.record")?.id).toBe("encounters");
+    expect(resolveCampaignBuilderZoneForCiClass("item.magic")?.id).toBe("loot");
+  });
 });
 
 describe("adventure cascade", () => {

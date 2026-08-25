@@ -13,7 +13,10 @@ export type ScryingContentPanelProps = {
   onEdit?: () => void;
   onEditSeed?: () => void;
   onEditResult?: () => void;
-  onSavePartyVtt?: (selectedIndices: number[]) => void;
+  onSavePartyVtt?: (
+    selectedIndices: number[],
+    options?: { linkCampaign?: boolean },
+  ) => void;
   onLoadPartyVtt?: () => void;
   onSaveToLibrary?: () => void;
 };

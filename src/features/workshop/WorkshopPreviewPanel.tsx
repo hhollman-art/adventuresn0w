@@ -24,7 +24,11 @@ import {
   postPreviewAction,
   type WorkshopPreviewSnapshot,
 } from "@/lib/workshop/previewSnapshot";
-import { parseCharactersMarkdown } from "@/lib/tabletop/parseCharactersMarkdown";
+import {
+  instantiateAiHeroesFromMarkdown,
+  previewAiHeroesFromMarkdown,
+} from "@/lib/tabletop/instantiateAiHeroes";
+import { useVaultDrawerOptional } from "@/contexts/VaultDrawerContext";
 
 type WorkshopPreviewPanelProps = {
   snapshot: WorkshopPreviewSnapshot;
@@ -33,7 +37,10 @@ type WorkshopPreviewPanelProps = {
   onEdit?: () => void;
   onEditSeed?: () => void;
   onEditResult?: () => void;
-  onSavePartyVtt?: (selectedIndices: number[]) => void;
+  onSavePartyVtt?: (
+    selectedIndices: number[],
+    options?: { linkCampaign?: boolean },
+  ) => void;
   onLoadPartyVtt?: () => void;
   onSaveToLibrary?: () => void;
 };
@@ -113,7 +120,7 @@ export default function WorkshopPreviewPanel({
   onEdit,
   onEditSeed,
   onEditResult,
-  onSavePartyVtt,
+  onSavePartyVtt: _onSavePartyVtt,
   onLoadPartyVtt,
   onSaveToLibrary,
 }: WorkshopPreviewPanelProps) {
@@ -143,6 +150,7 @@ export default function WorkshopPreviewPanel({
     primaryCommitLabel,
   } = snapshot;
 
+  const vault = useVaultDrawerOptional();
   const exportMode = (outputLayoutKind || workspace || "adventure") as PreviewExportMode;
   const exportBaseName = fileBaseName(previewMarkdown, exportMode);
   const hasContent = Boolean(previewMarkdown.trim() || previewImages.length > 0);
@@ -154,10 +162,7 @@ export default function WorkshopPreviewPanel({
     ) {
       return [];
     }
-    return parseCharactersMarkdown(previewMarkdown).players.map((player) => ({
-      ...player,
-      tokenId: null,
-    }));
+    return previewAiHeroesFromMarkdown(previewMarkdown).heroes.map((h) => h.player);
   }, [ciClass, previewMarkdown, workspace]);
   const [recruitBusy, setRecruitBusy] = useState(false);
   const [commitBusy, setCommitBusy] = useState(false);
@@ -184,13 +189,37 @@ export default function WorkshopPreviewPanel({
     else onEdit?.();
   }
 
-  function handleAcceptHeroes(selectedIndices: number[]) {
+  async function handleAcceptHeroes(
+    selectedIndices: number[],
+    options: { linkCampaign: boolean },
+  ) {
     setRecruitBusy(true);
-    if (popupMode) {
-      postPreviewAction("save-party-vtt", { selectedIndices });
-      return;
+    setExportNotice(null);
+    try {
+      if (popupMode) {
+        postPreviewAction("save-party-vtt", {
+          selectedIndices,
+          linkCampaign: options.linkCampaign,
+        });
+        return;
+      }
+
+      // Persist from the markdown currently shown in Scry (not a parent closure).
+      const result = await instantiateAiHeroesFromMarkdown(previewMarkdown, {
+        saveRoster: true,
+        source: "workshop",
+        selectedIndices,
+        linkActiveCampaign: options.linkCampaign,
+      });
+      if (!result.ok) {
+        setExportNotice(result.error);
+        return;
+      }
+      setExportNotice(result.message);
+      void vault?.refreshEntries();
+    } finally {
+      window.setTimeout(() => setRecruitBusy(false), 2500);
     }
-    onSavePartyVtt?.(selectedIndices);
   }
 
   function handleLoadParty() {

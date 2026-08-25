@@ -1,24 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ChangeEvent, DragEvent } from "react";
+import type { ChangeEvent } from "react";
 import Link from "next/link";
 import {
   characterSummary,
-  effectiveAc,
-  effectiveMaxHp,
-  formatMod,
-  proficiencyBonus,
 } from "@/lib/tabletop/character";
 import {
-  CHARACTER_SORT_LABEL,
-  CHARACTER_SOURCE_LABEL,
   deleteSavedCharacter,
   loadSavedCharacters,
   onCharactersChanged,
   saveCharacterToLibrary,
-  sortSavedCharacters,
-  type CharacterSortKey,
   type SavedCharacter,
 } from "@/lib/tabletop/characterLibrary";
 import {
@@ -45,14 +37,6 @@ import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
 import { workplace } from "@/lib/workplace";
 import { THE_TAVERN, CHARACTER_CF, PARTY_CF } from "@/lib/workplace/forgeLexicon";
 import { APP_ICONS } from "@/lib/ui/appIcons";
-import { SRD_CLASS_NAMES } from "@/lib/srd/classes";
-import { SRD_ANCESTRY_NAMES } from "@/lib/srd/ancestries";
-import {
-  setVaultDragData,
-  withContainerContext,
-  type VaultDragPayload,
-} from "@/lib/vault/cfDragDrop";
-import { useVaultDrawer } from "@/contexts/VaultDrawerContext";
 import WorkshopPageShell from "@/features/workshop/WorkshopPageShell";
 import AddPartyDialog from "@/features/workshop/AddPartyDialog";
 import CharacterEditorDialog from "./CharacterEditorDialog";
@@ -60,6 +44,7 @@ import CharacterSheetPrintView from "./CharacterSheetPrintView";
 import PartyBuilderDialog from "./PartyBuilderDialog";
 import VttExportPanel from "@/features/tabletop/VttExportPanel";
 import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
+import TavernWorkspace from "./TavernWorkspace";
 
 function downloadMarkdownFile(filename: string, contents: string) {
   const blob = new Blob([contents], { type: "text/markdown;charset=utf-8" });
@@ -78,13 +63,8 @@ export default function CharactersAndPartiesPage() {
   const [characters, setCharacters] = useState<SavedCharacter[]>([]);
   const [rosters, setRosters] = useState<SavedCharacterRoster[]>([]);
   const [status, setStatus] = useState<string | null>(null);
-  const { setDragging } = useVaultDrawer();
 
   /* Characters section state */
-  const [sortKey, setSortKey] = useState<CharacterSortKey>("updated");
-  const [query, setQuery] = useState("");
-  const [classFilter, setClassFilter] = useState("");
-  const [raceFilter, setRaceFilter] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingCharacter, setEditingCharacter] = useState<SavedCharacter | null>(null);
@@ -125,68 +105,10 @@ export default function CharactersAndPartiesPage() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [refresh]);
 
-  const visibleCharacters = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const classQ = classFilter.trim().toLowerCase();
-    const raceQ = raceFilter.trim().toLowerCase();
-    const filtered = characters.filter((c) => {
-      if (classQ && c.player.className.trim().toLowerCase() !== classQ) return false;
-      if (raceQ && c.player.species.trim().toLowerCase() !== raceQ) return false;
-      if (!q) return true;
-      return [c.player.name, c.player.playerName, c.player.className, c.player.species]
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
-    });
-    return sortSavedCharacters(filtered, sortKey);
-  }, [characters, query, sortKey, classFilter, raceFilter]);
-
-  const classOptions = useMemo(() => {
-    const fromHeroes = new Set(
-      characters.map((c) => c.player.className.trim()).filter(Boolean),
-    );
-    for (const name of SRD_CLASS_NAMES) fromHeroes.add(name);
-    return [...fromHeroes].sort((a, b) => a.localeCompare(b));
-  }, [characters]);
-
-  const raceOptions = useMemo(() => {
-    const fromHeroes = new Set(
-      characters.map((c) => c.player.species.trim()).filter(Boolean),
-    );
-    for (const name of SRD_ANCESTRY_NAMES) fromHeroes.add(name);
-    return [...fromHeroes].sort((a, b) => a.localeCompare(b));
-  }, [characters]);
-
-  const startHeroDrag = (event: DragEvent, c: SavedCharacter) => {
-    const payload: VaultDragPayload = withContainerContext(
-      {
-        vaultKind: "cf",
-        id: c.id,
-        ciClass: "character.sheet",
-        title: c.player.name,
-        detail: characterSummary(c.player),
-      },
-      {
-        parentId: "tavern",
-        parentCiClass: null,
-        slot: null,
-        holdKind: null,
-      },
-    );
-    setVaultDragData(event.dataTransfer, payload);
-    setDragging(payload);
-    event.dataTransfer.effectAllowed = "copyMove";
-  };
-
   const selectedCharacters = useMemo(
     () => characters.filter((c) => selectedIds.includes(c.id)),
     [characters, selectedIds],
   );
-
-  const toggleSelected = (id: string) =>
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
 
   /* ---- Character actions ---- */
 
@@ -436,70 +358,6 @@ export default function CharactersAndPartiesPage() {
         </p>
       ) : null}
 
-      {/* ---- Character list ---- */}
-
-      {characters.length > 0 ? (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name or player…"
-            className="min-w-0 flex-1 rounded-lg border px-3 py-1.5 text-sm text-[var(--text)]"
-            style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-            aria-label="Search heroes"
-          />
-          <label className="flex items-center gap-1.5 text-xs text-[var(--text-soft)]">
-            Class
-            <select
-              value={classFilter}
-              onChange={(e) => setClassFilter(e.target.value)}
-              className="rounded-lg border px-2 py-1.5 text-sm text-[var(--text)]"
-              style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-              aria-label="Filter by class"
-            >
-              <option value="">All classes</option>
-              {classOptions.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-1.5 text-xs text-[var(--text-soft)]">
-            Race
-            <select
-              value={raceFilter}
-              onChange={(e) => setRaceFilter(e.target.value)}
-              className="rounded-lg border px-2 py-1.5 text-sm text-[var(--text)]"
-              style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-              aria-label="Filter by race"
-            >
-              <option value="">All races</option>
-              {raceOptions.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-1.5 text-xs text-[var(--text-soft)]">
-            Sort
-            <select
-              value={sortKey}
-              onChange={(e) => setSortKey(e.target.value as CharacterSortKey)}
-              className="rounded-lg border px-2 py-1.5 text-sm text-[var(--text)]"
-              style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-            >
-              {(Object.keys(CHARACTER_SORT_LABEL) as CharacterSortKey[]).map((key) => (
-                <option key={key} value={key}>
-                  {CHARACTER_SORT_LABEL[key]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      ) : null}
-
       {selectedIds.length > 0 ? (
         <div
           className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm"
@@ -545,137 +403,69 @@ export default function CharactersAndPartiesPage() {
         </div>
       ) : null}
 
-      {characters.length === 0 ? (
-        <div className="workshop-campaign-card rounded-xl border p-8 text-center text-sm text-[var(--text-soft)]">
-          <p className="mb-2 text-[var(--text)]">No heroes yet.</p>
-          <p>
-            Click <strong className="text-[var(--text)]">New hero</strong> to build one
-            sheet by sheet, <strong className="text-[var(--text)]">Import character CF</strong> to
-            load a saved character CF, or open a fellowship below and copy its
-            members here.
-          </p>
-        </div>
-      ) : visibleCharacters.length === 0 ? (
-        <p
-          className="workshop-campaign-card rounded-xl border p-4 text-sm text-[var(--text-soft)]"
-          style={{ borderColor: "var(--border)" }}
-        >
-          No heroes match these filters.
-          {(classFilter || raceFilter || query.trim()) && (
+      <TavernWorkspace
+        selectedIds={selectedIds}
+        onSelectedIdsChange={setSelectedIds}
+        onOpenCharacter={(c) => {
+          setEditingCharacter(c);
+          setEditorOpen(true);
+        }}
+        emptyState={
+          <div className="workshop-campaign-card rounded-xl border p-8 text-center text-sm text-[var(--text-soft)]">
+            <p className="mb-2 text-[var(--text)]">No heroes yet.</p>
+            <p>
+              Click <strong className="text-[var(--text)]">New hero</strong> to build one
+              sheet by sheet, <strong className="text-[var(--text)]">Import character CF</strong> to
+              load a saved character CF, or save heroes from the Scrying Window after Generate Heroes.
+            </p>
+          </div>
+        }
+        renderActions={(c) => {
+          const p = c.player;
+          return (
             <>
-              {" "}
               <button
                 type="button"
-                className="underline text-[var(--accent)]"
                 onClick={() => {
-                  setQuery("");
-                  setClassFilter("");
-                  setRaceFilter("");
+                  setEditingCharacter(c);
+                  setEditorOpen(true);
                 }}
+                className="rounded-md border px-2.5 py-1 text-xs font-semibold text-[var(--text)]"
+                style={{ borderColor: "var(--border)" }}
               >
-                Clear filters
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => setPrintCharacter(c)}
+                className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]"
+                style={{ borderColor: "var(--border)" }}
+                title="Print a clean paper sheet for the table"
+              >
+                Print
+              </button>
+              <button
+                type="button"
+                onClick={() => downloadCharacterFile(c)}
+                className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]"
+                style={{ borderColor: "var(--border)" }}
+                title={`Save ${p.name} as a ${CHARACTER_CF}`}
+              >
+                Export character CF
+              </button>
+              <VttExportPanel compact player={p} />
+              <button
+                type="button"
+                onClick={() => void removeCharacter(c)}
+                className="rounded-md border px-2.5 py-1 text-xs text-red-800"
+                style={{ borderColor: "var(--border)" }}
+              >
+                Delete
               </button>
             </>
-          )}
-        </p>
-      ) : (
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {visibleCharacters.map((c) => {
-            const p = c.player;
-            const selected = selectedIds.includes(c.id);
-            return (
-              <li
-                key={c.id}
-                draggable
-                onDragStart={(e) => startHeroDrag(e, c)}
-                onDragEnd={() => setDragging(null)}
-                className="tavern-hero-card workshop-campaign-card rounded-xl border p-3 text-sm"
-                style={{
-                  borderColor: selected ? "var(--accent)" : "var(--border)",
-                }}
-                title="Drag into a campaign slot or the Lore Vault"
-              >
-                <div className="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    checked={selected}
-                    onChange={() => toggleSelected(c.id)}
-                    className="mt-1"
-                    aria-label={`Select ${p.name} for a party`}
-                    onMouseDown={(e) => e.stopPropagation()}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold text-[var(--text)]">
-                      {p.name}{" "}
-                      <span className="text-[10px] font-normal text-[var(--text-soft)]">
-                        ⠿ drag
-                      </span>
-                    </p>
-                    {p.playerName ? (
-                      <p className="text-[11px] text-[var(--text-soft)]">{p.playerName}</p>
-                    ) : null}
-                    <p className="text-xs text-[var(--text-soft)]">{characterSummary(p)}</p>
-                    <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--text)]">
-                      <span>
-                        AC <b>{effectiveAc(p)}</b>
-                      </span>
-                      <span>
-                        HP <b>{effectiveMaxHp(p)}</b>
-                      </span>
-                      <span>
-                        Prof <b>{formatMod(proficiencyBonus(p.level))}</b>
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-[10px] text-[var(--text-soft)]">
-                      {CHARACTER_SOURCE_LABEL[c.source]} · Updated {formatPartyUpdated(c.updatedAt)}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingCharacter(c);
-                      setEditorOpen(true);
-                    }}
-                    className="rounded-md border px-2.5 py-1 text-xs font-semibold text-[var(--text)]"
-                    style={{ borderColor: "var(--border)" }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPrintCharacter(c)}
-                    className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]"
-                    style={{ borderColor: "var(--border)" }}
-                    title="Print a clean paper sheet for the table"
-                  >
-                    Print
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => downloadCharacterFile(c)}
-                    className="rounded-md border px-2.5 py-1 text-xs text-[var(--text)]"
-                    style={{ borderColor: "var(--border)" }}
-                    title={`Save ${p.name} as a ${CHARACTER_CF}`}
-                  >
-                    Export character CF
-                  </button>
-                  <VttExportPanel compact player={p} />
-                  <button
-                    type="button"
-                    onClick={() => void removeCharacter(c)}
-                    className="rounded-md border px-2.5 py-1 text-xs text-red-800"
-                    style={{ borderColor: "var(--border)" }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+          );
+        }}
+      />
 
       {printCharacter ? (
         <CharacterSheetPrintView

@@ -23,7 +23,8 @@ export type VaultDragPayload = {
 export function setVaultDragData(dataTransfer: DataTransfer, payload: VaultDragPayload): void {
   dataTransfer.setData(VAULT_CF_DRAG_MIME, JSON.stringify(payload));
   dataTransfer.setData("text/plain", payload.title);
-  dataTransfer.effectAllowed = "copyMove";
+  // Include "link" so ContainerDropZone can set dropEffect = "link" across panels.
+  dataTransfer.effectAllowed = "all";
 }
 
 export function withContainerContext(
@@ -106,8 +107,6 @@ export function vaultPayloadIsStaticSrd(payload: VaultDragPayload): boolean {
 }
 
 export function vaultDragHasPayload(dataTransfer: DataTransfer): boolean {
-  return (
-    dataTransfer.types.includes(VAULT_CF_DRAG_MIME) ||
-    dataTransfer.types.includes(SRD_ENTITY_DRAG_MIME)
-  );
+  const types = Array.from(dataTransfer.types ?? []);
+  return types.includes(VAULT_CF_DRAG_MIME) || types.includes(SRD_ENTITY_DRAG_MIME);
 }

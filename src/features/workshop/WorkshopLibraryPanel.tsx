@@ -90,6 +90,7 @@ import type { SavedCustomSrdEntry } from "@/lib/srd/srdCustomLibrary";
 import type { CloneSrdResult } from "@/lib/srd/cloneSrdEntity";
 import { setSrdEntityDragData } from "@/lib/srd/srdDragDrop";
 import { setVaultDragData } from "@/lib/vault/cfDragDrop";
+import { useVaultDrawer } from "@/contexts/VaultDrawerContext";
 import { vaultPayloadForTarget, libraryEntryToContextTarget } from "@/lib/workshop/cfContextActions";
 import CfContextMenu from "@/features/ui/CfContextMenu";
 import {
@@ -396,6 +397,7 @@ function LibraryEntryRow({
   editLabel?: string;
   compact?: boolean;
 }) {
+  const { setDragging } = useVaultDrawer();
   const visual = ciClassVisual(entry.ciClass);
   const metaBits = [
     entry.spellLevel != null
@@ -420,7 +422,8 @@ function LibraryEntryRow({
       onDragStart={(e) => {
         const payload = vaultPayloadForTarget(libraryEntryToContextTarget(entry));
         setVaultDragData(e.dataTransfer, payload);
-        e.dataTransfer.effectAllowed = "copyMove";
+        setDragging(payload);
+        e.dataTransfer.effectAllowed = "all";
         if (entry.srdEntityId) {
           setSrdEntityDragData(e.dataTransfer, {
             entityId: entry.srdEntityId,
@@ -428,6 +431,7 @@ function LibraryEntryRow({
           });
         }
       }}
+      onDragEnd={() => setDragging(null)}
     >
       <div
         role="button"

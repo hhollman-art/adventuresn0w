@@ -157,7 +157,7 @@ function parseCharacterBlock(
   body: string,
   id: string,
 ): Omit<PlayerCharacter, "tokenId"> | null {
-  const { name, className, level } = parseHeading(heading);
+  const { name, className: headingClass, level } = parseHeading(heading);
   if (!name.trim()) return null;
 
   const species = parseBulletValue(body, ["Race", "Species", "Ancestry"]);
@@ -165,18 +165,22 @@ function parseCharacterBlock(
   const alignment = parseBulletValue(body, ["Alignment"]);
   const subclass = parseBulletValue(body, ["Subclass", "Sub-class", "Archetype"]);
   const playerName = parseBulletValue(body, ["Player", "Played by"]);
+  const classFromBody = parseBulletValue(body, ["Class", "Character class"]);
 
   const acRaw = parseBulletValue(body, ["AC", "Armor Class"]);
   const hpRaw = parseBulletValue(body, ["HP", "Hit points", "Hit Points", "Health"]);
   const speedRaw = parseBulletValue(body, ["Speed", "Walk", "Walking speed"]);
+
+  const className = (classFromBody || headingClass)
+    .replace(/\(\s*Level\s*\d+\s*\)/i, "")
+    .trim();
 
   return {
     id,
     name,
     playerName,
     species,
-    className: className.replace(/\(\s*Level\s*\d+\s*\)/i, "").trim(),
-    subclass,
+    className,    subclass,
     background,
     alignment,
     level,

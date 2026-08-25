@@ -31,6 +31,7 @@ import { loadSavedNpcs } from "@/lib/worldAssets/npc";
 import { loadSavedLocations } from "@/lib/worldAssets/location";
 import { attachAdventureToCampaign } from "@/lib/campaignBuilder/attach";
 import type { CampaignBuilderCatalog } from "@/lib/campaignBuilder/cascade";
+import { resolveCampaignBuilderZoneForCiClass, CAMPAIGN_BUILDER_ZONES } from "@/lib/campaignBuilder/zones";
 import {
   assignCampaignLootToCharacter,
   cloneLibraryItemToCampaignLoot,
@@ -145,10 +146,11 @@ export async function dropIntoCampaignContainer(options: {
   }
 
   if (slot === "adventure") {
+    // Always cascade childIds for any seed/result dropped into Quests & Cascading Adventures.
     const catalog = await loadCampaignBuilderCatalog();
-    if (payload.ciClass === "seed.adventure" || payload.ciClass.startsWith("seed.")) {
+    if (payload.ciClass.startsWith("seed.")) {
       const seed = catalog.seeds.find((s) => s.id === payload.id);
-      if (seed && (seed.kind === "adventure" || payload.ciClass === "seed.adventure")) {
+      if (seed) {
         const result = await attachAdventureToCampaign({
           campaignId,
           adventure: seed,
@@ -162,9 +164,9 @@ export async function dropIntoCampaignContainer(options: {
       scheduleLibrarySnapshot();
       return { ok: true, message: `${payload.title} linked as adventure CF.` };
     }
-    if (payload.ciClass === "result.adventure" || payload.ciClass.startsWith("result.")) {
+    if (payload.ciClass.startsWith("result.")) {
       const item = catalog.results.find((r) => r.id === payload.id);
-      if (item && (item.kind === "adventure" || payload.ciClass === "result.adventure")) {
+      if (item) {
         const result = await attachAdventureToCampaign({
           campaignId,
           adventure: item,
@@ -289,6 +291,37 @@ export async function dropIntoCampaignContainer(options: {
     ok: false,
     error: `Cannot drop ${payload.ciClass} into campaign slot “${slot}”.`,
   };
+}
+
+/**
+ * Link a vault CF payload into a campaign — prefers the zone the DM hovered,
+ * otherwise auto-routes by `ciClass` so Library → Campaign drops always write.
+ * Adventure cards cascade nested `childIds` via `attachAdventureToCampaign`.
+ */
+export async function linkVaultPayloadToCampaign(options: {
+  campaignId: string;
+  payload: VaultDragPayload;
+  /** Slot from the drop zone under the pointer; ignored when incompatible. */
+  preferredSlot?: ContainerSlot | null;
+}): Promise<ContainerMoveResult> {
+  const { campaignId, payload, preferredSlot } = options;
+  if (!payload.id || !payload.ciClass) {
+    return { ok: false, error: "That Creation File card is missing an id or type." };
+  }
+
+  const resolved = resolveCampaignBuilderZoneForCiClass(payload.ciClass);
+  const preferredZone = preferredSlot
+    ? CAMPAIGN_BUILDER_ZONES.find((z) => z.slot === preferredSlot) ?? null
+    : null;
+  const preferredOk = Boolean(
+    preferredZone?.accepts.includes(payload.ciClass as (typeof preferredZone.accepts)[number]),
+  );
+
+  const slot: ContainerSlot = preferredOk
+    ? (preferredSlot as ContainerSlot)
+    : (resolved?.slot ?? preferredSlot ?? "general");
+
+  return dropIntoCampaignContainer({ campaignId, payload, slot });
 }
 
 /** Drop a CF into a character sheet container slot. */

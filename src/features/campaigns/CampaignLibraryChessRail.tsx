@@ -79,10 +79,10 @@ export default function CampaignLibraryChessRail({
     >
       <div className="border-b px-3 py-2" style={{ borderColor: "var(--border)" }}>
         <p className="text-xs font-bold uppercase tracking-wide text-[var(--text)]">
-          Library chess pieces
+          Library cards
         </p>
         <p className="mt-0.5 text-[11px] text-[var(--text-soft)]">
-          Search, then drag into Party, Adventure, Loot, or Scene.
+          Search, then drag into a bucket.
         </p>
         <input
           type="search"

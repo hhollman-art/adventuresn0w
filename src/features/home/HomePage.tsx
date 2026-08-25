@@ -1440,7 +1440,10 @@ export default function Home(props: PageProps<"/">) {
     onEdit: () => void;
     onEditSeed: () => void;
     onEditResult: () => void;
-    onSavePartyVtt: (selectedIndices: number[]) => void;
+    onSavePartyVtt: (
+      selectedIndices: number[],
+      options?: { linkCampaign?: boolean },
+    ) => void;
     onSaveToLibrary: () => void;
     onLoadPartyVtt: () => void;
     onSaveInspectedMarkdown: (markdown: string) => void | Promise<void>;
@@ -1462,8 +1465,8 @@ export default function Home(props: PageProps<"/">) {
       if (libraryViewingSeed) openEditSeedEditor(libraryViewingSeed.id);
     },
     onEditResult: openLibraryResultEditor,
-    onSavePartyVtt: (selectedIndices) => {
-      void savePartyForVtt(selectedIndices);
+    onSavePartyVtt: (selectedIndices, options) => {
+      void savePartyForVtt(selectedIndices, options);
     },
     onSaveToLibrary: () => {
       void saveToLibrary();
@@ -1488,27 +1491,32 @@ export default function Home(props: PageProps<"/">) {
 
   const librarySelectionKey = libraryViewSelectionKey(librarySelection);
 
+  // Keep Save Heroes / Save to Library callbacks registered for Scry even during
+  // Generate Heroes (non-library workspace). Snapshot may come from the preview bus.
   useEffect(() => {
     if (!setLibraryInspector) return;
-    if (!isLibraryView) {
-      setLibraryInspector(null);
-      return;
-    }
     setLibraryInspector({
-      snapshot: libraryPreviewSnapshot,
-      hasSelection: Boolean(librarySelectionKey),
-      onClose: () => setLibrarySelection(null),
+      snapshot: isLibraryView ? libraryPreviewSnapshot : null,
+      hasSelection: isLibraryView ? Boolean(librarySelectionKey) : false,
+      onClose: () => {
+        if (isLibraryView) setLibrarySelection(null);
+      },
       onEdit: () => libraryInspectorCallbacksRef.current.onEdit(),
       onEditSeed: () => libraryInspectorCallbacksRef.current.onEditSeed(),
       onEditResult: () => libraryInspectorCallbacksRef.current.onEditResult(),
-      onSavePartyVtt: (selectedIndices) =>
-        libraryInspectorCallbacksRef.current.onSavePartyVtt(selectedIndices),
+      onSavePartyVtt: (selectedIndices, options) =>
+        libraryInspectorCallbacksRef.current.onSavePartyVtt(selectedIndices, options),
       onSaveToLibrary: () => libraryInspectorCallbacksRef.current.onSaveToLibrary(),
       onLoadPartyVtt: () => libraryInspectorCallbacksRef.current.onLoadPartyVtt(),
       onSaveInspectedMarkdown: (markdown) =>
         libraryInspectorCallbacksRef.current.onSaveInspectedMarkdown(markdown),
     });
-  }, [setLibraryInspector, isLibraryView, libraryPreviewSnapshot, librarySelectionKey]);
+  }, [
+    setLibraryInspector,
+    isLibraryView,
+    libraryPreviewSnapshot,
+    librarySelectionKey,
+  ]);
 
   useEffect(() => {
     const onInspect = (event: Event) => {

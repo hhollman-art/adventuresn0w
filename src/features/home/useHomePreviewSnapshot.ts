@@ -27,7 +27,6 @@ import type { SavedCharacter } from "@/lib/tabletop/characterLibrary";
 import type { SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
 import { instantiateAiHeroesFromMarkdown } from "@/lib/tabletop/instantiateAiHeroes";
 import { queuePartyImport } from "@/lib/tabletop/partyCampaign";
-import { THE_TAVERN } from "@/lib/workplace/forgeLexicon";
 import { buildSrdRuleBundleMarkdown } from "@/lib/srd/srdRuleBundles";
 import { buildLibraryPreviewSnapshot } from "@/lib/workshop/libraryPreviewSnapshot";
 import {
@@ -286,27 +285,28 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
     return previewMarkdown;
   }
 
-  async function savePartyForVtt(selectedIndices?: number[]) {
+  async function savePartyForVtt(
+    selectedIndices?: number[],
+    options?: { linkCampaign?: boolean },
+  ) {
     const md = exportMarkdownForDownload();
     if (!md.trim()) return;
     setPartySaveMessage(null);
     try {
-      // Instantiate only checked heroes as Character CFs in The Tavern.
       const result = await instantiateAiHeroesFromMarkdown(md, {
         saveRoster: true,
         source: "workshop",
         selectedIndices,
+        linkActiveCampaign: options?.linkCampaign !== false,
       });
       if (!result.ok) {
         setPartySaveMessage(result.error);
         return;
       }
-      setPartySaveMessage(
-        `${result.message} Open ${THE_TAVERN} to drag them into campaigns or the Lore Vault.`,
-      );
+      setPartySaveMessage(result.message);
     } catch (err) {
       setPartySaveMessage(
-        err instanceof Error ? err.message : "Could not save party to your library.",
+        err instanceof Error ? err.message : "Could not save heroes to your library.",
       );
     }
   }
@@ -626,8 +626,12 @@ export function useHomePreviewSnapshot(params: UseHomePreviewSnapshotParams) {
           }
           break;
         case "save-party-vtt": {
-          const payload = event.data.payload as { selectedIndices?: number[] } | undefined;
-          void savePartyForVtt(payload?.selectedIndices);
+          const payload = event.data.payload as
+            | { selectedIndices?: number[]; linkCampaign?: boolean }
+            | undefined;
+          void savePartyForVtt(payload?.selectedIndices, {
+            linkCampaign: payload?.linkCampaign,
+          });
           break;
         }
         case "load-party-vtt":

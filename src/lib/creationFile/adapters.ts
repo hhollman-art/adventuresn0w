@@ -3,7 +3,6 @@ import type { LibraryItem } from "@/lib/generationLibrary";
 import type { SavedGameItem } from "@/lib/itemLibrary";
 import { seedDisplayName, type SavedRealmSeed } from "@/lib/realmSeeds";
 import type { SavedCharacter } from "@/lib/tabletop/characterLibrary";
-import { characterSummary } from "@/lib/tabletop/character";
 import type { LibraryListEntry } from "@/lib/workshop/libraryCatalog";
 import type { CreationFile, CreationFileCiClass } from "@/lib/creationFile/types";
 import { cfTypeForCiClass } from "@/lib/creationFile/map";
@@ -67,15 +66,19 @@ export function characterToCreationFile(
   options: CreationFileCardOptions = {},
 ): CreationFile {
   const p = character.player;
-  const summary = characterSummary(p);
-  const subtitle = options.subtitle ?? (summary || `Level ${p.level} ${p.className}`.trim());
+  const classLabel = p.className.trim() || "Adventurer";
+  const species = p.species.trim();
+  const defaultSubtitle = species
+    ? `${classLabel} Level ${p.level} · ${species}`
+    : `${classLabel} Level ${p.level}`;
+  const subtitle = options.subtitle ?? defaultSubtitle;
   return {
     id: character.id,
     type: "character",
     ciClass: "character.sheet",
     title: p.name,
     ...(subtitle ? { subtitle } : {}),
-    tags: [],
+    tags: [classLabel, species, `Level ${p.level}`].filter(Boolean),
     data: {
       source: character.source,
       player: p as unknown as Record<string, unknown>,

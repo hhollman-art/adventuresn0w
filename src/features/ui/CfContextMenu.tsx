@@ -39,7 +39,7 @@ export default function CfContextMenu({
   const items: ContextMenuItem[] = [
     {
       id: "campaign",
-      label: "Send to Active Campaign",
+      label: "Add to Active Campaign",
       onSelect: () => sendCfToActiveCampaign(target),
     },
     {

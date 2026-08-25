@@ -4,7 +4,9 @@
 
 export {
   CAMPAIGN_BUILDER_ZONES,
+  CAMPAIGN_BUILDER_ZONE_ICON,
   campaignBuilderZone,
+  resolveCampaignBuilderZoneForCiClass,
   type CampaignBuilderZone,
   type CampaignBuilderZoneId,
 } from "@/lib/campaignBuilder/zones";
