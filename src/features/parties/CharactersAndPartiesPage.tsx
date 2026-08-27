@@ -5,6 +5,10 @@ import type { ChangeEvent } from "react";
 import Link from "next/link";
 import {
   characterSummary,
+  effectiveAc,
+  effectiveMaxHp,
+  formatMod,
+  proficiencyBonus,
 } from "@/lib/tabletop/character";
 import {
   deleteSavedCharacter,
