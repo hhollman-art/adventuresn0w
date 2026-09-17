@@ -657,8 +657,8 @@ html[data-preview-window="standalone"] .app-content {
 .scrying-glass-popup-frame {
   flex: none;
   width: min(72rem, 100%);
-  max-height: min(92dvh, 100%);
-  min-height: min(68dvh, 100%);
+  max-height: min(88dvh, 100%);
+  min-height: min(60dvh, 100%);
   margin: 0;
 }
 
@@ -666,10 +666,13 @@ html[data-preview-window="standalone"] .app-content {
   display: flex;
   flex-direction: column;
   flex: none;
-  width: min(72rem, 100%);
-  max-height: min(92dvh, 100%);
-  min-height: min(68dvh, 100%);
+  width: min(72rem, calc(100vw - 1.5rem));
+  max-height: min(88dvh, calc(100dvh - 1.5rem));
+  height: min(88dvh, calc(100dvh - 1.5rem));
+  min-height: 0;
   margin: 0;
+  /* Clip glass frame; scrolling lives only on .scrying-glass-scroll */
+  overflow: hidden;
   opacity: 0;
   transform: scale(0.96);
   transition:
@@ -695,6 +698,33 @@ html[data-preview-window="standalone"] .app-content {
   min-height: 0;
   opacity: 1;
   transform: none;
+}
+
+/* Single native scrollport for Scrying Glass modal content (mouse wheel works here). */
+.scrying-glass-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  pointer-events: auto;
+  touch-action: pan-y;
+}
+
+/* Nested preview panel must not create a second scroll trap inside the modal. */
+.scrying-glass-popup-shell .preview-window-panel,
+.scrying-glass-popup-shell .panel-scroll--scrying-glass.preview-window-panel {
+  flex: none;
+  max-height: none;
+  overflow: visible;
+  overscroll-behavior: auto;
+}
+
+.scrying-glass-popup-shell .scrying-inspector-pane {
+  max-height: none;
+  overflow: visible;
 }
 
 .scrying-glass-titlebar {
@@ -4932,30 +4962,9 @@ article.adventure-md .module-read-aloud p {
   color: var(--dmms-text);
 }
 
+/* Legacy docked inspector (unused) — Scrying Glass is a floating modal overlay. */
 .command-center-inspector {
   display: none;
-}
-
-.command-center-inspector.is-open {
-  display: flex;
-  flex: 0 0 var(--cc-inspector);
-  width: var(--cc-inspector);
-  min-width: 20rem;
-  max-width: 23.75rem;
-  flex-shrink: 0;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-  border-left: 1px solid var(--dmms-border-strong);
-  background: var(--dmms-panel);
-  transition: width 0.2s ease, flex-basis 0.2s ease;
-}
-
-.command-center-inspector > * {
-  min-height: 0;
-  min-width: 0;
-  flex: 1 1 auto;
-  width: 100%;
 }
 
 .command-center-panel-collapse {
@@ -4996,6 +5005,29 @@ article.adventure-md .module-read-aloud p {
   padding: 0.35rem 0.45rem 0;
   border-bottom: 1px solid var(--dmms-border-strong);
   background: var(--dmms-panel);
+}
+
+.scrying-glass-popup-shell .scrying-inspector-header {
+  border-bottom-color: rgba(142, 212, 255, 0.18);
+  background: linear-gradient(
+    180deg,
+    rgba(45, 96, 143, 0.55) 0%,
+    rgba(30, 68, 104, 0.72) 100%
+  );
+}
+
+.scrying-glass-popup-shell .scrying-inspector-tab {
+  color: #8bb8d9;
+}
+
+.scrying-glass-popup-shell .scrying-inspector-tab.is-active {
+  color: #e8f4ff;
+  border-bottom-color: #6ecfff;
+}
+
+.scrying-glass-popup-shell .library-inline-scrying-empty {
+  background: transparent !important;
+  border: none !important;
 }
 
 .scrying-inspector-tabs {
@@ -5088,21 +5120,13 @@ article.adventure-md .module-read-aloud p {
 }
 
 @media (max-width: 1279px) {
-  .command-center--vault-open .command-center-vault.is-open,
-  .command-center--inspector-open .command-center-inspector.is-open {
+  .command-center--vault-open .command-center-vault.is-open {
     position: absolute;
     z-index: 40;
     top: 0;
     bottom: 0;
-    border: 1px solid var(--dmms-border-strong);
-  }
-
-  .command-center--vault-open .command-center-vault.is-open {
     left: 0;
-  }
-
-  .command-center--inspector-open .command-center-inspector.is-open {
-    right: 0;
+    border: 1px solid var(--dmms-border-strong);
   }
 
   .command-center-main {
@@ -5112,8 +5136,7 @@ article.adventure-md .module-read-aloud p {
 }
 
 @media (max-width: 1023px) {
-  .command-center-vault.is-open,
-  .command-center-inspector.is-open {
+  .command-center-vault.is-open {
     width: min(20rem, 88vw);
     min-width: 0;
     max-width: none;

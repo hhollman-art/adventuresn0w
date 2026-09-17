@@ -23,11 +23,10 @@ function isTypingTarget(target: EventTarget | null): boolean {
 }
 
 /**
- * Persistent 3-zone DM Command Center:
- * header (Prep / Live) · Lore Vault · center canvas (router page) · Scrying inspector.
- *
- * Side panels use fixed widths and collapse to 48px icon rails so the center
- * canvas keeps priority (≥650px) and never gets text-squished.
+ * Persistent DM Command Center:
+ * header (Prep / Live) · Lore Vault · center canvas (router page) · Scry rail.
+ * Scrying Glass opens as a floating modal overlay (not a right-hand pane),
+ * so the workspace keeps full width while scrying.
  */
 export default function CommandCenterLayout({ children }: CommandCenterLayoutProps) {
   const pathname = usePathname() ?? "/";
@@ -65,9 +64,7 @@ export default function CommandCenterLayout({ children }: CommandCenterLayoutPro
   return (
     <div className="command-center-root">
       <CommandCenterHeader />
-      <div
-        className={`command-center${vaultOpen ? " command-center--vault-open" : ""}${inspectorOpen ? " command-center--inspector-open" : ""}`}
-      >
+      <div className={`command-center${vaultOpen ? " command-center--vault-open" : ""}`}>
         {vaultOpen ? (
           <aside className="command-center-vault is-open" aria-label="Lore Vault">
             <VaultDrawer layout="docked" />
@@ -94,27 +91,25 @@ export default function CommandCenterLayout({ children }: CommandCenterLayoutPro
           {children}
         </div>
 
-        {inspectorOpen ? (
-          <aside className="command-center-inspector is-open" aria-label={PREVIEW_WINDOW}>
-            <ScryingInspector />
-          </aside>
-        ) : (
-          <div className="command-center-inspector-rail no-print">
-            <button
-              type="button"
-              className="command-center-rail-btn"
-              aria-pressed={false}
-              title={`Open ${PREVIEW_WINDOW} (Alt+2)`}
-              onClick={() => setInspectorOpen(true)}
-            >
-              <span className="command-center-rail-chevron" aria-hidden="true">
-                ‹
-              </span>
-              Scry
-            </button>
-          </div>
-        )}
+        <div className="command-center-inspector-rail no-print">
+          <button
+            type="button"
+            className="command-center-rail-btn"
+            aria-pressed={inspectorOpen}
+            aria-haspopup="dialog"
+            title={`${inspectorOpen ? "Close" : "Open"} ${PREVIEW_WINDOW} (Alt+2)`}
+            onClick={() => (inspectorOpen ? setInspectorOpen(false) : setInspectorOpen(true))}
+          >
+            <span className="command-center-rail-chevron" aria-hidden="true">
+              ‹
+            </span>
+            Scry
+          </button>
+        </div>
       </div>
+
+      {/* Floating Scrying Glass modal — does not consume layout width */}
+      <ScryingInspector />
     </div>
   );
 }

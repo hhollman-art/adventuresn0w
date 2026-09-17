@@ -470,9 +470,7 @@
 }
 
 .command-center-root .forge-forest-card,
-.command-center-root .workshop-campaign-card,
-.command-center-root .scrying-glass-frame,
-.command-center-root .preview-window-frame {
+.command-center-root .workshop-campaign-card {
   background: var(--dmms-panel) !important;
   border: 1px solid var(--dmms-border-strong) !important;
   box-shadow: none !important;

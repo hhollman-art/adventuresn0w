@@ -37,8 +37,7 @@ export default function LibraryInlineScryingPanel({
         <div className="space-y-1">
           <p className="font-display text-sm font-semibold text-slate-100">{PREVIEW_WINDOW}</p>
           <p className="max-w-[16rem] text-xs leading-relaxed text-slate-400">
-            Select a creation file or SRD entry from the stacks to scry its details here — no popup
-            required.
+            Select a creation file or included rule from the stacks to open it in the Scrying Glass.
           </p>
         </div>
       </div>

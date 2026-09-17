@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
-import ScryingContentPanel from "@/features/workshop/ScryingContentPanel";
-import LibraryInlineScryingPanel from "@/features/workshop/LibraryInlineScryingPanel";
+import WorkshopPreviewPanel from "@/features/workshop/WorkshopPreviewPanel";
 import CreateNewHubForm from "@/features/workshop/CreateNewHubForm";
+import ScryingGlassIcon from "@/features/ui/ScryingGlassIcon";
 import SrdMarkdownTextarea from "@/features/ui/SrdMarkdownTextarea";
 import { usePowerWorkspaceOptional } from "@/features/workshop/PowerWorkspaceProvider";
 import {
@@ -36,6 +37,8 @@ const TABS: { id: InspectorTabId; label: string }[] = [
   { id: "edit", label: "Edit" },
   { id: "related", label: "Related Links" },
 ];
+
+const CLOSE_MS = 140;
 
 function snapshotHasContent(snapshot: WorkshopPreviewSnapshot | null): boolean {
   if (!snapshot) return false;
@@ -113,16 +116,16 @@ function ScryingEditPane({
 
   return (
     <div className="scrying-inspector-pane flex min-h-0 flex-1 flex-col">
-      <p className="mb-2 text-xs text-slate-300">
+      <p className="mb-2 shrink-0 text-xs text-slate-300">
         Edit the notes for this Creation File. Changes save to this device’s Library.
       </p>
       <SrdMarkdownTextarea
         value={draft}
         onChange={setDraft}
         rows={16}
-        className="min-h-0 flex-1 rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 py-2 font-mono text-xs text-slate-100"
+        className="min-h-[12rem] flex-1 rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 py-2 font-mono text-xs text-slate-100"
       />
-      <div className="mt-2 flex flex-wrap items-center gap-2">
+      <div className="mt-2 flex shrink-0 flex-wrap items-center gap-2">
         <button type="button" className="btn btn-sm btn-accent" disabled={saving} onClick={() => void save()}>
           {saving ? "Saving…" : "Save"}
         </button>
@@ -188,32 +191,72 @@ function ScryingRelatedPane({ meta }: { meta: InspectMeta | null }) {
   );
 }
 
-/** Persistent right-rail document viewer — not a modal. */
+function ScryingEmptyState() {
+  return (
+    <div className="library-inline-scrying-empty flex min-h-[12rem] flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+      <ScryingGlassIcon size={40} className="opacity-90" />
+      <div className="space-y-1">
+        <p className="font-display text-sm font-semibold text-slate-100">{PREVIEW_WINDOW}</p>
+        <p className="max-w-[18rem] text-xs leading-relaxed text-slate-300">
+          Select a creation file or included rule from the stacks to scry its details here.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Scrying Glass — floating modal overlay (portal). Workspace keeps full width;
+ * open via the Scry rail, Alt+2, or openOrFocusPreviewWindow().
+ */
 export default function ScryingInspector() {
+  const titleId = useId();
   const actions = useCommandCenterActionsOptional();
   const layout = useCommandCenterLayout();
   const library = useLibraryInspectorOptional();
   const { inspectedEntity, inspectorTab } = useInspectorFocus();
   const power = usePowerWorkspaceOptional();
   const setInspectorOpen = actions?.setInspectorOpen;
+  const [mounted, setMounted] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [busSnapshot, setBusSnapshot] = useState<WorkshopPreviewSnapshot | null>(null);
 
+  const open = layout.inspectorOpen || closing;
+
   const collapse = useCallback(() => {
-    setInspectorOpen?.(false);
-  }, [setInspectorOpen]);
+    if (closing) return;
+    setClosing(true);
+    setRevealed(false);
+    window.setTimeout(() => {
+      setInspectorOpen?.(false);
+      setClosing(false);
+    }, CLOSE_MS);
+  }, [closing, setInspectorOpen]);
 
   const reveal = useCallback(() => {
     const stored = readPreviewSnapshot();
     if (stored) setBusSnapshot(stored);
     if (stored?.inspect) actions?.applyInspectedEntity(stored.inspect);
+    setClosing(false);
     setInspectorOpen?.(true);
   }, [actions, setInspectorOpen]);
 
   useEffect(() => {
+    setMounted(true);
     const stored = readPreviewSnapshot();
     if (stored) setBusSnapshot(stored);
     return subscribeScryingGlassOpen(reveal);
   }, [reveal]);
+
+  useEffect(() => {
+    if (!layout.inspectorOpen) {
+      setRevealed(false);
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => setRevealed(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [layout.inspectorOpen]);
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
@@ -242,80 +285,137 @@ export default function ScryingInspector() {
     };
   }, [actions]);
 
-  if (layout.inspectorView === "create") {
-    return (
-      <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        <CreateNewHubForm
-          initialKind={power?.state.createHubKind}
-          homebrewPreferred={power?.state.homebrewPreferred ?? true}
-          onClose={() => {
-            layout.closeCreateInspector();
-            power?.closeCreateHub();
-          }}
-        />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!open) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (layout.inspectorView === "create") {
+          layout.closeCreateInspector();
+          power?.closeCreateHub();
+        }
+        collapse();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open, collapse, layout, power]);
+
+  if (!mounted || !open) return null;
 
   const snapshot = library?.snapshot ?? busSnapshot;
   const hasSelection = Boolean(library?.hasSelection || snapshotHasContent(snapshot));
   const meta = inspectedEntity ?? snapshot?.inspect ?? null;
+  const motionClass = revealed && !closing ? "is-open" : closing ? "is-closing" : "";
 
-  return (
-    <div className="scrying-inspector flex min-h-0 flex-1 flex-col">
-      <div className="scrying-inspector-header">
-        <div className="scrying-inspector-tabs" role="tablist" aria-label={`${PREVIEW_WINDOW} actions`}>
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={inspectorTab === tab.id}
-              className={`scrying-inspector-tab${inspectorTab === tab.id ? " is-active" : ""}`}
-              onClick={() => actions?.setInspectorTab(tab.id)}
+  return createPortal(
+    <div
+      className={`scrying-glass-backdrop no-print ${motionClass}`.trim()}
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) collapse();
+      }}
+    >
+      <div
+        className={`scrying-glass-popup-shell scrying-glass-frame ${motionClass}`.trim()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+      >
+        <header className="scrying-glass-titlebar shrink-0" aria-label={`${PREVIEW_WINDOW} title bar`}>
+          <ScryingGlassIcon size={24} className="scrying-glass-titlebar-icon" />
+          <p id={titleId} className="preview-window-titlebar-label">
+            D&amp;D EASY — {PREVIEW_WINDOW}
+          </p>
+          <button
+            type="button"
+            className="scrying-glass-dismiss-btn"
+            aria-label={`Close ${PREVIEW_WINDOW}`}
+            onClick={collapse}
+          >
+            <span aria-hidden="true">✕</span>
+          </button>
+        </header>
+
+        {layout.inspectorView === "create" ? (
+          <div className="scrying-glass-scroll panel-scroll panel-scroll--scrying-glass">
+            <div className="p-3 sm:p-4">
+              <CreateNewHubForm
+                initialKind={power?.state.createHubKind}
+                homebrewPreferred={power?.state.homebrewPreferred ?? true}
+                onClose={() => {
+                  layout.closeCreateInspector();
+                  power?.closeCreateHub();
+                  collapse();
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="scrying-inspector-header shrink-0">
+              <div className="scrying-inspector-tabs" role="tablist" aria-label={`${PREVIEW_WINDOW} actions`}>
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={inspectorTab === tab.id}
+                    className={`scrying-inspector-tab${inspectorTab === tab.id ? " is-active" : ""}`}
+                    onClick={() => actions?.setInspectorTab(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div
+              className="scrying-glass-scroll panel-scroll panel-scroll--scrying-glass"
+              role="tabpanel"
             >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="command-center-panel-collapse"
-          onClick={collapse}
-          aria-label={`Collapse ${PREVIEW_WINDOW}`}
-          title={`${PREVIEW_WINDOW} (Alt+2)`}
-        >
-          ›
-        </button>
+              {inspectorTab === "details" ? (
+                hasSelection && snapshot ? (
+                  <div className="scrying-glass-content-wrap">
+                    <p className="scrying-glass-hint no-print shrink-0">
+                      Review output here. Edit and save still apply in the Fantasy Forge workspace.
+                    </p>
+                    <WorkshopPreviewPanel
+                      snapshot={snapshot}
+                      popupMode
+                      onEdit={library?.onEdit}
+                      onEditSeed={library?.onEditSeed}
+                      onEditResult={library?.onEditResult}
+                      onSavePartyVtt={library?.onSavePartyVtt}
+                      onLoadPartyVtt={library?.onLoadPartyVtt}
+                      onSaveToLibrary={library?.onSaveToLibrary}
+                    />
+                  </div>
+                ) : (
+                  <ScryingEmptyState />
+                )
+              ) : null}
+              {inspectorTab === "edit" ? (
+                <ScryingEditPane
+                  snapshot={snapshot}
+                  meta={meta}
+                  onSaveMarkdown={library?.onSaveInspectedMarkdown}
+                />
+              ) : null}
+              {inspectorTab === "related" ? <ScryingRelatedPane meta={meta} /> : null}
+            </div>
+          </>
+        )}
       </div>
-
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden" role="tabpanel">
-        {inspectorTab === "details" ? (
-          hasSelection && snapshot ? (
-            <ScryingContentPanel
-              snapshot={snapshot}
-              variant="inline"
-              onClose={collapse}
-              onEdit={library?.onEdit}
-              onEditSeed={library?.onEditSeed}
-              onEditResult={library?.onEditResult}
-              onSavePartyVtt={library?.onSavePartyVtt}
-              onLoadPartyVtt={library?.onLoadPartyVtt}
-              onSaveToLibrary={library?.onSaveToLibrary}
-            />
-          ) : (
-            <LibraryInlineScryingPanel snapshot={null} hasSelection={false} onClose={collapse} />
-          )
-        ) : null}
-        {inspectorTab === "edit" ? (
-          <ScryingEditPane
-            snapshot={snapshot}
-            meta={meta}
-            onSaveMarkdown={library?.onSaveInspectedMarkdown}
-          />
-        ) : null}
-        {inspectorTab === "related" ? <ScryingRelatedPane meta={meta} /> : null}
-      </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

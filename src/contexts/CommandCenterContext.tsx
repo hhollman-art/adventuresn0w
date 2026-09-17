@@ -73,7 +73,7 @@ const InspectorFocusContext = createContext<{
 } | null>(null);
 
 export function CommandCenterProvider({ children }: { children: ReactNode }) {
-  const [inspectorOpen, setInspectorOpenState] = useState(true);
+  const [inspectorOpen, setInspectorOpenState] = useState(false);
   const [inspectorView, setInspectorView] = useState<"scry" | "create">("scry");
   const [inspectorTab, setInspectorTabState] = useState<InspectorTabId>("details");
   const [inspectedEntity, setInspectedEntity] = useState<InspectMeta | null>(null);
@@ -82,9 +82,10 @@ export function CommandCenterProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(INSPECTOR_OPEN_KEY);
-      if (stored === "0") setInspectorOpenState(false);
-      if (stored === "1") setInspectorOpenState(true);
+      // Floating modal should not auto-open from a prior docked-rail preference.
+      if (localStorage.getItem(INSPECTOR_OPEN_KEY) === "1") {
+        localStorage.setItem(INSPECTOR_OPEN_KEY, "0");
+      }
     } catch {
       /* ignore */
     }
