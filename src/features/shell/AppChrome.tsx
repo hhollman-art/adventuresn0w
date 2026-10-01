@@ -9,6 +9,7 @@ import FirstSaveVaultModal from "@/features/workshop/FirstSaveVaultModal";
 import DmmsCommandPalette from "@/features/commandPalette/DmmsCommandPalette";
 import CommandCenterLayout from "@/features/shell/CommandCenterLayout";
 import AppToastHost from "@/features/ui/AppToastHost";
+import SrdAssetGate from "@/features/srd/SrdAssetGate";
 import { useCommandCenterActionsOptional } from "@/contexts/CommandCenterContext";
 
 function CommandCenterChrome({ children }: { children: ReactNode }) {
@@ -33,8 +34,12 @@ function CommandCenterChrome({ children }: { children: ReactNode }) {
 
 export default function AppChrome({ children }: { children: ReactNode }) {
   return (
-    <PowerWorkspaceProvider>
-      <CommandCenterChrome>{children}</CommandCenterChrome>
-    </PowerWorkspaceProvider>
+    // SRD reference tables are fetched from /srd/*.json; the gate holds the
+    // shell until they are in memory so every sync SRD lookup below sees data.
+    <SrdAssetGate>
+      <PowerWorkspaceProvider>
+        <CommandCenterChrome>{children}</CommandCenterChrome>
+      </PowerWorkspaceProvider>
+    </SrdAssetGate>
   );
 }

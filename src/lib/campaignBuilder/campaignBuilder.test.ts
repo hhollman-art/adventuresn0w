@@ -115,6 +115,9 @@ describe("adventure cascade", () => {
           settingTags: [],
           sourceNote: "",
           imageDataUrl: null,
+          instanceId: null,
+          _source: null,
+          sourceSrdEntityId: null,
         },
       ],
       locations: [

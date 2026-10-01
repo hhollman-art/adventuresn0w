@@ -36,6 +36,7 @@ export const LIBRARY_CI_FANTASY_LABEL: Record<CiClass, string> = {
   "item.srd-magic": "SRD magic treasure",
   "party.roster": "Fellowship roster",
   "campaign.record": "Campaign chronicle",
+  "campaign.lore-vault": "Lore Vault",
   "npc.record": "Named NPC",
   "location.record": "World place",
   "session.record": "Session log",

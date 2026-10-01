@@ -13,7 +13,8 @@ export function setSrdEntityDragData(
 ): void {
   dataTransfer.setData(SRD_ENTITY_DRAG_MIME, JSON.stringify(payload));
   dataTransfer.setData("text/plain", payload.name);
-  dataTransfer.effectAllowed = "copy";
+  // copy → rich-text fields; link → Campaign / Live Session containers.
+  dataTransfer.effectAllowed = "copyLink";
 }
 
 export function readSrdEntityDragData(

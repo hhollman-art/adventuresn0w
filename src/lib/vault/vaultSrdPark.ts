@@ -8,7 +8,12 @@
 
 import type { CiClass } from "@/lib/ciRegistry";
 import { ciClassForGameItem } from "@/lib/ciRegistry";
-import { loadSavedGameItems, saveGameItem, type SavedGameItem } from "@/lib/itemLibrary";
+import {
+  gameItemSourceSrdEntityId,
+  loadSavedGameItems,
+  saveGameItem,
+  type SavedGameItem,
+} from "@/lib/itemLibrary";
 import {
   loadSavedCustomSrdEntries,
   saveCustomSrdEntry,
@@ -33,8 +38,6 @@ export type VaultLibraryCfRef = {
   instanceId?: string;
 };
 
-const SOURCE_TAG = /sourceSrdEntityId:\s*([^\s\n]+)/;
-
 /** Extract a bundled SRD entity id from a parked row or drag detail. */
 export function extractStaticSrdEntityId(row: {
   id: string;
@@ -50,9 +53,9 @@ export function extractStaticSrdEntityId(row: {
 }
 
 export function sourceSrdEntityIdFromGameItem(item: SavedGameItem): string | null {
-  const m = item.description.match(SOURCE_TAG);
-  if (!m?.[1]) return null;
-  return parseSrdEntityId(m[1].trim());
+  // Typed provenance first (survives description edits), legacy text tag second.
+  const raw = gameItemSourceSrdEntityId(item);
+  return raw ? parseSrdEntityId(raw) : null;
 }
 
 /** Find an existing user Library CF cloned from this SRD entity. */
@@ -116,7 +119,9 @@ export async function hydrateSrdEntityToLibrary(
   if (inst.payload.target === "campaign-item") {
     const list = await saveGameItem(inst.payload.draft);
     const created =
-      list.find((row) => row.description.includes(inst.sourceSrdEntityId)) ?? list[0];
+      list.find((row) => row.instanceId === inst.instanceId) ??
+      list.find((row) => row.description.includes(inst.sourceSrdEntityId)) ??
+      list[0];
     if (!created) return null;
     scheduleLibrarySnapshot();
     const entry = gameItemToLibraryEntry(created);

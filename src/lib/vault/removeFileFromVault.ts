@@ -10,10 +10,15 @@
 import {
   isParkedInVault,
   loadVaultParkingLot,
-  unparkCfFromVault,
   type VaultParkedEntry,
   VAULT_PARKING_CHANGED_EVENT,
 } from "@/lib/vault/vaultParking";
+import {
+  evictFromLoreVault,
+  isInstanceId,
+  purgeFromLoreVault,
+} from "@/lib/vault/loreVaultContainer";
+import type { CfRelationship } from "@/lib/workshop/containerCf";
 import { excludeFromVault } from "@/lib/vault/vaultExclusion";
 import {
   extractStaticSrdEntityId,
@@ -37,6 +42,8 @@ export type RemoveFileFromVaultResult =
       removed: VaultParkedEntry | null;
       message: string;
       cleanedSelectionKeys: string[];
+      /** Relationship rows deleted by this call — pass to `restoreLoreVaultRows` to undo. */
+      removedRelationships?: CfRelationship[];
     }
   | { ok: false; error: string };
 
@@ -162,7 +169,9 @@ async function resolveSourceSrdEntityId(
  *
  * Hard purge clears parking membership, adds the id to the vault exclusion
  * list (so it stays out of the vault index), and scrubs session selection
- * orphans. It does **not** delete Library Creation Files.
+ * orphans. It does **not** delete Library Creation Files. A parked SRD
+ * instance (`instance_*`) lives only in relationship rows, so its purge removes
+ * every row for that instance and needs no exclusion.
  */
 export async function removeFileFromVault(
   fileId: string,
@@ -187,9 +196,15 @@ export async function removeFileFromVault(
   const before = await loadVaultParkingLot();
   const removed = before.find((row) => row.id === fileId) ?? null;
 
-  await unparkCfFromVault(fileId);
+  const instance = isInstanceId(fileId);
+  // Only a vault-owned instance is purged everywhere; one held by a campaign or
+  // sheet is not the vault's to delete.
+  const removedRelationships =
+    hardDelete && instance && parked
+      ? await purgeFromLoreVault(fileId)
+      : await evictFromLoreVault(fileId);
 
-  if (hardDelete) {
+  if (hardDelete && !instance) {
     const sourceSrdEntityId =
       opts?.sourceSrdEntityId ?? (await resolveSourceSrdEntityId(fileId, removed));
     await excludeFromVault({
@@ -223,6 +238,7 @@ export async function removeFileFromVault(
     removed,
     message,
     cleanedSelectionKeys,
+    removedRelationships,
   };
 }
 

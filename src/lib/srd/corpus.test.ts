@@ -6,9 +6,12 @@ import {
   srdEntityToLibraryEntry,
   srdEntityToPreviewMarkdown,
 } from "@/lib/srd/corpus";
-import { SRD_ENTITY_COUNTS } from "@/lib/srd/srdEntities.data";
+import { srdEntityCounts } from "@/lib/srd/srdAssets";
 
 describe("SRD corpus", () => {
+  // Tables are loaded from public/srd/*.json by vitest.setup.ts.
+  const SRD_ENTITY_COUNTS = srdEntityCounts();
+
   it("indexes hundreds of bundled entities", () => {
     const total = Object.values(SRD_ENTITY_COUNTS).reduce((sum, n) => sum + n, 0);
     expect(total).toBeGreaterThan(1000);

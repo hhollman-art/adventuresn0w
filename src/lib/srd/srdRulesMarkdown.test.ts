@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { SRD_CATALOGUE, SRD_DOCUMENT_CHAPTERS } from "@/lib/srd";
+import { SRD_CATALOGUE, srdDocument } from "@/lib/srd";
 import { buildSrdRulesMarkdown } from "@/lib/srd/srdRulesMarkdown";
-import { SRD_DOCUMENT_PDF_ID } from "@/lib/srd/srdDocument.data";
 
 describe("buildSrdRulesMarkdown", () => {
+  // Document asset is loaded from public/srd/document.json by vitest.setup.ts.
+  const { pdfId: SRD_DOCUMENT_PDF_ID, chapters: SRD_DOCUMENT_CHAPTERS } = srdDocument();
+
   it("builds the full SRD 5.2.1 booklet with cover, chapters, and attribution", () => {
     const md = buildSrdRulesMarkdown();
     expect(md).toMatch(/^# SRD 5\.2\.1 Rules/m);

@@ -7,12 +7,10 @@ import type { SavedCharacter } from "@/lib/tabletop/characterLibrary";
 import type { SavedCharacterRoster } from "@/lib/tabletop/characterRoster";
 import type { SavedGameItem } from "@/lib/itemLibrary";
 import type { SavedRealmSeed } from "@/lib/realmSeeds";
-import { seedDisplayName } from "@/lib/realmSeeds";
 import type { LibraryItem } from "@/lib/generationLibrary";
 import type { SavedNpc } from "@/lib/worldAssets/npc";
 import type { SavedLocation } from "@/lib/worldAssets/location";
 import type { CiClass } from "@/lib/ciRegistry";
-import { ciClassForGameItem, CI_CLASS_FOR_CHARACTER, CI_CLASS_FOR_PARTY } from "@/lib/ciRegistry";
 import ContainerDropZone from "@/features/vault/ContainerDropZone";
 import CfContextMenu from "@/features/ui/CfContextMenu";
 import {
@@ -20,62 +18,27 @@ import {
   CAMPAIGN_BUILDER_ZONES,
   type CampaignBuilderZoneId,
 } from "@/lib/campaignBuilder/zones";
-import { detachCfFromCampaign } from "@/lib/campaignBuilder/attach";
+import { buildCampaignZoneCards, type CampaignZoneCard } from "@/lib/campaignBuilder/zoneCards";
 import { linkVaultPayloadToCampaign } from "@/lib/workshop/containerMoveWritePath";
 import type { VaultDragPayload } from "@/lib/vault/cfDragDrop";
 import { setVaultDragData, withContainerContext } from "@/lib/vault/cfDragDrop";
 import { useVaultDrawer } from "@/contexts/VaultDrawerContext";
 import { emitAppToast } from "@/lib/ui/appToast";
-import { characterSummary } from "@/lib/tabletop/character";
-import { GAME_ITEM_KIND_LABEL } from "@/lib/itemLibrary";
-import { inspectEntity } from "@/lib/workshop/inspectedEntity";
-import type { LibraryViewSelection } from "@/features/workshop/WorkshopLibraryPanel";
-import type { LibraryStorageCategory } from "@/lib/workshop/libraryCatalog";
+import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 import UnassignedLootPanel from "@/features/campaigns/UnassignedLootPanel";
 import CampaignLibraryChessRail from "@/features/campaigns/CampaignLibraryChessRail";
+import {
+  categoryForCiClass,
+  inspectCampaignCard,
+  removeCampaignCard,
+} from "@/features/campaigns/campaignCardActions";
+import { useCampaignRelationships } from "@/features/campaigns/useCampaignRelationships";
 
 const CANVAS_BG = "#0B0E14";
 const PANEL_BORDER = "#30363D";
 const TITLE_FG = "#F0F6FC";
 
-type WorkspaceCard = {
-  id: string;
-  title: string;
-  subtitle: string;
-  ciClass: CiClass | string;
-  zone: CampaignBuilderZoneId;
-};
-
-function categoryForCiClass(ciClass: string): LibraryStorageCategory {
-  if (ciClass.startsWith("seed.")) return "seeds";
-  if (ciClass.startsWith("result.")) return "results";
-  if (ciClass === "character.sheet") return "characters";
-  if (ciClass.startsWith("item.")) return "items";
-  if (ciClass === "party.roster") return "parties";
-  if (ciClass === "npc.record" || ciClass === "location.record") return "world";
-  if (ciClass === "monster.srd-entry") return "monsters";
-  return "campaigns";
-}
-
-function selectionForCard(card: WorkspaceCard): LibraryViewSelection {
-  if (card.ciClass === "monster.srd-entry" || card.id.startsWith("monster:")) {
-    return { kind: "srd-entity", entityId: card.id as `monster:${string}`, name: card.title };
-  }
-  if (typeof card.ciClass === "string" && card.ciClass.startsWith("seed.")) {
-    return { kind: "seed", id: card.id };
-  }
-  if (typeof card.ciClass === "string" && card.ciClass.startsWith("result.")) {
-    return { kind: "result", id: card.id };
-  }
-  if (card.ciClass === "character.sheet") return { kind: "character", id: card.id };
-  if (card.ciClass === "party.roster") return { kind: "party", id: card.id };
-  if (card.ciClass === "item.equipment" || card.ciClass === "item.magic") {
-    return { kind: "item", id: card.id };
-  }
-  if (card.ciClass === "npc.record") return { kind: "npc", id: card.id };
-  if (card.ciClass === "location.record") return { kind: "location", id: card.id };
-  return { kind: "campaign", id: card.id };
-}
+type WorkspaceCard = CampaignZoneCard;
 
 export type CampaignWorkspaceProps = {
   campaign: SavedCampaign;
@@ -112,138 +75,17 @@ export default function CampaignWorkspace({
     setActiveCampaignId(campaign.id);
   }, [campaign.id]);
 
-  const cardsByZone = useMemo(() => {
-    const map: Record<CampaignBuilderZoneId, WorkspaceCard[]> = {
-      parties: [],
-      adventures: [],
-      locations: [],
-      encounters: [],
-      loot: [],
-    };
+  const { relationships, addOptimistic } = useCampaignRelationships(campaign.id);
 
-    if (campaign.partyId) {
-      const party = parties.find((p) => p.id === campaign.partyId);
-      if (party) {
-        map.parties.push({
-          id: party.id,
-          title: party.name,
-          subtitle: `${party.players.length} hero${party.players.length === 1 ? "" : "es"}`,
-          ciClass: CI_CLASS_FOR_PARTY,
-          zone: "parties",
-        });
-      }
-    }
-    for (const c of characters.filter((ch) => campaign.characterIds.includes(ch.id))) {
-      map.parties.push({
-        id: c.id,
-        title: c.player.name,
-        subtitle: characterSummary(c.player),
-        ciClass: CI_CLASS_FOR_CHARACTER,
-        zone: "parties",
-      });
-    }
-
-    for (const s of seeds.filter(
-      (row) =>
-        campaign.seedIds.includes(row.id) &&
-        (row.kind === "adventure" || row.kind === "realm" || row.kind === "characters"),
-    )) {
-      map.adventures.push({
-        id: s.id,
-        title: seedDisplayName(s),
-        subtitle: s.briefDescription.trim() || "Adventure",
-        ciClass: `seed.${s.kind}`,
-        zone: "adventures",
-      });
-    }
-    for (const r of results.filter(
-      (row) =>
-        campaign.resultIds.includes(row.id) &&
-        (row.kind === "adventure" || row.kind === "realm" || row.kind === "characters"),
-    )) {
-      map.adventures.push({
-        id: r.id,
-        title: r.title,
-        subtitle: "Adventure",
-        ciClass: `result.${r.kind}`,
-        zone: "adventures",
-      });
-    }
-
-    for (const loc of locations.filter((l) => campaign.locationIds.includes(l.id))) {
-      map.locations.push({
-        id: loc.id,
-        title: loc.name,
-        subtitle: loc.locationKind,
-        ciClass: "location.record",
-        zone: "locations",
-      });
-    }
-    for (const s of seeds.filter((row) => campaign.seedIds.includes(row.id) && row.kind === "maps")) {
-      map.locations.push({
-        id: s.id,
-        title: seedDisplayName(s),
-        subtitle: "Map",
-        ciClass: "seed.maps",
-        zone: "locations",
-      });
-    }
-    for (const r of results.filter(
-      (row) => campaign.resultIds.includes(row.id) && row.kind === "maps",
-    )) {
-      map.locations.push({
-        id: r.id,
-        title: r.title,
-        subtitle: "Map",
-        ciClass: "result.maps",
-        zone: "locations",
-      });
-    }
-
-    for (const npc of npcs.filter((n) => campaign.npcIds.includes(n.id))) {
-      map.encounters.push({
-        id: npc.id,
-        title: npc.name,
-        subtitle: npc.briefDescription.trim() || "NPC",
-        ciClass: "npc.record",
-        zone: "encounters",
-      });
-    }
-    for (const monsterId of campaign.monsterIds ?? []) {
-      map.encounters.push({
-        id: monsterId,
-        title: monsterId.replace(/^monster:/, "").replace(/-/g, " "),
-        subtitle: "Monster",
-        ciClass: "monster.srd-entry",
-        zone: "encounters",
-      });
-    }
-    for (const s of seeds.filter((row) => campaign.seedIds.includes(row.id) && row.kind === "props")) {
-      map.encounters.push({
-        id: s.id,
-        title: seedDisplayName(s),
-        subtitle: "Encounter notes",
-        ciClass: "seed.props",
-        zone: "encounters",
-      });
-    }
-
-    const lootIds = new Set([...(campaign.unassignedLootIds ?? []), ...campaign.itemIds]);
-    for (const item of items.filter((i) => lootIds.has(i.id))) {
-      const inPool = (campaign.unassignedLootIds ?? []).includes(item.id);
-      map.loot.push({
-        id: item.id,
-        title: item.name,
-        subtitle: inPool
-          ? `Unassigned · ${GAME_ITEM_KIND_LABEL[item.kind]}`
-          : GAME_ITEM_KIND_LABEL[item.kind],
-        ciClass: ciClassForGameItem(item.kind),
-        zone: "loot",
-      });
-    }
-
-    return map;
-  }, [campaign, characters, items, locations, npcs, parties, results, seeds]);
+  const cardsByZone = useMemo(
+    () =>
+      buildCampaignZoneCards(
+        campaign,
+        { characters, parties, items, seeds, results, npcs, locations },
+        relationships,
+      ),
+    [campaign, characters, items, locations, npcs, parties, relationships, results, seeds],
+  );
 
   const onDropToZone = useCallback(
     (zoneId: CampaignBuilderZoneId) => async (payload: VaultDragPayload) => {
@@ -262,12 +104,13 @@ export default function CampaignWorkspace({
         onStatus(result.error);
         return { ok: false, message: result.error };
       }
+      addOptimistic(result.relationship);
       emitAppToast(result.message, "success");
       onStatus(result.message);
       onChanged();
       return { ok: true, message: result.message };
     },
-    [campaign.id, onChanged, onStatus],
+    [addOptimistic, campaign.id, onChanged, onStatus],
   );
 
   const zoneDropHandlers = useMemo(() => {
@@ -283,11 +126,7 @@ export default function CampaignWorkspace({
 
   const removeFromBucket = useCallback(
     async (card: WorkspaceCard) => {
-      const result = await detachCfFromCampaign({
-        campaignId: campaign.id,
-        ciClass: card.ciClass,
-        id: card.id,
-      });
+      const result = await removeCampaignCard(campaign.id, card);
       if (!result.ok) {
         emitAppToast(result.error, "warn");
         onStatus(result.error);
@@ -301,15 +140,7 @@ export default function CampaignWorkspace({
   );
 
   const openInScrying = useCallback(
-    (card: WorkspaceCard) => {
-      inspectEntity({
-        key: `campaign:${campaign.id}:${card.id}`,
-        label: card.title,
-        ciClass: card.ciClass as CiClass,
-        cfId: card.id.startsWith("monster:") ? null : card.id,
-        selection: selectionForCard(card),
-      });
-    },
+    (card: WorkspaceCard) => inspectCampaignCard(campaign.id, card),
     [campaign.id],
   );
 
@@ -323,9 +154,9 @@ export default function CampaignWorkspace({
           Campaign buckets
         </h2>
         <p className="max-w-2xl text-xs leading-relaxed text-slate-400">
-          Drag cards from the Lore Vault (or the search rail) into a bucket. Click a card to open
-          it on the right. Hover and press × to remove it from this campaign — your Library copy
-          stays safe.
+          Drag cards from the Lore Vault (or the search rail) into a bucket. Click a card to read
+          it in the pop-out {PREVIEW_WINDOW}. Hover and press × to remove it from this campaign —
+          your Library copy stays safe.
         </p>
       </header>
 
@@ -385,7 +216,7 @@ export default function CampaignWorkspace({
                             title: card.title,
                             ciClass: card.ciClass as CiClass,
                             category: categoryForCiClass(String(card.ciClass)),
-                            provenance: "user",
+                            provenance: card.relationship ? "srd" : "user",
                             detail: card.subtitle,
                           }}
                           onInspect={() => openInScrying(card)}
@@ -407,7 +238,9 @@ export default function CampaignWorkspace({
                                 background: CANVAS_BG,
                                 borderColor: PANEL_BORDER,
                               }}
-                              draggable={zone.id === "parties" || zone.id === "loot"}
+                              draggable={
+                                (zone.id === "parties" || zone.id === "loot") && !card.relationship
+                              }
                               onClick={() => openInScrying(card)}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter" || e.key === " ") {
@@ -416,7 +249,7 @@ export default function CampaignWorkspace({
                                 }
                               }}
                               onDragStart={(e) => {
-                                if (zone.id !== "parties" && zone.id !== "loot") return;
+                                if ((zone.id !== "parties" && zone.id !== "loot") || card.relationship) return;
                                 e.stopPropagation();
                                 const payload = withContainerContext(
                                   {

@@ -1,6 +1,6 @@
 {
   "name": "ddeasy",
-  "version": "0.6.5.2",
+  "version": "0.7.0.0",
   "private": true,
   "scripts": {
     "dev": "node node_modules/next/dist/bin/next dev --turbopack",
@@ -16,6 +16,8 @@
     "build:srd-spell-index": "node scripts/build-srd-spell-index.mjs",
     "build:srd-document": "node scripts/build-srd-document.mjs",
     "build:srd": "node scripts/build-srd-spells.mjs && node scripts/build-srd-document.mjs",
+    "build:srd-assets": "node node_modules/tsx/dist/cli.mjs scripts/export-srd-assets.ts",
+    "verify:srd-assets": "node node_modules/tsx/dist/cli.mjs scripts/export-srd-assets.ts --verify",
     "consolidate:srd-rules": "node scripts/consolidate-srd-rules.mjs",
     "consolidate:srd-macro": "node node_modules/tsx/dist/cli.mjs scripts/consolidate-srd-macro.ts",
     "build:macro-srd": "node node_modules/tsx/dist/cli.mjs scripts/buildMacroSrd.ts",

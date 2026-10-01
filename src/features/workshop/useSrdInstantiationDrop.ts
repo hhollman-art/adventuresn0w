@@ -13,8 +13,12 @@ import {
   instantiateSrdEntity,
   instantiateTargetForSlot,
   isStaticSrdDragId,
+  relationshipForInstance,
   type InstantiatedCF,
 } from "@/lib/srd/instantiateSrdEntity";
+import type { CiClass } from "@/lib/ciRegistry";
+import type { CfRelationship } from "@/lib/workshop/containerCf";
+import { recordContainerRelationship } from "@/lib/workshop/containerRelationships";
 
 /**
  * React helpers for seamless SRD → InstantiatedCF hydration on drop.
@@ -30,6 +34,31 @@ export function useSrdInstantiationDrop() {
       return instantiateSrdEntity(payload.id, instantiateTargetForSlot(slot), {
         name: payload.title,
       });
+    },
+    [],
+  );
+
+  /**
+   * Build the `relationships[]` row for a hydrated instance and (optionally)
+   * persist it on the parent's index. Use `persist: false` for draft
+   * containers that are not saved yet (write on save instead).
+   */
+  const indexInstance = useCallback(
+    async (
+      inst: InstantiatedCF,
+      parent: { id: string; ciClass: CiClass },
+      slot: ContainerSlot,
+      opts?: { persist?: boolean; libraryId?: string | null; active?: boolean },
+    ): Promise<CfRelationship> => {
+      const rel = relationshipForInstance(inst, parent, slot, opts);
+      if (opts?.persist !== false) {
+        try {
+          await recordContainerRelationship(rel);
+        } catch {
+          /* index is a convenience view — never block the drop */
+        }
+      }
+      return rel;
     },
     [],
   );
@@ -58,5 +87,5 @@ export function useSrdInstantiationDrop() {
     [],
   );
 
-  return { hydrateIfNeeded, dropOnCharacter, dropOnCampaign };
+  return { hydrateIfNeeded, indexInstance, dropOnCharacter, dropOnCampaign };
 }

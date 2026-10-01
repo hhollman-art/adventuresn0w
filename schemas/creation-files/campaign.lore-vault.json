@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ddeasy.app/schemas/creation-files/campaign.lore-vault.json",
+  "title": "campaign.lore-vault — Global Lore Vault parking lot",
+  "description": "Singleton container (id LORE_VAULT_CONTAINER). Membership is stored as container relationship rows with parentId LORE_VAULT_CONTAINER, kind \"park\", slot \"vault\" (src/lib/workshop/containerRelationships.ts). Parked SRD entities are local instance_* copies; parked Library CFs are referenced by id.",
+  "type": "object",
+  "required": ["id", "parked"],
+  "properties": {
+    "id": { "const": "LORE_VAULT_CONTAINER" },
+    "parked": {
+      "type": "array",
+      "items": { "$ref": "common.json#/$defs/cfRelationship" }
+    }
+  },
+  "additionalProperties": false
+}

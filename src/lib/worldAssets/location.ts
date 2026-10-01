@@ -1,11 +1,12 @@
 /**
  * Location Creation Files (`location.record`) — cities, dungeons, regions, and sites.
+ * Stored as the `location` collection of the unified Library engine.
  */
 
-const IDB_NAME = "ddeasy-location-library-v1";
-const IDB_STORE = "kv";
-const IDB_KEY = "locations";
-const LOCAL_STORAGE_KEY = "ddeasy-location-library-v1";
+import { defineCollection } from "@/lib/library/defineCollection";
+import { legacyKvDatabase, legacyLocalStorage } from "@/lib/library/legacySources";
+
+const LEGACY_STORAGE_KEY = "ddeasy-location-library-v1";
 
 export const LOCATIONS_CHANGED_EVENT = "ddeasy-locations-changed";
 const MAX_LOCATIONS = 256;
@@ -83,127 +84,22 @@ export function fixSavedLocation(value: unknown): SavedLocation | null {
   };
 }
 
-function parseJsonArray(raw: string): SavedLocation[] {
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map((row) => fixSavedLocation(row)).filter((l): l is SavedLocation => l !== null);
-  } catch {
-    return [];
-  }
-}
-
-function sortByUpdated(list: SavedLocation[]): SavedLocation[] {
-  return [...list].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-}
-
-function notifyChanged(): void {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new Event(LOCATIONS_CHANGED_EVENT));
-}
-
-let dbPromise: Promise<IDBDatabase> | null = null;
-
-function openDb(): Promise<IDBDatabase> {
-  if (typeof indexedDB === "undefined") return Promise.reject(new Error("indexedDB unavailable"));
-  if (!dbPromise) {
-    dbPromise = new Promise((resolve, reject) => {
-      const req = indexedDB.open(IDB_NAME, 1);
-      req.onerror = () => reject(req.error ?? new Error("IDB open failed"));
-      req.onsuccess = () => resolve(req.result);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
-      };
-    });
-  }
-  return dbPromise;
-}
-
-async function idbGet(): Promise<SavedLocation[] | undefined> {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(IDB_STORE, "readonly");
-    const req = tx.objectStore(IDB_STORE).get(IDB_KEY);
-    req.onerror = () => reject(req.error ?? new Error("IDB get failed"));
-    req.onsuccess = () => {
-      const v = req.result;
-      if (v === undefined) resolve(undefined);
-      else if (Array.isArray(v)) {
-        resolve(v.map((row) => fixSavedLocation(row)).filter((l): l is SavedLocation => l !== null));
-      } else resolve(undefined);
-    };
-  });
-}
-
-async function idbSet(items: SavedLocation[]): Promise<void> {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(IDB_STORE, "readwrite");
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error ?? new Error("IDB write failed"));
-    tx.objectStore(IDB_STORE).put(items, IDB_KEY);
-  });
-}
-
-function loadFromLocalStorage(): SavedLocation[] {
-  if (typeof window === "undefined") return [];
-  const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-  return raw ? parseJsonArray(raw) : [];
-}
-
-async function loadInternal(): Promise<SavedLocation[]> {
-  if (typeof window === "undefined") return [];
-  try {
-    let items = await idbGet();
-    if (items === undefined || items.length === 0) {
-      const mirror = loadFromLocalStorage();
-      if (mirror.length > 0) {
-        items = mirror;
-        try {
-          await idbSet(items);
-        } catch {
-          /* keep mirror */
-        }
-      } else items = [];
-    }
-    return sortByUpdated(items);
-  } catch {
-    return sortByUpdated(loadFromLocalStorage());
-  }
-}
-
-async function persist(list: SavedLocation[]): Promise<void> {
-  const sorted = sortByUpdated(list);
-  let lastError: unknown = null;
-  try {
-    await idbSet(sorted);
-  } catch (err) {
-    lastError = err;
-  }
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sorted));
-    notifyChanged();
-    if (!lastError) return;
-  } catch (err) {
-    lastError = err;
-  }
-  if (lastError) throw lastError instanceof Error ? lastError : new Error("Could not save locations");
-}
-
-let writeMutex = Promise.resolve();
-
-function withWriteLock<T>(fn: () => Promise<T>): Promise<T> {
-  const run = writeMutex.then(fn, fn);
-  writeMutex = run.then(
-    () => undefined,
-    () => undefined,
-  );
-  return run;
-}
+const locations = defineCollection<SavedLocation>({
+  name: "location",
+  normalize: fixSavedLocation,
+  max: MAX_LOCATIONS,
+  changedEvent: LOCATIONS_CHANGED_EVENT,
+  compare: (a, b) => b.updatedAt.localeCompare(a.updatedAt),
+  mirrorKey: "ddeasy-library-location",
+  legacySources: [
+    legacyKvDatabase(LEGACY_STORAGE_KEY, "kv", "locations"),
+    legacyLocalStorage(LEGACY_STORAGE_KEY),
+  ],
+});
 
 export async function loadSavedLocations(): Promise<SavedLocation[]> {
-  return loadInternal();
+  if (typeof window === "undefined") return [];
+  return locations.load();
 }
 
 export type SaveLocationInput = {
@@ -219,7 +115,7 @@ export type SaveLocationInput = {
 
 export async function saveLocation(input: SaveLocationInput): Promise<SavedLocation[]> {
   if (typeof window === "undefined") return [];
-  return withWriteLock(async () => {
+  return locations.write((current) => {
     if (!input.name.trim()) throw new Error("A location needs at least a name.");
     const now = new Date().toISOString();
     const record: SavedLocation = {
@@ -235,9 +131,7 @@ export async function saveLocation(input: SaveLocationInput): Promise<SavedLocat
       markdown: input.markdown ?? `# ${input.name.trim()}\n\n`,
       source: input.source ?? "created",
     };
-    const list = [record, ...(await loadInternal())].slice(0, MAX_LOCATIONS);
-    await persist(list);
-    return list;
+    return [record, ...current];
   });
 }
 
@@ -246,9 +140,9 @@ export async function updateLocation(
   patch: SaveLocationInput,
 ): Promise<SavedLocation[]> {
   if (typeof window === "undefined") return [];
-  return withWriteLock(async () => {
+  return locations.write((current) => {
     const now = new Date().toISOString();
-    const list = (await loadInternal()).map((row) => {
+    return current.map((row) => {
       if (row.id !== id) return row;
       return {
         ...row,
@@ -266,45 +160,24 @@ export async function updateLocation(
         updatedAt: now,
       };
     });
-    await persist(list);
-    return list;
   });
 }
 
 export async function deleteSavedLocation(id: string): Promise<SavedLocation[]> {
   if (typeof window === "undefined") return [];
-  return withWriteLock(async () => {
-    const list = (await loadInternal()).filter((row) => row.id !== id);
-    await persist(list);
-    return list;
-  });
+  return locations.write((current) => current.filter((row) => row.id !== id));
 }
 
 export async function importSavedLocations(
   rows: unknown[],
 ): Promise<{ added: number; locations: SavedLocation[] }> {
   if (typeof window === "undefined") return { added: 0, locations: [] };
-  return withWriteLock(async () => {
-    const existing = await loadInternal();
-    const known = new Set(existing.map((l) => l.id));
-    const incoming = rows
-      .map((row) => fixSavedLocation(row))
-      .filter((l): l is SavedLocation => l !== null && !known.has(l.id));
-    const next = [...incoming, ...existing].slice(0, MAX_LOCATIONS);
-    await persist(next);
-    return { added: incoming.length, locations: next };
-  });
+  const { added, rows: next } = await locations.importRows(rows);
+  return { added, locations: next };
 }
 
 export function onLocationsChanged(listener: () => void): () => void {
-  if (typeof window === "undefined") return () => undefined;
-  const handler = () => listener();
-  window.addEventListener(LOCATIONS_CHANGED_EVENT, handler);
-  window.addEventListener("storage", handler);
-  return () => {
-    window.removeEventListener(LOCATIONS_CHANGED_EVENT, handler);
-    window.removeEventListener("storage", handler);
-  };
+  return locations.subscribe(listener);
 }
 
 export const LOCATION_KIND_LABEL: Record<LocationKind, string> = {

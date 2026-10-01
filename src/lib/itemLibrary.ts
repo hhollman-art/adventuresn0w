@@ -99,7 +99,54 @@ export type SavedGameItem = {
   sourceNote: string;
   /** Optional artwork as a local `data:image/...` URL (never uploaded). */
   imageDataUrl: string | null;
+  /**
+   * SRD instantiation provenance (`instantiateSrdEntity.ts`). Set when this
+   * row was hydrated from a bundled SRD entity. Typed so a DM can rewrite the
+   * description into a custom magic item without losing where it came from.
+   * Legacy rows fall back to the `sourceSrdEntityId:` text tag in `description`.
+   */
+  instanceId: string | null;
+  _source: "SRD" | null;
+  sourceSrdEntityId: string | null;
 };
+
+const SRD_SOURCE_TAG = /sourceSrdEntityId:\s*([^\s\n]+)/;
+
+/** Typed field first, then the legacy description tag written by older builds. */
+export function gameItemSourceSrdEntityId(
+  item: Pick<SavedGameItem, "sourceSrdEntityId" | "description">,
+): string | null {
+  if (item.sourceSrdEntityId) return item.sourceSrdEntityId;
+  const m = item.description.match(SRD_SOURCE_TAG);
+  return m?.[1]?.trim() || null;
+}
+
+function normalizeProvenance(o: {
+  instanceId?: unknown;
+  _source?: unknown;
+  sourceSrdEntityId?: unknown;
+  description?: unknown;
+}): Pick<SavedGameItem, "instanceId" | "_source" | "sourceSrdEntityId"> {
+  const instanceId =
+    typeof o.instanceId === "string" && o.instanceId.startsWith("instance_")
+      ? o.instanceId
+      : null;
+  const typedSource =
+    typeof o.sourceSrdEntityId === "string" && o.sourceSrdEntityId.trim()
+      ? o.sourceSrdEntityId.trim()
+      : null;
+  // Upgrade legacy rows: lift the text tag into the typed field once.
+  const legacy =
+    !typedSource && typeof o.description === "string"
+      ? (o.description.match(SRD_SOURCE_TAG)?.[1]?.trim() ?? null)
+      : null;
+  const sourceSrdEntityId = typedSource ?? legacy;
+  const _source: "SRD" | null =
+    o._source === "SRD" || (instanceId !== null && sourceSrdEntityId !== null) || legacy !== null
+      ? "SRD"
+      : null;
+  return { instanceId, _source, sourceSrdEntityId };
+}
 
 function normalizeKind(value: unknown): GameItemKind {
   return value === "magic" ? "magic" : "equipment";
@@ -182,6 +229,7 @@ export function fixSavedGameItem(value: unknown): SavedGameItem | null {
     settingTags: normalizeStringList(o.settingTags, 12),
     sourceNote: typeof o.sourceNote === "string" ? o.sourceNote : "",
     imageDataUrl: normalizeImageDataUrl(o.imageDataUrl),
+    ...normalizeProvenance(o),
   };
 }
 
@@ -342,6 +390,10 @@ export type SaveGameItemInput = {
   settingTags?: string[];
   sourceNote?: string;
   imageDataUrl?: string | null;
+  /** SRD instantiation provenance — omitted on update ⇒ existing values are kept. */
+  instanceId?: string | null;
+  _source?: "SRD" | null;
+  sourceSrdEntityId?: string | null;
 };
 
 function buildRecordFromInput(
@@ -384,6 +436,17 @@ function buildRecordFromInput(
       input.imageDataUrl !== undefined
         ? normalizeImageDataUrl(input.imageDataUrl)
         : (existing?.imageDataUrl ?? null),
+    // Local mutability: a DM editing an SRD clone into a custom item keeps the
+    // typed origin unless the patch explicitly clears it.
+    ...normalizeProvenance({
+      instanceId: input.instanceId !== undefined ? input.instanceId : existing?.instanceId,
+      _source: input._source !== undefined ? input._source : existing?._source,
+      sourceSrdEntityId:
+        input.sourceSrdEntityId !== undefined
+          ? input.sourceSrdEntityId
+          : existing?.sourceSrdEntityId,
+      description: input.description ?? existing?.description,
+    }),
   };
 }
 

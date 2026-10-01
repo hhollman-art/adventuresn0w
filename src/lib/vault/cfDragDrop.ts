@@ -106,6 +106,21 @@ export function vaultPayloadIsStaticSrd(payload: VaultDragPayload): boolean {
   );
 }
 
+/**
+ * Pick the drop effect for a "link into container" drop that the drag source
+ * actually allows. Browsers cancel the drop (no `drop` event) when `dropEffect`
+ * is outside `effectAllowed`, so sources that only advertise copy/move still land.
+ */
+export function linkDropEffectFor(
+  effectAllowed: DataTransfer["effectAllowed"] | string | undefined,
+): DataTransfer["dropEffect"] {
+  const allowed = (effectAllowed ?? "uninitialized").toLowerCase();
+  if (allowed === "all" || allowed === "uninitialized" || allowed.includes("link")) return "link";
+  if (allowed.includes("copy")) return "copy";
+  if (allowed.includes("move")) return "move";
+  return "none";
+}
+
 export function vaultDragHasPayload(dataTransfer: DataTransfer): boolean {
   const types = Array.from(dataTransfer.types ?? []);
   return types.includes(VAULT_CF_DRAG_MIME) || types.includes(SRD_ENTITY_DRAG_MIME);

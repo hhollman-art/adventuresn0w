@@ -103,6 +103,9 @@ function sampleBackup(): LibraryBackupFile {
         settingTags: [],
         sourceNote: "",
         imageDataUrl: null,
+        instanceId: null,
+        _source: null,
+        sourceSrdEntityId: null,
       },
     ],
     parties: [],
@@ -183,6 +186,7 @@ describe("libraryBackup", () => {
       sessionRecords: [],
       relationshipGraphs: [],
       customSrd: [],
+      containerRelationships: [],
     });
   });
 
@@ -206,6 +210,7 @@ describe("libraryBackup", () => {
         sessionRecords: 0,
         relationshipGraphs: 0,
         customSrd: 0,
+        containerRelationships: 0,
       }),
     ).toBe("Restored 2 CFs, 1 result, 3 characters, 2 items, 1 party, 1 campaign from backup.");
     expect(
@@ -221,6 +226,7 @@ describe("libraryBackup", () => {
         sessionRecords: 0,
         relationshipGraphs: 0,
         customSrd: 0,
+        containerRelationships: 0,
       }),
     ).toBe("Backup read, but everything in it is already in your library.");
   });

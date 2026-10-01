@@ -151,3 +151,56 @@ export type SrdSpellIndexEntry = {
   edition: SrdEdition;
   dataSource: SrdDataSource;
 };
+
+/** Chapter ids of the bundled SRD_CC_v5.2.1 document. */
+export type SrdDocumentChapterId =
+  | "playing-the-game"
+  | "character-creation"
+  | "character-origins"
+  | "classes"
+  | "feats"
+  | "equipment"
+  | "spells"
+  | "rules-glossary"
+  | "gameplay-toolbox"
+  | "magic-items"
+  | "monsters"
+  | "monsters-a-z"
+  | "animals"
+  | "unknown";
+
+/** One heading in the bundled SRD document — byte range into `SRD_DOCUMENT_BODY`. */
+export type SrdDocumentIndexEntry = {
+  key: string;
+  title: string;
+  start: number;
+  end: number;
+  level: number;
+  chapter: SrdDocumentChapterId;
+};
+
+/** One top-level chapter of the bundled SRD document. */
+export type SrdDocumentChapter = { id: string; title: string };
+
+/**
+ * Shape of `public/srd/document.json` — mirrors the three exports of the
+ * generated `srdDocument.data.ts` module (`SRD_DOCUMENT_PDF_ID`,
+ * `SRD_DOCUMENT_CHAPTERS`, `SRD_DOCUMENT_BODY`).
+ */
+export type SrdDocumentAsset = {
+  /** Source document id, e.g. `SRD_CC_v5.2.1`. */
+  pdfId: string;
+  chapters: readonly SrdDocumentChapter[];
+  /** Full markdown body; entity and index rows hold byte ranges into it. */
+  body: string;
+};
+
+/**
+ * Shape of `public/srd/entities.json` — mirrors the three exports of the
+ * generated `srdEntities.data.ts` module.
+ */
+export type SrdEntitiesAsset = {
+  entityCounts: Record<string, number>;
+  taxonomyCounts: Record<string, number>;
+  entities: readonly SrdEntitySummary[];
+};

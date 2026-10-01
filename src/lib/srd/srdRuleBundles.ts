@@ -1,5 +1,5 @@
 import type { LibraryListEntry } from "@/lib/workshop/libraryCatalog";
-import { SRD_DOCUMENT_BODY } from "@/lib/srd/srdDocument.data";
+import { srdDocument } from "@/lib/srd/srdAssets";
 import type { SrdRuleBundleId } from "@/lib/srd/types";
 import {
   SRD_BUNDLED_SECTION_KEYS,
@@ -39,7 +39,7 @@ export function listSrdRuleBundleLibraryEntries(): LibraryListEntry[] {
 
 function sectionMarkdown(section: SrdRuleBundleSectionRef): string {
   if (typeof section.start === "number" && typeof section.end === "number") {
-    return SRD_DOCUMENT_BODY.slice(section.start, section.end).trim();
+    return srdDocument().body.slice(section.start, section.end).trim();
   }
   return "";
 }

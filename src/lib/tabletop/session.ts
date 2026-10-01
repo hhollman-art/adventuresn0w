@@ -206,6 +206,17 @@ export function fixPlayer(o: Record<string, unknown>): PlayerCharacter | null {
             value: typeof row.value === "number" && Number.isFinite(row.value) ? row.value : 0,
             active: row.active !== false,
             notes: typeof row.notes === "string" ? row.notes : undefined,
+            // SRD instantiation provenance (optional — legacy rows omit it).
+            ...(typeof row.instanceId === "string" ? { instanceId: row.instanceId } : {}),
+            ...(row._source === "SRD" ||
+            row._source === "user" ||
+            row._source === "import" ||
+            row._source === "created"
+              ? { _source: row._source }
+              : {}),
+            ...(typeof row.sourceSrdEntityId === "string"
+              ? { sourceSrdEntityId: row.sourceSrdEntityId }
+              : {}),
           }))
       : [],
     currentHp:

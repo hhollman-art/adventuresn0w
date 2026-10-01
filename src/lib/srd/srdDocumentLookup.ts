@@ -1,26 +1,14 @@
 import { SRD_ATTRIBUTION_SHORT, SRD_MANIFEST } from "@/lib/srd/manifest";
-import { SRD_DOCUMENT_BODY, SRD_DOCUMENT_PDF_ID } from "@/lib/srd/srdDocument.data";
-import { SRD_DOCUMENT_INDEX, type SrdDocumentIndexEntry } from "@/lib/srd/srdDocumentIndex.data";
+import { memoBySrdTable, srdDocument, srdDocumentIndex } from "@/lib/srd/srdAssets";
+import type { SrdDocumentChapterId, SrdDocumentIndexEntry } from "@/lib/srd/types";
 import type { SrdApiResource } from "@/lib/srd/dnd5eApi";
 
-export type SrdDocumentChapterId =
-  | "playing-the-game"
-  | "character-creation"
-  | "character-origins"
-  | "classes"
-  | "feats"
-  | "equipment"
-  | "spells"
-  | "rules-glossary"
-  | "gameplay-toolbox"
-  | "magic-items"
-  | "monsters"
-  | "monsters-a-z"
-  | "animals"
-  | "unknown";
+export type { SrdDocumentChapterId, SrdDocumentIndexEntry };
 
-const INDEX_BY_KEY = new Map<string, SrdDocumentIndexEntry>(
-  SRD_DOCUMENT_INDEX.map((entry) => [entry.key, entry]),
+/** Key → heading map, rebuilt once per asset load (see `srdAssets.ts`). */
+const indexByKey = memoBySrdTable(
+  srdDocumentIndex,
+  (index) => new Map<string, SrdDocumentIndexEntry>(index.map((entry) => [entry.key, entry])),
 );
 
 const PREFERRED_CHAPTERS: Partial<Record<SrdApiResource, readonly SrdDocumentChapterId[]>> = {
@@ -76,10 +64,11 @@ function pickEntry(
   const chapters = PREFERRED_CHAPTERS[resource] ?? [];
   let best: SrdDocumentIndexEntry | undefined;
   let bestScore = -1;
+  const byKey = indexByKey();
 
   for (const rawKey of keys) {
     for (const key of aliasKeys(rawKey, resource)) {
-      const entry = INDEX_BY_KEY.get(key);
+      const entry = byKey.get(key);
       if (!entry) continue;
       let score = 0;
       const chapterIdx = chapters.indexOf(entry.chapter);
@@ -96,7 +85,7 @@ function pickEntry(
 }
 
 function documentAttributionFooter(): string {
-  return `\n---\n\n${SRD_ATTRIBUTION_SHORT} Text from **${SRD_DOCUMENT_PDF_ID}** (SRD ${SRD_MANIFEST.version}, CC BY 4.0).`;
+  return `\n---\n\n${SRD_ATTRIBUTION_SHORT} Text from **${srdDocument().pdfId}** (SRD ${SRD_MANIFEST.version}, CC BY 4.0).`;
 }
 
 /** Extract one entry's Markdown from the bundled SRD 5.2.1 document, if present. */
@@ -108,7 +97,7 @@ export function lookupSrdDocumentMarkdown(params: {
   const entry = pickEntry(lookupKeys(params.name, params.index), params.resource);
   if (!entry) return null;
 
-  const raw = SRD_DOCUMENT_BODY.slice(entry.start, entry.end).trim();
+  const raw = srdDocument().body.slice(entry.start, entry.end).trim();
   if (!raw) return null;
 
   const body = raw.replace(/^#{1,6}\s+[^\n]+\n+/, "").trim();

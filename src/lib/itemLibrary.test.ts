@@ -35,8 +35,60 @@ function sample(over: {
     settingTags: [],
     sourceNote: "",
     imageDataUrl: null,
+    instanceId: null,
+    _source: null,
+    sourceSrdEntityId: null,
   };
 }
+
+describe("fixSavedGameItem — SRD instance provenance", () => {
+  it("defaults provenance to null for ordinary items", () => {
+    const fixed = fixSavedGameItem({ id: "i1", name: "Rope (50 ft)" });
+    expect(fixed!.instanceId).toBeNull();
+    expect(fixed!._source).toBeNull();
+    expect(fixed!.sourceSrdEntityId).toBeNull();
+  });
+
+  it("keeps typed provenance even when the description was rewritten", () => {
+    const fixed = fixSavedGameItem({
+      id: "i2",
+      name: "Blade of the Dawn",
+      kind: "magic",
+      rarity: "rare",
+      description: "A radiant blade. No SRD tag left in here.",
+      instanceId: "instance_weapon_longsword_abc123",
+      _source: "SRD",
+      sourceSrdEntityId: "weapon:longsword",
+    });
+    expect(fixed!.instanceId).toBe("instance_weapon_longsword_abc123");
+    expect(fixed!._source).toBe("SRD");
+    expect(fixed!.sourceSrdEntityId).toBe("weapon:longsword");
+  });
+
+  it("upgrades legacy rows that only carry the description text tag", () => {
+    const fixed = fixSavedGameItem({
+      id: "i3",
+      name: "Dancing Sword",
+      kind: "magic",
+      description: "A sword.\n\n_source: SRD\nsourceSrdEntityId: magic-item:dancing-sword",
+    });
+    expect(fixed!.sourceSrdEntityId).toBe("magic-item:dancing-sword");
+    expect(fixed!._source).toBe("SRD");
+    expect(fixed!.instanceId).toBeNull();
+  });
+
+  it("rejects instance ids that are not local instance_* ids", () => {
+    const fixed = fixSavedGameItem({
+      id: "i4",
+      name: "Longsword",
+      instanceId: "weapon:longsword",
+      _source: "SRD",
+      sourceSrdEntityId: "weapon:longsword",
+    });
+    expect(fixed!.instanceId).toBeNull();
+    expect(fixed!.sourceSrdEntityId).toBe("weapon:longsword");
+  });
+});
 
 describe("fixSavedGameItem", () => {
   it("accepts a valid row and fills defaults", () => {

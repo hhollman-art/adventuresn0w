@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireDmSession } from "@/lib/auth";
 import { buildSrdClonePayload } from "@/lib/srd/cloneSrdEntity";
 import { listSrdEntities, parseSrdEntityId } from "@/lib/srd/corpus";
+import { ensureSrdAssetsOnServer } from "@/lib/srd/srdAssets.node";
 import type { SrdEntityKind } from "@/lib/srd/types";
 
 type CloneBody =
@@ -43,6 +44,9 @@ export async function POST(request: Request) {
 
   const session = await requireDmSession();
   const userId = session?.dm.id ?? null;
+
+  // SRD tables are on-demand assets (public/srd/*.json); load them before any lookup.
+  await ensureSrdAssetsOnServer();
 
   if ("bulk" in parsed && parsed.bulk) {
     const count = listSrdEntities(parsed.kind).length;

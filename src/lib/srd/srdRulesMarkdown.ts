@@ -3,11 +3,7 @@ import { SRD_ANCESTRY_ENTRIES } from "@/lib/srd/ancestries";
 import { SRD_CLASS_ENTRIES } from "@/lib/srd/classes";
 import { SRD_SPELLS } from "@/lib/srd/spells";
 import type { SrdCatalogue } from "@/lib/srd/types";
-import {
-  SRD_DOCUMENT_BODY,
-  SRD_DOCUMENT_CHAPTERS,
-  SRD_DOCUMENT_PDF_ID,
-} from "@/lib/srd/srdDocument.data";
+import { srdDocument } from "@/lib/srd/srdAssets";
 
 const DEFAULT_SRD_CATALOGUE: SrdCatalogue = {
   version: SRD_MANIFEST.version,
@@ -17,9 +13,10 @@ const DEFAULT_SRD_CATALOGUE: SrdCatalogue = {
 };
 
 function buildCoverIntro(catalogue: SrdCatalogue): string {
-  const chapterList = SRD_DOCUMENT_CHAPTERS.map((c) => c.title).join(", ");
+  const { pdfId, chapters } = srdDocument();
+  const chapterList = chapters.map((c) => c.title).join(", ");
   return [
-    `Full **System Reference Document** English text (**${SRD_DOCUMENT_PDF_ID}**) bundled for read-only browse in D&D Easy.`,
+    `Full **System Reference Document** English text (**${pdfId}**) bundled for read-only browse in D&D Easy.`,
     "",
     "Use **Contents** in the Scrying Glass, then page through each section — major chapters match the official PDF, with subsections (spells, monsters, magic items, and similar) on their own pages where the source uses headings.",
     "",
@@ -41,7 +38,7 @@ export function buildSrdRulesMarkdown(
     "",
     buildCoverIntro(catalogue),
     "",
-    SRD_DOCUMENT_BODY,
+    srdDocument().body,
     "",
     "## License & attribution",
     "",
@@ -51,5 +48,3 @@ export function buildSrdRulesMarkdown(
 
   return lines.join("\n").trimEnd();
 }
-
-export { SRD_DOCUMENT_CHAPTERS, SRD_DOCUMENT_PDF_ID };

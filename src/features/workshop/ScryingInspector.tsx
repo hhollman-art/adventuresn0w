@@ -206,8 +206,9 @@ function ScryingEmptyState() {
 }
 
 /**
- * Scrying Glass — floating modal overlay (portal). Workspace keeps full width;
- * open via the Scry rail, Alt+2, or openOrFocusPreviewWindow().
+ * Scrying Glass — floating pop-out window rendered into a body portal.
+ * Never reserves layout width; open via the header Scry button, Alt+2, or
+ * openOrFocusPreviewWindow(). Backdrop click, ✕, or Escape closes it.
  */
 export default function ScryingInspector() {
   const titleId = useId();
@@ -216,31 +217,31 @@ export default function ScryingInspector() {
   const library = useLibraryInspectorOptional();
   const { inspectedEntity, inspectorTab } = useInspectorFocus();
   const power = usePowerWorkspaceOptional();
-  const setInspectorOpen = actions?.setInspectorOpen;
+  const setScryingGlassOpen = actions?.setScryingGlassOpen;
   const [mounted, setMounted] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [closing, setClosing] = useState(false);
   const [busSnapshot, setBusSnapshot] = useState<WorkshopPreviewSnapshot | null>(null);
 
-  const open = layout.inspectorOpen || closing;
+  const open = layout.scryingGlassOpen || closing;
 
   const collapse = useCallback(() => {
     if (closing) return;
     setClosing(true);
     setRevealed(false);
     window.setTimeout(() => {
-      setInspectorOpen?.(false);
+      setScryingGlassOpen?.(false);
       setClosing(false);
     }, CLOSE_MS);
-  }, [closing, setInspectorOpen]);
+  }, [closing, setScryingGlassOpen]);
 
   const reveal = useCallback(() => {
     const stored = readPreviewSnapshot();
     if (stored) setBusSnapshot(stored);
     if (stored?.inspect) actions?.applyInspectedEntity(stored.inspect);
     setClosing(false);
-    setInspectorOpen?.(true);
-  }, [actions, setInspectorOpen]);
+    setScryingGlassOpen?.(true);
+  }, [actions, setScryingGlassOpen]);
 
   useEffect(() => {
     setMounted(true);
@@ -250,13 +251,13 @@ export default function ScryingInspector() {
   }, [reveal]);
 
   useEffect(() => {
-    if (!layout.inspectorOpen) {
+    if (!layout.scryingGlassOpen) {
       setRevealed(false);
       return;
     }
     const frame = window.requestAnimationFrame(() => setRevealed(true));
     return () => window.cancelAnimationFrame(frame);
-  }, [layout.inspectorOpen]);
+  }, [layout.scryingGlassOpen]);
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
@@ -339,6 +340,7 @@ export default function ScryingInspector() {
             type="button"
             className="scrying-glass-dismiss-btn"
             aria-label={`Close ${PREVIEW_WINDOW}`}
+            title="Close (Esc)"
             onClick={collapse}
           >
             <span aria-hidden="true">✕</span>
@@ -346,7 +348,7 @@ export default function ScryingInspector() {
         </header>
 
         {layout.inspectorView === "create" ? (
-          <div className="scrying-glass-scroll panel-scroll panel-scroll--scrying-glass">
+          <div className="scrying-glass-scroll custom-scrollbar min-h-0 flex-1 overflow-y-auto">
             <div className="p-3 sm:p-4">
               <CreateNewHubForm
                 initialKind={power?.state.createHubKind}
@@ -379,7 +381,7 @@ export default function ScryingInspector() {
             </div>
 
             <div
-              className="scrying-glass-scroll panel-scroll panel-scroll--scrying-glass"
+              className="scrying-glass-scroll custom-scrollbar min-h-0 flex-1 overflow-y-auto"
               role="tabpanel"
             >
               {inspectorTab === "details" ? (

@@ -5,7 +5,7 @@ import { ToolButton, ToggleChip } from "@/features/ui/ToggleButton";
 import FantasyTooltipWrap from "@/features/ui/FantasyTooltipWrap";
 import type { TabletopSession } from "@/lib/tabletop/types";
 
-export type VttSidePanel = "party" | "tokens" | "initiative" | "dice" | "map";
+export type VttSidePanel = "party" | "tokens" | "initiative" | "dice" | "map" | "session";
 
 type VttControlSidebarProps = {
   session: TabletopSession;
@@ -33,6 +33,7 @@ const PANEL_TABS: [VttSidePanel, string, string][] = [
   ["initiative", "Init.", "Initiative order and rounds"],
   ["dice", "Dice", "Roll dice and view the log"],
   ["map", "Map", "Upload map art and grid settings"],
+  ["session", "Session", "Open campaign's party, quests, loot, and NPCs — drop cards in during play"],
 ];
 
 /** VTT tools + panel tabs — lives in the left column so the map can fill the screen. */

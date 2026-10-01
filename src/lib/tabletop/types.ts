@@ -83,6 +83,12 @@ export type CharacterModifier = {
   /** When false, ignored by the engine (unequipped / inactive). */
   active: boolean;
   notes?: string;
+  /** Hydrated SRD instance id when this effect was instantiated from a feat / condition. */
+  instanceId?: string;
+  /** Provenance tag — `"SRD"` means cloned from bundled rules; edits stay local. */
+  _source?: "SRD" | "user" | "import" | "created";
+  /** Canonical bundled SRD entity id this instance was hydrated from. */
+  sourceSrdEntityId?: string | null;
 };
 
 /** Gear, magic items, conditions, or other effects with stat modifiers. */

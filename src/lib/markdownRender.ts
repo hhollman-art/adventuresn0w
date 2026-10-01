@@ -12,6 +12,8 @@ type MdClassSet = {
   quoteP: string;
   p: string;
   h4Keyed: string;
+  /** `#####` / `######` — SRD stat block section labels (Traits, Actions, …). */
+  h5: string;
   tableWrap: string;
   table: string;
 };
@@ -29,6 +31,7 @@ const PREVIEW_CLASSES: MdClassSet = {
   p: "my-2 leading-relaxed text-[var(--text)]/95",
   h4Keyed:
     "module-keyed-heading mt-3 mb-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]",
+  h5: "md-subheading",
   tableWrap: "module-table-scroll my-4 overflow-x-auto",
   table:
     "module-glance-table w-full border-collapse text-left text-sm text-[var(--text)]",
@@ -44,6 +47,7 @@ const EXPORT_CLASSES: MdClassSet = {
   quoteP: "read-aloud-inner",
   p: "",
   h4Keyed: "module-keyed-heading",
+  h5: "md-subheading",
   tableWrap: "module-table-scroll",
   table: "module-glance-table",
 };
@@ -147,17 +151,76 @@ function tryParseHtmlBlock(
   return null;
 }
 
+const NAMED_ENTITIES: Record<string, string> = {
+  nbsp: "\u00A0",
+  ensp: "\u2002",
+  emsp: "\u2003",
+  thinsp: "\u2009",
+  mdash: "\u2014",
+  ndash: "\u2013",
+  minus: "\u2212",
+  hellip: "\u2026",
+  times: "\u00D7",
+  divide: "\u00F7",
+  plusmn: "\u00B1",
+  deg: "\u00B0",
+  frac12: "\u00BD",
+  frac14: "\u00BC",
+  frac34: "\u00BE",
+  lsquo: "\u2018",
+  rsquo: "\u2019",
+  ldquo: "\u201C",
+  rdquo: "\u201D",
+  bull: "\u2022",
+  middot: "\u00B7",
+  copy: "\u00A9",
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+};
+
+/** Decode HTML entities to characters; unknown names are left as written. Output must still be escaped. */
+export function decodeHtmlEntities(s: string): string {
+  return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z][a-z0-9]*);/gi, (raw, body: string) => {
+    if (body.startsWith("#")) {
+      const hex = body[1] === "x" || body[1] === "X";
+      const cp = Number.parseInt(body.slice(hex ? 2 : 1), hex ? 16 : 10);
+      return Number.isInteger(cp) && cp > 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : raw;
+    }
+    return NAMED_ENTITIES[body] ?? NAMED_ENTITIES[body.toLowerCase()] ?? raw;
+  });
+}
+
 function formatInlineMarkdown(s: string): string {
   const brTags: string[] = [];
   let out = s.replace(/<br\s*\/?>/gi, () => {
     brTags.push("<br />");
     return `\u0000BR${brTags.length - 1}\u0000`;
   });
-  out = out
+  out = decodeHtmlEntities(out)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    // `_x_` / `*x*` — flanking rules keep snake_case words and `2 * 3` arithmetic literal.
+    .replace(/(^|[^\w])_(?=\S)(.+?)(?<=\S)_(?!\w)/g, "$1<em>$2</em>")
+    .replace(/(^|[^\w*])\*(?=[^\s*])([^*]+?)(?<=\S)\*(?![\w*])/g, "$1<em>$2</em>");
   return out.replace(/\u0000BR(\d+)\u0000/g, (_, index) => brTags[Number(index)] ?? "");
+}
+
+/** `**_Name._**` at the start of a paragraph — SRD trait / action lead-in. */
+const TRAIT_LEAD_IN = /^<strong><em>([^<]+?)<\/em><\/strong>/;
+
+function isHardBreakLine(line: string): boolean {
+  return /<br\s*\/?>\s*$/i.test(line);
+}
+
+/** A line that may continue the previous paragraph after a trailing `<br>`. */
+function isParagraphContinuation(line: string | undefined): boolean {
+  const t = line?.trim() ?? "";
+  if (!t) return false;
+  return !/^(#{1,6}\s|[-*]\s|>|```|\||<table[\s>]|<hr\s*\/?>|---|\*\*\*|___)/i.test(t);
 }
 
 function elClass(classes: string): string {
@@ -183,7 +246,10 @@ export function slugifySectionId(title: string, used: Set<string>): string {
 }
 
 function stripInlineMarkdown(text: string): string {
-  return text.replace(/\*\*(.+?)\*\*/g, "$1").trim();
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/(^|[^\w])_(?=\S)(.+?)(?<=\S)_(?!\w)/g, "$1$2")
+    .trim();
 }
 
 function buildTocNav(
@@ -205,7 +271,8 @@ function buildTocNav(
 }
 
 /**
- * Minimal Markdown → HTML: headings (#–####), lists, bold, fenced code, blockquotes, GFM pipe tables, and SRD HTML tables.
+ * Minimal Markdown → HTML: headings (#–######), lists, bold, italics, HTML entities, fenced code, blockquotes, GFM pipe tables, and SRD HTML tables.
+ * Lines ending in `<br>` continue the same paragraph; `**_Name._**` lead-ins get `md-trait` stat block styling.
  * When `paperModuleSheets` is true, `#` through first `##` becomes a cover &lt;header&gt;, then each `##` is a section “sheet” (print page breaks in CSS).
  */
 export function renderMarkdownToHtml(
@@ -413,6 +480,18 @@ export function renderMarkdownToHtml(
       emit(`<h4${elClass(c.h4Keyed)}>${inlineFmt(t.slice(5))}</h4>`);
       continue;
     }
+    if (/^(?:-\s*){3,}$|^(?:\*\s*){3,}$|^(?:_\s*){3,}$/.test(t)) {
+      beginNonQuoteLine();
+      emit(`<hr class="module-md-hr" />`);
+      continue;
+    }
+    const minorHeading = t.match(/^(#{5,6})\s+(.*)$/);
+    if (minorHeading) {
+      beginNonQuoteLine();
+      const tag = minorHeading[1].length === 5 ? "h5" : "h6";
+      emit(`<${tag}${elClass(c.h5)}>${inlineFmt(minorHeading[2])}</${tag}>`);
+      continue;
+    }
     if (t.startsWith("- ") || t.startsWith("* ")) {
       beginNonQuoteLine();
       if (!inUl) {
@@ -424,10 +503,22 @@ export function renderMarkdownToHtml(
     }
     beginNonQuoteLine();
     if (t === "") {
-      emit(variant === "preview" ? "<br/>" : "<p><br /></p>");
-    } else {
-      emit(`<p${elClass(c.p)}>${inlineFmt(t)}</p>`);
+      // Preview paragraphs carry their own margins; an extra <br/> per blank line doubles the gaps.
+      if (variant !== "preview") emit("<p><br /></p>");
+      continue;
     }
+    let para = t;
+    while (isHardBreakLine(para) && isParagraphContinuation(lines[i + 1])) {
+      i += 1;
+      para = `${para}\n${lines[i].trim()}`;
+    }
+    let inner = inlineFmt(para).replace(/(?:\s*<br \/>)+\s*$/, "");
+    let pClass = c.p;
+    if (TRAIT_LEAD_IN.test(inner)) {
+      inner = inner.replace(TRAIT_LEAD_IN, '<strong class="md-trait-name"><em>$1</em></strong>');
+      pClass = `${c.p} md-trait`.trim();
+    }
+    emit(`<p${elClass(pClass)}>${inner}</p>`);
   }
 
   flushUl();

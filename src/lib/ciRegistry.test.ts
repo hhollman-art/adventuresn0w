@@ -68,7 +68,7 @@ describe("ciRegistry", () => {
       "item.srd-magic",
     ]);
     expect(ciClassesForCategory("parties")).toEqual(["party.roster"]);
-    expect(ciClassesForCategory("campaigns")).toEqual(["campaign.record"]);
+    expect(ciClassesForCategory("campaigns")).toEqual(["campaign.record", "campaign.lore-vault"]);
     expect(ciClassesForCategory("sessions")).toEqual([
       "session.record",
       "session.tabletop",

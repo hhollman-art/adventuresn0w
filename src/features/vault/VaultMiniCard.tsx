@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type DragEvent } from "react";
+import type { DragEvent } from "react";
 import { ciClassVisual } from "@/lib/ui/ciClassVisuals";
 import { fantasyCiLabel } from "@/lib/workshop/libraryBrowseFilters";
 import {
@@ -14,13 +14,22 @@ import { unlinkFromVaultParking } from "@/lib/workshop/containerMoveWritePath";
 import { cloneLibraryItemAsHomebrew } from "@/lib/workshop/cfCloneWritePath";
 import { openVaultCardPreview } from "@/lib/vault/openVaultCardPreview";
 import { removeFileFromVault } from "@/lib/vault/removeFileFromVault";
+import {
+  LORE_VAULT_CI_CLASS,
+  LORE_VAULT_CONTAINER_ID,
+  LORE_VAULT_SLOT,
+} from "@/lib/vault/loreVaultContainer";
 import CfContextMenu from "@/features/ui/CfContextMenu";
 import { emitAppToast } from "@/lib/ui/appToast";
 
 type VaultMiniCardProps = {
   entry: VaultCardEntry;
   parked?: boolean;
+  /** Vault relationship row id for a parked card. */
+  relationshipId?: string | null;
   onParkedChange?: () => void;
+  /** Purge handler owned by the drawer (immediate, with undo). */
+  onPurge?: (entry: VaultCardEntry) => void;
 };
 
 /**
@@ -29,11 +38,12 @@ type VaultMiniCardProps = {
 export default function VaultMiniCard({
   entry,
   parked = false,
+  relationshipId = null,
   onParkedChange,
+  onPurge,
 }: VaultMiniCardProps) {
   const { setDragging, refreshEntries } = useVaultDrawer();
   const visual = ciClassVisual(entry.ciClass);
-  const [confirmPurge, setConfirmPurge] = useState(false);
 
   const payload: VaultDragPayload = withContainerContext(
     {
@@ -45,11 +55,11 @@ export default function VaultMiniCard({
     },
     parked
       ? {
-          parentId: "lore-vault",
-          parentCiClass: null,
-          slot: "vault",
+          parentId: LORE_VAULT_CONTAINER_ID,
+          parentCiClass: LORE_VAULT_CI_CLASS,
+          slot: LORE_VAULT_SLOT,
           holdKind: "park",
-          relationshipId: entry.id,
+          relationshipId: relationshipId ?? entry.id,
         }
       : { parentId: null, parentCiClass: null, slot: null, holdKind: null },
   );
@@ -74,133 +84,111 @@ export default function VaultMiniCard({
     onParkedChange?.();
   };
 
-  const onConfirmPurge = async () => {
-    setConfirmPurge(false);
+  const purge = async () => {
+    if (onPurge) {
+      onPurge(entry);
+      return;
+    }
     const result = await removeFileFromVault(entry.id, true, {
       title: entry.title,
       sourceSrdEntityId: entry.sourceSrdEntityId,
     });
     if (!result.ok) {
       emitAppToast(result.error, "warn");
-    } else {
-      emitAppToast(result.message, "success");
-      onParkedChange?.();
-      void refreshEntries();
+      return;
     }
+    onParkedChange?.();
+    void refreshEntries();
   };
 
   return (
-    <>
-      <CfContextMenu
-        target={{
-          id: entry.id,
-          title: entry.title,
-          ciClass: entry.ciClass,
-          category: entry.category,
-          provenance: entry.provenance,
-          detail: entry.detail,
-          srdEntityId: entry.sourceSrdEntityId ?? undefined,
-        }}
-        alreadyParked={parked}
-        onInspect={() => openVaultCardPreview(entry)}
-        onDelete={parked ? () => setConfirmPurge(true) : undefined}
-        extraItems={[
-          {
-            id: "copy",
-            label: "Copy (homebrew duplicate)",
-            onSelect: () => void onCopy(),
-          },
-          {
-            id: "unlink",
-            label: parked ? "Unlink from vault parking" : "Unlink (not parked)",
-            disabled: !parked,
-            onSelect: () => void onUnlink(),
-          },
-        ]}
-      >
-        {(bind) => (
-          <li
-            className="vault-mini-card"
-            draggable
-            {...bind}
-            onDragStart={(event: DragEvent<HTMLLIElement>) => {
-              setVaultDragData(event.dataTransfer, payload);
-              setDragging(payload);
-              event.dataTransfer.effectAllowed = "copyMove";
-            }}
-            onDragEnd={() => setDragging(null)}
+    <CfContextMenu
+      target={{
+        id: entry.id,
+        title: entry.title,
+        ciClass: entry.ciClass,
+        category: entry.category,
+        provenance: entry.provenance,
+        detail: entry.detail,
+        srdEntityId: entry.sourceSrdEntityId ?? undefined,
+      }}
+      alreadyParked={parked}
+      onInspect={() => openVaultCardPreview(entry)}
+      extraItems={[
+        {
+          id: "copy",
+          label: "Copy (homebrew duplicate)",
+          onSelect: () => void onCopy(),
+        },
+        {
+          id: "unlink",
+          label: parked ? "Unlink from vault parking" : "Unlink (not parked)",
+          disabled: !parked,
+          onSelect: () => void onUnlink(),
+        },
+        {
+          id: "purge-vault",
+          label: "Purge from Vault",
+          danger: true,
+          hidden: !parked,
+          onSelect: () => void purge(),
+        },
+      ]}
+    >
+      {(bind) => (
+        <li
+          className="vault-mini-card"
+          draggable
+          data-parked={parked ? "true" : undefined}
+          {...bind}
+          onDragStart={(event: DragEvent<HTMLLIElement>) => {
+            setVaultDragData(event.dataTransfer, payload);
+            setDragging(payload);
+            // copy → park, move → trash, link → container drop zones.
+            event.dataTransfer.effectAllowed = "all";
+          }}
+          onDragEnd={() => setDragging(null)}
+        >
+          <span className="vault-mini-card-icon" style={{ color: visual.accent }} aria-hidden="true">
+            {visual.icon}
+          </span>
+          <button
+            type="button"
+            className="vault-mini-card-copy min-w-0 text-left"
+            onClick={() => openVaultCardPreview(entry)}
+            title="Inspect in Scrying Glass"
           >
-            <span className="vault-mini-card-icon" style={{ color: visual.accent }} aria-hidden="true">
-              {visual.icon}
-            </span>
+            <p className="vault-mini-card-title">
+              {entry.title}
+              {parked ? (
+                <span className="ml-1 text-[10px] font-normal text-[var(--dmms-accent,var(--accent))]">parked</span>
+              ) : null}
+            </p>
+            <p className="vault-mini-card-meta">
+              {fantasyCiLabel(entry.ciClass)} · {(entry.detail || "").slice(0, 48)}
+            </p>
+          </button>
+          {parked ? (
             <button
               type="button"
-              className="vault-mini-card-copy min-w-0 text-left"
-              onClick={() => openVaultCardPreview(entry)}
-              title="Inspect in Scrying Glass"
+              className="vault-mini-card-purge"
+              onClick={(event) => {
+                event.stopPropagation();
+                void purge();
+              }}
+              aria-label={`Purge ${entry.title} from Vault`}
+              title="Purge from Vault — your Library copy is kept"
             >
-              <p className="vault-mini-card-title">
-                {entry.title}
-                {parked ? (
-                  <span className="ml-1 text-[10px] font-normal text-[var(--dmms-accent,var(--accent))]">parked</span>
-                ) : null}
-              </p>
-              <p className="vault-mini-card-meta">
-                {fantasyCiLabel(entry.ciClass)} · {(entry.detail || "").slice(0, 48)}
-              </p>
+              🗑
             </button>
+          ) : (
             <span className="vault-mini-card-grip" aria-hidden="true">
               ⠿
             </span>
-          </li>
-        )}
-      </CfContextMenu>
-
-      {confirmPurge ? (
-        <div
-          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={`purge-vault-${entry.id}`}
-          onClick={() => setConfirmPurge(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-lg border p-4 shadow-xl"
-            style={{ background: "var(--panel)", borderColor: "var(--border)" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3
-              id={`purge-vault-${entry.id}`}
-              className="text-sm font-bold text-slate-100"
-            >
-              Purge from Vault?
-            </h3>
-            <p className="mt-2 text-xs leading-relaxed text-slate-300">
-              Remove <span className="text-slate-100">{entry.title}</span> from the Lore
-              Vault? It will no longer appear here. The Library original (if any) is not
-              deleted — drop it into “Park” again if you want it back in the vault.
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button type="button" className="btn btn-sm" onClick={() => setConfirmPurge(false)}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm"
-                style={{
-                  background: "var(--dmms-hp, #f85149)",
-                  color: "var(--dmms-text, #f0f6fc)",
-                  borderColor: "var(--dmms-hp, #f85149)",
-                }}
-                onClick={() => void onConfirmPurge()}
-              >
-                Purge from Vault
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </>
+          )}
+        </li>
+      )}
+    </CfContextMenu>
   );
 }
 

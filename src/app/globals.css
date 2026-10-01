@@ -563,7 +563,11 @@ html[data-preview-window="standalone"] .app-content {
     linear-gradient(168deg, color-mix(in srgb, var(--surface) 96%, black) 0%, var(--bg) 100%);
 }
 
-/* In-app Scrying Glass popup — glass lens motif (light center, dark edges). */
+/*
+ * In-app Scrying Glass pop-out — fixed full-viewport overlay (portal on body).
+ * z-index sits above app dialogs (Vault modals z-110, Create hub z-80) because
+ * those can launch a scry and the glass must open on top of them.
+ */
 .scrying-glass-backdrop {
   position: fixed;
   inset: 0;
@@ -572,8 +576,9 @@ html[data-preview-window="standalone"] .app-content {
   align-items: center;
   justify-content: center;
   padding: clamp(0.75rem, 2vw, 1.5rem);
-  background: rgba(21, 47, 88, 0.55);
-  backdrop-filter: blur(10px);
+  background: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   opacity: 0;
   transition: opacity 180ms ease;
 }
@@ -662,16 +667,17 @@ html[data-preview-window="standalone"] .app-content {
   margin: 0;
 }
 
+/* Pop-out window: w-11/12 max-w-4xl h-[85vh], dark crystal lens. */
 .scrying-glass-popup-shell {
   display: flex;
   flex-direction: column;
   flex: none;
-  width: min(72rem, calc(100vw - 1.5rem));
-  max-height: min(88dvh, calc(100dvh - 1.5rem));
-  height: min(88dvh, calc(100dvh - 1.5rem));
+  width: min(56rem, 91.6667vw);
+  height: min(85vh, calc(100dvh - 1.5rem));
+  max-height: calc(100dvh - 1.5rem);
   min-height: 0;
   margin: 0;
-  /* Clip glass frame; scrolling lives only on .scrying-glass-scroll */
+  /* Clips the rounded glass edge only; the body below scrolls on .scrying-glass-scroll */
   overflow: hidden;
   opacity: 0;
   transform: scale(0.96);
@@ -700,6 +706,44 @@ html[data-preview-window="standalone"] .app-content {
   transform: none;
 }
 
+/* Dark crystal: obsidian edges, faint arcane core — modal pop-out only. */
+.scrying-glass-popup-shell.scrying-glass-frame {
+  border-color: rgba(142, 212, 255, 0.35);
+  background: radial-gradient(
+    ellipse 100% 88% at 50% 40%,
+    #1f3a5c 0%,
+    #142740 42%,
+    #0b1628 74%,
+    #060c18 100%
+  );
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.65),
+    0 0 32px rgba(94, 184, 255, 0.22),
+    0 0 0 1px rgba(200, 236, 255, 0.1) inset;
+}
+
+.scrying-glass-popup-shell .scrying-glass-titlebar {
+  background: linear-gradient(180deg, rgba(31, 58, 92, 0.85) 0%, rgba(14, 28, 48, 0.92) 100%);
+}
+
+/* Glass-blue thumb; compound selector outranks the gold `.custom-scrollbar` default. */
+.scrying-glass-scroll.custom-scrollbar {
+  scrollbar-color: #4a8fd4 #0b1628;
+}
+
+.scrying-glass-scroll.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrying-glass-scroll.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0b1628;
+}
+
+.scrying-glass-scroll.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #4a8fd4;
+  border-radius: 4px;
+}
+
 /* Single native scrollport for Scrying Glass modal content (mouse wheel works here). */
 .scrying-glass-scroll {
   flex: 1 1 auto;
@@ -725,6 +769,29 @@ html[data-preview-window="standalone"] .app-content {
 .scrying-glass-popup-shell .scrying-inspector-pane {
   max-height: none;
   overflow: visible;
+}
+
+/* Darker lens core keeps body (#d4e8f8 ≈ 9:1), muted (#8bb8d9 ≈ 5:1), and accent text above WCAG AA. */
+.scrying-glass-popup-shell .preview-window-panel {
+  background: radial-gradient(
+    ellipse 100% 100% at 50% 40%,
+    #1f4266 0%,
+    #183656 45%,
+    #102844 75%,
+    var(--sg-bg-deep) 100%
+  ) !important;
+}
+
+.scrying-glass-popup-shell .preview-window-panel article.adventure-md.output-document-view .output-document-panel {
+  background: radial-gradient(ellipse 90% 75% at 50% 42%, #1f4266 0%, #183656 55%, #122c4a 100%);
+}
+
+.scrying-glass-popup-shell .preview-window-panel article.adventure-md .md-subheading {
+  color: var(--sg-accent);
+}
+
+.scrying-glass-popup-shell .preview-window-panel article.adventure-md .md-trait-name {
+  color: var(--sg-heading);
 }
 
 .scrying-glass-titlebar {
@@ -1570,22 +1637,6 @@ html[data-preview-window="standalone"] .app-content {
   gap: 0.75rem;
   overflow: hidden;
   padding: 0.15rem 0.1rem;
-}
-
-.command-center-inspector .library-inline-scrying-empty,
-.command-center-inspector .library-inline-scrying-frame,
-.command-center-inspector .scrying-glass-frame,
-.command-center-inspector .scrying-glass-popup-frame,
-.command-center-inspector .preview-window-frame {
-  opacity: 1;
-  transform: none;
-  min-height: 0;
-  max-height: none;
-  width: 100%;
-  height: 100%;
-  flex: 1 1 auto;
-  border-radius: 0;
-  margin: 0;
 }
 
 @media (min-width: 1024px) {
@@ -3002,6 +3053,37 @@ article.adventure-md hr.module-md-hr {
   margin: 1rem 0;
 }
 
+/* SRD stat block typography — `#####` section labels and `**_Trait._**` lead-ins. */
+article.adventure-md .md-subheading {
+  margin: 1.5rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+article.adventure-md .md-subheading + hr.module-md-hr {
+  margin: 0.3rem 0 0.75rem;
+}
+
+article.adventure-md p.md-trait {
+  margin: 0 0 0.75rem;
+  line-height: 1.625;
+}
+
+article.adventure-md .md-trait-name {
+  font-weight: 700;
+}
+
+article.adventure-md .md-trait-name em {
+  font-style: italic;
+}
+
+article.adventure-md em {
+  font-style: italic;
+}
+
 article.adventure-md .module-glance-th,
 article.adventure-md .module-glance-td {
   border: 1px solid var(--border);
@@ -3534,9 +3616,7 @@ article.adventure-md .module-read-aloud p {
   body:has(.character-sheet-print) .vault-drawer,
   body:has(.character-sheet-print) .vault-drawer-toggle,
   body:has(.character-sheet-print) .command-center-vault-rail,
-  body:has(.character-sheet-print) .command-center-inspector-rail,
   body:has(.character-sheet-print) .command-center-vault,
-  body:has(.character-sheet-print) .command-center-inspector,
   body:has(.character-sheet-print) header,
   body:has(.character-sheet-print) nav,
   body:has(.character-sheet-print) .app-chrome,
@@ -4838,7 +4918,6 @@ article.adventure-md .module-read-aloud p {
   --command-center-gold: var(--dmms-accent);
   --cc-rail: 3rem;
   --cc-vault: 16.25rem;
-  --cc-inspector: 21.25rem;
   --cc-main-min: 40.625rem;
   position: relative;
   display: flex;
@@ -4851,8 +4930,7 @@ article.adventure-md .module-read-aloud p {
   color: var(--dmms-text);
 }
 
-.command-center-vault-rail,
-.command-center-inspector-rail {
+.command-center-vault-rail {
   display: flex;
   flex: 0 0 var(--cc-rail);
   width: var(--cc-rail);
@@ -4866,10 +4944,6 @@ article.adventure-md .module-read-aloud p {
 
 .command-center-vault-rail {
   border-right: 1px solid var(--dmms-border-strong);
-}
-
-.command-center-inspector-rail {
-  border-left: 1px solid var(--dmms-border-strong);
 }
 
 .command-center-rail-btn {
@@ -4960,11 +5034,6 @@ article.adventure-md .module-read-aloud p {
   padding-left: 0;
   padding-right: 0;
   color: var(--dmms-text);
-}
-
-/* Legacy docked inspector (unused) — Scrying Glass is a floating modal overlay. */
-.command-center-inspector {
-  display: none;
 }
 
 .command-center-panel-collapse {
@@ -5444,6 +5513,39 @@ article.adventure-md .module-read-aloud p {
   font-size: 0.75rem;
   opacity: 0.7;
   color: var(--dmms-muted, #8b949e);
+}
+
+.vault-mini-card-purge {
+  flex-shrink: 0;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 0.35rem;
+  background: transparent;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--dmms-muted, #8b949e);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.vault-mini-card:hover .vault-mini-card-purge,
+.vault-mini-card-purge:focus-visible {
+  opacity: 1;
+}
+
+.vault-mini-card-purge:hover {
+  color: var(--dmms-hp, #f85149);
+  border-color: var(--dmms-hp, #f85149);
+}
+
+.vault-parked-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.45rem;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 .vault-drawer-footer {

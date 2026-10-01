@@ -67,7 +67,8 @@ export default function HelpPage() {
           </li>
           <li>
             Press the Generate button at the bottom of the form and watch the
-            result stream into the {PREVIEW_WINDOW} on the right.
+            result stream into the {PREVIEW_WINDOW}, a pop-out window you can close with
+            Esc and reopen from the Scry button at the top of the screen.
           </li>
           <li>
             Use the buttons above the output to copy, download, or print what

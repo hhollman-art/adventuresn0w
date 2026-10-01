@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ABILITY_LIST,
   abilityMod,
@@ -22,7 +22,11 @@ import { vaultPayloadIsStaticSrd } from "@/lib/vault/cfDragDrop";
 import {
   instantiateSrdEntity,
   isStaticSrdDragId,
+  relationshipForInstance,
+  type InstantiatedCF,
 } from "@/lib/srd/instantiateSrdEntity";
+import type { ContainerSlot } from "@/lib/workshop/containerCf";
+import { recordContainerRelationship } from "@/lib/workshop/containerRelationships";
 import {
   mintCharacterCfId,
   type SavedCharacter,
@@ -184,6 +188,16 @@ export default function CharacterEditorDialog({
   const [aiError, setAiError] = useState<string | null>(null);
   const [levelNotice, setLevelNotice] = useState<string | null>(null);
   const [printOpen, setPrintOpen] = useState(false);
+
+  /**
+   * SRD instances dropped into this draft. The draft is the container state
+   * until the hero is saved, so relationship rows are queued here and written
+   * with the saved character id — cancelling the dialog leaves no orphan rows.
+   */
+  const pendingInstancesRef = useRef<{ inst: InstantiatedCF; slot: ContainerSlot }[]>([]);
+  const queueInstance = (inst: InstantiatedCF, slot: ContainerSlot) => {
+    pendingInstancesRef.current.push({ inst, slot });
+  };
 
   const slotsHint = useMemo(
     () => formatSpellSlotsHint(draft.level, draft.className, draft.subclass),
@@ -348,6 +362,7 @@ export default function CharacterEditorDialog({
         return { ok: false, message: `${inst.name} is already on this sheet.` };
       }
       setDraft((d) => ({ ...d, items: [...d.items, embedded] }));
+      queueInstance(inst, "inventory");
       return {
         ok: true,
         message: `${inst.name} instantiated from SRD (${inst.instanceId}).`,
@@ -394,6 +409,7 @@ export default function CharacterEditorDialog({
         ...d,
         knownSpellIds: [...d.knownSpellIds, spellKey],
       }));
+      queueInstance(inst, "spells");
       return {
         ok: true,
         message: `${inst.name} added to known spells (${inst.instanceId}).`,
@@ -436,6 +452,7 @@ export default function CharacterEditorDialog({
       }
       const modifier = inst.payload.modifier;
       setDraft((d) => linkModifierToCharacter(d as PlayerCharacter, modifier) as Draft);
+      queueInstance(inst, "effects");
       return {
         ok: true,
         message: `${inst.name} instantiated from SRD as an effect (${inst.instanceId}).`,
@@ -485,6 +502,36 @@ export default function CharacterEditorDialog({
     character: SavedCharacter;
     characters: SavedCharacter[];
   }) => {
+    // Flush queued SRD instances onto the saved container's relationship index.
+    // Only rows still present on the saved sheet are written (removed drops skip).
+    const pending = pendingInstancesRef.current;
+    pendingInstancesRef.current = [];
+    if (pending.length > 0) {
+      const player = result.character.player;
+      const parent = { id: result.character.id, ciClass: "character.sheet" as const };
+      const rows = pending
+        .filter(({ inst, slot }) => {
+          if (slot === "inventory") return player.items.some((i) => i.instanceId === inst.instanceId);
+          if (slot === "effects") {
+            return (player.linkedModifiers ?? []).some((m) => m.id === inst.instanceId);
+          }
+          if (slot === "spells" && inst.payload.target === "spell") {
+            return player.knownSpellIds.includes(inst.payload.spellKey);
+          }
+          return true;
+        })
+        .map(({ inst, slot }) =>
+          relationshipForInstance(inst, parent, slot, {
+            active:
+              slot === "spells" && inst.payload.target === "spell"
+                ? player.preparedSpellIds.includes(inst.payload.spellKey)
+                : true,
+          }),
+        );
+      if (rows.length > 0) {
+        void recordContainerRelationship(rows).catch(() => undefined);
+      }
+    }
     onSaved(
       result.characters,
       character

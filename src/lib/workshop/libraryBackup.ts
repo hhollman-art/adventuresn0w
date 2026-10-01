@@ -38,6 +38,11 @@ import {
   importCustomSrdEntries,
   loadSavedCustomSrdEntries,
 } from "@/lib/srd/srdCustomLibrary";
+import type { CfRelationship } from "@/lib/workshop/containerCf";
+import {
+  importContainerRelationships,
+  loadContainerRelationships,
+} from "@/lib/workshop/containerRelationships";
 
 /**
  * Library backup file — everything the DM owns, in one JSON document they can
@@ -69,6 +74,8 @@ export type LibraryBackupFile = {
   relationshipGraphs?: CampaignRelationshipGraph[];
   /** User-owned editable clones of bundled SRD entries. */
   customSrd?: SavedCustomSrdEntry[];
+  /** Container relationship index — SRD instances held by campaigns / characters. */
+  containerRelationships?: CfRelationship[];
 };
 
 export const BACKUP_FORMAT = "ddeasy-library-backup";
@@ -86,11 +93,12 @@ export type LibraryBackupCounts = {
   sessionRecords: number;
   relationshipGraphs: number;
   customSrd: number;
+  containerRelationships: number;
 };
 
 /** Gather every locally stored library item into one serializable document. */
 export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
-  const [seeds, results, characters, items, parties, campaigns, npcs, locations, sessionRecords, relationshipGraphs, customSrd] =
+  const [seeds, results, characters, items, parties, campaigns, npcs, locations, sessionRecords, relationshipGraphs, customSrd, containerRelationships] =
     await Promise.all([
     loadRealmSeeds(),
     loadGenerationLibraryItems(),
@@ -103,6 +111,7 @@ export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
     loadSavedSessionRecords(),
     loadCampaignRelationshipGraphs(),
     loadSavedCustomSrdEntries(),
+    loadContainerRelationships(),
   ]);
   return {
     format: BACKUP_FORMAT,
@@ -119,6 +128,7 @@ export async function buildLibraryBackup(): Promise<LibraryBackupFile> {
     sessionRecords,
     relationshipGraphs,
     customSrd,
+    containerRelationships,
   };
 }
 
@@ -145,6 +155,7 @@ export type ParsedBackup =
       sessionRecords: unknown[];
       relationshipGraphs: unknown[];
       customSrd: unknown[];
+      containerRelationships: unknown[];
     }
   | { ok: false; error: string };
 
@@ -180,6 +191,9 @@ export function parseLibraryBackup(text: string): ParsedBackup {
     sessionRecords: Array.isArray(o.sessionRecords) ? o.sessionRecords : [],
     relationshipGraphs: Array.isArray(o.relationshipGraphs) ? o.relationshipGraphs : [],
     customSrd: Array.isArray(o.customSrd) ? o.customSrd : [],
+    containerRelationships: Array.isArray(o.containerRelationships)
+      ? o.containerRelationships
+      : [],
   };
 }
 
@@ -196,6 +210,7 @@ export type RestoreOutcome = {
   sessionRecords: SavedSessionRecord[];
   relationshipGraphs: CampaignRelationshipGraph[];
   customSrd: SavedCustomSrdEntry[];
+  containerRelationships: CfRelationship[];
 };
 
 /**
@@ -215,6 +230,7 @@ export async function restoreLibraryBackup(parsed: {
   sessionRecords?: unknown[];
   relationshipGraphs?: unknown[];
   customSrd?: unknown[];
+  containerRelationships?: unknown[];
 }): Promise<RestoreOutcome> {
   const seedResult = await importRealmSeeds(parsed.seeds);
   const resultResult = await importGenerationLibraryItems(parsed.results);
@@ -232,6 +248,10 @@ export async function restoreLibraryBackup(parsed: {
   );
   const customList = await importCustomSrdEntries(customRows);
   const customAdded = Math.max(0, customList.length - beforeCustom);
+  // Containers restore first (above) so these rows point at rows that exist.
+  const containerRelResult = await importContainerRelationships(
+    parsed.containerRelationships ?? [],
+  );
   return {
     counts: {
       seeds: seedResult.added,
@@ -245,6 +265,7 @@ export async function restoreLibraryBackup(parsed: {
       sessionRecords: sessionResult.added,
       relationshipGraphs: graphResult.added,
       customSrd: customAdded,
+      containerRelationships: containerRelResult.added,
     },
     seeds: seedResult.seeds,
     results: resultResult.items,
@@ -257,6 +278,7 @@ export async function restoreLibraryBackup(parsed: {
     sessionRecords: sessionResult.sessionRecords,
     relationshipGraphs: graphResult.graphs,
     customSrd: customList,
+    containerRelationships: containerRelResult.relationships,
   };
 }
 
@@ -293,6 +315,10 @@ export function describeRestoreCounts(counts: LibraryBackupCounts): string {
     );
   if (counts.customSrd > 0)
     parts.push(`${counts.customSrd} custom SRD clone${counts.customSrd === 1 ? "" : "s"}`);
+  if (counts.containerRelationships > 0)
+    parts.push(
+      `${counts.containerRelationships} container link${counts.containerRelationships === 1 ? "" : "s"}`,
+    );
   if (parts.length === 0) {
     return "Backup read, but everything in it is already in your library.";
   }

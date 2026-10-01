@@ -56,6 +56,9 @@ describe("gameItemToLibraryEntry homebrew", () => {
       settingTags: ["Homebrew"],
       sourceNote: "Codex",
       imageDataUrl: null,
+      instanceId: null,
+      _source: null,
+      sourceSrdEntityId: null,
     };
     const entry = gameItemToLibraryEntry(item);
     expect(entry.isHomebrew).toBe(true);

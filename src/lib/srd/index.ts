@@ -58,7 +58,6 @@ export {
   srdEntityToItemRef,
   srdEntityToLibraryEntry,
   srdEntityToPreviewMarkdown,
-  SRD_ENTITIES,
 } from "./corpus";
 
 export {
@@ -75,11 +74,31 @@ export {
   type StaticSRDReference,
   type SrdInstanceSource,
 } from "./instantiateSrdEntity";
-export { SRD_ENTITY_COUNTS, SRD_TAXONOMY_COUNTS } from "./srdEntities.data";
+/*
+ * SRD Asset tables (entities, document index, spell index) are fetched on
+ * demand from `public/srd/*.json` — see `./srdAssets`. The sync accessors
+ * below replace the former `SRD_ENTITIES`, `SRD_ENTITY_COUNTS`,
+ * `SRD_TAXONOMY_COUNTS`, `SRD_SPELL_INDEX`, and `SRD_DOCUMENT_INDEX` constants.
+ */
+export {
+  ensureSrdAssets,
+  isSrdAssetsReady,
+  loadSrdAsset,
+  srdDocument,
+  srdDocumentIndex,
+  srdEntities,
+  srdEntityCounts,
+  srdSpellIndex,
+  srdTaxonomyCounts,
+  subscribeSrdAssets,
+  SRD_ASSET_FILES,
+  type SrdAssetName,
+} from "./srdAssets";
 export { SRD_ORPHANS, SRD_ORPHAN_COUNT } from "./srdOrphans.data";
-export { SRD_SPELL_INDEX } from "./spellIndex.data";
 export { findSpellIndexEntry, searchSpellIndex } from "./spellIndex";
 export type {
+  SrdDocumentAsset,
+  SrdDocumentChapter,
   SrdEntityId,
   SrdEntityKind,
   SrdEntitySummary,
@@ -109,7 +128,7 @@ export const SRD_CATALOGUE: SrdCatalogue = {
   ancestries: SRD_ANCESTRY_ENTRIES,
 };
 
-export { SRD_DOCUMENT_CHAPTERS, SRD_DOCUMENT_PDF_ID } from "./srdDocument.data";
+// `SRD_DOCUMENT_CHAPTERS` / `SRD_DOCUMENT_PDF_ID` are now `srdDocument().chapters` / `.pdfId`.
 export { buildSrdRulesMarkdown } from "./srdRulesMarkdown";
 export {
   DND5E_API_ORIGIN,
@@ -139,5 +158,5 @@ export {
   lookupSrdDocumentMarkdown,
   normalizeSrdDocumentKey,
   type SrdDocumentChapterId,
+  type SrdDocumentIndexEntry,
 } from "./srdDocumentLookup";
-export { SRD_DOCUMENT_INDEX, type SrdDocumentIndexEntry } from "./srdDocumentIndex.data";

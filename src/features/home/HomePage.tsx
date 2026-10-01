@@ -245,7 +245,7 @@ export default function Home(props: PageProps<"/">) {
   const searchParams = useSearchParams();
   const commandCenterActions = useCommandCenterActionsOptional();
   const setLibraryInspector = commandCenterActions?.setLibraryInspector;
-  const setInspectorOpen = commandCenterActions?.setInspectorOpen;
+  const setScryingGlassOpen = commandCenterActions?.setScryingGlassOpen;
   const isLibraryView =
     pathname === "/library" || pathname.startsWith("/library/");
   const isWelcomeView = !isLibraryView && workspace === "welcome";
@@ -1533,8 +1533,8 @@ export default function Home(props: PageProps<"/">) {
 
   useEffect(() => {
     if (!isLibraryView || !librarySelectionKey) return;
-    setInspectorOpen?.(true);
-  }, [isLibraryView, librarySelectionKey, setInspectorOpen]);
+    setScryingGlassOpen?.(true);
+  }, [isLibraryView, librarySelectionKey, setScryingGlassOpen]);
 
   useEffect(() => {
     return () => setLibraryInspector?.(null);

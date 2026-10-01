@@ -423,13 +423,14 @@ function LibraryEntryRow({
         const payload = vaultPayloadForTarget(libraryEntryToContextTarget(entry));
         setVaultDragData(e.dataTransfer, payload);
         setDragging(payload);
-        e.dataTransfer.effectAllowed = "all";
         if (entry.srdEntityId) {
           setSrdEntityDragData(e.dataTransfer, {
             entityId: entry.srdEntityId,
             name: entry.title,
           });
         }
+        // After the SRD helper so its narrower copyLink never wins.
+        e.dataTransfer.effectAllowed = "all";
       }}
       onDragEnd={() => setDragging(null)}
     >

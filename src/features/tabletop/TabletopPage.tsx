@@ -67,6 +67,7 @@ import SessionRoomHostPanel from "@/features/session-room/SessionRoomHostPanel";
 import { useFullscreen } from "@/features/tabletop/useFullscreen";
 import VaultDropZone from "@/features/vault/VaultDropZone";
 import TabletopVaultDropBridge from "@/features/vault/TabletopVaultDropBridge";
+import SessionWorkspace from "@/features/tabletop/SessionWorkspace";
 import {
   TOKEN_COLOR_PALETTE,
   TOKEN_KIND_DEFAULT_COLOR,
@@ -258,6 +259,7 @@ export default function TabletopPage() {
         {panel === "initiative" && <InitiativePanel session={session} update={update} />}
         {panel === "dice" && <DicePanel session={session} update={update} />}
         {panel === "map" && <MapPanel session={session} update={update} />}
+        {panel === "session" && <SessionWorkspace onStatus={setVaultStatus} />}
       </VttControlSidebar>
 
       <VaultDropZone

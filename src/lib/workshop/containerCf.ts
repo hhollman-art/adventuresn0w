@@ -63,7 +63,33 @@ export type CfRelationship = {
   /** Optional provenance — library CF this embed was cloned from. */
   sourceLibraryId?: string | null;
   notes?: string;
+  /**
+   * SRD instantiation provenance (see `instantiateSrdEntity.ts`). Present when
+   * `childId` is a local `instance_*` clone of a bundled SRD entity.
+   */
+  instanceId?: string;
+  _source?: "SRD";
+  sourceSrdEntityId?: string | null;
 };
+
+/** Minimal SRD provenance carried by rows that project into relationships. */
+type ProvenanceInput = {
+  instanceId?: string;
+  _source?: string;
+  sourceSrdEntityId?: string | null;
+};
+
+function provenanceFields(row: ProvenanceInput): Pick<
+  CfRelationship,
+  "instanceId" | "_source" | "sourceSrdEntityId"
+> {
+  if (row._source !== "SRD" || typeof row.instanceId !== "string") return {};
+  return {
+    instanceId: row.instanceId,
+    _source: "SRD",
+    sourceSrdEntityId: row.sourceSrdEntityId ?? null,
+  };
+}
 
 /**
  * Structured container Creation File — not a static text blob.
@@ -166,6 +192,11 @@ export function campaignToContainerCF(input: {
   npcIds: string[];
   locationIds: string[];
   monsterIds?: string[];
+  /**
+   * Persisted instantiation rows for this campaign (`containerRelationships.ts`).
+   * Merged after the Tier-1 projection so instance provenance survives reloads.
+   */
+  persisted?: readonly CfRelationship[];
 }): ContainerCF {
   const now = input.updatedAt;
   const rels: CfRelationship[] = [];
@@ -223,7 +254,7 @@ export function campaignToContainerCF(input: {
     id: input.id,
     ciClass: "campaign.record",
     title: input.name,
-    relationships: rels,
+    relationships: mergeContainerRelationships(rels, input.persisted ?? []),
     updatedAt: input.updatedAt,
   };
 }
@@ -233,10 +264,22 @@ export function characterToContainerCF(input: {
   id: string;
   name: string;
   updatedAt: string;
-  items: { id: string; name: string; libraryItemId?: string | null; equipped?: boolean }[];
+  items: ({
+    id: string;
+    name: string;
+    libraryItemId?: string | null;
+    equipped?: boolean;
+  } & ProvenanceInput)[];
   knownSpellIds: string[];
   preparedSpellIds: string[];
-  linkedModifiers: { id: string; sourceLabel: string; sourceCfId: string | null; active: boolean }[];
+  linkedModifiers: ({
+    id: string;
+    sourceLabel: string;
+    sourceCfId: string | null;
+    active: boolean;
+  } & ProvenanceInput)[];
+  /** Persisted instantiation rows (spell instances only live here). */
+  persisted?: readonly CfRelationship[];
 }): ContainerCF {
   const rels: CfRelationship[] = [];
 
@@ -253,9 +296,19 @@ export function characterToContainerCF(input: {
       active: item.equipped !== false,
       createdAt: input.updatedAt,
       sourceLibraryId: item.libraryItemId ?? null,
+      ...provenanceFields(item),
     });
   }
+  // Spell keys already covered by a persisted SRD instance row — the instance
+  // row (childId = instanceId) replaces the bare catalogue-key link.
+  const instancedSpellKeys = new Set(
+    (input.persisted ?? [])
+      .filter((r) => r.slot === "spells" && r._source === "SRD" && r.sourceSrdEntityId)
+      .map((r) => spellKeyFromSrdEntityId(r.sourceSrdEntityId)),
+  );
+
   for (const spellId of input.knownSpellIds) {
+    if (instancedSpellKeys.has(spellId)) continue;
     rels.push({
       id: `${input.id}:spells:${spellId}`,
       parentId: input.id,
@@ -282,6 +335,7 @@ export function characterToContainerCF(input: {
       active: mod.active,
       createdAt: input.updatedAt,
       sourceLibraryId: mod.sourceCfId,
+      ...provenanceFields(mod),
     });
   }
 
@@ -289,7 +343,114 @@ export function characterToContainerCF(input: {
     id: input.id,
     ciClass: "character.sheet",
     title: input.name,
-    relationships: rels,
+    relationships: mergeContainerRelationships(rels, input.persisted ?? []),
     updatedAt: input.updatedAt,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Spell containment — single source of truth is the projection.        */
+/* ------------------------------------------------------------------ */
+
+/** `spell:fireball` → `fireball` (catalogue key stored on the sheet). */
+export function spellKeyFromSrdEntityId(entityId: string | null | undefined): string {
+  if (!entityId) return "";
+  return String(entityId).split(":").slice(1).join(":");
+}
+
+/** Catalogue key a spell relationship row refers to (instance or bare link). */
+export function spellKeyForRelationship(rel: CfRelationship): string {
+  if (rel._source === "SRD" && rel.sourceSrdEntityId) {
+    return spellKeyFromSrdEntityId(rel.sourceSrdEntityId);
+  }
+  return rel.childId;
+}
+
+/** Spell relationship rows on a container, optionally filtered to one key. */
+export function spellRelationships(container: ContainerCF, spellKey?: string): CfRelationship[] {
+  return container.relationships.filter(
+    (r) => r.slot === "spells" && (spellKey === undefined || spellKeyForRelationship(r) === spellKey),
+  );
+}
+
+/** True when the container already holds this spell (instance or catalogue link). */
+export function containerHoldsSpell(container: ContainerCF, spellKey: string): boolean {
+  return spellRelationships(container, spellKey).length > 0;
+}
+
+const LEGACY_SPELL_INSTANCE_LINE =
+  /^\[instance:(instance_[^\s\]]+) _source:SRD spell:([^\s\]]+)\]$/;
+
+/**
+ * Older builds appended `[instance:… _source:SRD spell:…]` lines to the hero's
+ * readable notes. Strip exactly those lines and return what they recorded so
+ * the caller can index them as relationship rows. Other notes text is untouched.
+ */
+export function extractLegacySpellInstanceLines(notes: string): {
+  notes: string;
+  entries: { instanceId: string; spellKey: string }[];
+} {
+  const entries: { instanceId: string; spellKey: string }[] = [];
+  const kept: string[] = [];
+  for (const line of notes.split("\n")) {
+    const m = line.trim().match(LEGACY_SPELL_INSTANCE_LINE);
+    if (m?.[1] && m[2]) entries.push({ instanceId: m[1], spellKey: m[2] });
+    else kept.push(line);
+  }
+  if (entries.length === 0) return { notes, entries };
+  return { notes: kept.join("\n").trim(), entries };
+}
+
+/* ------------------------------------------------------------------ */
+/* Relationship reducers — pure state updates used by drop handlers.    */
+/* ------------------------------------------------------------------ */
+
+/** Membership key: one row per (parent, slot, child). */
+export function relationshipKey(rel: Pick<CfRelationship, "parentId" | "slot" | "childId">): string {
+  return `${rel.parentId}:${rel.slot}:${rel.childId}`;
+}
+
+/**
+ * Merge persisted rows into a derived projection without phantom duplicates.
+ * A persisted row wins over a derived row with the same membership key so
+ * instance provenance (`instanceId`, `sourceSrdEntityId`) is never lost.
+ */
+export function mergeContainerRelationships(
+  derived: readonly CfRelationship[],
+  persisted: readonly CfRelationship[],
+): CfRelationship[] {
+  if (persisted.length === 0) return [...derived];
+  const byKey = new Map<string, CfRelationship>();
+  for (const rel of derived) byKey.set(relationshipKey(rel), rel);
+  for (const rel of persisted) {
+    const key = relationshipKey(rel);
+    const existing = byKey.get(key);
+    byKey.set(key, existing ? { ...existing, ...rel } : rel);
+  }
+  return [...byKey.values()];
+}
+
+/** Add or replace one relationship on a container (immutable). */
+export function upsertContainerRelationship(
+  container: ContainerCF,
+  rel: CfRelationship,
+): ContainerCF {
+  const key = relationshipKey(rel);
+  const rest = container.relationships.filter((r) => relationshipKey(r) !== key);
+  return {
+    ...container,
+    relationships: [...rest, rel],
+    updatedAt: rel.createdAt > container.updatedAt ? rel.createdAt : container.updatedAt,
+  };
+}
+
+/** Remove every relationship pointing at `childId` (immutable). */
+export function removeContainerRelationshipsForChild(
+  container: ContainerCF,
+  childId: string,
+): ContainerCF {
+  return {
+    ...container,
+    relationships: container.relationships.filter((r) => r.childId !== childId),
   };
 }

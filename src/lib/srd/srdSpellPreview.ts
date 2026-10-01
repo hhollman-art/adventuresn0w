@@ -1,6 +1,6 @@
 import { lookupSrdDocumentMarkdown } from "@/lib/srd/srdDocumentLookup";
 import { SRD_ATTRIBUTION_SHORT } from "@/lib/srd/manifest";
-import { SRD_DOCUMENT_PDF_ID } from "@/lib/srd/srdDocument.data";
+import { srdDocument } from "@/lib/srd/srdAssets";
 import { findSpellIndexEntry } from "@/lib/srd/spellIndex";
 import type { SrdSpellIndexEntry } from "@/lib/srd/types";
 
@@ -125,7 +125,7 @@ export function buildSrdSpellPreviewMarkdown(params: {
   lines.push(
     "---",
     "",
-    `${SRD_ATTRIBUTION_SHORT} Text from **${SRD_DOCUMENT_PDF_ID}** (SRD 5.2.1, CC BY 4.0).`,
+    `${SRD_ATTRIBUTION_SHORT} Text from **${srdDocument().pdfId}** (SRD 5.2.1, CC BY 4.0).`,
   );
 
   return lines.join("\n").trim();

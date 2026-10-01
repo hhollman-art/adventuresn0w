@@ -5,6 +5,7 @@ import { Cinzel } from "next/font/google";
 import AppChrome from "@/features/shell/AppChrome";
 import Providers from "@/app/Providers";
 import { APP_THEME_ORDER, APP_THEMES, DEFAULT_APP_THEME, LEGACY_THEME_MAP } from "@/lib/themes";
+import { srdPreloadBootScript } from "@/lib/srd/srdAssets";
 import "./globals.css";
 import pkg from "../../package.json";
 
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className={cinzel.variable} data-theme={DEFAULT_APP_THEME} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <script dangerouslySetInnerHTML={{ __html: srdPreloadBootScript() }} />
       </head>
       <body className="app-shell flex min-h-dvh flex-col antialiased">
         <Providers>

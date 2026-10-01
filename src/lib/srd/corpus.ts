@@ -5,7 +5,7 @@ import {
   buildSrdSpellPreviewMarkdown,
   formatSrdSpellLibraryDetail,
 } from "@/lib/srd/srdSpellPreview";
-import { SRD_ENTITIES } from "@/lib/srd/srdEntities.data";
+import { memoBySrdTable, srdDocument, srdEntities } from "@/lib/srd/srdAssets";
 import type { LibraryListEntry } from "@/lib/workshop/libraryCatalog";
 import { parseLibraryChallengeRating } from "@/lib/workshop/libraryCatalog";
 import { ciClassLabel } from "@/lib/ciRegistry";
@@ -13,7 +13,6 @@ import type { SrdEntityId, SrdEntityKind, SrdEntitySummary } from "@/lib/srd/typ
 import { normalizeSrdDocumentKey, lookupSrdDocumentMarkdown } from "@/lib/srd/srdDocumentLookup";
 import { isBundledSrdSectionKey } from "@/lib/srd/srdRuleBundles";
 import type { SrdItemRef } from "@/lib/srd/srdItemRef";
-import { SRD_DOCUMENT_BODY } from "@/lib/srd/srdDocument.data";
 
 const ENTITY_KIND_LABEL: Record<SrdEntityKind, string> = {
   spell: "SRD spell",
@@ -51,15 +50,24 @@ const KIND_TO_API_RESOURCE: Partial<Record<SrdEntityKind, SrdApiResource>> = {
   rule: "rule-sections",
 };
 
-const byId = new Map<SrdEntityId, SrdEntitySummary>(
-  SRD_ENTITIES.map((entity) => [entity.id, entity]),
-);
+/**
+ * Lookup maps, rebuilt once per asset load (SRD tables are fetched on demand —
+ * see `srdAssets.ts`). Always read through these getters, never cache the maps.
+ */
+const entityIndexes = memoBySrdTable(srdEntities, (entities) => {
+  const byId = new Map<SrdEntityId, SrdEntitySummary>();
+  const byKind = new Map<SrdEntityKind, SrdEntitySummary[]>();
+  for (const entity of entities) {
+    byId.set(entity.id, entity);
+    const list = byKind.get(entity.kind) ?? [];
+    list.push(entity);
+    byKind.set(entity.kind, list);
+  }
+  return { byId, byKind };
+});
 
-const byKind = new Map<SrdEntityKind, SrdEntitySummary[]>();
-for (const entity of SRD_ENTITIES) {
-  const list = byKind.get(entity.kind) ?? [];
-  list.push(entity);
-  byKind.set(entity.kind, list);
+function entitiesOfKind(kind: SrdEntityKind): SrdEntitySummary[] {
+  return entityIndexes().byKind.get(kind) ?? [];
 }
 
 export function srdEntityKindLabel(kind: SrdEntityKind): string {
@@ -75,12 +83,12 @@ export function ciClassForSrdEntity(kind: SrdEntityKind): CiClass {
 }
 
 export function getSrdEntity(id: SrdEntityId): SrdEntitySummary | undefined {
-  return byId.get(id);
+  return entityIndexes().byId.get(id);
 }
 
 export function listSrdEntities(kind?: SrdEntityKind): readonly SrdEntitySummary[] {
-  if (!kind) return SRD_ENTITIES;
-  return byKind.get(kind) ?? [];
+  if (!kind) return srdEntities();
+  return entitiesOfKind(kind);
 }
 
 export function searchSrdEntities(
@@ -91,8 +99,8 @@ export function searchSrdEntities(
   const limit = opts?.limit ?? 40;
   const kinds = opts?.kinds;
   const pool = kinds?.length
-    ? kinds.flatMap((kind) => byKind.get(kind) ?? [])
-    : SRD_ENTITIES;
+    ? kinds.flatMap((kind) => entitiesOfKind(kind))
+    : srdEntities();
 
   if (!q) return pool.slice(0, limit);
 
@@ -151,18 +159,18 @@ const ITEM_ENTITY_KINDS: readonly SrdEntityKind[] = [
 /** All bundled SRD equipment and magic item rows for the Items shelf. */
 export function listSrdItemLibraryEntries(): LibraryListEntry[] {
   return ITEM_ENTITY_KINDS.flatMap((kind) =>
-    (byKind.get(kind) ?? []).map(srdEntityToLibraryEntry),
+    entitiesOfKind(kind).map(srdEntityToLibraryEntry),
   );
 }
 
 /** Bundled SRD monster stat blocks for the Monsters shelf. */
 export function listSrdMonstersLibraryEntries(): LibraryListEntry[] {
-  return (byKind.get("monster") ?? []).map(srdEntityToLibraryEntry);
+  return entitiesOfKind("monster").map(srdEntityToLibraryEntry);
 }
 
 /** Spells, classes, rules, and other non-item, non-monster SRD rows for the Rules shelf. */
 export function listSrdRulesLibraryEntries(): LibraryListEntry[] {
-  return SRD_ENTITIES.filter(
+  return srdEntities().filter(
     (entity) =>
       !ITEM_ENTITY_KINDS.includes(entity.kind) &&
       entity.kind !== "monster" &&
@@ -173,7 +181,7 @@ export function listSrdRulesLibraryEntries(): LibraryListEntry[] {
 
 /** Bundled SRD spells with full index detail for the Rules shelf. */
 export function listSrdSpellsLibraryEntries(): LibraryListEntry[] {
-  return (byKind.get("spell") ?? []).map(srdEntityToLibraryEntry);
+  return entitiesOfKind("spell").map(srdEntityToLibraryEntry);
 }
 
 /** Virtual read-only Library row — not stored in user backup. */
@@ -189,7 +197,7 @@ export function srdEntityToLibraryEntry(entity: SrdEntitySummary): LibraryListEn
     entity.kind === "monster"
       ? parseLibraryChallengeRating(entity.subtitle) ??
         parseLibraryChallengeRating(
-          SRD_DOCUMENT_BODY.slice(entity.start, Math.min(entity.end, entity.start + 2200)),
+          srdDocument().body.slice(entity.start, Math.min(entity.end, entity.start + 2200)),
         )
       : undefined;
   return {
@@ -227,8 +235,8 @@ export function parseSrdEntityId(raw: string): SrdEntityId | null {
 
 export function findSrdEntityByName(kind: SrdEntityKind, name: string): SrdEntitySummary | undefined {
   const key = normalizeSrdDocumentKey(name);
-  return (byKind.get(kind) ?? []).find((e) => e.key === key || normalizeSrdDocumentKey(e.name) === key);
+  return entitiesOfKind(kind).find((e) => e.key === key || normalizeSrdDocumentKey(e.name) === key);
 }
 
 export { listSrdRuleBundleLibraryEntries, isBundledSrdSectionKey } from "@/lib/srd/srdRuleBundles";
-export { SRD_ENTITIES, ENTITY_KIND_LABEL, KIND_TO_API_RESOURCE };
+export { srdEntities, ENTITY_KIND_LABEL, KIND_TO_API_RESOURCE };

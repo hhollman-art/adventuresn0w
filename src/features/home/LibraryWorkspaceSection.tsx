@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 export type LibraryWorkspaceSectionProps = {
   resultsPanel: ReactNode;
-  /** @deprecated Scrying lives on the command-center right rail. Kept so callers can omit it. */
+  /** @deprecated Scrying is the pop-out modal (`ScryingInspector`). Kept so callers can omit it. */
   scryingPanel?: ReactNode;
 };
 

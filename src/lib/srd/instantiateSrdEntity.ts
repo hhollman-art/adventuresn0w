@@ -24,9 +24,27 @@ import type {
   ModifierSourceKind,
 } from "@/lib/tabletop/types";
 import type { GameItemKind, MagicRarity, SaveGameItemInput } from "@/lib/itemLibrary";
+import type {
+  CfRelationship,
+  ContainerRelationKind,
+  ContainerSlot,
+} from "@/lib/workshop/containerCf";
 
 /** Provenance tag on every hydrated instance — never mutates the global SRD. */
 export type SrdInstanceSource = "SRD";
+
+/**
+ * Provenance triple carried by every local row hydrated from the SRD —
+ * character gear, Library items, sheet modifiers, and relationship rows all
+ * share this exact shape so one type guard works everywhere.
+ */
+export type SrdInstanceProvenance = {
+  /** Unique local id (`instance_weapon_longsword_9a8b7c`). Never the global id. */
+  instanceId: string;
+  _source: SrdInstanceSource;
+  /** Canonical bundled entity this instance was cloned from (read-only origin). */
+  sourceSrdEntityId: SrdEntityId;
+};
 
 /** Drag / library pointer at a read-only bundled SRD entity. */
 export type StaticSRDReference = {
@@ -52,15 +70,12 @@ export type InstantiatedCF = {
 export type InstantiatedPayload =
   | {
       target: "character-item";
-      item: CharacterItem & {
-        instanceId: string;
-        _source: SrdInstanceSource;
-        sourceSrdEntityId: SrdEntityId;
-      };
+      item: CharacterItem & SrdInstanceProvenance;
     }
   | {
       target: "campaign-item";
-      draft: SaveGameItemInput;
+      /** Library draft — carries typed provenance so description edits never erase it. */
+      draft: SaveGameItemInput & SrdInstanceProvenance;
       instanceId: string;
       sourceSrdEntityId: SrdEntityId;
     }
@@ -72,10 +87,7 @@ export type InstantiatedPayload =
     }
   | {
       target: "effect";
-      modifier: CharacterModifier & {
-        instanceId: string;
-        _source: SrdInstanceSource;
-      };
+      modifier: CharacterModifier & SrdInstanceProvenance;
       markdown: string;
     }
   | {
@@ -148,11 +160,7 @@ export function isInstantiatedCF(value: unknown): value is InstantiatedCF {
 /** True when a CharacterItem was hydrated from the SRD (local mutable copy). */
 export function isSrdInstantiatedItem(
   item: CharacterItem,
-): item is CharacterItem & {
-  instanceId: string;
-  _source: SrdInstanceSource;
-  sourceSrdEntityId: SrdEntityId;
-} {
+): item is CharacterItem & SrdInstanceProvenance {
   const row = item as CharacterItem & {
     _source?: string;
     sourceSrdEntityId?: string;
@@ -207,7 +215,8 @@ function resolveTarget(
 function itemDraftFromEntity(
   entity: SrdEntitySummary,
   markdown: string,
-): SaveGameItemInput {
+  instanceId: string,
+): SaveGameItemInput & SrdInstanceProvenance {
   const kind: GameItemKind = entity.kind === "magic-item" ? "magic" : "equipment";
   return {
     kind,
@@ -215,6 +224,7 @@ function itemDraftFromEntity(
     itemType: srdEntityKindLabel(entity.kind),
     rarity: null as MagicRarity | null,
     requiresAttunement: false,
+    // Text tags stay for older readers; the typed fields below are authoritative.
     description: [
       markdown,
       "",
@@ -223,6 +233,9 @@ function itemDraftFromEntity(
     ].join("\n"),
     bonuses: emptyBonuses() as ItemBonuses,
     source: "import",
+    instanceId,
+    _source: "SRD",
+    sourceSrdEntityId: entity.id,
   };
 }
 
@@ -231,11 +244,7 @@ function characterItemFromEntity(
   markdown: string,
   instanceId: string,
   equipped = true,
-): CharacterItem & {
-  instanceId: string;
-  _source: SrdInstanceSource;
-  sourceSrdEntityId: SrdEntityId;
-} {
+): CharacterItem & SrdInstanceProvenance {
   return {
     id: instanceId,
     instanceId,
@@ -312,7 +321,7 @@ export function instantiateSrdEntity(
         ciClass,
         payload: {
           target: "campaign-item",
-          draft: itemDraftFromEntity(entity, markdown),
+          draft: itemDraftFromEntity(entity, markdown, instanceId),
           instanceId,
           sourceSrdEntityId: entity.id,
         },
@@ -332,13 +341,11 @@ export function instantiateSrdEntity(
         },
       };
     case "effect": {
-      const modifier: CharacterModifier & {
-        instanceId: string;
-        _source: SrdInstanceSource;
-      } = {
+      const modifier: CharacterModifier & SrdInstanceProvenance = {
         id: instanceId,
         instanceId,
         _source: "SRD",
+        sourceSrdEntityId: entity.id,
         sourceKind: "creation-file" as ModifierSourceKind,
         sourceLabel: entity.name,
         sourceCfId: instanceId,
@@ -368,6 +375,72 @@ export function instantiateSrdEntity(
         payload: { target: "rules", markdown },
       };
   }
+}
+
+/** True when any row carries the full SRD provenance triple. */
+export function hasSrdInstanceProvenance(value: unknown): value is SrdInstanceProvenance {
+  if (!value || typeof value !== "object") return false;
+  const o = value as Partial<SrdInstanceProvenance>;
+  return (
+    o._source === "SRD" &&
+    typeof o.instanceId === "string" &&
+    o.instanceId.startsWith("instance_") &&
+    typeof o.sourceSrdEntityId === "string"
+  );
+}
+
+/** How an instantiated payload is held inside its parent container. */
+export function relationKindForInstance(inst: InstantiatedCF): ContainerRelationKind {
+  switch (inst.payload.target) {
+    case "character-item":
+      return "embed";
+    case "campaign-item":
+      return "park";
+    case "effect":
+      return "modifier";
+    case "spell":
+    case "rules":
+      return "link";
+  }
+}
+
+/** Deterministic relationship row id — one membership per (parent, slot, instance). */
+export function instanceRelationshipId(
+  parentId: string,
+  slot: ContainerSlot,
+  instanceId: string,
+): string {
+  return `${parentId}:${slot}:${instanceId}`;
+}
+
+/**
+ * Build the container `relationships[]` row for a freshly instantiated CF.
+ * `childId` is always the local `instanceId` — never the global SRD entity id.
+ * Pure; callers persist via `recordContainerRelationship` or the UI reducer.
+ */
+export function relationshipForInstance(
+  inst: InstantiatedCF,
+  parent: { id: string; ciClass: CiClass },
+  slot: ContainerSlot,
+  opts?: { kind?: ContainerRelationKind; active?: boolean; createdAt?: string; libraryId?: string | null },
+): CfRelationship & SrdInstanceProvenance {
+  return {
+    id: instanceRelationshipId(parent.id, slot, inst.instanceId),
+    parentId: parent.id,
+    parentCiClass: parent.ciClass,
+    childId: inst.instanceId,
+    childCiClass: inst.ciClass,
+    kind: opts?.kind ?? relationKindForInstance(inst),
+    slot,
+    label: inst.name,
+    active: opts?.active ?? true,
+    createdAt: opts?.createdAt ?? new Date().toISOString(),
+    // For Library-backed instances the saved Library row id; otherwise the SRD origin.
+    sourceLibraryId: opts?.libraryId ?? null,
+    instanceId: inst.instanceId,
+    _source: "SRD",
+    sourceSrdEntityId: inst.sourceSrdEntityId,
+  };
 }
 
 /** Infer instantiate target from a container slot. */

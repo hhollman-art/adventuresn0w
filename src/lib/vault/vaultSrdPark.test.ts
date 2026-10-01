@@ -46,6 +46,9 @@ vi.mock("@/lib/itemLibrary", async () => {
         settingTags: input.settingTags ?? [],
         sourceNote: input.sourceNote ?? "",
         imageDataUrl: input.imageDataUrl ?? null,
+        instanceId: input.instanceId ?? null,
+        _source: input._source ?? null,
+        sourceSrdEntityId: input.sourceSrdEntityId ?? null,
       };
       items = [row, ...items];
       return items;
@@ -149,8 +152,42 @@ describe("vaultSrdPark", () => {
       settingTags: [],
       sourceNote: "",
       imageDataUrl: null,
+      instanceId: null,
+      _source: null,
+      sourceSrdEntityId: null,
     });
     expect(sid).toBe("magic-item:dancing-sword");
+  });
+
+  it("prefers typed provenance when the DM rewrote the description", () => {
+    const sid = sourceSrdEntityIdFromGameItem({
+      id: "x",
+      createdAt: "",
+      updatedAt: "",
+      kind: "magic",
+      name: "Blade of the Dawn",
+      itemType: "Weapon",
+      rarity: "rare",
+      requiresAttunement: true,
+      attunementNote: "",
+      // No text tag left — the DM turned the SRD longsword into a custom item.
+      description: "A radiant blade that hums at sunrise.",
+      properties: "",
+      charges: "",
+      effects: "",
+      bonuses: emptyBonuses(),
+      source: "import",
+      isHomebrew: true,
+      createdBy: null,
+      tags: [],
+      settingTags: [],
+      sourceNote: "",
+      imageDataUrl: null,
+      instanceId: "instance_weapon_longsword_abc123",
+      _source: "SRD",
+      sourceSrdEntityId: "weapon:longsword",
+    });
+    expect(sid).toBe("weapon:longsword");
   });
 
   it("hydrates SRD park into a Library item id (not the global entity id)", async () => {

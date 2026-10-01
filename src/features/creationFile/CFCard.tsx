@@ -63,7 +63,7 @@ export default function CFCard({
     );
     setVaultDragData(event.dataTransfer, payload);
     vault?.setDragging(payload);
-    event.dataTransfer.effectAllowed = "copyMove";
+    event.dataTransfer.effectAllowed = "all";
   };
 
   return (

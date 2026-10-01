@@ -17,6 +17,7 @@ import {
   linkToCampaign,
   loadCampaigns,
   getActiveCampaignId,
+  unlinkFromCampaign,
   updateCampaign,
 } from "@/lib/campaigns";
 import {
@@ -38,9 +39,14 @@ import {
   embedLibraryItemOnCharacter,
   linkModifierToCharacter,
 } from "@/lib/workshop/cfCloneWritePath";
-import { parkCfInVault } from "@/lib/vault/vaultParking";
 import { removeFileFromVault } from "@/lib/vault/removeFileFromVault";
-import { resolveSrdDragForVaultPark } from "@/lib/vault/vaultSrdPark";
+import {
+  findParkedLoreVaultInstance,
+  parkInLoreVault,
+  reassignLoreVaultInstance,
+  removeLoreVaultRow,
+  staticPayloadForParkedInstance,
+} from "@/lib/vault/loreVaultContainer";
 import { scheduleLibrarySnapshot } from "@/lib/workshop/librarySync";
 import { newId } from "@/lib/tabletop/session";
 import type { CharacterItem, ModifierSourceKind } from "@/lib/tabletop/types";
@@ -48,11 +54,81 @@ import {
   instantiateSrdEntity,
   instantiateTargetForSlot,
   isStaticSrdDragId,
+  relationshipForInstance,
+  type InstantiatedCF,
 } from "@/lib/srd/instantiateSrdEntity";
+import {
+  loadContainerRelationshipsFor,
+  recordContainerRelationship,
+  removeContainerRelationship,
+  removeContainerRelationshipsForChild,
+} from "@/lib/workshop/containerRelationships";
+import {
+  characterToContainerCF,
+  containerHoldsSpell,
+  extractLegacySpellInstanceLines,
+  type CfRelationship,
+} from "@/lib/workshop/containerCf";
 
 export type ContainerMoveResult =
-  | { ok: true; message: string; instanceId?: string }
+  | {
+      ok: true;
+      message: string;
+      instanceId?: string;
+      /** Relationship row written to the target container's index on drop. */
+      relationship?: CfRelationship;
+    }
   | { ok: false; error: string };
+
+/**
+ * Index an instantiated CF on its target container. Fire-and-forget safe:
+ * membership (Tier-1 ids / embedded rows) is already persisted by the caller,
+ * so a failed index write never loses the drop itself.
+ */
+async function indexInstance(
+  inst: InstantiatedCF,
+  parent: { id: string; ciClass: CiClass },
+  slot: ContainerSlot,
+  opts?: { libraryId?: string | null; active?: boolean },
+): Promise<CfRelationship> {
+  const rel = relationshipForInstance(inst, parent, slot, opts);
+  try {
+    await recordContainerRelationship(rel);
+  } catch {
+    /* index is a convenience view — membership already saved */
+  }
+  return rel;
+}
+
+/** Backfill index rows for spell instances older builds recorded in notes. */
+async function indexLegacySpellLines(
+  characterId: string,
+  entries: { instanceId: string; spellKey: string }[],
+  preparedSpellIds: readonly string[],
+): Promise<void> {
+  const createdAt = new Date().toISOString();
+  const rows: CfRelationship[] = entries.map(({ instanceId, spellKey }) => ({
+    id: `${characterId}:spells:${instanceId}`,
+    parentId: characterId,
+    parentCiClass: "character.sheet",
+    childId: instanceId,
+    childCiClass: "spell.srd-entry",
+    kind: "link",
+    slot: "spells",
+    label: spellKey,
+    active: preparedSpellIds.includes(spellKey),
+    createdAt,
+    sourceLibraryId: null,
+    instanceId,
+    _source: "SRD",
+    sourceSrdEntityId: `spell:${spellKey}`,
+  }));
+  try {
+    await recordContainerRelationship(rows);
+  } catch {
+    /* index is a convenience view — the sheet save already succeeded */
+  }
+}
 
 async function loadCampaignBuilderCatalog(): Promise<CampaignBuilderCatalog> {
   const [characters, items, seeds, results, parties, npcs, locations] = await Promise.all([
@@ -99,8 +175,108 @@ function needsSrdHydration(payload: VaultDragPayload): boolean {
   return vaultPayloadIsStaticSrd(payload) || isStaticSrdDragId(payload.id);
 }
 
-/** Drop a CF into a campaign container slot (party / adventure / loot / members). */
+const CAMPAIGN_PARENT = (campaignId: string) =>
+  ({ id: campaignId, ciClass: "campaign.record" }) as const;
+
+/**
+ * Hydrate a static SRD spell / rule / monster into a campaign-owned instance.
+ * The relationship row *is* the membership here (SavedCampaign has no field for
+ * these), so unlike `indexInstance` a failed write is reported, not swallowed.
+ */
+async function instantiateSrdReferenceOnCampaign(
+  campaignId: string,
+  payload: VaultDragPayload,
+  slot: ContainerSlot,
+): Promise<ContainerMoveResult> {
+  const target = payload.ciClass === "spell.srd-entry" ? "spell" : "rules";
+  const inst = instantiateSrdEntity(payload.id, target, { name: payload.title });
+  if (!inst) return { ok: false, error: `Could not instantiate “${payload.title}” from the SRD.` };
+  const relationship = relationshipForInstance(inst, CAMPAIGN_PARENT(campaignId), slot);
+  try {
+    await recordContainerRelationship(relationship);
+  } catch {
+    return { ok: false, error: `Could not save “${inst.name}” to this campaign — storage is full or blocked.` };
+  }
+  scheduleLibrarySnapshot();
+  return {
+    ok: true,
+    message: `${inst.name} added to the campaign as its own copy of the SRD entry.`,
+    instanceId: inst.instanceId,
+    relationship,
+  };
+}
+
+/**
+ * Remove an SRD instance card from a campaign. Drops the relationship row and,
+ * for monsters, the legacy `monsterIds` ref once no instance of it remains.
+ */
+export async function unlinkSrdInstanceFromCampaign(
+  campaignId: string,
+  relationship: Pick<CfRelationship, "id" | "sourceSrdEntityId" | "label">,
+): Promise<ContainerMoveResult> {
+  try {
+    const remaining = await removeContainerRelationship(relationship.id);
+    const sourceId = relationship.sourceSrdEntityId;
+    if (sourceId?.startsWith("monster:")) {
+      const stillHeld = remaining.some(
+        (r) => r.parentId === campaignId && r.sourceSrdEntityId === sourceId,
+      );
+      if (!stillHeld) await unlinkFromCampaign(campaignId, { monsterId: sourceId });
+    }
+  } catch {
+    return { ok: false, error: `Could not remove “${relationship.label}” — storage is blocked.` };
+  }
+  scheduleLibrarySnapshot();
+  return { ok: true, message: `${relationship.label} removed from this campaign.` };
+}
+
+/**
+ * Drop a CF into a campaign container slot (party / adventure / loot / members).
+ * A parked Lore Vault SRD instance is re-parented onto the campaign (same
+ * instance id); SRD items still go through the Library-backed loot path.
+ */
 export async function dropIntoCampaignContainer(options: {
+  campaignId: string;
+  payload: VaultDragPayload;
+  slot: ContainerSlot;
+}): Promise<ContainerMoveResult> {
+  const parked = await findParkedLoreVaultInstance(options.payload);
+  if (!parked) return placeOnCampaign(options);
+
+  const { campaignId, payload, slot } = options;
+  if (slot === "loot" || isSrdItemClass(payload.ciClass)) {
+    const result = await placeOnCampaign({
+      campaignId,
+      slot,
+      payload: staticPayloadForParkedInstance(payload, parked.sourceSrdEntityId),
+    });
+    if (result.ok) await removeLoreVaultRow(parked.id);
+    return result;
+  }
+
+  let relationship: CfRelationship;
+  try {
+    relationship = await reassignLoreVaultInstance({
+      row: parked,
+      parent: CAMPAIGN_PARENT(campaignId),
+      slot,
+    });
+  } catch {
+    return { ok: false, error: `Could not move “${parked.label}” — storage is full or blocked.` };
+  }
+  if (parked.sourceSrdEntityId.startsWith("monster:")) {
+    await linkToCampaign(campaignId, { monsterId: parked.sourceSrdEntityId });
+  }
+  scheduleLibrarySnapshot();
+  return {
+    ok: true,
+    message: `${parked.label} moved from the Lore Vault to this campaign.`,
+    instanceId: parked.instanceId,
+    relationship,
+  };
+}
+
+async function placeOnCampaign(options: {
   campaignId: string;
   payload: VaultDragPayload;
   slot: ContainerSlot;
@@ -108,22 +284,31 @@ export async function dropIntoCampaignContainer(options: {
   const { campaignId, payload, slot } = options;
 
   // Hydrate static SRD items into a local Library CF, then park in loot.
-  if (slot === "loot" && (isSrdItemClass(payload.ciClass) || needsSrdHydration(payload))) {
+  if (slot === "loot" && isSrdItemClass(payload.ciClass)) {
     const inst = instantiateSrdEntity(payload.id, "campaign-item", { name: payload.title });
     if (!inst || inst.payload.target !== "campaign-item") {
       return { ok: false, error: "Could not instantiate that SRD item." };
     }
     const list = await saveGameItem(inst.payload.draft);
     const created =
-      list.find((row) => row.description.includes(inst.sourceSrdEntityId)) ?? list[0];
+      list.find((row) => row.instanceId === inst.instanceId) ??
+      list.find((row) => row.description.includes(inst.sourceSrdEntityId)) ??
+      list[0];
     if (!created) return { ok: false, error: "Failed to save instantiated SRD item." };
 
     const result = await cloneLibraryItemToCampaignLoot(created.id, campaignId);
     if (!result.ok) return { ok: false, error: result.error };
+    const relationship = await indexInstance(
+      inst,
+      { id: campaignId, ciClass: "campaign.record" },
+      "loot",
+      { libraryId: created.id },
+    );
     return {
       ok: true,
       message: `${payload.title} instantiated from SRD and parked in Unassigned Loot.`,
       instanceId: inst.instanceId,
+      relationship,
     };
   }
 
@@ -207,6 +392,15 @@ export async function dropIntoCampaignContainer(options: {
       return { ok: true, message: `${payload.title} linked to Monsters & Encounters.` };
     }
     if (payload.ciClass === "monster.srd-entry" || payload.id.startsWith("monster:")) {
+      if (needsSrdHydration(payload)) {
+        // Each drop is its own instance (three goblins = three cards); `monsterIds`
+        // keeps the deduped catalogue ref older readers and the encounter cascade use.
+        const result = await instantiateSrdReferenceOnCampaign(campaignId, payload, "encounters");
+        if (!result.ok) return result;
+        const monsterId = result.relationship?.sourceSrdEntityId ?? payload.id;
+        await linkToCampaign(campaignId, { monsterId });
+        return { ...result, message: `${payload.title} added to Monsters & Encounters.` };
+      }
       await linkToCampaign(campaignId, { monsterId: payload.id });
       scheduleLibrarySnapshot();
       return { ok: true, message: `${payload.title} linked as a monster encounter ref.` };
@@ -227,16 +421,22 @@ export async function dropIntoCampaignContainer(options: {
     if (needsSrdHydration(payload) && isEffectClass(payload.ciClass)) {
       const inst = instantiateSrdEntity(payload.id, "effect", { name: payload.title });
       if (!inst || inst.payload.target !== "effect") {
-        return { ok: false, error: "Could not instantiate that SRD rule." };
+        // Entity missing from the loaded corpus — keep a provenance-tagged reference instead.
+        return instantiateSrdReferenceOnCampaign(campaignId, payload, slot);
       }
-      // Park the instance id in vault-style detail on campaign via custom note link —
-      // scene membership for rules uses npc/location; store as session-adjacent item link.
-      await linkToCampaign(campaignId, {});
+      // SavedCampaign has no field for rule effects — the relationship index is
+      // the container state here, so the instance id is recorded on the campaign.
+      const relationship = await indexInstance(
+        inst,
+        { id: campaignId, ciClass: "campaign.record" },
+        "scene",
+      );
       scheduleLibrarySnapshot();
       return {
         ok: true,
         message: `${payload.title} instantiated (${inst.instanceId}) — drop onto a hero sheet to attach as an effect.`,
         instanceId: inst.instanceId,
+        relationship,
       };
     }
     if (payload.ciClass === "npc.record") {
@@ -257,7 +457,7 @@ export async function dropIntoCampaignContainer(options: {
       scheduleLibrarySnapshot();
       return { ok: true, message: `${payload.title} linked to campaign.` };
     }
-    if (isSrdItemClass(payload.ciClass) || needsSrdHydration(payload)) {
+    if (isSrdItemClass(payload.ciClass)) {
       // Instantiating into general → same as loot park for linkability.
       return dropIntoCampaignContainer({
         campaignId,
@@ -285,6 +485,12 @@ export async function dropIntoCampaignContainer(options: {
       scheduleLibrarySnapshot();
       return { ok: true, message: `${payload.title} set as campaign party.` };
     }
+  }
+
+  // Any other static SRD reference (spells, rules, monsters outside Encounters)
+  // becomes a campaign-owned instance in the bucket the DM chose.
+  if (needsSrdHydration(payload) && !isSrdItemClass(payload.ciClass)) {
+    return instantiateSrdReferenceOnCampaign(campaignId, payload, slot);
   }
 
   return {
@@ -324,14 +530,38 @@ export async function linkVaultPayloadToCampaign(options: {
   return dropIntoCampaignContainer({ campaignId, payload, slot });
 }
 
-/** Drop a CF into a character sheet container slot. */
-export async function dropIntoCharacterContainer(options: {
+type CharacterDropOptions = {
   characterId: string;
   payload: VaultDragPayload;
   slot: ContainerSlot;
   fromCharacterId?: string | null;
   fromEmbeddedItemId?: string | null;
-}): Promise<ContainerMoveResult> {
+};
+
+/**
+ * Drop a CF into a character sheet container slot. A parked Lore Vault SRD
+ * instance is embedded under its existing instance id, then leaves the vault.
+ */
+export async function dropIntoCharacterContainer(
+  options: CharacterDropOptions,
+): Promise<ContainerMoveResult> {
+  const parked = await findParkedLoreVaultInstance(options.payload);
+  if (!parked) return placeOnCharacter(options);
+  const result = await placeOnCharacter(
+    {
+      ...options,
+      payload: staticPayloadForParkedInstance(options.payload, parked.sourceSrdEntityId),
+    },
+    parked.instanceId,
+  );
+  if (result.ok) await removeLoreVaultRow(parked.id);
+  return result;
+}
+
+async function placeOnCharacter(
+  options: CharacterDropOptions,
+  reuseInstanceId?: string,
+): Promise<ContainerMoveResult> {
   const { characterId, payload, slot } = options;
   const characters = await loadSavedCharacters();
   const saved = characters.find((c) => c.id === characterId);
@@ -354,11 +584,38 @@ export async function dropIntoCharacterContainer(options: {
         ...saved.player,
         items: [...saved.player.items, moved],
       });
+      // Move the index row with the embed so neither sheet holds a phantom.
+      let relationship: CfRelationship | undefined;
+      if (moving._source === "SRD" && moving.instanceId) {
+        try {
+          await removeContainerRelationshipsForChild(from.id, moving.instanceId);
+          relationship = {
+            id: `${saved.id}:inventory:${moved.id}`,
+            parentId: saved.id,
+            parentCiClass: "character.sheet",
+            childId: moved.id,
+            childCiClass: payload.ciClass,
+            kind: "embed",
+            slot: "inventory",
+            label: moved.name,
+            active: moved.equipped !== false,
+            createdAt: new Date().toISOString(),
+            sourceLibraryId: moved.libraryItemId ?? null,
+            instanceId: moving.instanceId,
+            _source: "SRD",
+            sourceSrdEntityId: moving.sourceSrdEntityId ?? null,
+          };
+          await recordContainerRelationship(relationship);
+        } catch {
+          /* index is a convenience view — the embed move already saved */
+        }
+      }
       scheduleLibrarySnapshot();
       return {
         ok: true,
         message: `Moved ${moving.name} from ${from.player.name} to ${saved.player.name}.`,
         instanceId: moved.instanceId ?? moved.id,
+        relationship,
       };
     }
 
@@ -367,6 +624,7 @@ export async function dropIntoCharacterContainer(options: {
       const inst = instantiateSrdEntity(payload.id, "character-item", {
         name: payload.title,
         equipped: true,
+        instanceId: reuseInstanceId,
       });
       if (!inst || inst.payload.target !== "character-item") {
         return { ok: false, error: "Could not instantiate that SRD item." };
@@ -388,11 +646,18 @@ export async function dropIntoCharacterContainer(options: {
         ...saved.player,
         items: [...saved.player.items, embedded],
       });
+      const relationship = await indexInstance(
+        inst,
+        { id: saved.id, ciClass: "character.sheet" },
+        "inventory",
+        { active: embedded.equipped !== false },
+      );
       scheduleLibrarySnapshot();
       return {
         ok: true,
         message: `${inst.name} instantiated from SRD into inventory.`,
         instanceId: inst.instanceId,
+        relationship,
       };
     }
 
@@ -419,28 +684,51 @@ export async function dropIntoCharacterContainer(options: {
   // —— Spells ——
   if (slot === "spells" && (isSpellClass(payload.ciClass) || needsSrdHydration(payload))) {
     if (needsSrdHydration(payload) || payload.ciClass === "spell.srd-entry") {
-      const inst = instantiateSrdEntity(payload.id, "spell", { name: payload.title });
+      const inst = instantiateSrdEntity(payload.id, "spell", {
+        name: payload.title,
+        instanceId: reuseInstanceId,
+      });
       if (!inst || inst.payload.target !== "spell") {
         return { ok: false, error: "Could not instantiate that SRD spell." };
       }
       const spellKey = inst.payload.spellKey;
-      const known = new Set(saved.player.knownSpellIds ?? []);
-      if (known.has(spellKey)) {
+      const container = characterToContainerCF({
+        id: saved.id,
+        name: saved.player.name,
+        updatedAt: saved.updatedAt,
+        items: saved.player.items,
+        knownSpellIds: saved.player.knownSpellIds ?? [],
+        preparedSpellIds: saved.player.preparedSpellIds ?? [],
+        linkedModifiers: saved.player.linkedModifiers ?? [],
+        persisted: await loadContainerRelationshipsFor(saved.id),
+      });
+      if (containerHoldsSpell(container, spellKey)) {
         return { ok: false, error: "Spell already known." };
       }
-      known.add(spellKey);
-      // Track instance in notes for relationship index (catalogue key stays for SRD picker).
-      const noteLine = `\n[instance:${inst.instanceId} _source:SRD spell:${spellKey}]`;
+      // Catalogue key stays on the sheet (SRD picker, level rules); the instance
+      // id lives only in the relationship index. Notes are never written here —
+      // lines left by older builds are moved into the index on this save.
+      const legacy = extractLegacySpellInstanceLines(saved.player.notes);
       await updateCharacterInLibrary(saved.id, {
         ...saved.player,
-        knownSpellIds: [...known],
-        notes: `${saved.player.notes.trim()}${noteLine}`.trim(),
+        knownSpellIds: [...(saved.player.knownSpellIds ?? []), spellKey],
+        notes: legacy.notes,
       });
+      if (legacy.entries.length > 0) {
+        await indexLegacySpellLines(saved.id, legacy.entries, saved.player.preparedSpellIds ?? []);
+      }
+      const relationship = await indexInstance(
+        inst,
+        { id: saved.id, ciClass: "character.sheet" },
+        "spells",
+        { active: (saved.player.preparedSpellIds ?? []).includes(spellKey) },
+      );
       scheduleLibrarySnapshot();
       return {
         ok: true,
         message: `${inst.name} instantiated from SRD into known spells.`,
         instanceId: inst.instanceId,
+        relationship,
       };
     }
   }
@@ -451,30 +739,45 @@ export async function dropIntoCharacterContainer(options: {
       const inst = instantiateSrdEntity(
         payload.id,
         instantiateTargetForSlot("effects"),
-        { name: payload.title },
+        { name: payload.title, instanceId: reuseInstanceId },
       );
       if (!inst || inst.payload.target !== "effect") {
         // Fallback: rules → effect modifier stub
-        const fallback = instantiateSrdEntity(payload.id, "effect", { name: payload.title });
+        const fallback = instantiateSrdEntity(payload.id, "effect", {
+          name: payload.title,
+          instanceId: reuseInstanceId,
+        });
         if (!fallback || fallback.payload.target !== "effect") {
           return { ok: false, error: "Could not instantiate that SRD effect." };
         }
         const next = linkModifierToCharacter(saved.player, fallback.payload.modifier);
         await updateCharacterInLibrary(saved.id, next);
+        const relationship = await indexInstance(
+          fallback,
+          { id: saved.id, ciClass: "character.sheet" },
+          "effects",
+        );
         scheduleLibrarySnapshot();
         return {
           ok: true,
           message: `${fallback.name} instantiated from SRD as an active effect.`,
           instanceId: fallback.instanceId,
+          relationship,
         };
       }
       const next = linkModifierToCharacter(saved.player, inst.payload.modifier);
       await updateCharacterInLibrary(saved.id, next);
+      const relationship = await indexInstance(
+        inst,
+        { id: saved.id, ciClass: "character.sheet" },
+        "effects",
+      );
       scheduleLibrarySnapshot();
       return {
         ok: true,
         message: `${inst.name} instantiated from SRD as an active effect.`,
         instanceId: inst.instanceId,
+        relationship,
       };
     }
 
@@ -498,40 +801,15 @@ export async function dropIntoCharacterContainer(options: {
   };
 }
 
-/** Park a CF in the Lore Vault parking lot (drag-in). */
+/**
+ * Park a CF in the Lore Vault parking lot (drag-in). SRD entities become a
+ * local instance on `LORE_VAULT_CONTAINER` — never a raw global id, and never
+ * a new row in the master Library.
+ */
 export async function dropIntoVaultParking(
   payload: VaultDragPayload,
 ): Promise<ContainerMoveResult> {
-  // Never park a raw global SRD entity id — hydrate (or reuse) a Library CF first.
-  if (needsSrdHydration(payload)) {
-    const lib = await resolveSrdDragForVaultPark({
-      id: payload.id,
-      title: payload.title,
-      detail: payload.detail,
-    });
-    if (!lib) {
-      return { ok: false, error: `Could not stage “${payload.title}” from the SRD.` };
-    }
-    await parkCfInVault({
-      id: lib.id,
-      ciClass: lib.ciClass,
-      title: lib.title,
-      detail: lib.detail,
-    });
-    return {
-      ok: true,
-      message: `${lib.title} staged in the Lore Vault (Library copy).`,
-      instanceId: lib.instanceId,
-    };
-  }
-
-  await parkCfInVault({
-    id: payload.id,
-    ciClass: payload.ciClass,
-    title: payload.title,
-    detail: payload.detail,
-  });
-  return { ok: true, message: `${payload.title} parked in the Lore Vault.` };
+  return parkInLoreVault(payload);
 }
 
 /** Assign campaign loot → character via the existing clone path. */

@@ -126,6 +126,9 @@ describe("ciRelationships", () => {
           settingTags: [],
           sourceNote: "",
           imageDataUrl: null,
+          instanceId: null,
+          _source: null,
+          sourceSrdEntityId: null,
         } satisfies SavedGameItem,
       ],
     });

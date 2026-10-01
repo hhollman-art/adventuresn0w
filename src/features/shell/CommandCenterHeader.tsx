@@ -18,13 +18,15 @@ import {
   type CommandCenterSessionMode,
 } from "@/lib/shell/commandCenterRoutes";
 import { dispatchWorkshopWelcome } from "@/lib/workshop/goWelcome";
+import ScryingGlassIcon from "@/features/ui/ScryingGlassIcon";
+import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 
 /** Minimalist Prep / Live header for the DM Command Center. */
 export default function CommandCenterHeader() {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
   const { themeId, setThemeId } = useAppTheme();
-  const { openCreateInspector } = useCommandCenterLayout();
+  const { openCreateInspector, scryingGlassOpen, setScryingGlassOpen } = useCommandCenterLayout();
   const power = usePowerWorkspaceOptional();
   const mode = sessionModeFromPathname(pathname);
   const [canvasOpen, setCanvasOpen] = useState(false);
@@ -122,6 +124,17 @@ export default function CommandCenterHeader() {
             </ul>
           ) : null}
         </div>
+        <button
+          type="button"
+          className="btn btn-sm inline-flex items-center gap-1.5"
+          aria-haspopup="dialog"
+          aria-expanded={scryingGlassOpen}
+          title={`Open the ${PREVIEW_WINDOW} to read the selected file (Alt+2)`}
+          onClick={() => setScryingGlassOpen(true)}
+        >
+          <ScryingGlassIcon size={16} />
+          Scry
+        </button>
         <button type="button" className="btn btn-sm btn-accent" onClick={openCreate}>
           Create New…
         </button>

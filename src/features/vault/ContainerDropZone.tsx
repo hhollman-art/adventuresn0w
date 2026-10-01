@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
 import type { CiClass } from "@/lib/ciRegistry";
 import {
+  linkDropEffectFor,
   readAnyVaultDragData,
   vaultDragHasPayload,
   type VaultDragPayload,
 } from "@/lib/vault/cfDragDrop";
 import { useVaultDrawer } from "@/contexts/VaultDrawerContext";
 import { evictFromVaultAfterSuccessfulDrop } from "@/lib/vault/removeFileFromVault";
+import { isLoreVaultDragPayload } from "@/lib/vault/loreVaultContainer";
 
 export type ContainerDropZoneProps = {
   zoneId: string;
@@ -67,8 +69,22 @@ export default function ContainerDropZone({
   } = useVaultDrawer();
   const [active, setActive] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const dragDepthRef = useRef(0);
+  const [saving, setSaving] = useState(false);
   const hoverPayloadRef = useRef<VaultDragPayload | null>(null);
+  const messageTimerRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (messageTimerRef.current) window.clearTimeout(messageTimerRef.current);
+    },
+    [],
+  );
+
+  const flash = (text: string, ms = 3200) => {
+    setMessage(text);
+    if (messageTimerRef.current) window.clearTimeout(messageTimerRef.current);
+    messageTimerRef.current = window.setTimeout(() => setMessage(null), ms);
+  };
 
   const handlerRef = useRef(onDropPayload);
   handlerRef.current = onDropPayload;
@@ -104,34 +120,35 @@ export default function ContainerDropZone({
   };
 
   const clearHover = () => {
-    dragDepthRef.current = 0;
     setActive(false);
     setDropHoverZoneId(null);
   };
 
-  const onDragEnter = (event: DragEvent<HTMLDivElement>) => {
-    if (!canAcceptEvent(event.dataTransfer)) return;
-    event.preventDefault();
-    dragDepthRef.current += 1;
-    setActive(true);
-    setDropHoverZoneId(zoneId);
-  };
-
-  const onDragOver = (event: DragEvent<HTMLDivElement>) => {
-    if (!canAcceptEvent(event.dataTransfer)) return;
+  const markHover = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    event.dataTransfer.dropEffect = "link";
+    event.dataTransfer.dropEffect = linkDropEffectFor(event.dataTransfer.effectAllowed);
     hoverPayloadRef.current = dragging ?? peekDragging();
     if (!active) setActive(true);
     if (dropHoverZoneId !== zoneId) setDropHoverZoneId(zoneId);
   };
 
+  const onDragEnter = (event: DragEvent<HTMLDivElement>) => {
+    if (!canAcceptEvent(event.dataTransfer)) return;
+    markHover(event);
+  };
+
+  const onDragOver = (event: DragEvent<HTMLDivElement>) => {
+    if (!canAcceptEvent(event.dataTransfer)) return;
+    markHover(event);
+  };
+
+  // Moving between child cards fires leave/enter pairs; only a leave whose next
+  // target is outside the zone (or unknown) clears the highlight. dragover re-arms it.
   const onDragLeave = (event: DragEvent<HTMLDivElement>) => {
     const related = event.relatedTarget as Node | null;
     if (related && event.currentTarget.contains(related)) return;
-    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
-    if (dragDepthRef.current === 0) clearHover();
+    clearHover();
   };
 
   const onDrop = async (event: DragEvent<HTMLDivElement>) => {
@@ -143,28 +160,33 @@ export default function ContainerDropZone({
     hoverPayloadRef.current = null;
     setDragging(null);
     if (!payload?.id || !payload.ciClass || !payload.title) {
-      setMessage("Could not read that Creation File card.");
-      window.setTimeout(() => setMessage(null), 2800);
+      flash("Could not read that Creation File card.", 2800);
       return;
     }
     if (!softAccept && accepts && !accepts.includes(payload.ciClass)) {
-      setMessage("This zone does not accept that card type.");
-      window.setTimeout(() => setMessage(null), 2800);
+      flash("This zone does not accept that card type.", 2800);
       return;
     }
-    const result = await handlerRef.current(payload);
-    const ok = !result || result.ok !== false;
-    if (ok && payload.container?.holdKind === "park") {
-      await evictFromVaultAfterSuccessfulDrop(payload.id, true);
+    setSaving(true);
+    setMessage(`Saving ${payload.title}…`);
+    try {
+      const result = await handlerRef.current(payload);
+      const ok = !result || result.ok !== false;
+      if (ok && isLoreVaultDragPayload(payload)) {
+        await evictFromVaultAfterSuccessfulDrop(payload.id, true);
+      }
+      flash(
+        result && typeof result === "object" && "message" in result && result.message
+          ? String(result.message)
+          : ok
+            ? `Linked ${payload.title}.`
+            : "Drop failed.",
+      );
+    } catch {
+      flash(`Could not save ${payload.title} — try the drop again.`);
+    } finally {
+      setSaving(false);
     }
-    setMessage(
-      result && typeof result === "object" && "message" in result && result.message
-        ? String(result.message)
-        : ok
-          ? `Linked ${payload.title}.`
-          : "Drop failed.",
-    );
-    window.setTimeout(() => setMessage(null), 3200);
   };
 
   return (
@@ -174,15 +196,16 @@ export default function ContainerDropZone({
         compact ? "p-2" : "p-3",
         className,
         isHovered
-          ? "border-amber-400 bg-amber-500/10"
+          ? "border-sky-400 bg-sky-500/10 ring-2 ring-sky-400/30"
           : showTarget && acceptsDrag
-            ? "border-amber-400/40 bg-amber-500/5"
+            ? "border-sky-400/50 bg-sky-500/5"
             : panelClassName,
       ]
         .filter(Boolean)
         .join(" ")}
       data-zone-id={zoneId}
       data-drop-active={isHovered ? "true" : "false"}
+      aria-busy={saving || undefined}
       onDragEnter={onDragEnter}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}

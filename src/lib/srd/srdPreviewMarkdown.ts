@@ -2,7 +2,7 @@ import type { SrdApiResource } from "@/lib/srd/dnd5eApi";
 import { dnd5eResourceToMarkdown } from "@/lib/srd/dnd5eApiMarkdown";
 import { lookupSrdDocumentMarkdown } from "@/lib/srd/srdDocumentLookup";
 import { buildSrdSpellPreviewMarkdown } from "@/lib/srd/srdSpellPreview";
-import { SRD_DOCUMENT_PDF_ID } from "@/lib/srd/srdDocument.data";
+import { srdDocument } from "@/lib/srd/srdAssets";
 import { SRD_ATTRIBUTION_SHORT } from "@/lib/srd/manifest";
 
 export type BuildSrdPreviewMarkdownParams = {
@@ -29,12 +29,13 @@ export function buildSrdPreviewMarkdown(params: BuildSrdPreviewMarkdownParams): 
     return documentMarkdown;
   }
 
+  const pdfId = srdDocument().pdfId;
   if (apiData) {
     const apiMarkdown = dnd5eResourceToMarkdown(resource, apiData);
-    return `${apiMarkdown}\n\n_Source: D&D 5e API (2014 SRD). Full ${SRD_DOCUMENT_PDF_ID} text was not found for this entry._\n\n${SRD_ATTRIBUTION_SHORT}`;
+    return `${apiMarkdown}\n\n_Source: D&D 5e API (2014 SRD). Full ${pdfId} text was not found for this entry._\n\n${SRD_ATTRIBUTION_SHORT}`;
   }
 
-  return `# ${name}\n\nNo matching entry was found in **${SRD_DOCUMENT_PDF_ID}** or the SRD API.`;
+  return `# ${name}\n\nNo matching entry was found in **${pdfId}** or the SRD API.`;
 }
 
 /** Async loader used by preview entry points. */

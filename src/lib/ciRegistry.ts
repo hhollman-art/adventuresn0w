@@ -51,6 +51,7 @@ export type CiClass =
   | "item.srd-magic"
   | "party.roster"
   | "campaign.record"
+  | "campaign.lore-vault"
   | "npc.record"
   | "location.record"
   | "session.record"
@@ -210,6 +211,14 @@ export const CI_REGISTRY: Record<CiClass, CiDefinition> = {
     category: "campaigns",
     label: "Campaign",
     storageModule: "src/lib/campaigns.ts",
+    provenance: "user",
+    inBackup: true,
+  },
+  "campaign.lore-vault": {
+    ciClass: "campaign.lore-vault",
+    category: "campaigns",
+    label: "Lore Vault parking lot",
+    storageModule: "src/lib/vault/loreVaultContainer.ts",
     provenance: "user",
     inBackup: true,
   },

@@ -9,7 +9,6 @@ import CommandCenterHeader from "@/features/shell/CommandCenterHeader";
 import { useVaultDrawer } from "@/contexts/VaultDrawerContext";
 import { useCommandCenterLayout } from "@/contexts/CommandCenterContext";
 import { isCommandCenterSkipPath } from "@/lib/shell/commandCenterRoutes";
-import { PREVIEW_WINDOW } from "@/lib/ui/labels";
 
 type CommandCenterLayoutProps = {
   children: ReactNode;
@@ -24,15 +23,16 @@ function isTypingTarget(target: EventTarget | null): boolean {
 
 /**
  * Persistent DM Command Center:
- * header (Prep / Live) · Lore Vault · center canvas (router page) · Scry rail.
- * Scrying Glass opens as a floating modal overlay (not a right-hand pane),
- * so the workspace keeps full width while scrying.
+ * header (Prep / Live) · Lore Vault · center canvas (router page).
+ * The center canvas takes all width right of the Vault. The Scrying Glass is a
+ * portal pop-out (`ScryingInspector`) opened from the header, Alt+2, or any
+ * "scry" action — it never reserves layout space.
  */
 export default function CommandCenterLayout({ children }: CommandCenterLayoutProps) {
   const pathname = usePathname() ?? "/";
   const skip = isCommandCenterSkipPath(pathname);
   const { open: vaultOpen, toggleOpen: toggleVault, setOpen: setVaultOpen } = useVaultDrawer();
-  const { inspectorOpen, toggleInspector, setInspectorOpen } = useCommandCenterLayout();
+  const { toggleScryingGlass } = useCommandCenterLayout();
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -44,13 +44,13 @@ export default function CommandCenterLayout({ children }: CommandCenterLayoutPro
         }
         if (event.code === "Digit2" || event.key === "2") {
           event.preventDefault();
-          toggleInspector();
+          toggleScryingGlass();
         }
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [toggleVault, toggleInspector]);
+  }, [toggleVault, toggleScryingGlass]);
 
   if (skip) {
     return (
@@ -90,25 +90,8 @@ export default function CommandCenterLayout({ children }: CommandCenterLayoutPro
         <div className="command-center-main min-w-0" role="main">
           {children}
         </div>
-
-        <div className="command-center-inspector-rail no-print">
-          <button
-            type="button"
-            className="command-center-rail-btn"
-            aria-pressed={inspectorOpen}
-            aria-haspopup="dialog"
-            title={`${inspectorOpen ? "Close" : "Open"} ${PREVIEW_WINDOW} (Alt+2)`}
-            onClick={() => (inspectorOpen ? setInspectorOpen(false) : setInspectorOpen(true))}
-          >
-            <span className="command-center-rail-chevron" aria-hidden="true">
-              ‹
-            </span>
-            Scry
-          </button>
-        </div>
       </div>
 
-      {/* Floating Scrying Glass modal — does not consume layout width */}
       <ScryingInspector />
     </div>
   );

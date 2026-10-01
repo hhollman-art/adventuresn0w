@@ -204,6 +204,12 @@ export function linkModifierToCharacter(
     active: modifier.active,
     notes: modifier.notes,
   };
+  // Carry SRD instantiation provenance so the local copy stays traceable.
+  if (modifier.instanceId) entry.instanceId = modifier.instanceId;
+  if (modifier._source) entry._source = modifier._source;
+  if (modifier.sourceSrdEntityId !== undefined) {
+    entry.sourceSrdEntityId = modifier.sourceSrdEntityId;
+  }
   return {
     ...character,
     linkedModifiers: [...(character.linkedModifiers ?? []), entry],

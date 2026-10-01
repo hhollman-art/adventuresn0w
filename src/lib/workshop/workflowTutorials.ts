@@ -72,7 +72,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Preview and load to the table",
         body:
-          "Back in Library, select your CF or party and preview on the right. When ready, load the party to the Virtual Table. Tokens and sheets carry over from your saved roster.",
+          "Back in Library, select your CF or party to open it in the pop-out Scrying Glass. When ready, load the party to the Virtual Table. Tokens and sheets carry over from your saved roster.",
         action: { type: "mode", mode: "library" },
         actionLabel: "Open Library",
       },
@@ -129,7 +129,7 @@ export const WORKFLOW_TUTORIALS: readonly WorkflowTutorial[] = [
       {
         title: "Review in the Library",
         body:
-          "Open Library, browse All or filter by Results/Parties/CFs. Click items to preview on the right — copy, export .md, print, or edit CFs and results before the table.",
+          "Open Library, browse All or filter by Results/Parties/CFs. Click items to read them in the pop-out Scrying Glass — copy, export .md, print, or edit CFs and results before the table.",
         action: { type: "mode", mode: "library" },
         actionLabel: "Open Library",
       },

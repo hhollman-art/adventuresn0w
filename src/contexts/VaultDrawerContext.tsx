@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import type { CiClass } from "@/lib/ciRegistry";
-import type { VaultDragPayload } from "@/lib/vault/cfDragDrop";
+import { readAnyVaultDragData, type VaultDragPayload } from "@/lib/vault/cfDragDrop";
 import {
   filterVaultEntries,
   loadVaultCardEntries,
@@ -103,6 +103,20 @@ export function VaultDrawerProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener("dragend", clear);
     return () => window.removeEventListener("dragend", clear);
+  }, []);
+
+  /** Track drags from sources that only write DataTransfer (SRD browser rows, rich text)
+   * so every drop zone arms. Bubble phase: the source's own handler has set data by now. */
+  useEffect(() => {
+    const track = (event: DragEvent) => {
+      if (draggingRef.current || !event.dataTransfer) return;
+      const payload = readAnyVaultDragData(event.dataTransfer);
+      if (!payload) return;
+      draggingRef.current = payload;
+      setDraggingState(payload);
+    };
+    window.addEventListener("dragstart", track);
+    return () => window.removeEventListener("dragstart", track);
   }, []);
 
   const setOpen = useCallback((next: boolean) => {

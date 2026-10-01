@@ -138,6 +138,14 @@
       "storageModule": "src/lib/campaigns.ts",
       "status": "shipped"
     },
+    "campaign.lore-vault": {
+      "file": "campaign.lore-vault.json",
+      "category": "campaigns",
+      "provenance": "user",
+      "inBackup": true,
+      "storageModule": "src/lib/vault/loreVaultContainer.ts",
+      "status": "shipped"
+    },
     "session.tabletop": {
       "file": "session.tabletop.json",
       "category": "sessions",

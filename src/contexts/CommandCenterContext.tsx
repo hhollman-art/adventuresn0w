@@ -19,7 +19,8 @@ import {
 
 export type InspectorTabId = "details" | "edit" | "related";
 
-const INSPECTOR_OPEN_KEY = "ddeasy-command-inspector-open";
+/** Key written by the retired docked Scry rail; cleared once on mount. */
+const LEGACY_DOCKED_RAIL_KEY = "ddeasy-command-inspector-open";
 
 export type CommandCenterLibraryInspector = {
   snapshot: WorkshopPreviewSnapshot | null;
@@ -45,8 +46,8 @@ type InspectorPayload = {
 };
 
 type CommandCenterActions = {
-  setInspectorOpen: (open: boolean) => void;
-  toggleInspector: () => void;
+  setScryingGlassOpen: (open: boolean) => void;
+  toggleScryingGlass: () => void;
   setLibraryInspector: (next: CommandCenterLibraryInspector | null) => void;
   openCreateInspector: () => void;
   closeCreateInspector: () => void;
@@ -55,7 +56,8 @@ type CommandCenterActions = {
 };
 
 type CommandCenterLayout = {
-  inspectorOpen: boolean;
+  /** Scrying Glass pop-out modal visibility (never persisted across reloads). */
+  scryingGlassOpen: boolean;
   inspectorView: "scry" | "create";
 };
 
@@ -73,7 +75,7 @@ const InspectorFocusContext = createContext<{
 } | null>(null);
 
 export function CommandCenterProvider({ children }: { children: ReactNode }) {
-  const [inspectorOpen, setInspectorOpenState] = useState(false);
+  const [scryingGlassOpen, setScryingGlassOpenState] = useState(false);
   const [inspectorView, setInspectorView] = useState<"scry" | "create">("scry");
   const [inspectorTab, setInspectorTabState] = useState<InspectorTabId>("details");
   const [inspectedEntity, setInspectedEntity] = useState<InspectMeta | null>(null);
@@ -82,37 +84,18 @@ export function CommandCenterProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      // Floating modal should not auto-open from a prior docked-rail preference.
-      if (localStorage.getItem(INSPECTOR_OPEN_KEY) === "1") {
-        localStorage.setItem(INSPECTOR_OPEN_KEY, "0");
-      }
+      localStorage.removeItem(LEGACY_DOCKED_RAIL_KEY);
     } catch {
       /* ignore */
     }
   }, []);
 
-  const setInspectorOpen = useCallback((next: boolean) => {
-    setInspectorOpenState((current) => {
-      if (current === next) return current;
-      try {
-        localStorage.setItem(INSPECTOR_OPEN_KEY, next ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+  const setScryingGlassOpen = useCallback((next: boolean) => {
+    setScryingGlassOpenState(next);
   }, []);
 
-  const toggleInspector = useCallback(() => {
-    setInspectorOpenState((current) => {
-      const next = !current;
-      try {
-        localStorage.setItem(INSPECTOR_OPEN_KEY, next ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+  const toggleScryingGlass = useCallback(() => {
+    setScryingGlassOpenState((current) => !current);
   }, []);
 
   const applyInspectedEntity = useCallback(
@@ -122,9 +105,9 @@ export function CommandCenterProvider({ children }: { children: ReactNode }) {
         return prev?.key === meta.key ? prev : meta;
       });
       setInspectorView("scry");
-      setInspectorOpen(true);
+      setScryingGlassOpen(true);
     },
-    [setInspectorOpen],
+    [setScryingGlassOpen],
   );
 
   const setInspectorTab = useCallback((tab: InspectorTabId) => {
@@ -162,8 +145,8 @@ export function CommandCenterProvider({ children }: { children: ReactNode }) {
 
   const openCreateInspector = useCallback(() => {
     setInspectorView("create");
-    setInspectorOpen(true);
-  }, [setInspectorOpen]);
+    setScryingGlassOpen(true);
+  }, [setScryingGlassOpen]);
 
   const closeCreateInspector = useCallback(() => {
     setInspectorView("scry");
@@ -196,8 +179,8 @@ export function CommandCenterProvider({ children }: { children: ReactNode }) {
 
   const actions = useMemo<CommandCenterActions>(
     () => ({
-      setInspectorOpen,
-      toggleInspector,
+      setScryingGlassOpen,
+      toggleScryingGlass,
       setLibraryInspector,
       openCreateInspector,
       closeCreateInspector,
@@ -205,8 +188,8 @@ export function CommandCenterProvider({ children }: { children: ReactNode }) {
       applyInspectedEntity,
     }),
     [
-      setInspectorOpen,
-      toggleInspector,
+      setScryingGlassOpen,
+      toggleScryingGlass,
       setLibraryInspector,
       openCreateInspector,
       closeCreateInspector,
@@ -216,8 +199,8 @@ export function CommandCenterProvider({ children }: { children: ReactNode }) {
   );
 
   const layout = useMemo<CommandCenterLayout>(
-    () => ({ inspectorOpen, inspectorView }),
-    [inspectorOpen, inspectorView],
+    () => ({ scryingGlassOpen, inspectorView }),
+    [scryingGlassOpen, inspectorView],
   );
 
   const inspectorFocus = useMemo(

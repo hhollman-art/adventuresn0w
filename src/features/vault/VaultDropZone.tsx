@@ -6,6 +6,11 @@ import type { CiClass } from "@/lib/ciRegistry";
 import { readAnyVaultDragData, vaultDragHasPayload } from "@/lib/vault/cfDragDrop";
 import { useVaultDrawer } from "@/contexts/VaultDrawerContext";
 import { evictFromVaultAfterSuccessfulDrop } from "@/lib/vault/removeFileFromVault";
+import {
+  findParkedLoreVaultInstance,
+  isLoreVaultDragPayload,
+  staticPayloadForParkedInstance,
+} from "@/lib/vault/loreVaultContainer";
 
 type VaultDropZoneProps = {
   zoneId: string;
@@ -54,8 +59,13 @@ export default function VaultDropZone({
       setMessage("This zone does not accept that card type.");
       return;
     }
-    const result = await handleDrop(zoneId, payload);
-    if (result.ok && payload.container?.holdKind === "park") {
+    // Table handlers read SRD cards by catalogue id; a parked instance carries its own.
+    const parked = await findParkedLoreVaultInstance(payload);
+    const deployed = parked
+      ? staticPayloadForParkedInstance(payload, parked.sourceSrdEntityId)
+      : payload;
+    const result = await handleDrop(zoneId, deployed);
+    if (result.ok && isLoreVaultDragPayload(payload)) {
       await evictFromVaultAfterSuccessfulDrop(payload.id, true);
     }
     setMessage(result.ok ? `Deployed ${payload.title}.` : result.message ?? "Could not deploy.");
